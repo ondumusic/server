@@ -4,7 +4,7 @@ defmodule MusicBox.Repo.Migrations.CreateAlbums do
   def change do
     create table(:albums, primary_key: false) do
       add :id, :binary_id, primary_key: true
-      add :artist_id, :uuid
+      add :artist_id, references(:artists, type: :binary_id, on_delete: :delete_all)
       add :name, :string
       add :release_year, :integer, null: true
 
