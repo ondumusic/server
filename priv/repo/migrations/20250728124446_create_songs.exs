@@ -7,7 +7,7 @@ defmodule MusicBox.Repo.Migrations.CreateSongs do
       add :artist_id, references(:artists, type: :binary_id, on_delete: :delete_all)
       add :album_id, references(:albums, type: :binary_id, on_delete: :delete_all)
       add :file_id, references(:files, type: :binary_id, on_delete: :delete_all)
-      add :name, :string
+      add :name, :string, collate: :nocase
       add :duration, :float
 
       timestamps(type: :utc_datetime)
