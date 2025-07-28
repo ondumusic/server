@@ -16,6 +16,6 @@ defmodule MusicBox.Albums.Album do
   def changeset(album, attrs) do
     album
     |> cast(attrs, [:artist_id, :name, :release_year])
-    |> validate_required([:artist_id, :name, :release_year])
+    |> validate_required([:artist_id, :name])
   end
 end
