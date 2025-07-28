@@ -38,6 +38,22 @@ defmodule MusicBox.Files do
   def get_file!(id), do: Repo.get!(File, id)
 
   @doc """
+  Gets a single file by path.
+
+  Raises `Ecto.NoResultsError` if the File does not exist.
+
+  ## Examples
+
+      iex> get_file_by_path!("/music/file.mp3")
+      %File{}
+
+      iex> get_file_by_path!("/music/other-file.mp3")
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_file_by_path!(path), do: Repo.get_by!(File, path: path)
+
+  @doc """
   Creates a file.
 
   ## Examples
