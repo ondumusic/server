@@ -1,0 +1,109 @@
+defmodule MusicBox.FileScanner.Analyzer do
+  alias MusicBox.FileScanner.{Entry, Utils}
+
+  defmodule Metadata do
+    defstruct [
+      :artist,
+      :album,
+      :title,
+      :track,
+      :release_year,
+      :duration,
+      genres: []
+    ]
+  end
+
+  defmodule Result do
+    defstruct [:path, :checksum, metadata: %Metadata{}]
+  end
+
+  def analyze(%Entry{path: path}) do
+    %Result{
+      path: path,
+      checksum: Utils.calculate_checksum(path),
+      metadata: get_metadata(path)
+    }
+  end
+
+  defp get_metadata(path) do
+    with {:ok, json} <- Utils.ffprobe(path) do
+      metadata = %Metadata{}
+      keys = Map.keys(metadata)
+      parse(metadata, keys, json)
+    end
+  end
+
+  defp parse(%Metadata{} = metadata, [], _json), do: metadata
+
+  @simple_fields ~w(artist album title)a
+  defp parse(%Metadata{} = metadata, [key | keys], json) when key in @simple_fields do
+    value =
+      case get_in(json, ["format", "tags", to_string(key)]) do
+        nil -> nil
+        value -> String.trim(value)
+      end
+
+    metadata
+    |> Map.put(key, value)
+    |> parse(keys, json)
+  end
+
+  defp parse(%Metadata{} = metadata, [:track = key | keys], json) do
+    value = get_in(json, ["format", "tags", to_string(key)]) || ""
+
+    track =
+      value
+      |> String.split(~r/[^0-9]/)
+      |> Enum.map(&String.trim/1)
+      |> List.first()
+      |> Utils.to_integer()
+
+    metadata
+    |> Map.put(key, track)
+    |> parse(keys, json)
+  end
+
+  defp parse(%Metadata{} = metadata, [:release_year = key | keys], json) do
+    value = get_in(json, ["format", "tags", "date"]) || ""
+
+    release_year =
+      case Regex.scan(~r/([0-9]{4})/, value) do
+        [[_, year] | _] -> Utils.to_integer(year)
+        _ -> nil
+      end
+
+    metadata
+    |> Map.put(key, release_year)
+    |> parse(keys, json)
+  end
+
+  defp parse(%Metadata{} = metadata, [:duration = key | keys], json) do
+    value = get_in(json, ["format", "duration"])
+
+    duration =
+      case Float.parse(value) do
+        {duration, _rest} -> duration
+        _ -> nil
+      end
+
+    metadata
+    |> Map.put(key, duration)
+    |> parse(keys, json)
+  end
+
+  defp parse(%Metadata{} = metadata, [:genres = key | keys], json) do
+    value = get_in(json, ["format", "tags", "genre"]) || ""
+
+    genre =
+      value
+      |> String.split(~r/[\/,;&]/)
+      |> Enum.map(&String.trim/1)
+      |> Enum.reject(&(&1 == ""))
+
+    metadata
+    |> Map.put(key, genre)
+    |> parse(keys, json)
+  end
+
+  defp parse(%Metadata{} = metadata, [_key | keys], json), do: parse(metadata, keys, json)
+end

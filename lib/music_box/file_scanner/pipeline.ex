@@ -1,7 +1,7 @@
 defmodule MusicBox.FileScanner.Pipeline do
   use Broadway
   alias Broadway.Message
-  alias MusicBox.FileScanner.{Entry, Utils}
+  alias MusicBox.FileScanner.{Analyzer, Entry, Utils}
 
   def start_link(opts) do
     path = Keyword.fetch!(opts, :path)
@@ -57,13 +57,7 @@ defmodule MusicBox.FileScanner.Pipeline do
   @impl true
   def handle_message(_processor, %Message{batcher: :files} = message, _context) do
     message
-    |> Message.update_data(fn entry ->
-      %{
-        path: entry.path,
-        artist: "The Unknowns",
-        album: "Rather Not Say"
-      }
-    end)
+    |> Message.update_data(&Analyzer.analyze/1)
   end
 
   def handle_message(_processor, message, _context),
