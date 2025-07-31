@@ -22,5 +22,6 @@ defmodule MusicBox.Albums.Album do
     album
     |> cast(attrs, [:artist_id, :name, :release_year])
     |> validate_required([:artist_id, :name])
+    |> unique_constraint([:artist_id, :name])
   end
 end

@@ -21,5 +21,6 @@ defmodule MusicBox.Artists.Artist do
     artist
     |> cast(attrs, [:name])
     |> validate_required([:name])
+    |> unique_constraint(:name)
   end
 end

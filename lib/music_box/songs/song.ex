@@ -24,5 +24,6 @@ defmodule MusicBox.Songs.Song do
     song
     |> cast(attrs, [:artist_id, :album_id, :name, :duration])
     |> validate_required([:artist_id, :album_id, :name, :duration])
+    |> unique_constraint(:file_id)
   end
 end
