@@ -1,7 +1,7 @@
 defmodule MusicBox.FileScanner.Pipeline do
   use Broadway
   alias Broadway.Message
-  alias MusicBox.FileScanner.{Analyzer, Entry, Utils}
+  alias MusicBox.FileScanner.{Analyzer, Entry, Operations, Utils}
 
   def start_link(opts) do
     path = Keyword.fetch!(opts, :path)
@@ -33,9 +33,9 @@ defmodule MusicBox.FileScanner.Pipeline do
   end
 
   def ack(:file, successful, _failed) do
-    IO.inspect(successful)
-
-    :noop
+    successful
+    |> Enum.map(& &1.data)
+    |> Operations.batch_insert()
   end
 
   def ack(:directory, [] = _successful, [] = _failed),
