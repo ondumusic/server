@@ -115,35 +115,39 @@ defmodule MusicBox.FileScanner.Operations do
   defp maybe_create_songs(repo, %{files: files, artists: artists, albums: albums}) do
     linked_file_albums =
       files
-      |> Enum.reject(&is_nil(&1.metadata.artist))
-      |> Enum.reject(&is_nil(&1.metadata.album))
-      |> Enum.reject(&is_nil(&1.metadata.title))
-      |> Enum.map(fn file ->
-        match_artist = String.downcase(file.metadata.artist)
-        match_album = String.downcase(file.metadata.album)
-        artist = Enum.find(artists, &(String.downcase(&1.name) == match_artist))
-
+      |> Enum.map(fn %{metadata: metadata} = file ->
         album =
-          albums
-          |> Enum.filter(&(&1.artist_id == artist.id))
-          |> Enum.find(&(String.downcase(&1.name) == match_album))
+          if is_binary(metadata.artist) and is_binary(metadata.album) do
+            match_artist = String.downcase(metadata.artist)
+            match_album = String.downcase(metadata.album)
+            artist = Enum.find(artists, &(String.downcase(&1.name) == match_artist))
+
+            albums
+            |> Enum.filter(&(&1.artist_id == artist.id))
+            |> Enum.find(&(String.downcase(&1.name) == match_album))
+          end
 
         %{
           file: file,
           album: album
         }
       end)
-      |> Enum.reject(&is_nil(&1.album))
 
     entries =
       linked_file_albums
       |> Enum.map(fn %{file: file, album: album} ->
+        title =
+          case file.metadata.title do
+            nil -> Path.basename(file.path)
+            title -> title
+          end
+
         %{
-          artist_id: album.artist_id,
-          album_id: album.id,
+          artist_id: album && album.artist_id,
+          album_id: album && album.id,
           file_id: file.id,
           duration: file.metadata.duration,
-          name: file.metadata.title
+          name: title
         }
       end)
       |> Enum.map(&add_timestamps/1)
