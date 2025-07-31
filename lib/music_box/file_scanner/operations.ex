@@ -8,6 +8,8 @@ defmodule MusicBox.FileScanner.Operations do
   alias MusicBox.Repo
   alias Ecto.Multi
 
+  import Ecto.Query
+
   def batch_insert([]), do: :noop
 
   def batch_insert([%Analyzer.Result{} | _] = files) do
@@ -17,6 +19,24 @@ defmodule MusicBox.FileScanner.Operations do
     |> Multi.run(:albums, &maybe_create_albums/2)
     |> Multi.run(:songs, &maybe_create_songs/2)
     |> Repo.transact()
+  end
+
+  def filter_existing_paths([]), do: []
+
+  def filter_existing_paths(paths) do
+    from(f in File, where: f.path in ^paths, select: f.path)
+    |> Repo.all()
+  end
+
+  def walk_entries([], _pipeline), do: :ok
+
+  def walk_entries(entries, pipeline) when is_atom(pipeline) do
+    Broadway.producer_names(pipeline)
+    |> Enum.random()
+    |> case do
+      nil -> :noop
+      producer -> GenStage.call(producer, {:walk, entries})
+    end
   end
 
   defp maybe_create_files(repo, files, _results) do

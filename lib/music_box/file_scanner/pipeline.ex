@@ -6,80 +6,89 @@ defmodule MusicBox.FileScanner.Pipeline do
   def start_link(opts) do
     path = Keyword.fetch!(opts, :path)
 
+    scan_type =
+      case Keyword.get(opts, :scan_type, :full) do
+        :quick -> :quick
+        :full -> :full
+      end
+
     Broadway.start_link(__MODULE__,
       name: __MODULE__,
       producer: [
         module: {MusicBox.FileScanner.Producer, path},
         concurrency: 1,
-        transformer: {__MODULE__, :transform, []}
+        transformer: {__MODULE__, :transform, [scan_type: scan_type]}
       ],
       processors: [
         default: [concurrency: 10]
       ],
       batchers: [
-        directories: [concurrency: 5, batch_size: 10],
-        unknowns: [concurrency: 2, batch_size: 10],
-        files: [concurrency: 2, batch_size: 10]
+        default: [concurrency: 5, batch_size: 10]
       ]
     )
   end
 
-  def transform(entry, _opts) do
+  @impl true
+  def prepare_messages(messages, _context) do
+    # If the scan type is quick we can ignore any existing files.
+    found_paths =
+      messages
+      |> Enum.filter(&(&1.metadata.scan_type == :quick))
+      |> Enum.reject(& &1.data.is_dir)
+      |> Enum.map(& &1.data.path)
+      |> Enum.filter(&Utils.music_file?/1)
+      |> Operations.filter_existing_paths()
+
+    messages
+    |> Enum.map(fn %Message{data: %Entry{path: path}} = message ->
+      if path in found_paths do
+        Message.failed(message, :is_exists)
+      else
+        message
+      end
+    end)
+  end
+
+  def transform(entry, opts) do
     %Message{
       data: entry,
-      batcher: get_batcher(entry),
-      acknowledger: {__MODULE__, get_acknowledger(entry), :ack_data}
+      metadata: %{
+        scan_type: Keyword.fetch!(opts, :scan_type)
+      },
+      acknowledger: {__MODULE__, :default, :ack_data}
     }
   end
 
-  def ack(:file, successful, _failed) do
+  def ack(:default, successful, failed) do
     successful
     |> Enum.map(& &1.data)
     |> Operations.batch_insert()
-  end
-
-  def ack(:directory, [] = _successful, [] = _failed),
-    do: :noop
-
-  def ack(:directory, successful, [] = _failed) do
-    entries = Enum.map(successful, & &1.data)
 
     # Send directory entries back to a random producer to walk them and find
     # even more files and/or directories.
-    Broadway.producer_names(__MODULE__)
-    |> Enum.random()
-    |> case do
-      nil -> :noop
-      producer -> GenStage.call(producer, {:walk, entries})
-    end
+    failed
+    |> Enum.filter(&(&1.status == {:failed, :is_directory}))
+    |> Enum.map(& &1.data)
+    |> Operations.walk_entries(__MODULE__)
   end
 
   @impl true
-  def handle_message(_processor, %Message{batcher: :files} = message, _context) do
-    message
-    |> Message.update_data(&Analyzer.analyze/1)
+
+  def handle_message(_processor, %Message{data: %Entry{is_dir: true}} = message, _context),
+    do: Message.failed(message, :is_directory)
+
+  def handle_message(_processor, %Message{status: :ok} = message, _context) do
+    if Utils.music_file?(message.data.path) do
+      Message.update_data(message, &Analyzer.analyze/1)
+    else
+      Message.failed(message, :is_unknown)
+    end
   end
 
   def handle_message(_processor, message, _context),
     do: message
 
   @impl true
-  def handle_batch(:unknowns, messages, _batch_info, _context),
-    do: Enum.map(messages, &Message.failed(&1, :is_unknown))
-
-  def handle_batch(_batch_group, messages, _batch_info, _context),
+  def handle_batch(:default, messages, _batch_info, _context),
     do: messages
-
-  defp get_acknowledger(%Entry{is_dir: true}), do: :directory
-  defp get_acknowledger(%Entry{is_dir: false}), do: :file
-
-  defp get_batcher(%Entry{is_dir: true}), do: :directories
-
-  defp get_batcher(%Entry{path: path}) do
-    if Utils.music_file?(path) do
-      :files
-    else
-      :unknowns
-    end
-  end
 end
