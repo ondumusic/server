@@ -14,23 +14,19 @@ defmodule MusicBox.FileScanner.Analyzer do
   end
 
   defmodule Result do
-    defstruct [:path, :last_modified_at, :checksum, metadata: %Metadata{}]
+    defstruct [:path, :size, :last_modified_at, :checksum, metadata: %Metadata{}]
   end
 
   def analyze(%Entry{path: path}) do
+    %{size: size, mtime: mtime} = File.stat!(path, time: :posix)
+
     %Result{
       path: path,
-      last_modified_at: get_last_modified_at(path),
+      size: size,
+      last_modified_at: DateTime.from_unix!(mtime),
       checksum: Utils.calculate_checksum(path),
       metadata: get_metadata(path)
     }
-  end
-
-  defp get_last_modified_at(path) do
-    path
-    |> File.stat!(time: :posix)
-    |> Map.get(:mtime)
-    |> DateTime.from_unix!()
   end
 
   defp get_metadata(path) do

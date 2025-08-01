@@ -10,6 +10,7 @@ defmodule MusicBox.Files.File do
   schema "files" do
     field :path, :string
     field :checksum, :string
+    field :size, :integer
 
     embeds_one :metadata, FileMetadata, on_replace: :delete
 
@@ -23,8 +24,8 @@ defmodule MusicBox.Files.File do
   @doc false
   def changeset(file, attrs) do
     file
-    |> cast(attrs, [:path, :last_scanned_at, :last_modified_at, :checksum])
-    |> validate_required([:path, :last_scanned_at, :last_modified_at, :checksum])
+    |> cast(attrs, [:path, :size, :last_scanned_at, :last_modified_at, :checksum])
+    |> validate_required([:path, :size, :last_scanned_at, :last_modified_at, :checksum])
     |> cast_embed(:metadata)
     |> unique_constraint(:path)
   end
