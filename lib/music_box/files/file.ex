@@ -11,6 +11,7 @@ defmodule MusicBox.Files.File do
     field :path, :string
     field :checksum, :string
     field :size, :integer
+    field :type, Ecto.Enum, values: ~w(m4a mp3 opus ogg flac wav)a
 
     embeds_one :metadata, FileMetadata, on_replace: :delete
 
@@ -24,8 +25,8 @@ defmodule MusicBox.Files.File do
   @doc false
   def changeset(file, attrs) do
     file
-    |> cast(attrs, [:path, :size, :last_scanned_at, :last_modified_at, :checksum])
-    |> validate_required([:path, :size, :last_scanned_at, :last_modified_at, :checksum])
+    |> cast(attrs, [:path, :size, :type, :last_scanned_at, :last_modified_at, :checksum])
+    |> validate_required([:path, :size, :type, :last_scanned_at, :last_modified_at, :checksum])
     |> cast_embed(:metadata)
     |> unique_constraint(:path)
   end

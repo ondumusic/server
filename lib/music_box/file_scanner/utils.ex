@@ -1,4 +1,6 @@
 defmodule MusicBox.FileScanner.Utils do
+  alias MusicBox.FileScanner.FileTypes
+
   def calculate_checksum(path) do
     File.stream!(path, [], 2048)
     |> Enum.reduce(:crypto.hash_init(:sha), &:crypto.hash_update(&2, &1))
@@ -18,21 +20,6 @@ defmodule MusicBox.FileScanner.Utils do
     end
   end
 
-  def music_file?(path) do
-    path
-    |> Path.extname()
-    |> String.downcase()
-    |> case do
-      ".mp3" -> true
-      ".m4a" -> true
-      ".aac" -> true
-      ".flac" -> true
-      ".ogg" -> true
-      ".wav" -> true
-      _ -> false
-    end
-  end
-
   def to_integer(nil), do: nil
   def to_integer(n) when is_integer(n), do: n
 
@@ -40,6 +27,17 @@ defmodule MusicBox.FileScanner.Utils do
     case Integer.parse(input) do
       {n, _rest} -> n
       _ -> nil
+    end
+  end
+
+  def detect_file_type(path) do
+    with {:ok, file} <- File.open(path, [:binary, :read]),
+         header_bytes <- IO.binread(file, 262),
+         _ <- File.close(file),
+         {:ok, type} <- FileTypes.detect(header_bytes) do
+      {:ok, type}
+    else
+      _ -> {:error, :unknown}
     end
   end
 end
