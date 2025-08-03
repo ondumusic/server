@@ -50,7 +50,7 @@ defmodule MusicBox.FileScanner.Analyzer do
   @simple_fields ~w(artist album title)a
   defp parse(%Metadata{} = metadata, [key | keys], json) when key in @simple_fields do
     value =
-      case get_in(json, ["format", "tags", to_string(key)]) do
+      case get_tag(json, to_string(key)) do
         nil -> nil
         value -> String.trim(value)
       end
@@ -61,7 +61,7 @@ defmodule MusicBox.FileScanner.Analyzer do
   end
 
   defp parse(%Metadata{} = metadata, [:track = key | keys], json) do
-    value = get_in(json, ["format", "tags", to_string(key)]) || ""
+    value = get_tag(json, to_string(key)) || ""
 
     track =
       value
@@ -76,7 +76,7 @@ defmodule MusicBox.FileScanner.Analyzer do
   end
 
   defp parse(%Metadata{} = metadata, [:release_year = key | keys], json) do
-    value = get_in(json, ["format", "tags", "date"]) || ""
+    value = get_tag(json, "date") || ""
 
     release_year =
       case Regex.scan(~r/([0-9]{4})/, value) do
@@ -104,7 +104,7 @@ defmodule MusicBox.FileScanner.Analyzer do
   end
 
   defp parse(%Metadata{} = metadata, [:genres = key | keys], json) do
-    value = get_in(json, ["format", "tags", "genre"]) || ""
+    value = get_tag(json, "genre") || ""
 
     genre =
       value
@@ -118,4 +118,30 @@ defmodule MusicBox.FileScanner.Analyzer do
   end
 
   defp parse(%Metadata{} = metadata, [_key | keys], json), do: parse(metadata, keys, json)
+
+  defp get_tag(map, tag) do
+    tags = get_in(map, ["format", "tags"])
+
+    tags =
+      if is_nil(tags) do
+        map
+        |> Map.get("streams", [])
+        |> Enum.map(&Map.get(&1, "tags"))
+        |> Enum.reject(&is_nil/1)
+        |> List.first()
+      else
+        tags
+      end
+
+    if tags do
+      tags
+      |> Enum.find(fn {k, _v} ->
+        String.downcase(k) == String.downcase(tag)
+      end)
+      |> case do
+        {_k, v} -> v
+        _ -> nil
+      end
+    end
+  end
 end
