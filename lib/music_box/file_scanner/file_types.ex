@@ -5,9 +5,10 @@ defmodule MusicBox.FileScanner.FileTypes do
                    <<0x4D::size(8), 0x34::size(8), 0x41::size(8), 0x20::size(8)>>
   def detect(<<_, _, _, _, @m4a_signature, _rest::binary>>), do: {:ok, :m4a}
 
-  @mp3_signature <<0x49::size(8), 0x44::size(8), 0x33::size(8)>> ||
-                   <<0xFF::size(8), 0xFB::size(8)>>
+  @mp3_signature <<0xFF::size(8), 0xFB::size(8)>>
+  @mp3v2_signature <<0x49::size(8), 0x44::size(8), 0x33::size(8)>>
   def detect(<<@mp3_signature, _rest::binary>>), do: {:ok, :mp3}
+  def detect(<<@mp3v2_signature, _rest::binary>>), do: {:ok, :mp3}
 
   @opus_signature <<0x4F::size(8), 0x70::size(8), 0x75::size(8), 0x73::size(8), 0x48::size(8),
                     0x65::size(8), 0x61::size(8), 0x64::size(8)>>
