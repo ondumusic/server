@@ -9,6 +9,7 @@ defmodule MusicBox.Albums.Album do
   @foreign_key_type :binary_id
   schema "albums" do
     field :name, :string
+    field :compilation, :boolean
     field :release_year, :integer
 
     belongs_to :artist, Artist
@@ -20,8 +21,8 @@ defmodule MusicBox.Albums.Album do
   @doc false
   def changeset(album, attrs) do
     album
-    |> cast(attrs, [:artist_id, :name, :release_year])
-    |> validate_required([:artist_id, :name])
+    |> cast(attrs, [:artist_id, :name, :compilation, :release_year])
+    |> validate_required([:artist_id, :compilation, :name])
     |> unique_constraint([:artist_id, :name])
   end
 end

@@ -117,7 +117,8 @@ defmodule MusicBox.FileScanner.Operations do
       |> Enum.map(fn %{file: file, artist: artist} ->
         %{
           artist_id: artist.id,
-          name: file.metadata.album
+          name: file.metadata.album,
+          compilation: file.metadata.compilation
         }
       end)
       |> Enum.map(&add_timestamps/1)
