@@ -12,14 +12,13 @@ defmodule MusicBoxWeb.LibraryController do
     render(conn, :artists, page: Artists.paginate_artists(params))
   end
 
-  def artist(conn, _params) do
-    albums = Albums.get_albums_for_artist(conn.assigns.artist)
-    render(conn, :artist, artist: conn.assigns.artist, albums: albums)
+  def artist(conn, params) do
+    render(conn, :artist, artist: conn.assigns.artist)
   end
 
-  def artist_albums(conn, _params) do
-    albums = Albums.get_albums_for_artist(conn.assigns.artist)
-    render(conn, :albums, albums: albums)
+  def artist_albums(conn, params) do
+    page = Albums.paginate_albums_for_artist(conn.assigns.artist, params)
+    render(conn, :albums, page: page)
   end
 
   def albums(conn, params) do

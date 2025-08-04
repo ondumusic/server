@@ -29,12 +29,12 @@ defmodule MusicBox.Albums do
     |> Repo.paginate(params)
   end
 
-  def get_albums_for_artist(%Artist{id: artist_id}) do
+  def paginate_albums_for_artist(%Artist{id: artist_id}, params) do
     from(a in Album,
       where: a.artist_id == ^artist_id,
       order_by: [asc: a.name]
     )
-    |> Repo.all()
+    |> Repo.paginate(params)
   end
 
   @doc """

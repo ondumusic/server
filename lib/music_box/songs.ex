@@ -44,7 +44,7 @@ defmodule MusicBox.Songs do
       ** (Ecto.NoResultsError)
 
   """
-  def get_song!(id), do: Repo.get!(Song, id)
+  def get_song!(id), do: Repo.get!(Song, id) |> Repo.preload(:file)
 
   @doc """
   Creates a song.
