@@ -16,7 +16,7 @@ defmodule MusicBox.FileScanner.Utils do
          {:ok, json} <- Jason.decode(stdout) do
       {:ok, json}
     else
-      _ -> %{error: :ffprobe_failed}
+      _ -> {:error, :ffprobe_failed}
     end
   end
 

@@ -27,21 +27,26 @@ defmodule MusicBox.FileScanner.Analyzer do
   def analyze(%Entry{path: path}, opts \\ []) do
     %{size: size, mtime: mtime} = File.stat!(path, time: :posix)
 
-    %Result{
-      path: path,
-      size: size,
-      type: Keyword.get(opts, :type, :unknown),
-      last_modified_at: DateTime.from_unix!(mtime),
-      checksum: Utils.calculate_checksum(path),
-      metadata: get_metadata(path)
-    }
+    with {:ok, metadata} <- get_metadata(path) do
+      {:ok,
+       %Result{
+         path: path,
+         size: size,
+         type: Keyword.get(opts, :type, :unknown),
+         last_modified_at: DateTime.from_unix!(mtime),
+         checksum: Utils.calculate_checksum(path),
+         metadata: metadata
+       }}
+    else
+      {:error, :ffprobe_failed} -> {:error, :analyzing_failed}
+    end
   end
 
   defp get_metadata(path) do
     with {:ok, json} <- Utils.ffprobe(path) do
       metadata = %Metadata{}
       keys = Map.keys(metadata)
-      parse(metadata, keys, json)
+      {:ok, parse(metadata, keys, json)}
     end
   end
 

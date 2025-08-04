@@ -66,8 +66,10 @@ defmodule MusicBox.FileScanner.Pipeline do
     do: Message.failed(message, :is_directory)
 
   def handle_message(_processor, %Message{status: :ok} = message, _context) do
-    case Utils.detect_file_type(message.data.path) do
-      {:ok, type} -> Message.update_data(message, &Analyzer.analyze(&1, type: type))
+    with {:ok, type} <- Utils.detect_file_type(message.data.path),
+         {:ok, result} <- Analyzer.analyze(message.data, type: type) do
+      Message.put_data(message, result)
+    else
       _ -> Message.failed(message, :is_unknown)
     end
   end

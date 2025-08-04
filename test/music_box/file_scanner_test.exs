@@ -4,7 +4,6 @@ defmodule MusicBox.FileScannerTest do
   alias MusicBox.FileScanner
   alias MusicBox.FileScanner.Pipeline
   alias MusicBox.FileScanner.Producer
-  alias MusicBox.FileScanner.Analyzer
   alias MusicBox.FileScanner.Entry
 
   @fixtures_path Path.expand("../support/fixtures/music_files", __DIR__)
