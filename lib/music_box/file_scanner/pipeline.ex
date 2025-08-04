@@ -12,10 +12,13 @@ defmodule MusicBox.FileScanner.Pipeline do
         :full -> :full
       end
 
+    producer_module =
+      Application.fetch_env!(:music_box, MusicBox.FileScanner) |> Keyword.fetch!(:producer_module)
+
     Broadway.start_link(__MODULE__,
       name: __MODULE__,
       producer: [
-        module: {MusicBox.FileScanner.Producer, path},
+        module: {producer_module, path},
         concurrency: 1,
         transformer: {__MODULE__, :transform, [scan_type: scan_type]}
       ],

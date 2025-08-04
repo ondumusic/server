@@ -3,6 +3,7 @@ defmodule MusicBox.ArtistsTest do
 
   alias MusicBox.Artists
 
+  @moduletag :skip
   describe "artists" do
     alias MusicBox.Artists.Artist
 

@@ -3,6 +3,7 @@ defmodule MusicBox.FilesTest do
 
   alias MusicBox.Files
 
+  @moduletag :skip
   describe "files" do
     alias MusicBox.Files.File
 

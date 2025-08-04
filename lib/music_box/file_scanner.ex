@@ -1,11 +1,8 @@
 defmodule MusicBox.FileScanner do
-  def scan(scan_type \\ :full) do
-    # TODO: Make this configurable
-    music_dir = "/Users/max/Music"
-
+  def scan(path, scan_type \\ :full) do
     DynamicSupervisor.start_child(
       MusicBox.FileScanner.Supervisor,
-      {MusicBox.FileScanner.Pipeline, path: music_dir, scan_type: scan_type}
+      {MusicBox.FileScanner.Pipeline, path: path, scan_type: scan_type}
     )
   end
 

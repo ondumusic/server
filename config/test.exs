@@ -22,3 +22,6 @@ config :logger, level: :warning
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
+
+# To allow us to test the Broadway pipeline we should use the DummyProducer
+config :music_box, MusicBox.FileScanner, producer_module: Broadway.DummyProducer
