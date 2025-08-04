@@ -6,6 +6,7 @@ defmodule MusicBox.Songs do
   import Ecto.Query, warn: false
   alias MusicBox.Repo
 
+  alias MusicBox.Albums.Album
   alias MusicBox.Songs.Song
 
   @doc """
@@ -19,6 +20,14 @@ defmodule MusicBox.Songs do
   """
   def list_songs do
     Repo.all(Song)
+  end
+
+  def get_songs_for_album(%Album{id: album_id}) do
+    from(s in Song,
+      where: s.album_id == ^album_id,
+      order_by: [asc: s.name]
+    )
+    |> Repo.all()
   end
 
   @doc """

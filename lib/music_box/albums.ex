@@ -7,6 +7,7 @@ defmodule MusicBox.Albums do
   alias MusicBox.Repo
 
   alias MusicBox.Albums.Album
+  alias MusicBox.Artists.Artist
 
   @doc """
   Returns the list of albums.
@@ -19,6 +20,21 @@ defmodule MusicBox.Albums do
   """
   def list_albums do
     Repo.all(Album)
+  end
+
+  def paginate_albums(params) do
+    from(a in Album,
+      order_by: [asc: a.name]
+    )
+    |> Repo.paginate(params)
+  end
+
+  def get_albums_for_artist(%Artist{id: artist_id}) do
+    from(a in Album,
+      where: a.artist_id == ^artist_id,
+      order_by: [asc: a.name]
+    )
+    |> Repo.all()
   end
 
   @doc """

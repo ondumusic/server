@@ -9,6 +9,7 @@ defmodule MusicBox.Artists.Artist do
   @foreign_key_type :binary_id
   schema "artists" do
     field :name, :string
+    field :album_count, :integer, virtual: true, default: 0
 
     has_many :albums, Album
     has_many :songs, Song

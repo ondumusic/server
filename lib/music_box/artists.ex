@@ -18,7 +18,23 @@ defmodule MusicBox.Artists do
 
   """
   def list_artists do
-    Repo.all(Artist)
+    from(a in Artist,
+      left_join: al in assoc(a, :albums),
+      order_by: [asc: a.name],
+      group_by: a.id,
+      select: %{a | album_count: count()}
+    )
+    |> Repo.all()
+  end
+
+  def paginate_artists(params) do
+    from(a in Artist,
+      left_join: al in assoc(a, :albums),
+      order_by: [asc: a.name],
+      group_by: a.id,
+      select: %{a | album_count: count()}
+    )
+    |> Repo.paginate(params)
   end
 
   @doc """
@@ -35,7 +51,16 @@ defmodule MusicBox.Artists do
       ** (Ecto.NoResultsError)
 
   """
-  def get_artist!(id), do: Repo.get!(Artist, id)
+  def get_artist!(id) do
+    from(a in Artist,
+      left_join: al in assoc(a, :albums),
+      order_by: [asc: a.name],
+      where: a.id == ^id,
+      group_by: a.id,
+      select: %{a | album_count: count()}
+    )
+    |> Repo.one!()
+  end
 
   @doc """
   Creates a artist.
