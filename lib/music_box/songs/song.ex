@@ -11,6 +11,7 @@ defmodule MusicBox.Songs.Song do
   schema "songs" do
     field :name, :string
     field :duration, :float
+    field :track, :integer
 
     belongs_to :artist, Artist
     belongs_to :album, Album
@@ -22,7 +23,7 @@ defmodule MusicBox.Songs.Song do
   @doc false
   def changeset(song, attrs) do
     song
-    |> cast(attrs, [:artist_id, :album_id, :name, :duration])
+    |> cast(attrs, [:artist_id, :album_id, :track, :name, :duration])
     |> validate_required([:name, :duration])
     |> unique_constraint(:file_id)
   end

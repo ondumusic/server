@@ -40,6 +40,7 @@ defmodule MusicBoxWeb.LibraryJSON do
     %{
       id: song.id,
       name: song.name,
+      track: song.track,
       duration: song.duration
     }
   end

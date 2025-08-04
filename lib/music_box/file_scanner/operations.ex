@@ -168,6 +168,7 @@ defmodule MusicBox.FileScanner.Operations do
           album_id: album && album.id,
           file_id: file.id,
           duration: file.metadata.duration,
+          track: file.metadata.track,
           name: title
         }
       end)

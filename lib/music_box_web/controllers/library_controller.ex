@@ -12,7 +12,7 @@ defmodule MusicBoxWeb.LibraryController do
     render(conn, :artists, page: Artists.paginate_artists(params))
   end
 
-  def artist(conn, params) do
+  def artist(conn, _params) do
     render(conn, :artist, artist: conn.assigns.artist)
   end
 
