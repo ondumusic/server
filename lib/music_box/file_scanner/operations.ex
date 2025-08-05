@@ -118,7 +118,8 @@ defmodule MusicBox.FileScanner.Operations do
         %{
           artist_id: artist.id,
           name: file.metadata.album,
-          compilation: file.metadata.compilation
+          compilation: file.metadata.compilation,
+          release_year: file.metadata.release_year
         }
       end)
       |> Enum.map(&add_timestamps/1)
