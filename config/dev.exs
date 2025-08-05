@@ -21,7 +21,18 @@ config :music_box, MusicBoxWeb.Endpoint,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "yV4IemL1RTaLEQBwbSp9rKZEXCnPeFl3bYKmSrQ0FnpEeDPfE0cS3oOZgMEc79r4",
-  watchers: []
+  watchers: [
+    pnpm: [
+      "vite",
+      "build",
+      "--mode",
+      "dev",
+      "--watch",
+      "--config",
+      "vite.config.js",
+      cd: Path.expand("../assets", __DIR__)
+    ]
+  ]
 
 # ## SSL Support
 #
