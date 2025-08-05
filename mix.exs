@@ -59,9 +59,9 @@ defmodule MusicBox.MixProject do
     [
       setup: ["deps.get", "ecto.setup", "assets.setup"],
       "assets.setup": ["cmd --cd assets pnpm install"],
-      "assets.build": ["cmd --cd assets pnpm vite build --config vite.config.js"],
+      "assets.build": ["cmd --cd assets pnpm vite build --config vite.config.mjs"],
       "assets.deploy": [
-        "cmd --cd assets pnpm vite build --mode production --config vite.config.js",
+        "cmd --cd assets pnpm vite build --mode production --config vite.config.mjs",
         "phx.digest"
       ],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],

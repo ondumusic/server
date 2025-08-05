@@ -29,7 +29,7 @@ config :music_box, MusicBoxWeb.Endpoint,
       "dev",
       "--watch",
       "--config",
-      "vite.config.js",
+      "vite.config.mjs",
       cd: Path.expand("../assets", __DIR__)
     ]
   ]
