@@ -1,8 +1,23 @@
 defmodule MusicBoxWeb.Router do
   use MusicBoxWeb, :router
 
+  pipeline :browser do
+    plug :accepts, ["html"]
+    plug :fetch_session
+    plug :put_root_layout, html: {MusicBoxWeb.Layouts, :root}
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
+  end
+
+  scope "/", MusicBoxWeb do
+    pipe_through :browser
+
+    get "/", PageController, :react
+    get "/artist/:id", PageController, :react
   end
 
   scope "/api", MusicBoxWeb do

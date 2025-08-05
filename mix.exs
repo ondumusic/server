@@ -34,6 +34,8 @@ defmodule MusicBox.MixProject do
     [
       {:phoenix, "~> 1.7.21"},
       {:phoenix_ecto, "~> 4.5"},
+      {:phoenix_html, "~> 4.1"},
+      {:phoenix_live_view, "~> 1.0"},
       {:ecto_sql, "~> 3.10"},
       {:ecto_sqlite3, ">= 0.0.0"},
       {:telemetry_metrics, "~> 1.0"},
@@ -55,7 +57,13 @@ defmodule MusicBox.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      setup: ["deps.get", "ecto.setup"],
+      setup: ["deps.get", "ecto.setup", "assets.setup"],
+      "assets.setup": ["cmd --cd assets pnpm install"],
+      "assets.build": ["cmd --cd assets pnpm vite build --config vite.config.js"],
+      "assets.deploy": [
+        "cmd --cd assets pnpm vite build --mode production --config vite.config.js",
+        "phx.digest"
+      ],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
