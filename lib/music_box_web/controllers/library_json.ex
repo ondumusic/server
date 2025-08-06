@@ -19,7 +19,7 @@ defmodule MusicBoxWeb.LibraryJSON do
     |> Map.put(:entries, Enum.map(page.entries, &album(%{album: &1})))
   end
 
-  def album(%{album: album, songs: songs}) do
+  def album(%{album: %{songs: songs} = album}) when is_list(songs) do
     %{
       id: album.id,
       name: album.name,

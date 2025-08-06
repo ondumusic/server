@@ -27,7 +27,7 @@ export function ArtistListView() {
     }
   }, [isFetching, error, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  if (isFetching) return "Loading...";
+  if (isFetching && !data) return "Loading...";
   if (error) return `An error has occurred: ${error.message}`;
 
   return (

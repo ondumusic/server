@@ -32,9 +32,10 @@ defmodule MusicBox.Albums do
   def paginate_albums_for_artist(%Artist{id: artist_id}, params) do
     from(a in Album,
       where: a.artist_id == ^artist_id,
-      order_by: [asc: a.name]
+      order_by: [asc: a.name],
+      preload: [:songs]
     )
-    |> Repo.paginate(params)
+    |> Repo.paginate(params, default_limit: 10)
   end
 
   @doc """

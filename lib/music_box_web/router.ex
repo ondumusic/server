@@ -20,6 +20,8 @@ defmodule MusicBoxWeb.Router do
     get "/library", PageController, :react
     get "/artist", PageController, :react
     get "/artist/:id", PageController, :react
+
+    get "/stream/:song_id", StreamController, :stream
   end
 
   scope "/api", MusicBoxWeb do
@@ -32,9 +34,5 @@ defmodule MusicBoxWeb.Router do
 
     get "/albums", LibraryController, :albums
     get "/albums/:album_id", LibraryController, :album
-  end
-
-  scope "/stream", MusicBoxWeb do
-    get "/:song_id", StreamController, :stream
   end
 end

@@ -5,12 +5,13 @@ defmodule MusicBox.Repo do
 
   @paginate_opts [
     repo: __MODULE__,
-    page_size: 25,
-    max_page_size: 25,
+    max_limit: 100,
+    default_limit: 50,
     replace_invalid_params: true
   ]
-  def paginate(queryable, params) when is_map(params) do
-    {entries, meta} = Flop.validate_and_run!(queryable, params, @paginate_opts)
+  def paginate(queryable, params, opts \\ []) when is_map(params) do
+    opts = Keyword.merge(@paginate_opts, opts)
+    {entries, meta} = Flop.validate_and_run!(queryable, params, opts)
 
     %{
       entries: entries,
