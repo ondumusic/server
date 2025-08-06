@@ -1,5 +1,5 @@
 import { Outlet } from "react-router";
 
-export function Layout() {
+export function RootLayout() {
   return <Outlet />;
 }
