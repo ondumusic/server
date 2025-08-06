@@ -1,4 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Link } from "react-router";
 
 export function ArtistListView() {
@@ -20,12 +21,14 @@ export function ArtistListView() {
       fetch(`/api/artists?page=${pageParam}`).then((res) => res.json()),
   });
 
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage && !isFetching && !error) {
+      fetchNextPage();
+    }
+  }, [isFetching, error, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   if (isFetching) return "Loading...";
-
   if (error) return `An error has occurred: ${error.message}`;
-
-  // NOTE: Don't think this is desired usage?
-  if (hasNextPage && !isFetchingNextPage) fetchNextPage();
 
   return (
     <ul>
