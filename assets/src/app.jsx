@@ -10,6 +10,7 @@ import {
 } from "react-router";
 
 import { Layout } from "./layout";
+import { ArtistsPage } from "./pages/artists";
 
 const router = createBrowserRouter([
   {
@@ -21,14 +22,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        Component: () => (
-          <div class="w-screen h-screen flex items-center justify-center">
-            <p class="max-w-md mx-4">
-              Hello <span class="font-bold">React</span>!
-              <Link to="/artist/the-beatles">The Beatles</Link>
-            </p>
-          </div>
-        ),
+        Component: ArtistsPage,
       },
       {
         path: "artist",

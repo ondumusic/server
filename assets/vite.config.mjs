@@ -23,6 +23,6 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       __APP_ENV__: env.APP_ENV,
-    }
+    },
   };
 });

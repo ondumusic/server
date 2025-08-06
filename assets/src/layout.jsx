@@ -1,16 +1,5 @@
-import { Outlet, useNavigation } from "react-router";
-
-const MainMenu = () => <p>Menu</p>;
+import { Outlet } from "react-router";
 
 export function Layout() {
-  const navigation = useNavigation();
-  const isIdle = navigation.state === "idle";
-  console.log(isIdle);
-
-  return (
-    <>
-      <MainMenu />
-      <Outlet />
-    </>
-  );
+  return <Outlet />;
 }
