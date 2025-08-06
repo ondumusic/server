@@ -1,16 +1,13 @@
-import { loadEnv, defineConfig } from "vite";
 import tailwindcss from "@tailwindcss/vite";
-import react from '@vitejs/plugin-react';
+import react from "@vitejs/plugin-react";
+import { defineConfig, loadEnv } from "vite";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
   return {
     publicDir: "public/",
-    plugins: [
-      tailwindcss(),
-      react()
-    ],
+    plugins: [tailwindcss(), react()],
     build: {
       outDir: "../priv/static",
       emptyOutDir: true,
@@ -26,6 +23,6 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       __APP_ENV__: env.APP_ENV,
-    },
+    }
   };
 });

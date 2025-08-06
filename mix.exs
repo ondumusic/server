@@ -58,6 +58,7 @@ defmodule MusicBox.MixProject do
   defp aliases do
     [
       setup: ["deps.get", "ecto.setup", "assets.setup"],
+      format: ["format", "cmd --cd assets pnpm exec biome check --write --unsafe"],
       "assets.setup": ["cmd --cd assets pnpm install"],
       "assets.build": ["cmd --cd assets pnpm vite build --config vite.config.mjs"],
       "assets.deploy": [

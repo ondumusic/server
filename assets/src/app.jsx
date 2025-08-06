@@ -1,9 +1,13 @@
 import "./app.css";
 
-import { StrictMode, Suspense, useEffect } from "react";
+import { StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { RouterProvider } from "react-router";
-import { createBrowserRouter, redirect, Link } from "react-router";
+import {
+  createBrowserRouter,
+  Link,
+  RouterProvider,
+  redirect,
+} from "react-router";
 
 import { Layout } from "./layout";
 
@@ -17,12 +21,14 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        Component: () => <div class="w-screen h-screen flex items-center justify-center">
-          <p class="max-w-md mx-4">
-            Hello <span class="font-bold">React</span>!
-            <Link to="/artist/the-beatles">The Beatles</Link>
-          </p>
-        </div>,
+        Component: () => (
+          <div class="w-screen h-screen flex items-center justify-center">
+            <p class="max-w-md mx-4">
+              Hello <span class="font-bold">React</span>!
+              <Link to="/artist/the-beatles">The Beatles</Link>
+            </p>
+          </div>
+        ),
       },
       {
         path: "artist",
@@ -34,10 +40,17 @@ const router = createBrowserRouter([
           },
           {
             path: ":id",
-            Component: () => <p>Artist Page or <Link to="/" class="text-emerald-600 font-bold">go back</Link></p>,
+            Component: () => (
+              <p>
+                Artist Page or{" "}
+                <Link to="/" class="text-emerald-600 font-bold">
+                  go back
+                </Link>
+              </p>
+            ),
           },
-        ]
-      }
+        ],
+      },
     ],
   },
 ]);
