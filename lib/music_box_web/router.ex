@@ -17,6 +17,8 @@ defmodule MusicBoxWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :react
+    get "/library", PageController, :react
+    get "/artist", PageController, :react
     get "/artist/:id", PageController, :react
   end
 
