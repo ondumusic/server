@@ -41,6 +41,7 @@ export function ArtistListView() {
         <ArtistListItem
           key={artist.id}
           isSelected={params.artistId === artist.id}
+          scrollIntoView={!hasNextPage}
           artist={artist}
         />
       ))}
