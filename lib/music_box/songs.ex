@@ -25,7 +25,7 @@ defmodule MusicBox.Songs do
   def get_songs_for_album(%Album{id: album_id}) do
     from(s in Song,
       where: s.album_id == ^album_id,
-      order_by: [asc_nulls_last: s.track, asc: s.name]
+      order_by: [asc: s.disc, asc_nulls_last: s.track, asc: s.name]
     )
     |> Repo.all()
   end

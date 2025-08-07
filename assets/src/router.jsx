@@ -1,8 +1,8 @@
 import { createBrowserRouter, redirect } from "react-router";
-import { ArtistsLayout } from "./layouts/artists_layout";
-import { RootLayout } from "./layouts/root_layout";
-import { ArtistAlbumList } from "./views/artist_album_list";
-import { EmptyView } from "./views/empty";
+import { ArtistsLayout } from "./layouts/ArtistsLayout";
+import { RootLayout } from "./layouts/RootLayout";
+import { ArtistAlbumListView } from "./views/ArtistAlbumListView";
+import { EmptyView } from "./views/EmptyView";
 
 export const router = createBrowserRouter([
   {
@@ -29,7 +29,7 @@ export const router = createBrowserRouter([
               },
               {
                 path: ":artistId",
-                Component: () => <ArtistAlbumList />,
+                Component: () => <ArtistAlbumListView />,
               },
             ],
           },

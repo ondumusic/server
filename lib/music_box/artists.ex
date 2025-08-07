@@ -22,7 +22,7 @@ defmodule MusicBox.Artists do
       left_join: al in assoc(a, :albums),
       order_by: [asc: a.name],
       group_by: a.id,
-      select: %{a | album_count: count()}
+      select: %{a | album_count: count(al.id)}
     )
     |> Repo.all()
   end
@@ -32,9 +32,9 @@ defmodule MusicBox.Artists do
       left_join: al in assoc(a, :albums),
       order_by: [asc: a.name],
       group_by: a.id,
-      select: %{a | album_count: count()}
+      select: %{a | album_count: count(al.id)}
     )
-    |> Repo.paginate(params)
+    |> Repo.paginate(params, default_limit: 100)
   end
 
   @doc """
@@ -57,7 +57,7 @@ defmodule MusicBox.Artists do
       order_by: [asc: a.name],
       where: a.id == ^id,
       group_by: a.id,
-      select: %{a | album_count: count()}
+      select: %{a | album_count: count(al.id)}
     )
     |> Repo.one!()
   end

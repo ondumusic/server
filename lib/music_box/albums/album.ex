@@ -13,7 +13,7 @@ defmodule MusicBox.Albums.Album do
     field :release_year, :integer
 
     belongs_to :artist, Artist
-    has_many :songs, Song, preload_order: [asc_nulls_last: :track, asc: :name]
+    has_many :songs, Song, preload_order: [asc: :disc, asc_nulls_last: :track, asc: :name]
 
     timestamps(type: :utc_datetime)
   end

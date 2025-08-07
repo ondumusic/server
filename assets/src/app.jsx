@@ -6,7 +6,7 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
 
 import { router } from "./router";
-import { queryClient } from "./utils/query_client";
+import { queryClient } from "./utils/queryClient";
 
 const appRoot = document.getElementById("App");
 if (appRoot) {

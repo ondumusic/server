@@ -1,8 +1,14 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { Link } from "react-router";
+import { useParams } from "react-router";
+
+import { ArtistListItem } from "../components/ArtistListItem";
+import { api } from "../services/api";
+import { paginatedMap } from "../utils/paginatedMap";
 
 export function ArtistListView() {
+  const params = useParams();
+
   const {
     error,
     data,
@@ -17,8 +23,7 @@ export function ArtistListView() {
       if (nextPage > lastPage.total_pages) return null;
       return nextPage;
     },
-    queryFn: ({ pageParam = 1 }) =>
-      fetch(`/api/artists?page=${pageParam}`).then((res) => res.json()),
+    queryFn: ({ pageParam = 1 }) => api.get("/artists", { page: pageParam }),
   });
 
   useEffect(() => {
@@ -32,16 +37,13 @@ export function ArtistListView() {
 
   return (
     <ul>
-      {data.pages.map((page) =>
-        page.entries.map((artist) => (
-          <li
-            key={artist.id}
-            class="whitespace-nowrap text-ellipsis max-w-full overflow-hidden"
-          >
-            <Link to={`/artist/${artist.id}`}>{artist.name}</Link>
-          </li>
-        )),
-      )}
+      {paginatedMap(data, (artist) => (
+        <ArtistListItem
+          key={artist.id}
+          isSelected={params.artistId === artist.id}
+          artist={artist}
+        />
+      ))}
     </ul>
   );
 }

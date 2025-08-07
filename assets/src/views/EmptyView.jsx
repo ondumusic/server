@@ -1,7 +1,7 @@
-export function EmptyView(props) {
+export function EmptyView({ message }) {
   return (
     <div class="h-full content-center text-center">
-      <p>{props.message}</p>
+      <p>{message}</p>
     </div>
   );
 }
