@@ -7,6 +7,7 @@ defmodule MusicBox.Files.FileMetadata do
     field :artist, :string
     field :album, :string
     field :title, :string
+    field :disc, :integer
     field :track, :integer
     field :release_year, :integer
     field :compilation, :boolean
@@ -21,6 +22,7 @@ defmodule MusicBox.Files.FileMetadata do
       :album,
       :compilation,
       :title,
+      :disc,
       :track,
       :release_year,
       :duration,

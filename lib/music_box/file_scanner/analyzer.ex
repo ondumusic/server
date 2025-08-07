@@ -10,6 +10,7 @@ defmodule MusicBox.FileScanner.Analyzer do
       :release_year,
       :compilation,
       :duration,
+      disc: 1,
       genres: []
     ]
   end
@@ -79,6 +80,22 @@ defmodule MusicBox.FileScanner.Analyzer do
 
     metadata
     |> Map.put(key, value)
+    |> parse(keys, json)
+  end
+
+  defp parse(%Metadata{} = metadata, [:disc = key | keys], json) do
+    value = get_tag(json, to_string(key)) || ""
+    current_value = Map.get(metadata, key)
+
+    disc =
+      value
+      |> String.split(~r/[^0-9]/)
+      |> Enum.map(&String.trim/1)
+      |> List.first()
+      |> Utils.to_integer()
+
+    metadata
+    |> Map.put(key, disc || current_value)
     |> parse(keys, json)
   end
 

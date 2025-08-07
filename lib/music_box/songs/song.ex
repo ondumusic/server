@@ -12,6 +12,7 @@ defmodule MusicBox.Songs.Song do
     field :name, :string
     field :duration, :float
     field :track, :integer
+    field :disc, :integer, default: 1
 
     belongs_to :artist, Artist
     belongs_to :album, Album
@@ -23,7 +24,7 @@ defmodule MusicBox.Songs.Song do
   @doc false
   def changeset(song, attrs) do
     song
-    |> cast(attrs, [:artist_id, :album_id, :track, :name, :duration])
+    |> cast(attrs, [:artist_id, :album_id, :track, :disc, :name, :duration])
     |> validate_required([:name, :duration])
     |> unique_constraint(:file_id)
   end
