@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
-
+import { PlayerProvider } from "./hooks/usePlayer";
 import { router } from "./router";
 import { queryClient } from "./utils/queryClient";
 
@@ -15,9 +15,11 @@ if (appRoot) {
   root.render(
     <StrictMode>
       <Suspense>
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-        </QueryClientProvider>
+        <PlayerProvider>
+          <QueryClientProvider client={queryClient}>
+            <RouterProvider router={router} />
+          </QueryClientProvider>
+        </PlayerProvider>
       </Suspense>
     </StrictMode>,
   );

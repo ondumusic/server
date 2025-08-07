@@ -21,7 +21,7 @@ export function ArtistAlbumListView() {
   if (error) return `An error has occurred: ${error.message}`;
 
   return (
-    <div class="space-y-8 mx-8 my-8">
+    <div className="space-y-8 mx-8 my-8">
       {!isFetchingArtist && dataArtist ? (
         <ArtistAlbumListHeader artist={dataArtist} />
       ) : null}

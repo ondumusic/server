@@ -31,9 +31,9 @@ export function ArtistListItem({
     >
       <Link
         to={`/artist/${artist.id}`}
-        class="whitespace-nowrap text-ellipsis max-w-full overflow-hidden items-center flex gap-2"
+        className="whitespace-nowrap text-ellipsis max-w-full overflow-hidden items-center flex gap-2"
       >
-        <div class="rounded-full bg-stone-200 aspect-square w-8 h-8"></div>
+        <div className="rounded-full bg-stone-200 aspect-square w-8 h-8"></div>
         <span>{artist.name}</span>
       </Link>
     </li>
