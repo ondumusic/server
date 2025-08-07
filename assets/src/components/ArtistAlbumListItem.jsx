@@ -4,7 +4,7 @@ import { splitSongsByDisc } from "../utils/splitSongsByDisc";
 
 export function ArtistAlbumListItem({ album }) {
   const albumDiscs = splitSongsByDisc(album.songs);
-  const { playSong, currentSongId } = usePlayer();
+  const { playSong, currentSong } = usePlayer();
 
   return (
     <div className="flex w-full">
@@ -29,8 +29,8 @@ export function ArtistAlbumListItem({ album }) {
                 <li
                   key={song.id}
                   className="relative flex justify-between"
-                  onClick={() => playSong(song.id)}
-                  onKeyDown={() => playSong(song.id)}
+                  onClick={() => playSong(song)}
+                  onKeyDown={() => playSong(song)}
                 >
                   {song.track ? (
                     <span className="absolute right-full text-right mr-2 text-stone-500">
@@ -38,7 +38,9 @@ export function ArtistAlbumListItem({ album }) {
                     </span>
                   ) : null}
                   <span
-                    className={currentSongId === song.id ? "font-semibold" : ""}
+                    className={
+                      currentSong.id === song.id ? "font-semibold" : ""
+                    }
                   >
                     {song.name}
                   </span>

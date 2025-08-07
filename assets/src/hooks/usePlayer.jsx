@@ -16,7 +16,7 @@ const playSong = (id) => {
 
 const PlayerContext = createContext({
   isPlaying: false,
-  currentSongId: null,
+  currentSong: null,
   playSong: () => {},
   setIsPlaying: () => {},
 });
@@ -27,15 +27,15 @@ export function usePlayer() {
 
 export const PlayerProvider = ({ children }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentSongId, setCurrentSongId] = useState(false);
+  const [currentSong, setCurrentSong] = useState(false);
   const value = {
     setIsPlaying,
     isPlaying,
-    currentSongId,
-    playSong: (id) => {
+    currentSong,
+    playSong: (song) => {
       setIsPlaying(true);
-      setCurrentSongId(id);
-      playSong(id);
+      setCurrentSong(song);
+      playSong(song.id);
     },
   };
 
@@ -43,4 +43,3 @@ export const PlayerProvider = ({ children }) => {
     <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>
   );
 };
-
