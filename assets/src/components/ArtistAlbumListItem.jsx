@@ -1,10 +1,14 @@
+import { useMemo } from "react";
 import { usePlayer } from "../hooks/usePlayer";
 import { formatDuration } from "../utils/formatDuration";
 import { splitSongsByDisc } from "../utils/splitSongsByDisc";
 
 export function ArtistAlbumListItem({ album }) {
-  const albumDiscs = splitSongsByDisc(album.songs);
   const { playSong, currentSong } = usePlayer();
+  const albumDiscs = useMemo(
+    () => splitSongsByDisc(album.songs),
+    [album.songs],
+  );
 
   return (
     <div className="flex w-full">
