@@ -10,7 +10,7 @@ export function ArtistsLayout() {
           <ArtistListView />
         </div>
       </Panel>
-      <PanelResizeHandle className="w-[1px] bg-stone-200" />
+      <PanelResizeHandle className="w-1 bg-white border-l border-stone-200" />
       <Panel minSize={30}>
         <div className="overflow-y-auto h-full p-4 bg-white">
           <Outlet />
