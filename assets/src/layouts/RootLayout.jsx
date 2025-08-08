@@ -3,23 +3,15 @@ import { Player } from "../components/Player";
 import { usePlayer } from "../hooks/usePlayer";
 
 export function RootLayout() {
-  const {
-    audioRef,
-    isPlaying,
-    currentSong,
-    setDuration,
-    setCurrentTime,
-    setPercentage,
-  } = usePlayer();
+  const { audioRef, isPlaying, currentSong, setDuration, setCurrentTime } =
+    usePlayer();
 
-  const onTimeUpdate = ({ target: { currentTime, duration } }) => {
-    const percentage = (currentTime / duration) * 100;
+  const onTimeUpdate = ({ target: { currentTime } }) => {
     setCurrentTime(currentTime);
-    setPercentage(percentage);
   };
 
-  const onLoadedMetadata = () => {
-    setDuration(audioRef.current.duration);
+  const onLoadedMetadata = ({ target: { duration } }) => {
+    setDuration(duration);
   };
 
   return (

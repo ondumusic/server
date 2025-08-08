@@ -4,7 +4,10 @@ import { formatDuration } from "../utils/formatDuration";
 import { splitSongsByDisc } from "../utils/splitSongsByDisc";
 
 export function ArtistAlbumListItem({ album }) {
-  const { playSong, currentSong } = usePlayer();
+  const { enqueueAndPlay, currentSong } = usePlayer();
+
+  // For UX we want to split multi-disc albums into separate arrays so we
+  // can display them a bit nicer.
   const albumDiscs = useMemo(
     () => splitSongsByDisc(album.songs),
     [album.songs],
@@ -33,8 +36,8 @@ export function ArtistAlbumListItem({ album }) {
                 <li
                   key={song.id}
                   className="relative flex justify-between"
-                  onClick={() => playSong(song)}
-                  onKeyDown={() => playSong(song)}
+                  onClick={() => enqueueAndPlay(album.songs, song)}
+                  onKeyDown={() => enqueueAndPlay(album.songs, song)}
                 >
                   {song.track ? (
                     <span className="absolute right-full text-right mr-2 text-stone-500">
@@ -43,7 +46,9 @@ export function ArtistAlbumListItem({ album }) {
                   ) : null}
                   <span
                     className={
-                      currentSong.id === song.id ? "font-semibold" : ""
+                      currentSong && currentSong.id === song.id
+                        ? "font-semibold"
+                        : ""
                     }
                   >
                     {song.name}
