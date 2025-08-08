@@ -1,8 +1,28 @@
+import { useMemo } from "react";
 import { usePlayer } from "../hooks/usePlayer";
 import { formatDuration } from "../utils/formatDuration";
+import { queryClient } from "../utils/queryClient";
+
+function findCachedItem(queryKey, id) {
+  const cache = queryClient.getQueryData(queryKey);
+  if (!cache) return;
+  const entries = cache.pages.flatMap((page) => page.entries);
+  return entries.find((entry) => entry.id === id);
+}
 
 export function NowPlaying() {
   const { currentSong, duration, currentTime, percentage } = usePlayer();
+
+  const artist = useMemo(() => {
+    return findCachedItem(["artistList"], currentSong.artistId);
+  }, [currentSong]);
+
+  const album = useMemo(() => {
+    return findCachedItem(
+      ["albumList", currentSong.artistId],
+      currentSong.albumId,
+    );
+  }, [currentSong]);
 
   return (
     <div className="bg-emerald-700/60 p-2 rounded-lg max-w-xl mx-auto relative overflow-hidden">
@@ -12,7 +32,7 @@ export function NowPlaying() {
             {currentSong.name}
           </h4>
           <h5 className="whitespace-nowrap text-ellipsis overflow-hidden">
-            The Artist - The Album
+            {artist.name} - {album.name}
           </h5>
         </div>
 

@@ -9,7 +9,7 @@ defmodule MusicBoxWeb.LibraryJSON do
     %{
       id: artist.id,
       name: artist.name,
-      album_count: artist.album_count
+      albumCount: artist.album_count
     }
   end
 
@@ -22,8 +22,9 @@ defmodule MusicBoxWeb.LibraryJSON do
   def album(%{album: %{songs: songs} = album}) when is_list(songs) do
     %{
       id: album.id,
+      artistId: album.artist_id,
       name: album.name,
-      release_year: album.release_year,
+      releaseYear: album.release_year,
       songs: Enum.map(songs, &song(%{song: &1}))
     }
   end
@@ -31,14 +32,17 @@ defmodule MusicBoxWeb.LibraryJSON do
   def album(%{album: album}) do
     %{
       id: album.id,
+      artistId: album.artist_id,
       name: album.name,
-      release_year: album.release_year
+      releaseYear: album.release_year
     }
   end
 
   def song(%{song: song}) do
     %{
       id: song.id,
+      artistId: song.artist_id,
+      albumId: song.album_id,
       name: song.name,
       disc: song.disc,
       track: song.track,

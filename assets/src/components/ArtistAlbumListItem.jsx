@@ -15,7 +15,7 @@ export function ArtistAlbumListItem({ album }) {
       <div className="flex-shrink-0 pr-18 text-sm w-80">
         <div className="aspect-square w-full bg-stone-200 mb-4 shadow-lg"></div>
         <h3 className="font-semibold">{album.name}</h3>
-        <span className="text-stone-500">{album.release_year}</span>
+        <span className="text-stone-500">{album.releaseYear}</span>
       </div>
       <div className="space-y-6 w-full">
         {albumDiscs.map((disc) => (
