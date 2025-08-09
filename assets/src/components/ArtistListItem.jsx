@@ -25,16 +25,16 @@ export function ArtistListItem({
   return (
     <li
       ref={refContainer}
-      class={["px-4 py-2", isSelected ? "bg-emerald-600 text-white" : ""].join(
-        " ",
-      )}
+      class={[isSelected ? "bg-emerald-600 text-white" : ""].join(" ")}
     >
       <Link
         to={`/artist/${artist.id}`}
-        className="whitespace-nowrap text-ellipsis max-w-full overflow-hidden items-center flex gap-2"
+        className="px-4 py-2 whitespace-nowrap items-center flex gap-2"
       >
         <div className="rounded-full bg-stone-200 aspect-square w-8 h-8"></div>
-        <span>{artist.name}</span>
+        <span className="text-ellipsis max-w-full overflow-hidden">
+          {artist.name}
+        </span>
       </Link>
     </li>
   );
