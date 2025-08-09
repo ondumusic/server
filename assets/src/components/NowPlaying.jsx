@@ -1,14 +1,7 @@
 import { useMemo } from "react";
 import { usePlayer } from "../hooks/usePlayer";
+import { findCachedItem } from "../utils/findCachedItem";
 import { formatDuration } from "../utils/formatDuration";
-import { queryClient } from "../utils/queryClient";
-
-function findCachedItem(queryKey, id) {
-  const cache = queryClient.getQueryData(queryKey);
-  if (!cache) return;
-  const entries = cache.pages.flatMap((page) => page.entries);
-  return entries.find((entry) => entry.id === id);
-}
 
 export function NowPlaying() {
   const { currentSong, duration, currentTime, progressPercentage } =
@@ -28,13 +21,13 @@ export function NowPlaying() {
   }, [currentSong]);
 
   return (
-    <div className="flex-shrink-0 w-xl bg-emerald-700/60 p-2 rounded-lg relative overflow-hidden">
+    <div className="flex-shrink-0 w-1/2 max-w-xl bg-emerald-700/60 p-2 rounded-lg relative overflow-hidden">
       <div className="flex justify-between items-end tabular-nums text-white/70 pb-1">
-        <div class="order-2">
+        <div class="overflow-hidden mx-12 order-2">
           <h4 className="whitespace-nowrap text-ellipsis overflow-hidden text-white/90 font-semibold">
             {currentSong?.name}
           </h4>
-          <h5 className="whitespace-nowrap text-ellipsis overflow-hidden">
+          <h5 className="whitespace-nowrap text-ellipsis overflow-hidden mx-8">
             {artist?.name} - {album?.name}
           </h5>
         </div>

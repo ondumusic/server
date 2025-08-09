@@ -1,9 +1,18 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useQueue } from "../hooks/useQueue";
+import { findCachedItem } from "../utils/findCachedItem";
 
 const PlayerContext = createContext({
   audioRef: null,
   isPlaying: false,
+  isVisible: false,
   currentSong: null,
   currentTime: 0,
   duration: 0,
@@ -26,6 +35,7 @@ export const PlayerProvider = ({ children }) => {
     hasNextSong,
   } = useQueue();
 
+  const [isVisible, setIsVisible] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -55,12 +65,80 @@ export const PlayerProvider = ({ children }) => {
     setCurrentTime(0);
   }, [currentSong]);
 
+  const currentArtist = useMemo(() => {
+    if (!currentSong) return;
+    return findCachedItem(["artistList"], currentSong.artistId);
+  }, [currentSong]);
+
+  const currentAlbum = useMemo(() => {
+    if (!currentSong) return;
+    return findCachedItem(
+      ["albumList", currentSong.artistId],
+      currentSong.albumId,
+    );
+  }, [currentSong]);
+
+  // Experimenting with MediaSession
+  useEffect(() => {
+    if (!currentSong) {
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.setActionHandler("play", null);
+      navigator.mediaSession.setActionHandler("pause", null);
+      navigator.mediaSession.setActionHandler("stop", null);
+      navigator.mediaSession.setActionHandler("previoustrack", null);
+      navigator.mediaSession.setActionHandler("nexttrack", null);
+
+      // TODO: Look into implementing these:
+      // seekbackward
+      // seekforward
+      // seekto
+    } else {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentSong.name,
+        artist: currentArtist?.name,
+        album: currentAlbum?.name,
+        artwork: [],
+      });
+
+      navigator.mediaSession.setActionHandler("play", () => {
+        setIsPlaying(true);
+      });
+
+      navigator.mediaSession.setActionHandler("pause", () => {
+        setIsPlaying(false);
+      });
+
+      navigator.mediaSession.setActionHandler("stop", () => {
+        setIsPlaying(false);
+      });
+
+      navigator.mediaSession.setActionHandler("previoustrack", () => {
+        if (hasPrevSong) prevSong();
+        else setIsPlaying(false);
+      });
+
+      navigator.mediaSession.setActionHandler("nexttrack", () => {
+        if (hasNextSong) nextSong();
+        else setIsPlaying(false);
+      });
+    }
+  }, [
+    hasNextSong,
+    hasPrevSong,
+    nextSong,
+    prevSong,
+    currentSong,
+    currentAlbum?.name,
+    currentArtist?.name,
+  ]);
+
   // Calculate the current playback percentage
   let progressPercentage = (currentTime / duration) * 100;
   if (Number.isNaN(progressPercentage)) progressPercentage = 0;
 
   const value = {
     audioRef,
+    isVisible,
 
     // Current queue and song information
     queue,
@@ -76,6 +154,7 @@ export const PlayerProvider = ({ children }) => {
     setCurrentTime,
     setDuration,
     setIsPlaying,
+    setIsVisible,
 
     // Queue Management
     prevSong,
@@ -83,6 +162,7 @@ export const PlayerProvider = ({ children }) => {
     enqueueAndPlay(songs, startIndex = 0) {
       if (!Array.isArray(songs)) songs = [songs];
       if (songs.length === 0) return;
+      setIsVisible(true);
       replaceQueue(songs, startIndex);
       if (!isPlaying) setIsPlaying(true);
     },
