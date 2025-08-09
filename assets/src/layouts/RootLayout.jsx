@@ -3,8 +3,14 @@ import { Player } from "../components/Player";
 import { usePlayer } from "../hooks/usePlayer";
 
 export function RootLayout() {
-  const { audioRef, isPlaying, currentSong, setDuration, setCurrentTime } =
-    usePlayer();
+  const {
+    audioRef,
+    isVisible,
+    currentSong,
+    nextSong,
+    setDuration,
+    setCurrentTime,
+  } = usePlayer();
 
   const onTimeUpdate = ({ target: { currentTime } }) => {
     setCurrentTime(currentTime);
@@ -18,13 +24,14 @@ export function RootLayout() {
     <>
       <div className="flex flex-col max-h-screen">
         <Outlet />
-        {isPlaying ? <Player /> : null}
+        {isVisible ? <Player /> : null}
       </div>
       <audio
         ref={audioRef}
         src={currentSong && `/stream/${currentSong.id}`}
         onTimeUpdate={onTimeUpdate}
         onLoadedMetadata={onLoadedMetadata}
+        onEnded={nextSong}
         class="hidden"
         playsinline
       />
