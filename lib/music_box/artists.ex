@@ -86,7 +86,7 @@ defmodule MusicBox.Artists do
     from(a in AlbumArtist,
       left_join: al in assoc(a, :albums),
       order_by: [asc: a.name],
-      where: a.id == ^id,
+      where: a.id == ^id or a.slug == ^id,
       group_by: a.id,
       select: %{a | album_count: count(al.id)}
     )

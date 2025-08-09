@@ -2,7 +2,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { api } from "../services/api";
 
-export function useAutomaticInfiniteQuery({ path, queryKey }) {
+export function useAutomaticInfiniteQuery({ path, queryKey }, opts = {}) {
   const {
     error,
     data,
@@ -19,6 +19,7 @@ export function useAutomaticInfiniteQuery({ path, queryKey }) {
       return nextPage;
     },
     queryFn: ({ pageParam }) => api.get(path, { page: pageParam }),
+    ...opts,
   });
 
   useEffect(() => {

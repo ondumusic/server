@@ -28,7 +28,7 @@ export function ArtistListItem({
       class={[isSelected ? "bg-emerald-600 text-white" : ""].join(" ")}
     >
       <Link
-        to={`/artist/${albumArtist.id}`}
+        to={`/artist/${albumArtist.slug}`}
         className="px-4 py-2 whitespace-nowrap items-center flex gap-2"
       >
         <div className="rounded-full bg-stone-200 aspect-square w-8 h-8"></div>

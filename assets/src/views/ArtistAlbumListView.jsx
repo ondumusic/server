@@ -14,18 +14,21 @@ export function ArtistAlbumListView() {
     });
 
   const { isFetching, hasFirstPage, data, error } =
-    useInfiniteArtistAlbumsQuery({
-      albumArtistId: albumArtistId,
-    });
+    useInfiniteArtistAlbumsQuery(
+      {
+        albumArtistId: dataArtist?.id,
+      },
+      {
+        enabled: !!dataArtist,
+      },
+    );
 
   if ((isFetching || isFetchingArtist) && !hasFirstPage) return "Loading...";
   if (error) return `An error has occurred: ${error.message}`;
 
   return (
     <div className="space-y-8 mx-8 my-8">
-      {!isFetchingArtist && dataArtist ? (
-        <ArtistAlbumListHeader albumArtist={dataArtist} />
-      ) : null}
+      <ArtistAlbumListHeader albumArtist={dataArtist} />
       {paginatedMap(data, (album) => (
         <ArtistAlbumListItem
           key={album.id}
