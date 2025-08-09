@@ -7,6 +7,7 @@ defmodule MusicBox.FileScanner.Analyzer do
       :album,
       :title,
       :track,
+      :album_artist,
       :release_year,
       :compilation,
       :duration,
@@ -67,12 +68,30 @@ defmodule MusicBox.FileScanner.Analyzer do
     |> parse(keys, json)
   end
 
-  defp parse(%Metadata{} = metadata, [:artist = key | keys], json) do
+  defp parse(%Metadata{} = metadata, [:album_artist = key | keys], json) do
     value =
       [
+        get_tag(json, "album artist"),
         get_tag(json, "album_artist"),
         get_tag(json, "albumartist"),
         get_tag(json, "artist")
+      ]
+      |> Enum.reject(&is_nil/1)
+      |> Enum.map(&String.trim/1)
+      |> List.first()
+
+    metadata
+    |> Map.put(key, value)
+    |> parse(keys, json)
+  end
+
+  defp parse(%Metadata{} = metadata, [:artist = key | keys], json) do
+    value =
+      [
+        get_tag(json, "artist"),
+        get_tag(json, "album artist"),
+        get_tag(json, "album_artist"),
+        get_tag(json, "albumartist")
       ]
       |> Enum.reject(&is_nil/1)
       |> Enum.map(&String.trim/1)

@@ -6,6 +6,7 @@ defmodule MusicBox.Files.FileMetadata do
   embedded_schema do
     field :artist, :string
     field :album, :string
+    field :album_artist, :string
     field :title, :string
     field :disc, :integer
     field :track, :integer
@@ -20,6 +21,7 @@ defmodule MusicBox.Files.FileMetadata do
     |> cast(params, [
       :artist,
       :album,
+      :album_artist,
       :compilation,
       :title,
       :disc,

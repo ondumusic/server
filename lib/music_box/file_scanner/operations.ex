@@ -3,6 +3,7 @@ defmodule MusicBox.FileScanner.Operations do
   alias MusicBox.Files.File
   alias MusicBox.Files.FileMetadata
   alias MusicBox.Artists.Artist
+  alias MusicBox.Artists.AlbumArtist
   alias MusicBox.Albums.Album
   alias MusicBox.Songs.Song
   alias MusicBox.Repo
@@ -15,6 +16,7 @@ defmodule MusicBox.FileScanner.Operations do
   def batch_insert([%Analyzer.Result{} | _] = files) do
     Multi.new()
     |> Multi.run(:files, &maybe_create_files(&1, files, &2))
+    |> Multi.run(:album_artists, &maybe_create_album_artists/2)
     |> Multi.run(:artists, &maybe_create_artists/2)
     |> Multi.run(:albums, &maybe_create_albums/2)
     |> Multi.run(:songs, &maybe_create_songs/2)
@@ -66,6 +68,32 @@ defmodule MusicBox.FileScanner.Operations do
     {:ok, files}
   end
 
+  defp maybe_create_album_artists(repo, %{files: files}) do
+    artist_names =
+      files
+      |> Enum.reject(&is_nil(&1.metadata.album_artist))
+      |> Enum.map(& &1.metadata.album_artist)
+      |> Enum.uniq_by(&String.downcase/1)
+
+    entries =
+      artist_names
+      |> Enum.map(fn artist_name ->
+        %{
+          name: artist_name
+        }
+      end)
+      |> Enum.map(&add_timestamps/1)
+
+    {_num, artists} =
+      repo.insert_all(AlbumArtist, entries,
+        returning: true,
+        conflict_target: [:name],
+        on_conflict: {:replace_all_except, [:id, :inserted_at]}
+      )
+
+    {:ok, artists}
+  end
+
   defp maybe_create_artists(repo, %{files: files}) do
     artist_names =
       files
@@ -92,21 +120,21 @@ defmodule MusicBox.FileScanner.Operations do
     {:ok, artists}
   end
 
-  defp maybe_create_albums(repo, %{files: files, artists: artists}) do
+  defp maybe_create_albums(repo, %{files: files, album_artists: album_artists}) do
     linked_file_artists =
       files
-      |> Enum.reject(&is_nil(&1.metadata.artist))
+      |> Enum.reject(&is_nil(&1.metadata.album_artist))
       |> Enum.reject(&is_nil(&1.metadata.album))
       |> Enum.map(fn file ->
-        match_artist = String.downcase(file.metadata.artist)
-        artist = Enum.find(artists, &(String.downcase(&1.name) == match_artist))
+        match_artist = String.downcase(file.metadata.album_artist)
+        album_artist = Enum.find(album_artists, &(String.downcase(&1.name) == match_artist))
 
         %{
           file: file,
-          artist: artist
+          album_artist: album_artist
         }
       end)
-      |> Enum.reject(&is_nil(&1.artist))
+      |> Enum.reject(&is_nil(&1.album_artist))
 
     artist_albums =
       linked_file_artists
@@ -114,9 +142,9 @@ defmodule MusicBox.FileScanner.Operations do
 
     entries =
       artist_albums
-      |> Enum.map(fn %{file: file, artist: artist} ->
+      |> Enum.map(fn %{file: file, album_artist: album_artist} ->
         %{
-          artist_id: artist.id,
+          album_artist_id: album_artist.id,
           name: file.metadata.album,
           compilation: file.metadata.compilation,
           release_year: file.metadata.release_year
@@ -127,37 +155,49 @@ defmodule MusicBox.FileScanner.Operations do
     {_num, albums} =
       repo.insert_all(Album, entries,
         returning: true,
-        conflict_target: [:artist_id, :name],
+        conflict_target: [:album_artist_id, :name],
         on_conflict: {:replace_all_except, [:id, :inserted_at]}
       )
 
     {:ok, albums}
   end
 
-  defp maybe_create_songs(repo, %{files: files, artists: artists, albums: albums}) do
+  defp maybe_create_songs(repo, %{
+         files: files,
+         artists: artists,
+         album_artists: album_artists,
+         albums: albums
+       }) do
     linked_file_albums =
       files
       |> Enum.map(fn %{metadata: metadata} = file ->
-        album =
-          if is_binary(metadata.artist) and is_binary(metadata.album) do
+        artist =
+          if is_binary(metadata.album_artist) do
             match_artist = String.downcase(metadata.artist)
+            Enum.find(artists, &(String.downcase(&1.name) == match_artist))
+          end
+
+        album =
+          if is_binary(metadata.album_artist) and is_binary(metadata.album) do
+            match_artist = String.downcase(metadata.album_artist)
             match_album = String.downcase(metadata.album)
-            artist = Enum.find(artists, &(String.downcase(&1.name) == match_artist))
+            album_artist = Enum.find(album_artists, &(String.downcase(&1.name) == match_artist))
 
             albums
-            |> Enum.filter(&(&1.artist_id == artist.id))
+            |> Enum.filter(&(&1.album_artist_id == album_artist.id))
             |> Enum.find(&(String.downcase(&1.name) == match_album))
           end
 
         %{
           file: file,
-          album: album
+          album: album,
+          artist: artist
         }
       end)
 
     entries =
       linked_file_albums
-      |> Enum.map(fn %{file: file, album: album} ->
+      |> Enum.map(fn %{file: file, album: album, artist: artist} ->
         title =
           case file.metadata.title do
             nil -> Path.basename(file.path)
@@ -165,7 +205,7 @@ defmodule MusicBox.FileScanner.Operations do
           end
 
         %{
-          artist_id: album && album.artist_id,
+          artist_id: artist && artist.id,
           album_id: album && album.id,
           file_id: file.id,
           duration: file.metadata.duration,

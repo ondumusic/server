@@ -6,7 +6,7 @@ defmodule MusicBox.Artists do
   import Ecto.Query, warn: false
   alias MusicBox.Repo
 
-  alias MusicBox.Artists.Artist
+  alias MusicBox.Artists.{AlbumArtist, Artist}
 
   @doc """
   Returns the list of artists.
@@ -37,6 +37,26 @@ defmodule MusicBox.Artists do
     |> Repo.paginate(params, default_limit: 100)
   end
 
+  def list_album_artists do
+    from(a in AlbumArtist,
+      left_join: al in assoc(a, :albums),
+      order_by: [asc: a.name],
+      group_by: a.id,
+      select: %{a | album_count: count(al.id)}
+    )
+    |> Repo.all()
+  end
+
+  def paginate_album_artists(params) do
+    from(a in AlbumArtist,
+      left_join: al in assoc(a, :albums),
+      order_by: [asc: a.name],
+      group_by: a.id,
+      select: %{a | album_count: count(al.id)}
+    )
+    |> Repo.paginate(params, default_limit: 100)
+  end
+
   @doc """
   Gets a single artist.
 
@@ -53,6 +73,17 @@ defmodule MusicBox.Artists do
   """
   def get_artist!(id) do
     from(a in Artist,
+      left_join: al in assoc(a, :albums),
+      order_by: [asc: a.name],
+      where: a.id == ^id,
+      group_by: a.id,
+      select: %{a | album_count: count(al.id)}
+    )
+    |> Repo.one!()
+  end
+
+  def get_album_artist!(id) do
+    from(a in AlbumArtist,
       left_join: al in assoc(a, :albums),
       order_by: [asc: a.name],
       where: a.id == ^id,
