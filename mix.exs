@@ -45,7 +45,8 @@ defmodule MusicBox.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:broadway, "~> 1.2"},
-      {:flop, "~> 0.26.3"}
+      {:flop, "~> 0.26.3"},
+      {:slugify, "~> 1.3"}
     ]
   end
 

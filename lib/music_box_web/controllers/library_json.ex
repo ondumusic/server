@@ -9,6 +9,7 @@ defmodule MusicBoxWeb.LibraryJSON do
     %{
       id: album_artist.id,
       name: album_artist.name,
+      slug: album_artist.slug,
       albumCount: album_artist.album_count
     }
   end

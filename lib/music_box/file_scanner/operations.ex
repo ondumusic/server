@@ -1,5 +1,6 @@
 defmodule MusicBox.FileScanner.Operations do
   alias MusicBox.FileScanner.Analyzer
+  alias MusicBox.FileScanner.Utils
   alias MusicBox.Files.File
   alias MusicBox.Files.FileMetadata
   alias MusicBox.Artists.Artist
@@ -79,7 +80,8 @@ defmodule MusicBox.FileScanner.Operations do
       artist_names
       |> Enum.map(fn artist_name ->
         %{
-          name: artist_name
+          name: artist_name,
+          slug: Utils.slugify(artist_name)
         }
       end)
       |> Enum.map(&add_timestamps/1)
@@ -87,7 +89,7 @@ defmodule MusicBox.FileScanner.Operations do
     {_num, artists} =
       repo.insert_all(AlbumArtist, entries,
         returning: true,
-        conflict_target: [:name],
+        conflict_target: [:slug],
         on_conflict: {:replace_all_except, [:id, :inserted_at]}
       )
 

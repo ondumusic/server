@@ -1,6 +1,10 @@
 defmodule MusicBox.FileScanner.Utils do
   alias MusicBox.FileScanner.FileTypes
 
+  def slugify(input) do
+    Slug.slugify(input, separator: "-", lowercase: true)
+  end
+
   def calculate_checksum(path) do
     File.stream!(path, [], 2048)
     |> Enum.reduce(:crypto.hash_init(:sha), &:crypto.hash_update(&2, &1))
