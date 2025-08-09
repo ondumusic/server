@@ -23,7 +23,7 @@ export function NowPlaying() {
             {currentSong?.name}
           </h4>
           <h5 className="whitespace-nowrap text-ellipsis overflow-hidden mx-8">
-            {currentSong.artist?.name} - {album?.name}
+            {currentSong?.artist?.name} - {album?.name}
           </h5>
         </div>
 
