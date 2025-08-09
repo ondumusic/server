@@ -3,7 +3,7 @@ import { usePlayer } from "../hooks/usePlayer";
 import { formatDuration } from "../utils/formatDuration";
 import { splitSongsByDisc } from "../utils/splitSongsByDisc";
 
-export function ArtistAlbumListItem({ album, albumArtist }) {
+export function ArtistAlbumListItem({ album }) {
   const { enqueueAndPlay, currentSong } = usePlayer();
 
   // For UX we want to split multi-disc albums into separate arrays so we
@@ -12,6 +12,10 @@ export function ArtistAlbumListItem({ album, albumArtist }) {
     () => splitSongsByDisc(album.songs),
     [album.songs],
   );
+
+  // Only show song artists if there is more than 1 unique artist
+  const shouldShowSongArtist =
+    new Set(album.songs.map((song) => song.artist.id)).size > 1;
 
   return (
     <div className="flex w-full">
@@ -59,8 +63,7 @@ export function ArtistAlbumListItem({ album, albumArtist }) {
                     >
                       {song.name}
                     </span>
-                    {albumArtist.name.toLowerCase() !==
-                    song.artist.name.toLowerCase() ? (
+                    {shouldShowSongArtist ? (
                       <span class="block text-stone-400">
                         {song.artist.name}
                       </span>
