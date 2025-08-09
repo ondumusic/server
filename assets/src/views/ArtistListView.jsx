@@ -17,7 +17,10 @@ export function ArtistListView() {
       {paginatedMap(data, (albumArtist) => (
         <ArtistListItem
           key={albumArtist.id}
-          isSelected={albumArtistId === albumArtist.id}
+          isSelected={
+            albumArtistId === albumArtist.id ||
+            albumArtistId === albumArtist.slug
+          }
           scrollIntoView={isCompleted}
           albumArtist={albumArtist}
         />
