@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router";
 
 export function ArtistListItem({
-  artist,
+  albumArtist,
   isSelected = false,
   scrollIntoView = false,
 }) {
@@ -28,12 +28,12 @@ export function ArtistListItem({
       class={[isSelected ? "bg-emerald-600 text-white" : ""].join(" ")}
     >
       <Link
-        to={`/artist/${artist.id}`}
+        to={`/artist/${albumArtist.id}`}
         className="px-4 py-2 whitespace-nowrap items-center flex gap-2"
       >
         <div className="rounded-full bg-stone-200 aspect-square w-8 h-8"></div>
         <span className="text-ellipsis max-w-full overflow-hidden">
-          {artist.name}
+          {albumArtist.name}
         </span>
       </Link>
     </li>

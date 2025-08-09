@@ -1,20 +1,21 @@
 import { useParams } from "react-router";
 import { ArtistAlbumListHeader } from "../components/ArtistAlbumListHeader";
 import { ArtistAlbumListItem } from "../components/ArtistAlbumListItem";
-import { useArtistQuery } from "../hooks/useArtistQuery";
+import { useAlbumArtistQuery } from "../hooks/useAlbumArtistQuery";
 import { useInfiniteArtistAlbumsQuery } from "../hooks/useInfiniteArtistAlbumsQuery";
 import { paginatedMap } from "../utils/paginatedMap";
 
 export function ArtistAlbumListView() {
-  const { artistId } = useParams();
+  const { albumArtistId } = useParams();
 
-  const { isFetching: isFetchingArtist, data: dataArtist } = useArtistQuery({
-    artistId: artistId,
-  });
+  const { isFetching: isFetchingArtist, data: dataArtist } =
+    useAlbumArtistQuery({
+      albumArtistId: albumArtistId,
+    });
 
   const { isFetching, hasFirstPage, data, error } =
     useInfiniteArtistAlbumsQuery({
-      artistId: artistId,
+      albumArtistId: albumArtistId,
     });
 
   if ((isFetching || isFetchingArtist) && !hasFirstPage) return "Loading...";
@@ -23,10 +24,14 @@ export function ArtistAlbumListView() {
   return (
     <div className="space-y-8 mx-8 my-8">
       {!isFetchingArtist && dataArtist ? (
-        <ArtistAlbumListHeader artist={dataArtist} />
+        <ArtistAlbumListHeader albumArtist={dataArtist} />
       ) : null}
       {paginatedMap(data, (album) => (
-        <ArtistAlbumListItem key={album.id} album={album} />
+        <ArtistAlbumListItem
+          key={album.id}
+          albumArtist={dataArtist}
+          album={album}
+        />
       ))}
     </div>
   );

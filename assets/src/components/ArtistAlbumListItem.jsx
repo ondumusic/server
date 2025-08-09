@@ -3,7 +3,7 @@ import { usePlayer } from "../hooks/usePlayer";
 import { formatDuration } from "../utils/formatDuration";
 import { splitSongsByDisc } from "../utils/splitSongsByDisc";
 
-export function ArtistAlbumListItem({ album }) {
+export function ArtistAlbumListItem({ album, albumArtist }) {
   const { enqueueAndPlay, currentSong } = usePlayer();
 
   // For UX we want to split multi-disc albums into separate arrays so we
@@ -49,15 +49,23 @@ export function ArtistAlbumListItem({ album }) {
                       {song.track}.
                     </span>
                   ) : null}
-                  <span
-                    className={
-                      currentSong && currentSong.id === song.id
-                        ? "font-semibold"
-                        : ""
-                    }
-                  >
-                    {song.name}
-                  </span>
+                  <div>
+                    <span
+                      className={
+                        currentSong && currentSong.id === song.id
+                          ? "font-semibold"
+                          : ""
+                      }
+                    >
+                      {song.name}
+                    </span>
+                    {albumArtist.name.toLowerCase() !==
+                    song.artist.name.toLowerCase() ? (
+                      <span class="block text-stone-400">
+                        {song.artist.name}
+                      </span>
+                    ) : null}
+                  </div>
                   <span className="tabular-nums">
                     {formatDuration(song.duration)}
                   </span>

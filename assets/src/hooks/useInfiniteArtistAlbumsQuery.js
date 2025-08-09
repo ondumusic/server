@@ -1,8 +1,8 @@
 import { useAutomaticInfiniteQuery } from "./useAutomaticInfiniteQuery";
 
-export function useInfiniteArtistAlbumsQuery({ artistId }) {
+export function useInfiniteArtistAlbumsQuery({ albumArtistId }) {
   return useAutomaticInfiniteQuery({
-    path: `/artists/${artistId}/albums`,
-    queryKey: ["albumList", artistId],
+    path: `/artists/${albumArtistId}/albums`,
+    queryKey: ["albumList", albumArtistId],
   });
 }

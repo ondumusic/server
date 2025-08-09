@@ -7,15 +7,10 @@ export function NowPlaying() {
   const { currentSong, duration, currentTime, progressPercentage } =
     usePlayer();
 
-  const artist = useMemo(() => {
-    if (!currentSong) return;
-    return findCachedItem(["artistList"], currentSong.artistId);
-  }, [currentSong]);
-
   const album = useMemo(() => {
     if (!currentSong) return;
     return findCachedItem(
-      ["albumList", currentSong.artistId],
+      ["albumList", currentSong.albumArtistId],
       currentSong.albumId,
     );
   }, [currentSong]);
@@ -28,7 +23,7 @@ export function NowPlaying() {
             {currentSong?.name}
           </h4>
           <h5 className="whitespace-nowrap text-ellipsis overflow-hidden mx-8">
-            {artist?.name} - {album?.name}
+            {currentSong.artist?.name} - {album?.name}
           </h5>
         </div>
 

@@ -28,7 +28,7 @@ export const router = createBrowserRouter([
                 loader: () => redirect("/"),
               },
               {
-                path: ":artistId",
+                path: ":albumArtistId",
                 Component: () => <ArtistAlbumListView />,
               },
             ],

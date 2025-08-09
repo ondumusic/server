@@ -65,15 +65,10 @@ export const PlayerProvider = ({ children }) => {
     setCurrentTime(0);
   }, [currentSong]);
 
-  const currentArtist = useMemo(() => {
-    if (!currentSong) return;
-    return findCachedItem(["artistList"], currentSong.artistId);
-  }, [currentSong]);
-
   const currentAlbum = useMemo(() => {
     if (!currentSong) return;
     return findCachedItem(
-      ["albumList", currentSong.artistId],
+      ["albumList", currentSong.albumArtistId],
       currentSong.albumId,
     );
   }, [currentSong]);
@@ -95,7 +90,7 @@ export const PlayerProvider = ({ children }) => {
     } else {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: currentSong.name,
-        artist: currentArtist?.name,
+        artist: currentSong.artist?.name,
         album: currentAlbum?.name,
         artwork: [],
       });
@@ -129,7 +124,6 @@ export const PlayerProvider = ({ children }) => {
     prevSong,
     currentSong,
     currentAlbum?.name,
-    currentArtist?.name,
   ]);
 
   // Calculate the current playback percentage
