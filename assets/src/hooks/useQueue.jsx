@@ -35,13 +35,9 @@ export const QueueProvider = ({ children }) => {
       const nextSongIndex = Math.min(queue.length, queueIndex + 1);
       setQueueIndex(nextSongIndex);
     },
-    replaceQueue(songs, startIndex = 0) {
+    replaceQueue(songs, startWithSong = null) {
       if (!Array.isArray(songs)) songs = [songs];
-
-      if (typeof startIndex === "object") {
-        startIndex = songs.findIndex(({ id }) => id === startIndex.id);
-      }
-
+      let startIndex = songs.findIndex(({ id }) => id === startWithSong?.id);
       startIndex = Math.max(Math.min(songs.length - 1, startIndex), 0);
       setQueue(songs);
       setQueueIndex(startIndex);
