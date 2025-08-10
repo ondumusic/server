@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { NextIcon } from "../components/icons/NextIcon";
 import { PauseIcon } from "../components/icons/PauseIcon";
 import { PlayIcon } from "../components/icons/PlayIcon";
@@ -6,6 +7,7 @@ import { NowPlaying } from "../components/NowPlaying";
 import { usePlayer } from "../hooks/usePlayer";
 
 export function Player() {
+  const { t } = useTranslation();
   const {
     isPlaying,
     setIsPlaying,
@@ -24,7 +26,7 @@ export function Player() {
           className="disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md"
           onClick={() => prevSong()}
         >
-          <PrevIcon className="size-6" />
+          <PrevIcon className="size-6" title={t("btnPreviousSong")} />
         </button>
         <button
           type="button"
@@ -32,9 +34,9 @@ export function Player() {
           onClick={() => setIsPlaying(!isPlaying)}
         >
           {isPlaying ? (
-            <PauseIcon className="size-8" />
+            <PauseIcon className="size-8" title={t("btnPauseCurrentSong")} />
           ) : (
-            <PlayIcon className="size-8" />
+            <PlayIcon className="size-8" title={t("btnPlayCurrentSong")} />
           )}
         </button>
         <button
@@ -43,7 +45,7 @@ export function Player() {
           className="disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md"
           onClick={() => nextSong()}
         >
-          <NextIcon className="size-6" />
+          <NextIcon className="size-6" title={t("btnNextSong")} />
         </button>
 
         <div className="w-8"></div>

@@ -8,6 +8,7 @@ import { PlayerProvider } from "./hooks/usePlayer";
 import { QueueProvider } from "./hooks/useQueue";
 import { router } from "./router";
 import { queryClient } from "./utils/queryClient";
+import "./i18next";
 
 const appRoot = document.getElementById("App");
 if (appRoot) {
