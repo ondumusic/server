@@ -1,8 +1,12 @@
 defmodule MusicBoxWeb.LibraryJSON do
   def album_artists(%{page: page}) do
-    page
-    |> Map.take([:page_number, :page_size, :total_entries, :total_pages])
-    |> Map.put(:entries, Enum.map(page.entries, &album_artist(%{album_artist: &1})))
+    %{
+      pageNumber: page.page_number,
+      pageSize: page.page_size,
+      totalEntries: page.total_entries,
+      totalPages: page.total_pages,
+      entries: Enum.map(page.entries, &album_artist(%{album_artist: &1}))
+    }
   end
 
   def album_artist(%{album_artist: album_artist}) do
@@ -22,9 +26,13 @@ defmodule MusicBoxWeb.LibraryJSON do
   end
 
   def albums(%{page: page}) do
-    page
-    |> Map.take([:page_number, :page_size, :total_entries, :total_pages])
-    |> Map.put(:entries, Enum.map(page.entries, &album(%{album: &1})))
+    %{
+      pageNumber: page.page_number,
+      pageSize: page.page_size,
+      totalEntries: page.total_entries,
+      totalPages: page.total_pages,
+      entries: Enum.map(page.entries, &album(%{album: &1}))
+    }
   end
 
   def album(%{album: %{songs: songs} = album}) when is_list(songs) do

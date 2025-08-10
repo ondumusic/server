@@ -1,5 +1,7 @@
 import {
   createContext,
+  type ReactNode,
+  type RefObject,
   useContext,
   useEffect,
   useMemo,
@@ -7,24 +9,64 @@ import {
   useState,
 } from "react";
 import { useQueue } from "../hooks/useQueue";
+import type { Album, Song } from "../types";
 import { findCachedItem } from "../utils/findCachedItem";
 
-const PlayerContext = createContext({
-  audioRef: null,
-  isPlaying: false,
+export interface PlayerContextT {
+  audioRef: RefObject<HTMLAudioElement | null>;
+  isVisible: boolean;
+
+  // Current queue and song information
+  queue: Song[];
+  hasPrevSong: boolean;
+  hasNextSong: boolean;
+  isPlaying: boolean;
+  currentSong?: Song;
+  currentTime: number;
+  duration: number;
+  progressPercentage: number;
+
+  // State Management
+  setCurrentTime(currentTime: number): void;
+  setDuration(duration: number): void;
+  setIsPlaying(isPlaying: boolean): void;
+  setIsVisible(isVisible: boolean): void;
+
+  // Queue Management
+  prevSong(): void;
+  nextSong(): void;
+  enqueueAndPlay(songs: Song[], startWithSong?: Song): void;
+}
+
+const PlayerContext = createContext<PlayerContextT>({
+  audioRef: { current: null },
   isVisible: false,
-  currentSong: null,
+  queue: [],
+  hasPrevSong: false,
+  hasNextSong: false,
+  isPlaying: false,
+  currentSong: undefined,
   currentTime: 0,
   duration: 0,
-  enqueueAndPlay: () => {},
-  setCurrentTime: () => {},
+  progressPercentage: 0,
+  setCurrentTime: (_currentTime) => {},
+  setDuration: (_duration) => {},
+  setIsPlaying: (_isPlaying) => {},
+  setIsVisible: (_isVisible) => {},
+  prevSong: () => {},
+  nextSong: () => {},
+  enqueueAndPlay: (_songs, _startWithSong?) => {},
 });
 
 export function usePlayer() {
   return useContext(PlayerContext);
 }
 
-export const PlayerProvider = ({ children }) => {
+interface Props {
+  children: ReactNode;
+}
+
+export const PlayerProvider = ({ children }: Props) => {
   const {
     queue,
     currentSong,
@@ -39,7 +81,7 @@ export const PlayerProvider = ({ children }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const audioRef = useRef(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   // This effect controls the actual playback, for example to switch between
   // playing and paused states. If there is no (more) song and it is set to
@@ -65,11 +107,11 @@ export const PlayerProvider = ({ children }) => {
     setCurrentTime(0);
   }, [currentSong]);
 
-  const currentAlbum = useMemo(() => {
-    if (!currentSong) return;
-    return findCachedItem(
-      ["albumList", currentSong.albumArtistId],
-      currentSong.albumId,
+  const currentAlbum: Album | undefined = useMemo(() => {
+    if (!currentSong) return undefined;
+    return findCachedItem<Album>(
+      ["albumList", currentSong?.albumArtistId],
+      currentSong?.albumId,
     );
   }, [currentSong]);
 
@@ -89,8 +131,8 @@ export const PlayerProvider = ({ children }) => {
       // seekto
     } else {
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: currentSong.name,
-        artist: currentSong.artist?.name,
+        title: currentSong?.name,
+        artist: currentSong?.artist?.name,
         album: currentAlbum?.name,
         artwork: [],
       });
@@ -117,14 +159,7 @@ export const PlayerProvider = ({ children }) => {
         else setIsPlaying(false);
       });
     }
-  }, [
-    hasNextSong,
-    hasPrevSong,
-    nextSong,
-    prevSong,
-    currentSong,
-    currentAlbum?.name,
-  ]);
+  }, [hasNextSong, hasPrevSong, nextSong, prevSong, currentSong, currentAlbum]);
 
   // Calculate the current playback percentage
   let progressPercentage = (currentTime / duration) * 100;
@@ -153,11 +188,11 @@ export const PlayerProvider = ({ children }) => {
     // Queue Management
     prevSong,
     nextSong,
-    enqueueAndPlay(songs, startIndex = 0) {
+    enqueueAndPlay(songs: Song[], startWithSong?: Song) {
       if (!Array.isArray(songs)) songs = [songs];
       if (songs.length === 0) return;
       setIsVisible(true);
-      replaceQueue(songs, startIndex);
+      replaceQueue(songs, startWithSong);
       if (!isPlaying) setIsPlaying(true);
     },
   };

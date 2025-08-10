@@ -1,5 +1,9 @@
 // https://sidekickicons.com/?type=solid20&code=JSX
-export function PauseIcon({ className = "size-5" }) {
+interface Props {
+  className: string;
+}
+
+export function PauseIcon({ className = "size-5" }: Props) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

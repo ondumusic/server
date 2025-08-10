@@ -61,9 +61,10 @@ defmodule MusicBox.MixProject do
       setup: ["deps.get", "ecto.setup", "assets.setup"],
       format: ["format", "cmd --cd assets pnpm exec biome check --write --unsafe"],
       "assets.setup": ["cmd --cd assets pnpm install"],
-      "assets.build": ["cmd --cd assets pnpm vite build --config vite.config.mjs"],
+      "assets.build": ["cmd --cd assets pnpm run build"],
       "assets.deploy": [
-        "cmd --cd assets pnpm vite build --mode production --config vite.config.mjs",
+        "assets.setup",
+        "assets.build",
         "phx.digest"
       ],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],

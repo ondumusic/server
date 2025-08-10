@@ -1,16 +1,23 @@
+type RequestMethod = "GET";
+
+type SearchParams = Record<string, string>;
+
+interface Options {
+  baseURL?: string;
+}
+
 class APIClient {
   #baseURL = "/api";
 
-  constructor(opts) {
+  constructor(opts: Options = {}) {
     this.#baseURL = (opts.baseURL || this.#baseURL).replace(/\/$/, "");
   }
 
-  get(path, search = {}) {
+  get(path: string, search: SearchParams = {}) {
     return this.#request("GET", path, search);
   }
 
-  #request(method, path, search) {
-    if (path[0] !== "/") path = `/${path}`;
+  #request(method: RequestMethod, path: string, search: SearchParams) {
     const requestPath = this.#baseURL + path;
     const url = new URL(requestPath, window.location.href);
     url.search = new URLSearchParams(search).toString();

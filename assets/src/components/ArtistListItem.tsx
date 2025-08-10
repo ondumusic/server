@@ -1,12 +1,19 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router";
+import type { AlbumArtist } from "../types";
+
+interface Props {
+  albumArtist: AlbumArtist;
+  isSelected: boolean;
+  scrollIntoView: boolean;
+}
 
 export function ArtistListItem({
   albumArtist,
   isSelected = false,
   scrollIntoView = false,
-}) {
-  const refContainer = useRef(null);
+}: Props) {
+  const refContainer = useRef<HTMLLIElement>(null);
 
   // We ignore isSelected in the useEffect dependencies list as that value can
   // change when the user interacts with the application. By only having the
@@ -14,10 +21,9 @@ export function ArtistListItem({
   // biome-ignore lint/correctness/useExhaustiveDependencies(isSelected): suppress dependency isSelected
   useEffect(() => {
     if (isSelected && scrollIntoView) {
-      refContainer.current.scrollIntoView({
+      refContainer.current?.scrollIntoView({
         behavior: "instant",
         block: "center",
-        container: "nearest",
       });
     }
   }, [scrollIntoView]);
@@ -25,7 +31,7 @@ export function ArtistListItem({
   return (
     <li
       ref={refContainer}
-      class={[isSelected ? "bg-emerald-600 text-white" : ""].join(" ")}
+      className={[isSelected ? "bg-emerald-600 text-white" : ""].join(" ")}
     >
       <Link
         to={`/artist/${albumArtist.slug}`}

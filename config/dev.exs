@@ -23,13 +23,9 @@ config :music_box, MusicBoxWeb.Endpoint,
   secret_key_base: "yV4IemL1RTaLEQBwbSp9rKZEXCnPeFl3bYKmSrQ0FnpEeDPfE0cS3oOZgMEc79r4",
   watchers: [
     pnpm: [
-      "vite",
-      "build",
-      "--mode",
-      "dev",
-      "--watch",
-      "--config",
-      "vite.config.mjs",
+      "pnpm",
+      "run",
+      "dev:watch",
       cd: Path.expand("../assets", __DIR__)
     ]
   ]

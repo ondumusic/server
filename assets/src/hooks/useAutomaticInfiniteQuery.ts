@@ -1,8 +1,21 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { api } from "../services/api";
+import type { Page } from "../types";
 
-export function useAutomaticInfiniteQuery({ path, queryKey }, opts = {}) {
+interface Params {
+  path: string;
+  queryKey: string[];
+}
+
+export interface Options {
+  enabled?: boolean;
+}
+
+export function useAutomaticInfiniteQuery<T>(
+  { path, queryKey }: Params,
+  opts: Options = {},
+) {
   const {
     error,
     data,
@@ -10,15 +23,15 @@ export function useAutomaticInfiniteQuery({ path, queryKey }, opts = {}) {
     hasNextPage,
     isFetching,
     isFetchingNextPage,
-  } = useInfiniteQuery({
+  } = useInfiniteQuery<Page<T>>({
     queryKey,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
-      const nextPage = lastPage.page_number + 1;
-      if (nextPage > lastPage.total_pages) return null;
+      const nextPage = lastPage.pageNumber + 1;
+      if (nextPage > lastPage.totalPages) return null;
       return nextPage;
     },
-    queryFn: ({ pageParam }) => api.get(path, { page: pageParam }),
+    queryFn: ({ pageParam }) => api.get(path, { page: pageParam as string }),
     ...opts,
   });
 

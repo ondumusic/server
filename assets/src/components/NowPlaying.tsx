@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { usePlayer } from "../hooks/usePlayer";
+import type { Album } from "../types";
 import { findCachedItem } from "../utils/findCachedItem";
 import { formatDuration } from "../utils/formatDuration";
 
@@ -9,7 +10,7 @@ export function NowPlaying() {
 
   const album = useMemo(() => {
     if (!currentSong) return;
-    return findCachedItem(
+    return findCachedItem<Album>(
       ["albumList", currentSong.albumArtistId],
       currentSong.albumId,
     );
@@ -18,7 +19,7 @@ export function NowPlaying() {
   return (
     <div className="flex-shrink-0 w-1/2 max-w-xl bg-emerald-700/60 p-2 rounded-lg relative overflow-hidden">
       <div className="flex justify-between items-end tabular-nums text-white/70 pb-1">
-        <div class="overflow-hidden mx-12 order-2">
+        <div className="overflow-hidden mx-12 order-2">
           <h4 className="whitespace-nowrap text-ellipsis overflow-hidden text-white/90 font-semibold">
             {currentSong?.name}
           </h4>
@@ -27,10 +28,10 @@ export function NowPlaying() {
           </h5>
         </div>
 
-        <span class="flex-shrink-0 text-xs order-1">
+        <span className="flex-shrink-0 text-xs order-1">
           {formatDuration(currentTime)}
         </span>
-        <span class="flex-shrink-0 text-xs order-3">
+        <span className="flex-shrink-0 text-xs order-3">
           {formatDuration(duration)}
         </span>
       </div>

@@ -1,3 +1,4 @@
+import type { ChangeEvent } from "react";
 import { Outlet } from "react-router";
 import { Player } from "../components/Player";
 import { usePlayer } from "../hooks/usePlayer";
@@ -12,12 +13,12 @@ export function RootLayout() {
     setCurrentTime,
   } = usePlayer();
 
-  const onTimeUpdate = ({ target: { currentTime } }) => {
-    setCurrentTime(currentTime);
+  const onTimeUpdate = (event: ChangeEvent<HTMLAudioElement>) => {
+    setCurrentTime(event.target.currentTime);
   };
 
-  const onLoadedMetadata = ({ target: { duration } }) => {
-    setDuration(duration);
+  const onLoadedMetadata = (event: ChangeEvent<HTMLAudioElement>) => {
+    setDuration(event.target.duration);
   };
 
   return (
@@ -32,8 +33,7 @@ export function RootLayout() {
         onTimeUpdate={onTimeUpdate}
         onLoadedMetadata={onLoadedMetadata}
         onEnded={nextSong}
-        class="hidden"
-        playsinline
+        className="hidden"
       />
     </>
   );

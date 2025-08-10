@@ -1,5 +1,5 @@
 import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
+import react from "@vitejs/plugin-react-swc";
 import { defineConfig, loadEnv } from "vite";
 
 export default defineConfig(({ mode }) => {
@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       copyPublicDir: true,
       rollupOptions: {
-        input: "src/app.jsx",
+        input: "src/app.tsx",
         output: {
           assetFileNames: "assets/[name][extname]",
           chunkFileNames: "[name].js",

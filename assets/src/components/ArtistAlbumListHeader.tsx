@@ -1,4 +1,10 @@
-export function ArtistAlbumListHeader({ albumArtist }) {
+import type { AlbumArtist } from "../types";
+
+interface Props {
+  albumArtist: AlbumArtist;
+}
+
+export function ArtistAlbumListHeader({ albumArtist }: Props) {
   return (
     <header className="pb-4 border-b border-stone-300">
       <h1 className="font-semibold text-2xl">{albumArtist.name}</h1>

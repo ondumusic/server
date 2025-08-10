@@ -1,5 +1,9 @@
 // https://heroicons.com/mini
-export function PrevIcon({ className = "size-5" }) {
+interface Props {
+  className: string;
+}
+
+export function PrevIcon({ className = "size-5" }: Props) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

@@ -1,14 +1,20 @@
 import { useMemo } from "react";
 import { usePlayer } from "../hooks/usePlayer";
+import type { Album, AlbumArtist, Song } from "../types";
 import { formatDuration } from "../utils/formatDuration";
 import { splitSongsByDisc } from "../utils/splitSongsByDisc";
 
-export function ArtistAlbumListItem({ album }) {
+interface Props {
+  album: Album;
+  albumArtist: AlbumArtist;
+}
+
+export function ArtistAlbumListItem({ album }: Props) {
   const { enqueueAndPlay, currentSong } = usePlayer();
 
   // For UX we want to split multi-disc albums into separate arrays so we
   // can display them a bit nicer.
-  const albumDiscs = useMemo(
+  const songsPerDisc = useMemo(
     () => splitSongsByDisc(album.songs),
     [album.songs],
   );
@@ -30,9 +36,9 @@ export function ArtistAlbumListItem({ album }) {
         <span className="text-stone-500">{album.releaseYear}</span>
       </div>
       <div className="space-y-6 w-full">
-        {albumDiscs.map((disc) => (
+        {songsPerDisc.map((disc) => (
           <div key={`${album.id}-disc-${disc.number}`}>
-            {albumDiscs.length > 1 ? (
+            {songsPerDisc.length > 1 ? (
               <h3
                 key={`${album.id}-disc-label-${disc.number}`}
                 className="text-xs text-stone-500 font-semibold mb-2"
@@ -41,7 +47,7 @@ export function ArtistAlbumListItem({ album }) {
               </h3>
             ) : null}
             <ul className="space-y-2 text-sm">
-              {disc.songs.map((song) => (
+              {disc.songs.map((song: Song) => (
                 <li
                   key={song.id}
                   className="relative flex justify-between"
@@ -64,7 +70,7 @@ export function ArtistAlbumListItem({ album }) {
                       {song.name}
                     </span>
                     {shouldShowSongArtist ? (
-                      <span class="block text-stone-400">
+                      <span className="block text-stone-400">
                         {song.artist.name}
                       </span>
                     ) : null}

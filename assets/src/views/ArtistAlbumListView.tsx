@@ -3,15 +3,16 @@ import { ArtistAlbumListHeader } from "../components/ArtistAlbumListHeader";
 import { ArtistAlbumListItem } from "../components/ArtistAlbumListItem";
 import { useAlbumArtistQuery } from "../hooks/useAlbumArtistQuery";
 import { useInfiniteArtistAlbumsQuery } from "../hooks/useInfiniteArtistAlbumsQuery";
+import type { Album, UUID } from "../types";
 import { paginatedMap } from "../utils/paginatedMap";
 
+type Params = { albumArtistId: UUID };
+
 export function ArtistAlbumListView() {
-  const { albumArtistId } = useParams();
+  const { albumArtistId } = useParams() as Params;
 
   const { isFetching: isFetchingArtist, data: dataArtist } =
-    useAlbumArtistQuery({
-      albumArtistId: albumArtistId,
-    });
+    useAlbumArtistQuery({ albumArtistId });
 
   const { isFetching, hasFirstPage, data, error } =
     useInfiniteArtistAlbumsQuery(
@@ -29,7 +30,7 @@ export function ArtistAlbumListView() {
   return (
     <div className="space-y-8 mx-8 my-8">
       <ArtistAlbumListHeader albumArtist={dataArtist} />
-      {paginatedMap(data, (album) => (
+      {paginatedMap<Album>(data, (album) => (
         <ArtistAlbumListItem
           key={album.id}
           albumArtist={dataArtist}
