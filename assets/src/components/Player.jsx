@@ -1,5 +1,6 @@
 import { NextIcon } from "../components/icons/NextIcon";
-import { PlayPauseIcon } from "../components/icons/PlayPauseIcon";
+import { PlayIcon } from "../components/icons/PlayIcon";
+import { PauseIcon } from "../components/icons/PauseIcon";
 import { PrevIcon } from "../components/icons/PrevIcon";
 import { NowPlaying } from "../components/NowPlaying";
 import { usePlayer } from "../hooks/usePlayer";
@@ -30,7 +31,7 @@ export function Player() {
           className="disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md"
           onClick={() => setIsPlaying(!isPlaying)}
         >
-          <PlayPauseIcon className="size-6" />
+          {isPlaying ?  <PauseIcon className="size-8" /> : <PlayIcon className="size-8" />}
         </button>
         <button
           type="button"
