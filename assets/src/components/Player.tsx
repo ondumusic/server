@@ -26,7 +26,12 @@ export function Player() {
           className="disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md"
           onClick={() => prevTrack()}
         >
-          <PrevIcon className="size-6" title={t("btnPreviousTrack")} />
+          <PrevIcon
+            className="size-6"
+            title={t("button.previousTrack", {
+              defaultValue: "Previous Track",
+            })}
+          />
         </button>
         <button
           type="button"
@@ -34,9 +39,19 @@ export function Player() {
           onClick={() => setIsPlaying(!isPlaying)}
         >
           {isPlaying ? (
-            <PauseIcon className="size-8" title={t("btnPauseCurrentTrack")} />
+            <PauseIcon
+              className="size-8"
+              title={t("button.pauseCurrentTrack", {
+                defaultValue: "Pause Current Track",
+              })}
+            />
           ) : (
-            <PlayIcon className="size-8" title={t("btnPlayCurrentTrack")} />
+            <PlayIcon
+              className="size-8"
+              title={t("button.playCurrentTrack", {
+                defaultValue: "Play Current Track",
+              })}
+            />
           )}
         </button>
         <button
@@ -45,7 +60,10 @@ export function Player() {
           className="disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md"
           onClick={() => nextTrack()}
         >
-          <NextIcon className="size-6" title={t("btnNextTrack")} />
+          <NextIcon
+            className="size-6"
+            title={t("button.nextTrack", { defaultValue: "Next Track" })}
+          />
         </button>
 
         <div className="w-8"></div>

@@ -19,7 +19,13 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            Component: () => <EmptyView message={i18next.t("noResults")} />,
+            Component: () => (
+              <EmptyView
+                message={i18next.t("emptyView.noResults", {
+                  defaultValue: "No Results",
+                })}
+              />
+            ),
           },
           {
             path: "artists",

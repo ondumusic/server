@@ -30,13 +30,15 @@ export function ArtistAlbumListView() {
   return (
     <div className="space-y-8 mx-8 my-8">
       <ArtistAlbumListHeader albumArtist={dataArtist} />
-      {paginatedMap<Album>(data, (album) => (
-        <ArtistAlbumListItem
-          key={album.id}
-          albumArtist={dataArtist}
-          album={album}
-        />
-      ))}
+      <div className="space-y-16">
+        {paginatedMap<Album>(data, (album) => (
+          <ArtistAlbumListItem
+            key={album.id}
+            albumArtist={dataArtist}
+            album={album}
+          />
+        ))}
+      </div>
     </div>
   );
 }

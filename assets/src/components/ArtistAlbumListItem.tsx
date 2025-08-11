@@ -1,7 +1,9 @@
 import { useMemo } from "react";
+import { Trans } from "react-i18next";
 import { usePlayer } from "../hooks/usePlayer";
 import type { Album, AlbumArtist, Track } from "../types";
 import { formatDuration } from "../utils/formatDuration";
+import { formatTotalDuration } from "../utils/formatTotalDuration";
 import { splitTracksByDisc } from "../utils/splitTracksByDisc";
 
 interface Props {
@@ -23,6 +25,8 @@ export function ArtistAlbumListItem({ album }: Props) {
   const shouldShowTrackArtist =
     new Set(album.tracks.map((track) => track.artist.id)).size > 1;
 
+  const totalFormattedDuration = formatTotalDuration(album.tracks);
+
   return (
     <div className="flex w-full">
       <div className="flex-shrink-0 pr-18 text-sm w-80">
@@ -32,57 +36,75 @@ export function ArtistAlbumListItem({ album }: Props) {
           onClick={() => enqueueAndPlay(album.tracks)}
           onKeyDown={() => enqueueAndPlay(album.tracks)}
         ></button>
-        <h3 className="font-semibold">{album.name}</h3>
-        <span className="text-stone-500">{album.releaseYear}</span>
+        <span className="font-light text-stone-400">
+          <Trans
+            i18nKey="album.trackCount"
+            count={album.tracks.length}
+            duration={totalFormattedDuration}
+          >
+            {{ count: album.tracks.length }} tracks,{" "}
+            {{ duration: totalFormattedDuration }}
+          </Trans>
+        </span>
       </div>
-      <div className="space-y-6 w-full">
-        {tracksPerDisc.map((disc) => (
-          <div key={`${album.id}-disc-${disc.number}`}>
-            {tracksPerDisc.length > 1 ? (
-              <h3
-                key={`${album.id}-disc-label-${disc.number}`}
-                className="text-xs text-stone-500 font-semibold mb-2"
-              >
-                Disc {disc.number}
-              </h3>
-            ) : null}
-            <ul className="space-y-2 text-sm">
-              {disc.tracks.map((track: Track) => (
-                <li
-                  key={track.id}
-                  className="relative flex justify-between"
-                  onClick={() => enqueueAndPlay(album.tracks, track)}
-                  onKeyDown={() => enqueueAndPlay(album.tracks, track)}
+      <div className="w-full">
+        <div className="text-sm border-b border-stone-300 pb-2 mb-6">
+          <h2 className="font-semibold text-lg">{album.name}</h2>
+          <span className="text-stone-400 font-normal">
+            {album.releaseYear}
+          </span>
+        </div>
+        <div>
+          {tracksPerDisc.map((disc) => (
+            <div key={`${album.id}-disc-${disc.number}`}>
+              {tracksPerDisc.length > 1 ? (
+                <h3
+                  key={`${album.id}-disc-label-${disc.number}`}
+                  className="text-xs text-stone-500 font-semibold mb-2"
                 >
-                  {track.number ? (
-                    <span className="absolute right-full text-right mr-2 text-stone-500">
-                      {track.number}.
-                    </span>
-                  ) : null}
-                  <div>
-                    <span
-                      className={
-                        currentTrack && currentTrack.id === track.id
-                          ? "font-semibold"
-                          : ""
-                      }
-                    >
-                      {track.name}
-                    </span>
-                    {shouldShowTrackArtist ? (
-                      <span className="block text-stone-400">
-                        {track.artist.name}
+                  <Trans i18nKey="album.discNumber" disc={disc.number}>
+                    Disc {{ disc: disc.number }}
+                  </Trans>
+                </h3>
+              ) : null}
+              <ul className="space-y-2 text-sm">
+                {disc.tracks.map((track: Track) => (
+                  <li
+                    key={track.id}
+                    className="relative flex justify-between"
+                    onClick={() => enqueueAndPlay(album.tracks, track)}
+                    onKeyDown={() => enqueueAndPlay(album.tracks, track)}
+                  >
+                    {track.number ? (
+                      <span className="absolute right-full text-right mr-2 text-stone-400 font-light">
+                        {track.number}.
                       </span>
                     ) : null}
-                  </div>
-                  <span className="tabular-nums">
-                    {formatDuration(track.duration)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+                    <div>
+                      <span
+                        className={
+                          currentTrack && currentTrack.id === track.id
+                            ? "font-semibold"
+                            : ""
+                        }
+                      >
+                        {track.name}
+                      </span>
+                      {shouldShowTrackArtist ? (
+                        <span className="block text-stone-400">
+                          {track.artist.name}
+                        </span>
+                      ) : null}
+                    </div>
+                    <span className="tabular-nums text-stone-400 font-light">
+                      {formatDuration(track.duration)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -1,9 +1,26 @@
 {
-  "artistAlbumCount_one": "{{count}} album",
-  "artistAlbumCount_other": "{{count}} albums",
-  "btnPreviousTrack": "Previous Track",
-  "btnPauseCurrentTrack": "Pause Current Track",
-  "btnPlayCurrentTrack": "Play Current Track",
-  "btnNextTrack": "Next Track",
-  "noResults": "No Results"
+  "artist": {
+    "albumCount_one": "{{count}} album",
+    "albumCount_other": "{{count}} albums"
+  },
+  "album": {
+    "trackCount_one": "{{count}} track, {{duration}}",
+    "trackCount_other": "{{count}} tracks, {{duration}}",
+    "discNumber": "Disc {{disc}}"
+  },
+  "button": {
+    "previousTrack": "Previous Track",
+    "pauseCurrentTrack": "Pause Current Track",
+    "playCurrentTrack": "Play Current Track",
+    "nextTrack": "Next Track"
+  },
+  "emptyView": {
+    "noResults": "No Results"
+  },
+  "formattedDuration": {
+    "minutes_one": "{{ count }} minute",
+    "minutes_other": "{{ count }} minutes",
+    "hoursAndMinutes_one": "{{ count }} hour, $t(formattedDuration.minutes, {\"count\": {{ minutes }}})",
+    "hoursAndMinutes_other": "{{ count }} hours, $t(formattedDuration.minutes, {\"count\": {{ minutes }}})"
+  }
 }
