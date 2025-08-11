@@ -4,5 +4,6 @@
   "btnPreviousSong": "Previous Song",
   "btnPauseCurrentSong": "Pause Current Song",
   "btnPlayCurrentSong": "Play Current Song",
-  "btnNextSong": "Next Song"
+  "btnNextSong": "Next Song",
+  "noResults": "No Results"
 }

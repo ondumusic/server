@@ -23,7 +23,7 @@ export function RootLayout() {
 
   return (
     <>
-      <div className="flex flex-col max-h-screen">
+      <div className="flex flex-col h-full">
         <Outlet />
         {isVisible ? <Player /> : null}
       </div>

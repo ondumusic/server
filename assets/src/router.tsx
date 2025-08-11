@@ -1,4 +1,5 @@
 import { createBrowserRouter, redirect } from "react-router";
+import i18next from "./i18next";
 import { ArtistsLayout } from "./layouts/ArtistsLayout";
 import { RootLayout } from "./layouts/RootLayout";
 import { ArtistAlbumListView } from "./views/ArtistAlbumListView";
@@ -18,7 +19,7 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            Component: () => <EmptyView message="No Results" />,
+            Component: () => <EmptyView message={i18next.t("noResults")} />,
           },
           {
             path: "artist",

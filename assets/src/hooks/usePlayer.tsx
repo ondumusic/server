@@ -87,7 +87,7 @@ export const PlayerProvider = ({ children }: Props) => {
   // playing and paused states. If there is no (more) song and it is set to
   // isPlaying it will set the player into a paused state.
   useEffect(() => {
-    if (!audioRef || !audioRef.current) return;
+    if (!audioRef.current) return;
 
     if (isPlaying && !currentSong) {
       setIsPlaying(false);
@@ -192,8 +192,16 @@ export const PlayerProvider = ({ children }: Props) => {
       if (!Array.isArray(songs)) songs = [songs];
       if (songs.length === 0) return;
       setIsVisible(true);
+
       replaceQueue(songs, startWithSong);
       if (!isPlaying) setIsPlaying(true);
+
+      // If the user wants to play the current song from the beginning again
+      // it technically doesn't change the state.. but we can seek to 0.
+      if (isPlaying && startWithSong === currentSong) {
+        if (!audioRef.current) return;
+        audioRef.current.currentTime = 0;
+      }
     },
   };
 
