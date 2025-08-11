@@ -3,12 +3,12 @@ import { api } from "../services/api";
 import type { UUID } from "../types";
 
 interface Params {
-  albumArtistId: UUID;
+  artistId: UUID;
 }
 
-export function useAlbumArtistQuery({ albumArtistId }: Params) {
+export function useAlbumArtistQuery({ artistId }: Params) {
   return useQuery({
-    queryKey: ["albumArtist", albumArtistId],
-    queryFn: () => api.get(`/artists/${albumArtistId}`),
+    queryKey: ["albumArtist", artistId],
+    queryFn: () => api.get(`/artists/${artistId}`),
   });
 }

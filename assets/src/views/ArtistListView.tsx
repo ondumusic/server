@@ -5,10 +5,10 @@ import { useInfiniteArtistsQuery } from "../hooks/useInfiniteArtistsQuery";
 import type { AlbumArtist, UUID } from "../types";
 import { paginatedMap } from "../utils/paginatedMap";
 
-type Params = { albumArtistId: UUID };
+type Params = { artistId: UUID };
 
 export function ArtistListView() {
-  const { albumArtistId } = useParams() as Params;
+  const { artistId } = useParams() as Params;
   const { isFetching, hasFirstPage, isCompleted, data, error } =
     useInfiniteArtistsQuery();
 
@@ -21,8 +21,7 @@ export function ArtistListView() {
         <ArtistListItem
           key={albumArtist.id}
           isSelected={
-            albumArtistId === albumArtist.id ||
-            albumArtistId === albumArtist.slug
+            artistId === albumArtist.id || artistId === albumArtist.slug
           }
           scrollIntoView={isCompleted}
           albumArtist={albumArtist}

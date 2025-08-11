@@ -6,18 +6,18 @@ import { useInfiniteArtistAlbumsQuery } from "../hooks/useInfiniteArtistAlbumsQu
 import type { Album, UUID } from "../types";
 import { paginatedMap } from "../utils/paginatedMap";
 
-type Params = { albumArtistId: UUID };
+type Params = { artistId: UUID };
 
 export function ArtistAlbumListView() {
-  const { albumArtistId } = useParams() as Params;
+  const { artistId } = useParams() as Params;
 
   const { isFetching: isFetchingArtist, data: dataArtist } =
-    useAlbumArtistQuery({ albumArtistId });
+    useAlbumArtistQuery({ artistId });
 
   const { isFetching, hasFirstPage, data, error } =
     useInfiniteArtistAlbumsQuery(
       {
-        albumArtistId: dataArtist?.id,
+        artistId: dataArtist?.id,
       },
       {
         enabled: !!dataArtist,

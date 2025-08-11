@@ -7,8 +7,8 @@ export function RootLayout() {
   const {
     audioRef,
     isVisible,
-    currentSong,
-    nextSong,
+    currentTrack,
+    nextTrack,
     setDuration,
     setCurrentTime,
   } = usePlayer();
@@ -29,10 +29,10 @@ export function RootLayout() {
       </div>
       <audio
         ref={audioRef}
-        src={currentSong && `/stream/${currentSong.id}`}
+        src={currentTrack && `/stream/${currentTrack.id}`}
         onTimeUpdate={onTimeUpdate}
         onLoadedMetadata={onLoadedMetadata}
-        onEnded={nextSong}
+        onEnded={nextTrack}
         className="hidden"
       />
     </>

@@ -22,14 +22,14 @@ export const router = createBrowserRouter([
             Component: () => <EmptyView message={i18next.t("noResults")} />,
           },
           {
-            path: "artist",
+            path: "artists",
             children: [
               {
                 index: true,
                 loader: () => redirect("/"),
               },
               {
-                path: ":albumArtistId",
+                path: ":artistId",
                 Component: () => <ArtistAlbumListView />,
               },
             ],

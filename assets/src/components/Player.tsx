@@ -11,10 +11,10 @@ export function Player() {
   const {
     isPlaying,
     setIsPlaying,
-    hasNextSong,
-    hasPrevSong,
-    prevSong,
-    nextSong,
+    hasNextTrack,
+    hasPrevTrack,
+    prevTrack,
+    nextTrack,
   } = usePlayer();
 
   return (
@@ -22,11 +22,11 @@ export function Player() {
       <div className="flex justify-center items-center w-full">
         <button
           type="button"
-          disabled={!hasPrevSong}
+          disabled={!hasPrevTrack}
           className="disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md"
-          onClick={() => prevSong()}
+          onClick={() => prevTrack()}
         >
-          <PrevIcon className="size-6" title={t("btnPreviousSong")} />
+          <PrevIcon className="size-6" title={t("btnPreviousTrack")} />
         </button>
         <button
           type="button"
@@ -34,18 +34,18 @@ export function Player() {
           onClick={() => setIsPlaying(!isPlaying)}
         >
           {isPlaying ? (
-            <PauseIcon className="size-8" title={t("btnPauseCurrentSong")} />
+            <PauseIcon className="size-8" title={t("btnPauseCurrentTrack")} />
           ) : (
-            <PlayIcon className="size-8" title={t("btnPlayCurrentSong")} />
+            <PlayIcon className="size-8" title={t("btnPlayCurrentTrack")} />
           )}
         </button>
         <button
           type="button"
-          disabled={!hasNextSong}
+          disabled={!hasNextTrack}
           className="disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md"
-          onClick={() => nextSong()}
+          onClick={() => nextTrack()}
         >
-          <NextIcon className="size-6" title={t("btnNextSong")} />
+          <NextIcon className="size-6" title={t("btnNextTrack")} />
         </button>
 
         <div className="w-8"></div>

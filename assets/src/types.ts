@@ -14,27 +14,26 @@ export interface Artist {
 
 export interface Album {
   id: UUID;
-  albumArtistId: UUID;
+  artistId: UUID;
   name: string;
   releaseYear: number;
-  songs: Song[];
+  tracks: Track[];
 }
 
-export interface Song {
+export interface Track {
   id: UUID;
   artistId: UUID;
   albumId: UUID;
-  albumArtistId: UUID;
   artist: Artist;
   name: string;
   disc: number;
-  track: number;
+  number: number;
   duration: number;
 }
 
 export interface Disc {
   number: number;
-  songs: Song[];
+  tracks: Track[];
 }
 
 export interface Page<T> {

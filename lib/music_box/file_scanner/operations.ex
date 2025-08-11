@@ -4,9 +4,8 @@ defmodule MusicBox.FileScanner.Operations do
   alias MusicBox.Files.File
   alias MusicBox.Files.FileMetadata
   alias MusicBox.Artists.Artist
-  alias MusicBox.Artists.AlbumArtist
   alias MusicBox.Albums.Album
-  alias MusicBox.Songs.Song
+  alias MusicBox.Tracks.Track
   alias MusicBox.Repo
   alias Ecto.Multi
 
@@ -17,10 +16,9 @@ defmodule MusicBox.FileScanner.Operations do
   def batch_insert([%Analyzer.Result{} | _] = files) do
     Multi.new()
     |> Multi.run(:files, &maybe_create_files(&1, files, &2))
-    |> Multi.run(:album_artists, &maybe_create_album_artists/2)
     |> Multi.run(:artists, &maybe_create_artists/2)
     |> Multi.run(:albums, &maybe_create_albums/2)
-    |> Multi.run(:songs, &maybe_create_songs/2)
+    |> Multi.run(:tracks, &maybe_create_tracks/2)
     |> Repo.transact()
   end
 
@@ -69,11 +67,11 @@ defmodule MusicBox.FileScanner.Operations do
     {:ok, files}
   end
 
-  defp maybe_create_album_artists(repo, %{files: files}) do
+  defp maybe_create_artists(repo, %{files: files}) do
     artist_names =
       files
-      |> Enum.reject(&is_nil(&1.metadata.album_artist))
-      |> Enum.map(& &1.metadata.album_artist)
+      |> Enum.reject(&is_nil(&1.metadata.artist))
+      |> Enum.flat_map(&[&1.metadata.album_artist, &1.metadata.artist])
       |> Enum.uniq_by(&String.downcase/1)
 
     entries =
@@ -87,7 +85,7 @@ defmodule MusicBox.FileScanner.Operations do
       |> Enum.map(&add_timestamps/1)
 
     {_num, artists} =
-      repo.insert_all(AlbumArtist, entries,
+      repo.insert_all(Artist, entries,
         returning: true,
         conflict_target: [:slug],
         on_conflict: {:replace_all_except, [:id, :inserted_at]}
@@ -96,47 +94,21 @@ defmodule MusicBox.FileScanner.Operations do
     {:ok, artists}
   end
 
-  defp maybe_create_artists(repo, %{files: files}) do
-    artist_names =
-      files
-      |> Enum.reject(&is_nil(&1.metadata.artist))
-      |> Enum.map(& &1.metadata.artist)
-      |> Enum.uniq_by(&String.downcase/1)
-
-    entries =
-      artist_names
-      |> Enum.map(fn artist_name ->
-        %{
-          name: artist_name
-        }
-      end)
-      |> Enum.map(&add_timestamps/1)
-
-    {_num, artists} =
-      repo.insert_all(Artist, entries,
-        returning: true,
-        conflict_target: [:name],
-        on_conflict: {:replace_all_except, [:id, :inserted_at]}
-      )
-
-    {:ok, artists}
-  end
-
-  defp maybe_create_albums(repo, %{files: files, album_artists: album_artists}) do
+  defp maybe_create_albums(repo, %{files: files, artists: artists}) do
     linked_file_artists =
       files
       |> Enum.reject(&is_nil(&1.metadata.album_artist))
       |> Enum.reject(&is_nil(&1.metadata.album))
       |> Enum.map(fn file ->
         match_artist = String.downcase(file.metadata.album_artist)
-        album_artist = Enum.find(album_artists, &(String.downcase(&1.name) == match_artist))
+        album_artist = Enum.find(artists, &(String.downcase(&1.name) == match_artist))
 
         %{
           file: file,
-          album_artist: album_artist
+          artist: album_artist
         }
       end)
-      |> Enum.reject(&is_nil(&1.album_artist))
+      |> Enum.reject(&is_nil(&1.artist))
 
     artist_albums =
       linked_file_artists
@@ -144,10 +116,11 @@ defmodule MusicBox.FileScanner.Operations do
 
     entries =
       artist_albums
-      |> Enum.map(fn %{file: file, album_artist: album_artist} ->
+      |> Enum.map(fn %{file: file, artist: artist} ->
         %{
-          album_artist_id: album_artist.id,
+          artist_id: artist.id,
           name: file.metadata.album,
+          slug: Utils.slugify(file.metadata.album),
           compilation: file.metadata.compilation,
           release_year: file.metadata.release_year
         }
@@ -157,24 +130,23 @@ defmodule MusicBox.FileScanner.Operations do
     {_num, albums} =
       repo.insert_all(Album, entries,
         returning: true,
-        conflict_target: [:album_artist_id, :name],
+        conflict_target: [:artist_id, :slug],
         on_conflict: {:replace_all_except, [:id, :inserted_at]}
       )
 
     {:ok, albums}
   end
 
-  defp maybe_create_songs(repo, %{
+  defp maybe_create_tracks(repo, %{
          files: files,
          artists: artists,
-         album_artists: album_artists,
          albums: albums
        }) do
     linked_file_albums =
       files
       |> Enum.map(fn %{metadata: metadata} = file ->
         artist =
-          if is_binary(metadata.album_artist) do
+          if is_binary(metadata.artist) do
             match_artist = String.downcase(metadata.artist)
             Enum.find(artists, &(String.downcase(&1.name) == match_artist))
           end
@@ -183,11 +155,13 @@ defmodule MusicBox.FileScanner.Operations do
           if is_binary(metadata.album_artist) and is_binary(metadata.album) do
             match_artist = String.downcase(metadata.album_artist)
             match_album = String.downcase(metadata.album)
-            album_artist = Enum.find(album_artists, &(String.downcase(&1.name) == match_artist))
+            album_artist = Enum.find(artists, &(String.downcase(&1.name) == match_artist))
 
-            albums
-            |> Enum.filter(&(&1.album_artist_id == album_artist.id))
-            |> Enum.find(&(String.downcase(&1.name) == match_album))
+            if album_artist do
+              albums
+              |> Enum.filter(&(&1.artist_id == album_artist.id))
+              |> Enum.find(&(String.downcase(&1.name) == match_album))
+            end
           end
 
         %{
@@ -211,21 +185,21 @@ defmodule MusicBox.FileScanner.Operations do
           album_id: album && album.id,
           file_id: file.id,
           duration: file.metadata.duration,
-          track: file.metadata.track,
+          number: file.metadata.track,
           disc: file.metadata.disc,
           name: title
         }
       end)
       |> Enum.map(&add_timestamps/1)
 
-    {_num, songs} =
-      repo.insert_all(Song, entries,
+    {_num, tracks} =
+      repo.insert_all(Track, entries,
         returning: true,
         conflict_target: [:file_id],
         on_conflict: {:replace_all_except, [:id, :inserted_at]}
       )
 
-    {:ok, songs}
+    {:ok, tracks}
   end
 
   defp add_timestamps(entry, additional_fields \\ []) do

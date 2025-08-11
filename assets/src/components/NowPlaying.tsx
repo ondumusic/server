@@ -5,26 +5,26 @@ import { findCachedItem } from "../utils/findCachedItem";
 import { formatDuration } from "../utils/formatDuration";
 
 export function NowPlaying() {
-  const { currentSong, duration, currentTime, progressPercentage } =
+  const { currentTrack, duration, currentTime, progressPercentage } =
     usePlayer();
 
   const album = useMemo(() => {
-    if (!currentSong) return;
+    if (!currentTrack) return;
     return findCachedItem<Album>(
-      ["albumList", currentSong.albumArtistId],
-      currentSong.albumId,
+      ["albumList", currentTrack.artistId],
+      currentTrack.albumId,
     );
-  }, [currentSong]);
+  }, [currentTrack]);
 
   return (
     <div className="flex-shrink-0 w-1/2 max-w-xl bg-emerald-700/60 p-2 rounded-lg relative overflow-hidden">
       <div className="flex justify-between items-end tabular-nums text-white/70 pb-1">
         <div className="overflow-hidden mx-12 order-2">
           <h4 className="whitespace-nowrap text-ellipsis overflow-hidden text-white/90 font-semibold">
-            {currentSong?.name}
+            {currentTrack?.name}
           </h4>
           <h5 className="whitespace-nowrap text-ellipsis overflow-hidden mx-8">
-            {currentSong?.artist?.name} - {album?.name}
+            {currentTrack?.artist?.name} - {album?.name}
           </h5>
         </div>
 

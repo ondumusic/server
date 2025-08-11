@@ -1,24 +1,24 @@
 import { createContext, type ReactNode, useContext, useState } from "react";
-import type { Song } from "../types";
+import type { Track } from "../types";
 
 export interface QueueContext {
-  queue: Song[];
-  currentSong?: Song;
-  hasPrevSong: boolean;
-  hasNextSong: boolean;
-  prevSong(): void;
-  nextSong(): void;
-  replaceQueue(songs: Song[], startWithSong?: Song): void;
+  queue: Track[];
+  currentTrack?: Track;
+  hasPrevTrack: boolean;
+  hasNextTrack: boolean;
+  prevTrack(): void;
+  nextTrack(): void;
+  replaceQueue(tracks: Track[], startWithTrack?: Track): void;
 }
 
 const QueueContext = createContext<QueueContext>({
   queue: [],
-  currentSong: undefined,
-  hasPrevSong: false,
-  hasNextSong: false,
-  prevSong: () => {},
-  nextSong: () => {},
-  replaceQueue: (_songs, _startWithSong?) => {},
+  currentTrack: undefined,
+  hasPrevTrack: false,
+  hasNextTrack: false,
+  prevTrack: () => {},
+  nextTrack: () => {},
+  replaceQueue: (_tracks, _startWithTrack?) => {},
 });
 
 export function useQueue() {
@@ -30,30 +30,30 @@ interface Props {
 }
 
 export const QueueProvider = ({ children }: Props) => {
-  const [queue, setQueue] = useState<Song[]>([]);
+  const [queue, setQueue] = useState<Track[]>([]);
   const [queueIndex, setQueueIndex] = useState(0);
-  const currentSong = queue[queueIndex] ?? undefined;
-  const hasNextSong = queueIndex < queue.length - 1;
-  const hasPrevSong = queueIndex > 0;
+  const currentTrack = queue[queueIndex] ?? undefined;
+  const hasNextTrack = queueIndex < queue.length - 1;
+  const hasPrevTrack = queueIndex > 0;
 
   const value = {
     queue,
-    currentSong,
-    hasPrevSong,
-    hasNextSong,
-    prevSong() {
-      const prevSongIndex = Math.max(0, queueIndex - 1);
-      setQueueIndex(prevSongIndex);
+    currentTrack,
+    hasPrevTrack,
+    hasNextTrack,
+    prevTrack() {
+      const prevTrackIndex = Math.max(0, queueIndex - 1);
+      setQueueIndex(prevTrackIndex);
     },
-    nextSong() {
-      const nextSongIndex = Math.min(queue.length, queueIndex + 1);
-      setQueueIndex(nextSongIndex);
+    nextTrack() {
+      const nextTrackIndex = Math.min(queue.length, queueIndex + 1);
+      setQueueIndex(nextTrackIndex);
     },
-    replaceQueue(songs: Song[], startWithSong?: Song) {
-      if (!Array.isArray(songs)) songs = [songs];
-      let startIndex = songs.findIndex(({ id }) => id === startWithSong?.id);
-      startIndex = Math.max(Math.min(songs.length - 1, startIndex), 0);
-      setQueue(songs);
+    replaceQueue(tracks: Track[], startWithTrack?: Track) {
+      if (!Array.isArray(tracks)) tracks = [tracks];
+      let startIndex = tracks.findIndex(({ id }) => id === startWithTrack?.id);
+      startIndex = Math.max(Math.min(tracks.length - 1, startIndex), 0);
+      setQueue(tracks);
       setQueueIndex(startIndex);
     },
   };

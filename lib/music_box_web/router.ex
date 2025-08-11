@@ -18,19 +18,19 @@ defmodule MusicBoxWeb.Router do
 
     get "/", PageController, :react
     get "/library", PageController, :react
-    get "/artist", PageController, :react
-    get "/artist/:id", PageController, :react
+    get "/artists", PageController, :react
+    get "/artists/:id", PageController, :react
 
-    get "/stream/:song_id", StreamController, :stream
+    get "/stream/:track_id", StreamController, :stream
   end
 
   scope "/api", MusicBoxWeb do
     pipe_through :api
 
-    get "/artists", LibraryController, :album_artists
-    get "/artists/:album_artist_id", LibraryController, :album_artist
-    get "/artists/:album_artist_id/albums", LibraryController, :artist_albums
-    get "/artists/:album_artist_id/albums/:album_id", LibraryController, :album
+    get "/artists", LibraryController, :artists
+    get "/artists/:artist_id", LibraryController, :artist
+    get "/artists/:artist_id/albums", LibraryController, :artist_albums
+    get "/artists/:artist_id/albums/:album_id", LibraryController, :artist_album
 
     get "/albums", LibraryController, :albums
     get "/albums/:album_id", LibraryController, :album

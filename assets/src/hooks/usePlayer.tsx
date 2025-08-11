@@ -9,19 +9,19 @@ import {
   useState,
 } from "react";
 import { useQueue } from "../hooks/useQueue";
-import type { Album, Song } from "../types";
+import type { Album, Track } from "../types";
 import { findCachedItem } from "../utils/findCachedItem";
 
 export interface PlayerContextT {
   audioRef: RefObject<HTMLAudioElement | null>;
   isVisible: boolean;
 
-  // Current queue and song information
-  queue: Song[];
-  hasPrevSong: boolean;
-  hasNextSong: boolean;
+  // Current queue and track information
+  queue: Track[];
+  hasPrevTrack: boolean;
+  hasNextTrack: boolean;
   isPlaying: boolean;
-  currentSong?: Song;
+  currentTrack?: Track;
   currentTime: number;
   duration: number;
   progressPercentage: number;
@@ -33,19 +33,19 @@ export interface PlayerContextT {
   setIsVisible(isVisible: boolean): void;
 
   // Queue Management
-  prevSong(): void;
-  nextSong(): void;
-  enqueueAndPlay(songs: Song[], startWithSong?: Song): void;
+  prevTrack(): void;
+  nextTrack(): void;
+  enqueueAndPlay(tracks: Track[], startWithTrack?: Track): void;
 }
 
 const PlayerContext = createContext<PlayerContextT>({
   audioRef: { current: null },
   isVisible: false,
   queue: [],
-  hasPrevSong: false,
-  hasNextSong: false,
+  hasPrevTrack: false,
+  hasNextTrack: false,
   isPlaying: false,
-  currentSong: undefined,
+  currentTrack: undefined,
   currentTime: 0,
   duration: 0,
   progressPercentage: 0,
@@ -53,9 +53,9 @@ const PlayerContext = createContext<PlayerContextT>({
   setDuration: (_duration) => {},
   setIsPlaying: (_isPlaying) => {},
   setIsVisible: (_isVisible) => {},
-  prevSong: () => {},
-  nextSong: () => {},
-  enqueueAndPlay: (_songs, _startWithSong?) => {},
+  prevTrack: () => {},
+  nextTrack: () => {},
+  enqueueAndPlay: (_tracks, _startWithTrack?) => {},
 });
 
 export function usePlayer() {
@@ -69,12 +69,12 @@ interface Props {
 export const PlayerProvider = ({ children }: Props) => {
   const {
     queue,
-    currentSong,
+    currentTrack,
     replaceQueue,
-    prevSong,
-    nextSong,
-    hasPrevSong,
-    hasNextSong,
+    prevTrack,
+    nextTrack,
+    hasPrevTrack,
+    hasNextTrack,
   } = useQueue();
 
   const [isVisible, setIsVisible] = useState(false);
@@ -84,40 +84,40 @@ export const PlayerProvider = ({ children }: Props) => {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // This effect controls the actual playback, for example to switch between
-  // playing and paused states. If there is no (more) song and it is set to
+  // playing and paused states. If there is no (more) track and it is set to
   // isPlaying it will set the player into a paused state.
   useEffect(() => {
     if (!audioRef.current) return;
 
-    if (isPlaying && !currentSong) {
+    if (isPlaying && !currentTrack) {
       setIsPlaying(false);
     } else if (isPlaying) {
       audioRef.current.play();
     } else {
       audioRef.current.pause();
     }
-  }, [isPlaying, currentSong]);
+  }, [isPlaying, currentTrack]);
 
-  // When the currentSong changes we assume we are starting from 0 again so
+  // When the currentTrack changes we assume we are starting from 0 again so
   // reset to 0 and the audio event handlers will update it once metadata is
   // loaded and it starts playing.
   useEffect(() => {
-    if (!currentSong) return;
+    if (!currentTrack) return;
     setDuration(0);
     setCurrentTime(0);
-  }, [currentSong]);
+  }, [currentTrack]);
 
   const currentAlbum: Album | undefined = useMemo(() => {
-    if (!currentSong) return undefined;
+    if (!currentTrack) return undefined;
     return findCachedItem<Album>(
-      ["albumList", currentSong?.albumArtistId],
-      currentSong?.albumId,
+      ["albumList", currentTrack?.artistId],
+      currentTrack?.albumId,
     );
-  }, [currentSong]);
+  }, [currentTrack]);
 
   // Experimenting with MediaSession
   useEffect(() => {
-    if (!currentSong) {
+    if (!currentTrack) {
       navigator.mediaSession.metadata = null;
       navigator.mediaSession.setActionHandler("play", null);
       navigator.mediaSession.setActionHandler("pause", null);
@@ -131,8 +131,8 @@ export const PlayerProvider = ({ children }: Props) => {
       // seekto
     } else {
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: currentSong?.name,
-        artist: currentSong?.artist?.name,
+        title: currentTrack?.name,
+        artist: currentTrack?.artist?.name,
         album: currentAlbum?.name,
         artwork: [],
       });
@@ -150,16 +150,23 @@ export const PlayerProvider = ({ children }: Props) => {
       });
 
       navigator.mediaSession.setActionHandler("previoustrack", () => {
-        if (hasPrevSong) prevSong();
+        if (hasPrevTrack) prevTrack();
         else setIsPlaying(false);
       });
 
       navigator.mediaSession.setActionHandler("nexttrack", () => {
-        if (hasNextSong) nextSong();
+        if (hasNextTrack) nextTrack();
         else setIsPlaying(false);
       });
     }
-  }, [hasNextSong, hasPrevSong, nextSong, prevSong, currentSong, currentAlbum]);
+  }, [
+    hasNextTrack,
+    hasPrevTrack,
+    nextTrack,
+    prevTrack,
+    currentTrack,
+    currentAlbum,
+  ]);
 
   // Calculate the current playback percentage
   let progressPercentage = (currentTime / duration) * 100;
@@ -169,12 +176,12 @@ export const PlayerProvider = ({ children }: Props) => {
     audioRef,
     isVisible,
 
-    // Current queue and song information
+    // Current queue and track information
     queue,
-    hasPrevSong,
-    hasNextSong,
+    hasPrevTrack,
+    hasNextTrack,
     isPlaying,
-    currentSong,
+    currentTrack,
     currentTime,
     duration,
     progressPercentage,
@@ -186,19 +193,19 @@ export const PlayerProvider = ({ children }: Props) => {
     setIsVisible,
 
     // Queue Management
-    prevSong,
-    nextSong,
-    enqueueAndPlay(songs: Song[], startWithSong?: Song) {
-      if (!Array.isArray(songs)) songs = [songs];
-      if (songs.length === 0) return;
+    prevTrack,
+    nextTrack,
+    enqueueAndPlay(tracks: Track[], startWithTrack?: Track) {
+      if (!Array.isArray(tracks)) tracks = [tracks];
+      if (tracks.length === 0) return;
       setIsVisible(true);
 
-      replaceQueue(songs, startWithSong);
+      replaceQueue(tracks, startWithTrack);
       if (!isPlaying) setIsPlaying(true);
 
-      // If the user wants to play the current song from the beginning again
+      // If the user wants to play the current track from the beginning again
       // it technically doesn't change the state.. but we can seek to 0.
-      if (isPlaying && startWithSong === currentSong) {
+      if (isPlaying && startWithTrack === currentTrack) {
         if (!audioRef.current) return;
         audioRef.current.currentTime = 0;
       }

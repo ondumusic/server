@@ -1,23 +1,20 @@
 defmodule MusicBox.Artists.Artist do
   use Ecto.Schema
-  import Ecto.Changeset
 
-  alias MusicBox.Songs.Song
+  alias MusicBox.Tracks.Track
+  alias MusicBox.Albums.Album
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "artists" do
     field :name, :string
-    has_many :songs, Song
+    field :slug, :string
+
+    field :album_count, :integer, virtual: true
+
+    has_many :albums, Album
+    has_many :tracks, Track
 
     timestamps(type: :utc_datetime)
-  end
-
-  @doc false
-  def changeset(artist, attrs) do
-    artist
-    |> cast(attrs, [:name])
-    |> validate_required([:name])
-    |> unique_constraint(:name)
   end
 end

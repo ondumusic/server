@@ -1,9 +1,9 @@
 {
   "artistAlbumCount_one": "{{count}} album",
   "artistAlbumCount_other": "{{count}} albums",
-  "btnPreviousSong": "Previous Song",
-  "btnPauseCurrentSong": "Pause Current Song",
-  "btnPlayCurrentSong": "Play Current Song",
-  "btnNextSong": "Next Song",
+  "btnPreviousTrack": "Previous Track",
+  "btnPauseCurrentTrack": "Pause Current Track",
+  "btnPlayCurrentTrack": "Play Current Track",
+  "btnNextTrack": "Next Track",
   "noResults": "No Results"
 }
