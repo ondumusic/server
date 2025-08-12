@@ -1,19 +1,16 @@
 import {
   createContext,
   type ReactNode,
-  type RefObject,
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { useQueue } from "../hooks/useQueue";
 import type { Album, Track } from "../types";
 import { findCachedItem } from "../utils/findCachedItem";
 
-export interface PlayerContextT {
-  audioRef: RefObject<HTMLAudioElement | null>;
+export interface PlayerContext {
   isVisible: boolean;
 
   // Current queue and track information
@@ -38,8 +35,7 @@ export interface PlayerContextT {
   enqueueAndPlay(tracks: Track[], startWithTrack?: Track): void;
 }
 
-const PlayerContext = createContext<PlayerContextT>({
-  audioRef: { current: null },
+const PlayerContext = createContext<PlayerContext>({
   isVisible: false,
   queue: [],
   hasPrevTrack: false,
@@ -81,20 +77,15 @@ export const PlayerProvider = ({ children }: Props) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const audioRef = useRef<HTMLAudioElement>(null);
 
-  // This effect controls the actual playback, for example to switch between
-  // playing and paused states. If there is no (more) track and it is set to
-  // isPlaying it will set the player into a paused state.
+  // If the player should be playing but there is no current track, for example
+  // because the playlist has reached its end, we can update the state to
+  // reflect this.
   useEffect(() => {
-    if (!audioRef.current) return;
-
     if (isPlaying && !currentTrack) {
       setIsPlaying(false);
-    } else if (isPlaying) {
-      audioRef.current.play();
-    } else {
-      audioRef.current.pause();
+      setCurrentTime(0);
+      setDuration(0);
     }
   }, [isPlaying, currentTrack]);
 
@@ -118,6 +109,7 @@ export const PlayerProvider = ({ children }: Props) => {
   // Experimenting with MediaSession
   useEffect(() => {
     if (!currentTrack) {
+      navigator.mediaSession.playbackState = "none";
       navigator.mediaSession.metadata = null;
       navigator.mediaSession.setActionHandler("play", null);
       navigator.mediaSession.setActionHandler("pause", null);
@@ -130,6 +122,7 @@ export const PlayerProvider = ({ children }: Props) => {
       // seekforward
       // seekto
     } else {
+      navigator.mediaSession.playbackState = "playing";
       navigator.mediaSession.metadata = new MediaMetadata({
         title: currentTrack?.name,
         artist: currentTrack?.artist?.name,
@@ -173,7 +166,6 @@ export const PlayerProvider = ({ children }: Props) => {
   if (Number.isNaN(progressPercentage)) progressPercentage = 0;
 
   const value = {
-    audioRef,
     isVisible,
 
     // Current queue and track information
@@ -203,12 +195,12 @@ export const PlayerProvider = ({ children }: Props) => {
       replaceQueue(tracks, startWithTrack);
       if (!isPlaying) setIsPlaying(true);
 
-      // If the user wants to play the current track from the beginning again
-      // it technically doesn't change the state.. but we can seek to 0.
-      if (isPlaying && startWithTrack === currentTrack) {
-        if (!audioRef.current) return;
-        audioRef.current.currentTime = 0;
-      }
+      // // If the user wants to play the current track from the beginning again
+      // // it technically doesn't change the state.. but we can seek to 0.
+      // if (isPlaying && startWithTrack === currentTrack) {
+      //   if (!audioRef.current) return;
+      //   audioRef.current.currentTime = 0;
+      // }
     },
   };
 
