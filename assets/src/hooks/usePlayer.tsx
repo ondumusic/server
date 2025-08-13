@@ -89,15 +89,7 @@ export const PlayerProvider = ({ children }: Props) => {
     }
   }, [isPlaying, currentTrack]);
 
-  // When the currentTrack changes we assume we are starting from 0 again so
-  // reset to 0 and the audio event handlers will update it once metadata is
-  // loaded and it starts playing.
-  useEffect(() => {
-    if (!currentTrack) return;
-    setDuration(0);
-    setCurrentTime(0);
-  }, [currentTrack]);
-
+  // Find the currentAlbum from cache so we can display it in the mediaSession
   const currentAlbum: Album | undefined = useMemo(() => {
     if (!currentTrack) return undefined;
     return findCachedItem<Album>(
@@ -149,6 +141,18 @@ export const PlayerProvider = ({ children }: Props) => {
         if (hasNextTrack) nextTrack();
         else setIsPlaying(false);
       });
+
+      navigator.mediaSession.setActionHandler("seekbackward", (details) => {
+        console.log("seekbackward", details.seekOffset || 15);
+      });
+
+      navigator.mediaSession.setActionHandler("seekforward", (details) => {
+        console.log("seekforward", details.seekOffset || 15);
+      });
+
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        console.log("seekto", details.fastSeek, details.seekTime);
+      });
     }
   }, [
     hasNextTrack,
@@ -158,6 +162,20 @@ export const PlayerProvider = ({ children }: Props) => {
     currentTrack,
     currentAlbum,
   ]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies(duration): suppress dependency duration
+  useEffect(() => {
+    if (!currentTrack || duration === 0) return;
+    if (!isPlaying) return;
+
+    navigator.mediaSession.playbackState = "playing";
+
+    navigator.mediaSession.setPositionState({
+      duration: duration,
+      playbackRate: 1,
+      position: currentTime,
+    });
+  }, [isPlaying, currentTrack, currentTime]);
 
   // Calculate the current playback percentage
   let progressPercentage = (currentTime / duration) * 100;

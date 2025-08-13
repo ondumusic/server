@@ -4,13 +4,16 @@ import { PauseIcon } from "../components/icons/PauseIcon";
 import { PlayIcon } from "../components/icons/PlayIcon";
 import { PrevIcon } from "../components/icons/PrevIcon";
 import { NowPlaying } from "../components/NowPlaying";
+import { useAudioManager } from "../hooks/useAudioManager";
 import { usePlayer } from "../hooks/usePlayer";
 
 export function Player() {
   const { t } = useTranslation();
+  const { scrubAndPlay } = useAudioManager();
   const {
     isPlaying,
     setIsPlaying,
+    currentTime,
     hasNextTrack,
     hasPrevTrack,
     prevTrack,
@@ -22,9 +25,11 @@ export function Player() {
       <div className="flex justify-center items-center w-full">
         <button
           type="button"
-          disabled={!hasPrevTrack}
           className="disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md cursor-pointer"
-          onClick={() => prevTrack()}
+          onClick={() => {
+            if (hasPrevTrack && currentTime <= 2) prevTrack();
+            else scrubAndPlay(0);
+          }}
         >
           <PrevIcon
             className="size-6"

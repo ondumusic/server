@@ -26,6 +26,8 @@ export function useAudioManager() {
 function createShadowAudioElement() {
   const audioEl = new Audio();
   audioEl.classList.add("hidden");
+  // audioEl.classList.add("absolute", "top-0", "left-0");
+  // audioEl.controls = true;
   document.body.appendChild(audioEl);
   return audioEl;
 }
@@ -48,6 +50,7 @@ export const AudioManagerProvider = ({ children }: Props) => {
     usePlayer();
 
   // currentTime polling
+  // biome-ignore lint/correctness/useExhaustiveDependencies(setCurrentTime): suppress dependency setCurrentTime
   useEffect(() => {
     if (pollRef.current) cancelAnimationFrame(pollRef.current);
     if (!isPolling || !currentTrack || !isPlaying) return;
@@ -66,14 +69,13 @@ export const AudioManagerProvider = ({ children }: Props) => {
     };
 
     pollCurrentTime();
-  }, [currentTrack, isPlaying, isPolling, setCurrentTime]);
+  }, [currentTrack, isPlaying, isPolling]);
 
   // Pause/resume functionality
   useEffect(() => {
-    if (!currentTrack) return;
     if (!audioRef.current || !shadowRef.current) return;
 
-    if (!isPlaying && audioRef.current.state === "running") {
+    if (!currentTrack || (!isPlaying && audioRef.current.state === "running")) {
       audioRef.current.suspend();
       shadowRef.current.pause();
       setIsPolling(false);
@@ -150,6 +152,8 @@ export const AudioManagerProvider = ({ children }: Props) => {
     abortRef.current = new AbortController();
 
     // Reset initial states
+    if (shadowRef.current) shadowRef.current.remove();
+    if (pollRef.current) cancelAnimationFrame(pollRef.current);
     setIsPolling(false);
     setCurrentTime(0);
     setDuration(0);
@@ -171,9 +175,14 @@ export const AudioManagerProvider = ({ children }: Props) => {
         bufferRef.current = audioBuf;
         startTimeRef.current = audioRef.current.currentTime;
 
-        if (!shadowRef.current) shadowRef.current = createShadowAudioElement();
-        if (shadowBlobUrlRef.current)
+        if (!shadowRef.current) {
+          shadowRef.current = createShadowAudioElement();
+        }
+
+        if (shadowBlobUrlRef.current) {
           URL.revokeObjectURL(shadowBlobUrlRef.current);
+        }
+
         shadowBlobUrlRef.current = generateSilentTrack(
           audioBuf.duration,
           audioRef.current.sampleRate,
@@ -181,6 +190,7 @@ export const AudioManagerProvider = ({ children }: Props) => {
         shadowRef.current.src = shadowBlobUrlRef.current;
 
         setDuration(audioBuf.duration);
+        setCurrentTime(0);
         setIsPolling(true);
         scrubTo(0, true);
       })
