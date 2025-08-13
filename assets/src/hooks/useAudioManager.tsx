@@ -13,6 +13,7 @@ export interface AudioManagerContext {
   isPlaying: boolean;
   duration: number;
   currentTime: number;
+  progressPercentage: number;
 
   // State management
   setCurrentTime(currentTime: number): void;
@@ -28,6 +29,7 @@ const AudioManagerContext = createContext<AudioManagerContext>({
   isPlaying: false,
   currentTime: 0,
   duration: 0,
+  progressPercentage: 0,
   setCurrentTime: (_currentTime) => {},
   setDuration: (_duration) => {},
   setIsPlaying: (_isPlaying) => {},
@@ -214,14 +216,18 @@ export const AudioManagerProvider = ({ children }: Props) => {
       .catch(console.error);
   }, [currentTrack]);
 
+  // Calculate the current playback percentage
+  let progressPercentage = (currentTime / duration) * 100;
+  if (Number.isNaN(progressPercentage)) progressPercentage = 0;
+
   const value = {
     isPlaying,
     duration,
     currentTime,
+    progressPercentage,
     setCurrentTime,
     setDuration,
     setIsPlaying,
-
     scrubTo,
     scrubAndPlay(updatedTime: number) {
       scrubTo(updatedTime, true);

@@ -81,6 +81,7 @@ export const PlayerProvider = ({ children }: Props) => {
     setCurrentTime,
     duration,
     setDuration,
+    progressPercentage,
     scrubAndPlay,
   } = useAudioManager();
 
@@ -189,10 +190,6 @@ export const PlayerProvider = ({ children }: Props) => {
     });
   }, [isPlaying, currentTrack, currentTime]);
 
-  // Calculate the current playback percentage
-  let progressPercentage = (currentTime / duration) * 100;
-  if (Number.isNaN(progressPercentage)) progressPercentage = 0;
-
   const value = {
     isVisible,
 
@@ -226,7 +223,7 @@ export const PlayerProvider = ({ children }: Props) => {
       // If the user wants to play the current track from the beginning again
       // it technically doesn't change the state.. but we can seek to 0.
       if (isPlaying && startWithTrack === currentTrack) {
-        scrubAndPlay(0)
+        scrubAndPlay(0);
       }
     },
   };
