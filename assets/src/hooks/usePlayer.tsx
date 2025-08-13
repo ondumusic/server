@@ -109,7 +109,6 @@ export const PlayerProvider = ({ children }: Props) => {
   // Experimenting with MediaSession
   useEffect(() => {
     if (!currentTrack) {
-      navigator.mediaSession.playbackState = "none";
       navigator.mediaSession.metadata = null;
       navigator.mediaSession.setActionHandler("play", null);
       navigator.mediaSession.setActionHandler("pause", null);
@@ -122,7 +121,6 @@ export const PlayerProvider = ({ children }: Props) => {
       // seekforward
       // seekto
     } else {
-      navigator.mediaSession.playbackState = "playing";
       navigator.mediaSession.metadata = new MediaMetadata({
         title: currentTrack?.name,
         artist: currentTrack?.artist?.name,

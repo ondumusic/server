@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { usePlayer } from "../hooks/usePlayer";
+import { generateSilentTrack } from "../utils/generateSilentTrack";
 
 export interface AudioManagerContext {
   scrubTo(updatedTime: number): void;
@@ -22,11 +23,20 @@ export function useAudioManager() {
   return useContext(AudioManagerContext);
 }
 
+function createShadowAudioElement() {
+  const audioEl = new Audio();
+  audioEl.classList.add("hidden");
+  document.body.appendChild(audioEl);
+  return audioEl;
+}
+
 interface Props {
   children: ReactNode;
 }
 
 export const AudioManagerProvider = ({ children }: Props) => {
+  const shadowRef = useRef<HTMLAudioElement>(null);
+  const shadowBlobUrlRef = useRef<string>(null);
   const audioRef = useRef<AudioContext>(new AudioContext());
   const sourceRef = useRef<AudioBufferSourceNode>(null);
   const abortRef = useRef<AbortController>(null);
@@ -60,16 +70,19 @@ export const AudioManagerProvider = ({ children }: Props) => {
 
   // Pause/resume functionality
   useEffect(() => {
-    if (!audioRef.current) return;
+    if (!currentTrack) return;
+    if (!audioRef.current || !shadowRef.current) return;
 
     if (!isPlaying && audioRef.current.state === "running") {
       audioRef.current.suspend();
+      shadowRef.current.pause();
       setIsPolling(false);
     } else if (isPlaying) {
+      shadowRef.current.play();
       audioRef.current.resume();
       setIsPolling(true);
     }
-  }, [isPlaying]);
+  }, [isPlaying, currentTrack]);
 
   const cleanupSourceNode = (sourceNode: AudioBufferSourceNode) => {
     sourceNode.disconnect();
@@ -79,7 +92,7 @@ export const AudioManagerProvider = ({ children }: Props) => {
 
   // Scrubbing/seeking functionality
   const scrubTo = (updatedTime: number, continuePlayback: boolean = false) => {
-    if (!audioRef.current || !bufferRef.current) return;
+    if (!audioRef.current || !bufferRef.current || !shadowRef.current) return;
 
     // Cleanup the previous source node
     if (sourceRef.current) cleanupSourceNode(sourceRef.current);
@@ -103,9 +116,13 @@ export const AudioManagerProvider = ({ children }: Props) => {
       sourceRef.current.start(0, updatedTime, 0.1);
     }
 
+    // Also update currentTime on the shadow audio element
+    shadowRef.current.currentTime = updatedTime;
+
     // If the state is suspended, attempt to resume
-    if (audioRef.current.state === "suspended") {
+    if (isPlaying && audioRef.current.state === "suspended") {
       audioRef.current.resume();
+      shadowRef.current.play();
     }
 
     // Update the startTime ref and currentTime state
@@ -153,6 +170,16 @@ export const AudioManagerProvider = ({ children }: Props) => {
 
         bufferRef.current = audioBuf;
         startTimeRef.current = audioRef.current.currentTime;
+
+        if (!shadowRef.current) shadowRef.current = createShadowAudioElement();
+        if (shadowBlobUrlRef.current)
+          URL.revokeObjectURL(shadowBlobUrlRef.current);
+        shadowBlobUrlRef.current = generateSilentTrack(
+          audioBuf.duration,
+          audioRef.current.sampleRate,
+        );
+        shadowRef.current.src = shadowBlobUrlRef.current;
+
         setDuration(audioBuf.duration);
         setIsPolling(true);
         scrubTo(0, true);

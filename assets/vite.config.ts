@@ -5,10 +5,15 @@ import { defineConfig, loadEnv } from "vite";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
+  console.log(mode);
+
   return {
     publicDir: "public/",
     plugins: [tailwindcss(), react()],
     build: {
+      minify: mode === "dev" ? false : "esbuild",
+      cssMinify: mode === "dev" ? false : "lightningcss",
+      sourcemap: mode === "dev",
       outDir: "../priv/static",
       emptyOutDir: true,
       copyPublicDir: true,
