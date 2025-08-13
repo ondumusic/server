@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
 import type { Album, Track } from "../types";
 import { findCachedItem } from "../utils/findCachedItem";
@@ -73,14 +74,24 @@ export const PlayerProvider = ({ children }: Props) => {
     hasNextTrack,
   } = useQueue();
 
+  const {
+    isPlaying,
+    setIsPlaying,
+    currentTime,
+    setCurrentTime,
+    duration,
+    setDuration,
+    scrubAndPlay,
+  } = useAudioManager();
+
   const [isVisible, setIsVisible] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
 
   // If the player should be playing but there is no current track, for example
   // because the playlist has reached its end, we can update the state to
   // reflect this.
+  // biome-ignore lint/correctness/useExhaustiveDependencies(setIsPlaying): suppress dependency setIsPlaying
+  // biome-ignore lint/correctness/useExhaustiveDependencies(setCurrentTime): suppress dependency setCurrentTime
+  // biome-ignore lint/correctness/useExhaustiveDependencies(setDuration): suppress dependency setDuration
   useEffect(() => {
     if (isPlaying && !currentTrack) {
       setIsPlaying(false);
@@ -99,6 +110,7 @@ export const PlayerProvider = ({ children }: Props) => {
   }, [currentTrack]);
 
   // Experimenting with MediaSession
+  // biome-ignore lint/correctness/useExhaustiveDependencies(setIsPlaying): suppress dependency setIsPlaying
   useEffect(() => {
     if (!currentTrack) {
       navigator.mediaSession.metadata = null;
@@ -211,12 +223,11 @@ export const PlayerProvider = ({ children }: Props) => {
       replaceQueue(tracks, startWithTrack);
       if (!isPlaying) setIsPlaying(true);
 
-      // // If the user wants to play the current track from the beginning again
-      // // it technically doesn't change the state.. but we can seek to 0.
-      // if (isPlaying && startWithTrack === currentTrack) {
-      //   if (!audioRef.current) return;
-      //   audioRef.current.currentTime = 0;
-      // }
+      // If the user wants to play the current track from the beginning again
+      // it technically doesn't change the state.. but we can seek to 0.
+      if (isPlaying && startWithTrack === currentTrack) {
+        scrubAndPlay(0)
+      }
     },
   };
 

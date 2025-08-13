@@ -19,13 +19,13 @@ if (appRoot) {
     <StrictMode>
       <Suspense>
         <QueueProvider>
-          <PlayerProvider>
-            <AudioManagerProvider>
+          <AudioManagerProvider>
+            <PlayerProvider>
               <QueryClientProvider client={queryClient}>
                 <RouterProvider router={router} />
               </QueryClientProvider>
-            </AudioManagerProvider>
-          </PlayerProvider>
+            </PlayerProvider>
+          </AudioManagerProvider>
         </QueueProvider>
       </Suspense>
     </StrictMode>,

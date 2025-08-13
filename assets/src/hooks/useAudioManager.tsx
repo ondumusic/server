@@ -6,15 +6,31 @@ import {
   useRef,
   useState,
 } from "react";
-import { usePlayer } from "../hooks/usePlayer";
+import { useQueue } from "../hooks/useQueue";
 import { generateSilentTrack } from "../utils/generateSilentTrack";
 
 export interface AudioManagerContext {
+  isPlaying: boolean;
+  duration: number;
+  currentTime: number;
+
+  // State management
+  setCurrentTime(currentTime: number): void;
+  setDuration(duration: number): void;
+  setIsPlaying(isPlaying: boolean): void;
+
+  // Scrubbing functionality
   scrubTo(updatedTime: number): void;
   scrubAndPlay(updatedTime: number): void;
 }
 
 const AudioManagerContext = createContext<AudioManagerContext>({
+  isPlaying: false,
+  currentTime: 0,
+  duration: 0,
+  setCurrentTime: (_currentTime) => {},
+  setDuration: (_duration) => {},
+  setIsPlaying: (_isPlaying) => {},
   scrubTo: (_updatedTime) => {},
   scrubAndPlay: (_updatedTime) => {},
 });
@@ -46,11 +62,13 @@ export const AudioManagerProvider = ({ children }: Props) => {
   const startTimeRef = useRef<number>(null);
   const bufferRef = useRef<AudioBuffer>(null);
   const [isPolling, setIsPolling] = useState(false);
-  const { isPlaying, currentTrack, nextTrack, setDuration, setCurrentTime } =
-    usePlayer();
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const { currentTrack, nextTrack } = useQueue();
 
   // currentTime polling
-  // biome-ignore lint/correctness/useExhaustiveDependencies(setCurrentTime): suppress dependency setCurrentTime
   useEffect(() => {
     if (pollRef.current) cancelAnimationFrame(pollRef.current);
     if (!isPolling || !currentTrack || !isPlaying) return;
@@ -134,7 +152,6 @@ export const AudioManagerProvider = ({ children }: Props) => {
 
   // Everything AudioContext (fetch, play, etc)
   // biome-ignore lint/correctness/useExhaustiveDependencies(cleanupSourceNode): suppress dependency cleanupSourceNode
-  // biome-ignore lint/correctness/useExhaustiveDependencies(setCurrentTime): suppress dependency setCurrentTime
   // biome-ignore lint/correctness/useExhaustiveDependencies(scrubTo): suppress dependency scrubTo
   useEffect(() => {
     if (!currentTrack) return;
@@ -195,9 +212,16 @@ export const AudioManagerProvider = ({ children }: Props) => {
         scrubTo(0, true);
       })
       .catch(console.error);
-  }, [currentTrack, setDuration]);
+  }, [currentTrack]);
 
   const value = {
+    isPlaying,
+    duration,
+    currentTime,
+    setCurrentTime,
+    setDuration,
+    setIsPlaying,
+
     scrubTo,
     scrubAndPlay(updatedTime: number) {
       scrubTo(updatedTime, true);
