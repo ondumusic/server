@@ -38,49 +38,57 @@ export function NowPlaying() {
   };
 
   return (
-    <div className="flex-shrink-0 w-1/2 max-w-xl bg-emerald-700/60 p-2 rounded-lg relative overflow-hidden">
-      <div className="flex justify-between items-end tabular-nums text-white/70 pb-1">
-        <div className="overflow-hidden mx-12 order-2">
-          <h4 className="whitespace-nowrap text-ellipsis overflow-hidden text-white/90 font-semibold">
-            {currentTrack?.name}
-          </h4>
-          <h5 className="whitespace-nowrap text-ellipsis overflow-hidden mx-8">
-            {currentTrack?.artist?.name} - {album?.name}
-          </h5>
+    <div className="flex-shrink-0 relative w-1/2 max-w-xl select-none group/player">
+      <div className="relative bg-emerald-700/60 p-2 rounded-lg overflow-hidden cursor-default">
+        <div className="flex justify-between items-end tabular-nums text-white/70 pb-1">
+          <div className="overflow-hidden mx-12 order-2">
+            <h4 className="whitespace-nowrap text-ellipsis overflow-hidden text-white/90 font-semibold">
+              {currentTrack?.name}
+            </h4>
+            <h5 className="whitespace-nowrap text-ellipsis overflow-hidden mx-8">
+              {currentTrack?.artist?.name} - {album?.name}
+            </h5>
+          </div>
+
+          <span className="flex-shrink-0 text-xs order-1">
+            {formatDuration(currentTime)}
+          </span>
+          <span className="flex-shrink-0 text-xs order-3">
+            {formatDuration(duration)}
+          </span>
         </div>
 
-        <span className="flex-shrink-0 text-xs order-1">
-          {formatDuration(currentTime)}
-        </span>
-        <span className="flex-shrink-0 text-xs order-3">
-          {formatDuration(duration)}
-        </span>
+        <div className="absolute z-[10] bottom-0 left-0 right-0 bg-emerald-300/40 h-1">
+          <div
+            className="h-1 rounded-tr-lg rounded-br-lg bg-emerald-200"
+            style={{ width: `${progressPercentage}%` }}
+          ></div>
+        </div>
       </div>
-
-      <div className="absolute bottom-0 left-0 right-0 bg-emerald-300/40 h-1 overflow-hidden">
-        <input
-          type="range"
-          className="
-            appearance-none bg-transparent
+      <input
+        type="range"
+        className="
+            appearance-none bg-transparent z-[20]
             absolute left-0 right-0 bottom-0
             [&::-webkit-slider-runnable-track]:bg-transparent
             [&::-webkit-slider-thumb]:appearance-none
-            [&::-webkit-slider-thumb]:h-1
-            [&::-webkit-slider-thumb]:w-2
+            [&::-webkit-slider-thumb]:h-3
+            [&::-webkit-slider-thumb]:w-3
+            [&::-webkit-slider-thumb]:rounded-md
+            [&::-webkit-slider-thumb]:transition-all
+            [&::-webkit-slider-thumb]:translate-y-[4px]
+            [&::-webkit-slider-thumb]:translate-x-[-1px]
             [&::-webkit-slider-thumb]:bg-transparent
+            group-hover/player:[&::-webkit-slider-thumb]:bg-white
+            group-hover/player:[&::-webkit-slider-thumb]:shadow-xl
           "
-          value={currentTime}
-          min={0}
-          max={duration}
-          onChange={onScrub}
-          onMouseDown={onScrubStart}
-          onMouseUp={onScrubEnd}
-        />
-        <div
-          className="h-1 bg-emerald-200 rounded-lg"
-          style={{ width: `${progressPercentage}%` }}
-        ></div>
-      </div>
+        value={currentTime}
+        min={0}
+        max={duration}
+        onChange={onScrub}
+        onMouseDown={onScrubStart}
+        onMouseUp={onScrubEnd}
+      />
     </div>
   );
 }
