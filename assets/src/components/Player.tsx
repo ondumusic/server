@@ -18,12 +18,12 @@ export function Player() {
   } = usePlayer();
 
   return (
-    <div className="flex-shrink-0 bg-emerald-600 text-white p-3 text-sm text-center">
+    <div className="flex-shrink-0 bg-emerald-600 text-white p-3 text-sm text-center select-none">
       <div className="flex justify-center items-center w-full">
         <button
           type="button"
           disabled={!hasPrevTrack}
-          className="disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md"
+          className="disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md cursor-pointer"
           onClick={() => prevTrack()}
         >
           <PrevIcon
@@ -35,7 +35,7 @@ export function Player() {
         </button>
         <button
           type="button"
-          className="disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md"
+          className="disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md cursor-pointer"
           onClick={() => setIsPlaying(!isPlaying)}
         >
           {isPlaying ? (
@@ -57,7 +57,7 @@ export function Player() {
         <button
           type="button"
           disabled={!hasNextTrack}
-          className="disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md"
+          className="disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md cursor-pointer"
           onClick={() => nextTrack()}
         >
           <NextIcon
