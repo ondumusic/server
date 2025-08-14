@@ -1,4 +1,6 @@
 defmodule MusicBoxWeb.LibraryJSON do
+  use MusicBoxWeb, :verified_routes
+
   def artists(%{page: page}) do
     %{
       pageNumber: page.page_number,
@@ -49,7 +51,8 @@ defmodule MusicBoxWeb.LibraryJSON do
       name: track.name,
       disc: track.disc,
       number: track.number,
-      duration: track.duration
+      duration: track.duration,
+      streamUrl: url(~p"/stream/#{track}")
     }
   end
 end

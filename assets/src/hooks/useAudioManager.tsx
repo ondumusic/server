@@ -127,7 +127,7 @@ export const AudioManagerProvider = ({ children }: Props) => {
     <AudioManagerContext.Provider value={value}>
       <audio
         ref={audioRef}
-        src={currentTrack && `/stream/${currentTrack.id}`}
+        src={currentTrack?.streamUrl}
         preload="auto"
         onLoadedMetadata={onLoadedMetadata}
         onTimeUpdate={onTimeUpdate}

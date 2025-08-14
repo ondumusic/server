@@ -30,6 +30,7 @@ export interface Track {
   disc: number;
   number: number;
   duration: number;
+  streamUrl: string;
 }
 
 export interface Disc {
