@@ -91,21 +91,6 @@ const NavigatorMediaSessionProvider = ({ children }: Props) => {
       console.log("nexttrack");
       nextTrack();
     });
-
-    navigator.mediaSession.setActionHandler("seekbackward", (details) => {
-      // TODO: This does not appear to be called (Safari, macOS)
-      console.log("seekbackward", details.seekOffset || 15);
-    });
-
-    navigator.mediaSession.setActionHandler("seekforward", (details) => {
-      // TODO: This does not appear to be called (Safari, macOS)
-      console.log("seekforward", details.seekOffset || 15);
-    });
-
-    navigator.mediaSession.setActionHandler("seekto", (details) => {
-      // TODO: This does not appear to be called (Safari, macOS)
-      console.log("seekto", details.fastSeek, details.seekTime);
-    });
   }, [currentTime]);
 
   const value = {};

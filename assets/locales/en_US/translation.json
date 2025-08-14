@@ -9,6 +9,7 @@
     "discNumber": "Disc {{disc}}"
   },
   "button": {
+    "playSelectedTrack": "Play {{ trackName }}",
     "previousTrack": "Previous Track",
     "pauseCurrentTrack": "Pause Current Track",
     "playCurrentTrack": "Play Current Track",

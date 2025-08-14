@@ -71,11 +71,11 @@ export function ArtistAlbumListItem({ album }: Props) {
                   </Trans>
                 </h3>
               ) : null}
-              <ul className="space-y-2 text-sm">
+              <ul className="text-sm">
                 {disc.tracks.map((track: Track) => (
                   <li
                     key={track.id}
-                    className="relative flex justify-between group/song"
+                    className="relative py-1.5 flex justify-between cursor-pointer group/song"
                     onClick={() => enqueueAndPlay(album.tracks, track)}
                     onKeyDown={() => enqueueAndPlay(album.tracks, track)}
                   >
