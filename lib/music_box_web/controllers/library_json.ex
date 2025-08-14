@@ -37,6 +37,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       artistId: album.artist_id,
       name: album.name,
       releaseYear: album.release_year,
+      isUnknown: album.is_unknown,
       tracks: Enum.map(tracks, &track(%{track: &1, album: album}))
     }
   end

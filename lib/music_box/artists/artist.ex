@@ -1,5 +1,6 @@
 defmodule MusicBox.Artists.Artist do
   use Ecto.Schema
+  import Ecto.Query
 
   alias MusicBox.Tracks.Track
   alias MusicBox.Albums.Album
@@ -16,5 +17,23 @@ defmodule MusicBox.Artists.Artist do
     has_many :tracks, Track
 
     timestamps(type: :utc_datetime)
+  end
+
+  def preloaded(query \\ nil) do
+    query =
+      if query,
+        do: query,
+        else: from(a in __MODULE__, as: :artist)
+
+    album_count_query =
+      from(al in Album,
+        where: al.artist_id == parent_as(:artist).id,
+        select: count(al.artist_id)
+      )
+
+    query
+    |> select_merge(%{
+      album_count: subquery(album_count_query)
+    })
   end
 end

@@ -44,4 +44,9 @@ defmodule MusicBox.FileScanner.Utils do
       _ -> {:error, :unknown}
     end
   end
+
+  def random_hex(len) do
+    :crypto.strong_rand_bytes(len)
+    |> Base.encode16(case: :lower)
+  end
 end

@@ -23,10 +23,10 @@ defmodule MusicBox.FileScanner.Pipeline do
         transformer: {__MODULE__, :transform, [scan_type: scan_type]}
       ],
       processors: [
-        default: [concurrency: 10]
+        default: [concurrency: 5]
       ],
       batchers: [
-        default: [concurrency: 5, batch_size: 10]
+        default: [concurrency: 5, batch_size: 20]
       ]
     )
   end

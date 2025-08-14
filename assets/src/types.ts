@@ -18,6 +18,7 @@ export interface Album {
   name: string;
   releaseYear: number;
   tracks: Track[];
+  isUnknown: boolean;
 }
 
 export interface Track {

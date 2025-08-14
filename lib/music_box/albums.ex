@@ -6,19 +6,20 @@ defmodule MusicBox.Albums do
   alias MusicBox.Artists.Artist
 
   def paginate_albums(params) do
-    from(a in Album,
-      order_by: [desc_nulls_last: a.release_year, asc: a.name]
+    Album.preloaded()
+    |> order_by([album: al, artist: a],
+      asc: a.name,
+      desc_nulls_last: al.release_year,
+      asc: al.name
     )
     |> Repo.paginate(params)
   end
 
   def paginate_albums_for_artist(%Artist{id: artist_id}, params) do
-    from(a in Album,
-      where: a.artist_id == ^artist_id,
-      order_by: [desc_nulls_last: a.release_year, asc: a.name],
-      preload: [tracks: [:artist]]
-    )
-    |> Repo.paginate(params, default_limit: 10)
+    Album.preloaded()
+    |> where([album: al], al.artist_id == ^artist_id)
+    |> order_by([album: al], desc_nulls_last: al.release_year, asc: al.name)
+    |> Repo.paginate(params)
   end
 
   def get_album!(id) do
