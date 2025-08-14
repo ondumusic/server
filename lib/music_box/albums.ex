@@ -23,21 +23,15 @@ defmodule MusicBox.Albums do
   end
 
   def get_album!(id) do
-    from(a in Album,
-      order_by: [asc: a.name],
-      where: a.id == ^id,
-      preload: [tracks: [:artist]]
-    )
+    Album.preloaded()
+    |> where([album: al], al.id == ^id)
     |> Repo.one!()
   end
 
   def get_album_for_artist!(%Artist{id: artist_id}, id_or_slug) do
-    from(a in Album,
-      order_by: [asc: a.name],
-      where: a.artist_id == ^artist_id,
-      where: a.id == ^id_or_slug or a.slug == ^id_or_slug,
-      preload: [tracks: [:artist]]
-    )
+    Album.preloaded()
+    |> where([album: al], al.artist_id == ^artist_id)
+    |> where([album: al], al.id == ^id_or_slug or al.slug == ^id_or_slug)
     |> Repo.one!()
   end
 end
