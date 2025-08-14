@@ -43,6 +43,7 @@ defmodule MusicBoxWeb.LibraryJSON do
     %{
       id: track.id,
       artistId: track.artist_id,
+      albumArtistId: album.artist_id,
       artist: artist(%{artist: track.artist}),
       albumId: album.id,
       name: track.name,

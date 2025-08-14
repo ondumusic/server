@@ -31,7 +31,7 @@ interface Props {
 
 export const QueueProvider = ({ children }: Props) => {
   const [queue, setQueue] = useState<Track[]>([]);
-  const [queueIndex, setQueueIndex] = useState(0);
+  const [queueIndex, setQueueIndex] = useState(-1);
   const currentTrack = queue[queueIndex] ?? undefined;
   const hasNextTrack = queueIndex < queue.length - 1;
   const hasPrevTrack = queueIndex > 0;
@@ -42,11 +42,15 @@ export const QueueProvider = ({ children }: Props) => {
     hasPrevTrack,
     hasNextTrack,
     prevTrack() {
-      const prevTrackIndex = Math.max(0, queueIndex - 1);
+      const prevTrackIndex = Math.max(-1, queueIndex - 1);
       setQueueIndex(prevTrackIndex);
     },
     nextTrack() {
-      const nextTrackIndex = Math.min(queue.length, queueIndex + 1);
+      let nextTrackIndex = queueIndex + 1;
+      if (nextTrackIndex >= queue.length) {
+        nextTrackIndex = -1;
+      }
+
       setQueueIndex(nextTrackIndex);
     },
     replaceQueue(tracks: Track[], startWithTrack?: Track) {

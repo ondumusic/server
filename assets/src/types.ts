@@ -23,6 +23,7 @@ export interface Album {
 export interface Track {
   id: UUID;
   artistId: UUID;
+  albumArtistId: UUID;
   albumId: UUID;
   artist: Artist;
   name: string;

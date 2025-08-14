@@ -21,15 +21,15 @@ interface Props {
 }
 
 const NavigatorMediaSessionProvider = ({ children }: Props) => {
-  const { currentTrack, prevTrack, nextTrack, hasNextTrack, hasPrevTrack } =
-    useQueue();
-  const { isPlaying, setIsPlaying, currentTime, duration } = useAudioManager();
+  const { currentTrack, prevTrack, nextTrack } = useQueue();
+  const { isPlaying, setIsPlaying, currentTime, duration, scrubAndPlay } =
+    useAudioManager();
 
   // Find the currentAlbum from cache so we can display it in the mediaSession
   const currentAlbum: Album | undefined = useMemo(() => {
     if (!currentTrack) return undefined;
     return findCachedItem<Album>(
-      ["albumList", currentTrack?.artistId],
+      ["albumList", currentTrack?.albumArtistId],
       currentTrack?.albumId,
     );
   }, [currentTrack]);
@@ -63,62 +63,50 @@ const NavigatorMediaSessionProvider = ({ children }: Props) => {
 
   // Setup the mediaSession Action Handlers
   // biome-ignore lint/correctness/useExhaustiveDependencies(setIsPlaying): suppress dependency setIsPlaying
+  // biome-ignore lint/correctness/useExhaustiveDependencies(scrubAndPlay): suppress dependency scrubAndPlay
   // biome-ignore lint/correctness/useExhaustiveDependencies(prevTrack): suppress dependency prevTrack
   // biome-ignore lint/correctness/useExhaustiveDependencies(nextTrack): suppress dependency nextTrack
   useEffect(() => {
-    if (!currentTrack) {
-      navigator.mediaSession.setActionHandler("play", null);
-      navigator.mediaSession.setActionHandler("pause", null);
-      navigator.mediaSession.setActionHandler("stop", null);
-      navigator.mediaSession.setActionHandler("previoustrack", null);
-      navigator.mediaSession.setActionHandler("nexttrack", null);
-      navigator.mediaSession.setActionHandler("seekbackward", null);
-      navigator.mediaSession.setActionHandler("seekforward", null);
-      navigator.mediaSession.setActionHandler("seekto", null);
-    } else {
-      navigator.mediaSession.setActionHandler("play", () => {
-        console.log("play");
-        setIsPlaying(true);
-      });
+    navigator.mediaSession.setActionHandler("play", () => {
+      console.log("play");
+      setIsPlaying(true);
+    });
 
-      navigator.mediaSession.setActionHandler("pause", () => {
-        console.log("pause");
-        setIsPlaying(false);
-      });
+    navigator.mediaSession.setActionHandler("pause", () => {
+      console.log("pause");
+      setIsPlaying(false);
+    });
 
-      navigator.mediaSession.setActionHandler("stop", () => {
-        console.log("stop");
-        setIsPlaying(false);
-      });
+    navigator.mediaSession.setActionHandler("stop", () => {
+      console.log("stop");
+      setIsPlaying(false);
+    });
 
-      navigator.mediaSession.setActionHandler("previoustrack", () => {
-        console.log("previoustrack");
-        if (hasPrevTrack) prevTrack();
-        else setIsPlaying(false);
-      });
+    navigator.mediaSession.setActionHandler("previoustrack", () => {
+      if (currentTime <= 2) prevTrack();
+      else scrubAndPlay(0);
+    });
 
-      navigator.mediaSession.setActionHandler("nexttrack", () => {
-        console.log("nexttrack");
-        if (hasNextTrack) nextTrack();
-        else setIsPlaying(false);
-      });
+    navigator.mediaSession.setActionHandler("nexttrack", () => {
+      console.log("nexttrack");
+      nextTrack();
+    });
 
-      navigator.mediaSession.setActionHandler("seekbackward", (details) => {
-        // TODO: This does not appear to be called (Safari, macOS)
-        console.log("seekbackward", details.seekOffset || 15);
-      });
+    navigator.mediaSession.setActionHandler("seekbackward", (details) => {
+      // TODO: This does not appear to be called (Safari, macOS)
+      console.log("seekbackward", details.seekOffset || 15);
+    });
 
-      navigator.mediaSession.setActionHandler("seekforward", (details) => {
-        // TODO: This does not appear to be called (Safari, macOS)
-        console.log("seekforward", details.seekOffset || 15);
-      });
+    navigator.mediaSession.setActionHandler("seekforward", (details) => {
+      // TODO: This does not appear to be called (Safari, macOS)
+      console.log("seekforward", details.seekOffset || 15);
+    });
 
-      navigator.mediaSession.setActionHandler("seekto", (details) => {
-        // TODO: This does not appear to be called (Safari, macOS)
-        console.log("seekto", details.fastSeek, details.seekTime);
-      });
-    }
-  }, [hasNextTrack, hasPrevTrack, currentTrack]);
+    navigator.mediaSession.setActionHandler("seekto", (details) => {
+      // TODO: This does not appear to be called (Safari, macOS)
+      console.log("seekto", details.fastSeek, details.seekTime);
+    });
+  }, [currentTime]);
 
   const value = {};
   return (

@@ -6,22 +6,29 @@ import { findCachedItem } from "../utils/findCachedItem";
 import { formatDuration } from "../utils/formatDuration";
 
 export function NowPlaying() {
-  const { currentTime, duration, progressPercentage, scrubTo, scrubAndPlay } =
-    useAudioManager();
+  const {
+    setIsPlaying,
+    currentTime,
+    duration,
+    progressPercentage,
+    scrubTo,
+    scrubAndPlay,
+  } = useAudioManager();
   const { currentTrack } = useQueue();
   const scrubTime = useRef<number>(0);
   const isScrubbing = useRef<boolean>(false);
 
-  const album = useMemo(() => {
+  const currentAlbum = useMemo(() => {
     if (!currentTrack) return;
     return findCachedItem<Album>(
-      ["albumList", currentTrack.artistId],
+      ["albumList", currentTrack.albumArtistId],
       currentTrack.albumId,
     );
   }, [currentTrack]);
 
   const onScrubStart = () => {
     isScrubbing.current = true;
+    setIsPlaying(false);
   };
 
   const onScrub = (event: ChangeEvent<HTMLInputElement>) => {
@@ -46,7 +53,7 @@ export function NowPlaying() {
               {currentTrack?.name}
             </h4>
             <h5 className="whitespace-nowrap text-ellipsis overflow-hidden mx-8">
-              {currentTrack?.artist?.name} - {album?.name}
+              {currentTrack?.artist?.name} - {currentAlbum?.name}
             </h5>
           </div>
 

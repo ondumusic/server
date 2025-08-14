@@ -1,4 +1,5 @@
 import {
+  type ChangeEvent,
   createContext,
   type ReactNode,
   useContext,
@@ -7,7 +8,6 @@ import {
   useState,
 } from "react";
 import { useQueue } from "../hooks/useQueue";
-import { generateSilentTrack } from "../utils/generateSilentTrack";
 
 export interface AudioManagerContext {
   isPlaying: boolean;
@@ -41,188 +41,72 @@ export function useAudioManager() {
   return useContext(AudioManagerContext);
 }
 
-function createShadowAudioElement() {
-  const audioEl = new Audio();
-  audioEl.classList.add("hidden");
-  // audioEl.classList.add("absolute", "top-0", "left-0");
-  // audioEl.controls = true;
-  document.body.appendChild(audioEl);
-  return audioEl;
-}
-
 interface Props {
   children: ReactNode;
 }
 
 export const AudioManagerProvider = ({ children }: Props) => {
-  const shadowRef = useRef<HTMLAudioElement>(null);
-  const shadowBlobUrlRef = useRef<string>(null);
-  const audioRef = useRef<AudioContext>(new AudioContext());
-  const sourceRef = useRef<AudioBufferSourceNode>(null);
-  const abortRef = useRef<AbortController>(null);
-  const pollRef = useRef<number>(null);
-  const startTimeRef = useRef<number>(null);
-  const bufferRef = useRef<AudioBuffer>(null);
-  const [isPolling, setIsPolling] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const { currentTrack, nextTrack } = useQueue();
 
-  // currentTime polling
-  useEffect(() => {
-    if (pollRef.current) cancelAnimationFrame(pollRef.current);
-    if (!isPolling || !currentTrack || !isPlaying) return;
-
-    // Poll function to get the current playback position
-    const pollCurrentTime = () => {
-      if (audioRef.current && startTimeRef.current !== null) {
-        let currentTime = audioRef.current.currentTime - startTimeRef.current;
-        currentTime = Math.max(0, Math.min(duration, currentTime))
-        setCurrentTime(currentTime);
-      }
-
-      pollRef.current = requestAnimationFrame(pollCurrentTime);
-      return () => {
-        if (pollRef.current) cancelAnimationFrame(pollRef.current);
-      };
-    };
-
-    pollCurrentTime();
-  }, [currentTrack, isPlaying, isPolling]);
-
-  // Pause/resume functionality
-  useEffect(() => {
-    if (!audioRef.current || !shadowRef.current) return;
-
-    if (!currentTrack || !isPlaying) {
-      audioRef.current.suspend();
-      shadowRef.current.pause();
-      setIsPolling(false);
-    } else if (isPlaying) {
-      shadowRef.current.play();
-      audioRef.current.resume();
-      setIsPolling(true);
-    }
-  }, [isPlaying, currentTrack]);
-
-  const cleanupSourceNode = (sourceNode: AudioBufferSourceNode) => {
-    sourceNode.disconnect();
-    sourceNode.removeEventListener("ended", nextTrack);
-    sourceNode.stop(0);
-  };
-
-  // Scrubbing/seeking functionality
-  const scrubTo = (updatedTime: number, continuePlayback: boolean = false) => {
-    if (!audioRef.current || !bufferRef.current || !shadowRef.current) return;
-
-    // Cleanup the previous source node
-    if (sourceRef.current) cleanupSourceNode(sourceRef.current);
-
-    // Create new source node
-    sourceRef.current = audioRef.current.createBufferSource();
-    sourceRef.current.buffer = bufferRef.current;
-    sourceRef.current.connect(audioRef.current.destination);
-
-    // If we are continuing playback assign the events and ensure
-    // polling is enabled again
-    if (continuePlayback) {
-      sourceRef.current.addEventListener("ended", nextTrack);
-      setIsPolling(true);
-    }
-
-    // Ensure updatedTime is within bounds
-    updatedTime = Math.max(0, Math.min(duration, updatedTime))
-
-    // Scrub and preview, or continue playback
-    if (continuePlayback) {
-      sourceRef.current.start(0, updatedTime);
-    } else {
-      sourceRef.current.start(0, updatedTime, 0.1);
-    }
-
-    // Also update currentTime on the shadow audio element
-    shadowRef.current.currentTime = updatedTime;
-
-    // If the state is suspended, attempt to resume
-    if (isPlaying) {
-      if (audioRef.current.state === "suspended") audioRef.current.resume();
-      if (shadowRef.current.paused) shadowRef.current.play();
-    }
-
-    // Update the startTime ref and currentTime state
-    startTimeRef.current = audioRef.current.currentTime - updatedTime;
-    setCurrentTime(updatedTime);
-  };
-
-  // Everything AudioContext (fetch, play, etc)
-  // biome-ignore lint/correctness/useExhaustiveDependencies(cleanupSourceNode): suppress dependency cleanupSourceNode
-  // biome-ignore lint/correctness/useExhaustiveDependencies(scrubTo): suppress dependency scrubTo
-  useEffect(() => {
-    if (!currentTrack) return;
-
-    // If a fetch is still in progress we can abort it.
-    if (abortRef.current) {
-      abortRef.current.abort();
-    }
-
-    // If we are switching songs we should disconnect and stop the current
-    // source (if one is available)
-    if (sourceRef.current) cleanupSourceNode(sourceRef.current);
-
-    // Setup a new abort controller
-    abortRef.current = new AbortController();
-
-    // Ensure the shadow <audio> element (for mediaSession support) exists
-    if (!shadowRef.current) {
-      shadowRef.current = createShadowAudioElement();
-    }
-
-    // Reset initial states
-    if (pollRef.current) cancelAnimationFrame(pollRef.current);
-    setIsPolling(false);
-    setCurrentTime(0);
-    setDuration(0);
-
-    // Get the song
-    fetch(`/stream/${currentTrack.id}`, {
-      signal: abortRef.current.signal,
-    })
-      .then((resp) => resp.arrayBuffer())
-      .then((buf) => {
-        if (abortRef.current?.signal.aborted) return;
-        return audioRef.current?.decodeAudioData(buf);
-      })
-      .then((audioBuf) => {
-        if (!audioBuf) return;
-        if (abortRef.current?.signal.aborted) return;
-        if (!audioRef.current) return;
-        if (!shadowRef.current) return;
-
-        bufferRef.current = audioBuf;
-        startTimeRef.current = audioRef.current.currentTime;
-
-        if (shadowBlobUrlRef.current) {
-          URL.revokeObjectURL(shadowBlobUrlRef.current);
-        }
-
-        shadowBlobUrlRef.current = generateSilentTrack(
-          audioBuf.duration,
-          audioRef.current.sampleRate,
-        );
-        shadowRef.current.src = shadowBlobUrlRef.current;
-
-        setDuration(audioBuf.duration);
-        setCurrentTime(0);
-        setIsPolling(true);
-        scrubTo(0, true);
-      })
-      .catch(console.error);
-  }, [currentTrack]);
-
   // Calculate the current playback percentage
   let progressPercentage = (currentTime / duration) * 100;
   if (Number.isNaN(progressPercentage)) progressPercentage = 0;
+
+  // Pause/resume functionality
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    if (!isPlaying || !currentTrack) {
+      audioRef.current.pause();
+    } else if (isPlaying) {
+      audioRef.current.play();
+    }
+  }, [isPlaying, currentTrack]);
+
+  // Reset when track changes
+  useEffect(() => {
+    if (!currentTrack) {
+      setIsPlaying(false);
+
+      // Make sure to also clear the <audio> tag to avoid the browser
+      // being able to interact with the last played track.
+      if (audioRef.current) {
+        audioRef.current.src = "";
+      }
+    }
+
+    setCurrentTime(0);
+    setDuration(0);
+  }, [currentTrack]);
+
+  // Scrubbing functionality
+  const scrubTo = (updatedTime: number) => {
+    if (!audioRef.current) return;
+
+    // Keep the updatedTime within bounds
+    updatedTime = Math.max(0, Math.min(duration, updatedTime));
+
+    // Set the currentTime
+    setCurrentTime(updatedTime);
+    audioRef.current.currentTime = updatedTime;
+  };
+
+  // Audio Event Listeners
+  const onLoadedMetadata = (event: ChangeEvent<HTMLAudioElement>) => {
+    setDuration(event.target.duration);
+  };
+
+  const onTimeUpdate = (event: ChangeEvent<HTMLAudioElement>) => {
+    setCurrentTime(event.target.currentTime);
+  };
+
+  const onEnded = (_event: ChangeEvent<HTMLAudioElement>) => {
+    nextTrack();
+  };
 
   const value = {
     isPlaying,
@@ -234,12 +118,21 @@ export const AudioManagerProvider = ({ children }: Props) => {
     setIsPlaying,
     scrubTo,
     scrubAndPlay(updatedTime: number) {
-      scrubTo(updatedTime, true);
+      setIsPlaying(true);
+      scrubTo(updatedTime);
     },
   };
 
   return (
     <AudioManagerContext.Provider value={value}>
+      <audio
+        ref={audioRef}
+        src={currentTrack && `/stream/${currentTrack.id}`}
+        preload="auto"
+        onLoadedMetadata={onLoadedMetadata}
+        onTimeUpdate={onTimeUpdate}
+        onEnded={onEnded}
+      />
       {children}
     </AudioManagerContext.Provider>
   );
