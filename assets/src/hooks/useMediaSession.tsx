@@ -10,9 +10,7 @@ import { useQueue } from "../hooks/useQueue";
 import type { Album } from "../types";
 import { findCachedItem } from "../utils/findCachedItem";
 
-export type MediaSessionContext = {};
-
-const MediaSessionContext = createContext<MediaSessionContext>({});
+const MediaSessionContext = createContext({});
 
 export function useMediaSession() {
   return useContext(MediaSessionContext);
@@ -42,10 +40,9 @@ const NavigatorMediaSessionProvider = ({ children }: Props) => {
     if (!currentTrack || duration === 0) return;
     if (!isPlaying) return;
 
-    navigator.mediaSession.playbackState = "playing";
     navigator.mediaSession.setPositionState({
-      duration: duration,
       playbackRate: 1,
+      duration,
       position: currentTime,
     });
   }, [isPlaying, currentTrack, currentTime]);
@@ -80,23 +77,28 @@ const NavigatorMediaSessionProvider = ({ children }: Props) => {
       navigator.mediaSession.setActionHandler("seekto", null);
     } else {
       navigator.mediaSession.setActionHandler("play", () => {
+        console.log("play");
         setIsPlaying(true);
       });
 
       navigator.mediaSession.setActionHandler("pause", () => {
+        console.log("pause");
         setIsPlaying(false);
       });
 
       navigator.mediaSession.setActionHandler("stop", () => {
+        console.log("stop");
         setIsPlaying(false);
       });
 
       navigator.mediaSession.setActionHandler("previoustrack", () => {
+        console.log("previoustrack");
         if (hasPrevTrack) prevTrack();
         else setIsPlaying(false);
       });
 
       navigator.mediaSession.setActionHandler("nexttrack", () => {
+        console.log("nexttrack");
         if (hasNextTrack) nextTrack();
         else setIsPlaying(false);
       });

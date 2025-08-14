@@ -64,7 +64,6 @@ export const AudioManagerProvider = ({ children }: Props) => {
   const startTimeRef = useRef<number>(null);
   const bufferRef = useRef<AudioBuffer>(null);
   const [isPolling, setIsPolling] = useState(false);
-
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -78,7 +77,8 @@ export const AudioManagerProvider = ({ children }: Props) => {
     // Poll function to get the current playback position
     const pollCurrentTime = () => {
       if (audioRef.current && startTimeRef.current !== null) {
-        const currentTime = audioRef.current.currentTime - startTimeRef.current;
+        let currentTime = audioRef.current.currentTime - startTimeRef.current;
+        currentTime = Math.max(0, Math.min(duration, currentTime))
         setCurrentTime(currentTime);
       }
 
@@ -95,7 +95,7 @@ export const AudioManagerProvider = ({ children }: Props) => {
   useEffect(() => {
     if (!audioRef.current || !shadowRef.current) return;
 
-    if (!currentTrack || (!isPlaying && audioRef.current.state === "running")) {
+    if (!currentTrack || !isPlaying) {
       audioRef.current.suspend();
       shadowRef.current.pause();
       setIsPolling(false);
@@ -131,6 +131,9 @@ export const AudioManagerProvider = ({ children }: Props) => {
       setIsPolling(true);
     }
 
+    // Ensure updatedTime is within bounds
+    updatedTime = Math.max(0, Math.min(duration, updatedTime))
+
     // Scrub and preview, or continue playback
     if (continuePlayback) {
       sourceRef.current.start(0, updatedTime);
@@ -142,9 +145,9 @@ export const AudioManagerProvider = ({ children }: Props) => {
     shadowRef.current.currentTime = updatedTime;
 
     // If the state is suspended, attempt to resume
-    if (isPlaying && audioRef.current.state === "suspended") {
-      audioRef.current.resume();
-      shadowRef.current.play();
+    if (isPlaying) {
+      if (audioRef.current.state === "suspended") audioRef.current.resume();
+      if (shadowRef.current.paused) shadowRef.current.play();
     }
 
     // Update the startTime ref and currentTime state
@@ -170,8 +173,12 @@ export const AudioManagerProvider = ({ children }: Props) => {
     // Setup a new abort controller
     abortRef.current = new AbortController();
 
+    // Ensure the shadow <audio> element (for mediaSession support) exists
+    if (!shadowRef.current) {
+      shadowRef.current = createShadowAudioElement();
+    }
+
     // Reset initial states
-    if (shadowRef.current) shadowRef.current.remove();
     if (pollRef.current) cancelAnimationFrame(pollRef.current);
     setIsPolling(false);
     setCurrentTime(0);
@@ -190,13 +197,10 @@ export const AudioManagerProvider = ({ children }: Props) => {
         if (!audioBuf) return;
         if (abortRef.current?.signal.aborted) return;
         if (!audioRef.current) return;
+        if (!shadowRef.current) return;
 
         bufferRef.current = audioBuf;
         startTimeRef.current = audioRef.current.currentTime;
-
-        if (!shadowRef.current) {
-          shadowRef.current = createShadowAudioElement();
-        }
 
         if (shadowBlobUrlRef.current) {
           URL.revokeObjectURL(shadowBlobUrlRef.current);
