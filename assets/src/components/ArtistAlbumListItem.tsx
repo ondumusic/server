@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Trans } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
+import { PlayIcon } from "../components/icons/PlayIcon";
 import { usePlayer } from "../hooks/usePlayer";
 import { useQueue } from "../hooks/useQueue";
 import type { Album, AlbumArtist, Track } from "../types";
@@ -15,6 +16,7 @@ interface Props {
 export function ArtistAlbumListItem({ album }: Props) {
   const { enqueueAndPlay } = usePlayer();
   const { currentTrack } = useQueue();
+  const { t } = useTranslation();
 
   // For UX we want to split multi-disc albums into separate arrays so we
   // can display them a bit nicer.
@@ -73,14 +75,25 @@ export function ArtistAlbumListItem({ album }: Props) {
                 {disc.tracks.map((track: Track) => (
                   <li
                     key={track.id}
-                    className="relative flex justify-between"
+                    className="relative flex justify-between group/song"
                     onClick={() => enqueueAndPlay(album.tracks, track)}
                     onKeyDown={() => enqueueAndPlay(album.tracks, track)}
                   >
                     {track.number ? (
-                      <span className="absolute right-full text-right mr-2 text-stone-400 font-light">
-                        {track.number}.
-                      </span>
+                      <div className="absolute right-full text-right mr-2">
+                        <span className="text-stone-400 font-light group-hover/song:hidden">
+                          {track.number}.
+                        </span>
+                        <div className="hidden group-hover/song:block py-1 text-emerald-600">
+                          <PlayIcon
+                            className="size-4"
+                            title={t("button.playSelectedTrack", {
+                              defaultValue: "Play {{ trackName }}",
+                              trackName: track.name,
+                            })}
+                          />
+                        </div>
+                      </div>
                     ) : null}
                     <div>
                       <span
