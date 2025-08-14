@@ -1,14 +1,14 @@
 import { type ChangeEvent, useMemo, useRef } from "react";
 import { useAudioManager } from "../hooks/useAudioManager";
-import { usePlayer } from "../hooks/usePlayer";
+import { useQueue } from "../hooks/useQueue";
 import type { Album } from "../types";
 import { findCachedItem } from "../utils/findCachedItem";
 import { formatDuration } from "../utils/formatDuration";
 
 export function NowPlaying() {
-  const { currentTrack, duration, currentTime, progressPercentage } =
-    usePlayer();
-  const { scrubTo, scrubAndPlay } = useAudioManager();
+  const { currentTime, duration, progressPercentage, scrubTo, scrubAndPlay } =
+    useAudioManager();
+  const { currentTrack } = useQueue();
   const scrubTime = useRef<number>(0);
   const isScrubbing = useRef<boolean>(false);
 

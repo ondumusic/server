@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Trans } from "react-i18next";
 import { usePlayer } from "../hooks/usePlayer";
+import { useQueue } from "../hooks/useQueue";
 import type { Album, AlbumArtist, Track } from "../types";
 import { formatDuration } from "../utils/formatDuration";
 import { formatTotalDuration } from "../utils/formatTotalDuration";
@@ -12,7 +13,8 @@ interface Props {
 }
 
 export function ArtistAlbumListItem({ album }: Props) {
-  const { enqueueAndPlay, currentTrack } = usePlayer();
+  const { enqueueAndPlay } = usePlayer();
+  const { currentTrack } = useQueue();
 
   // For UX we want to split multi-disc albums into separate arrays so we
   // can display them a bit nicer.

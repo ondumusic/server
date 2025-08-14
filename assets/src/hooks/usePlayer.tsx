@@ -1,57 +1,20 @@
-import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, type ReactNode, useContext, useState } from "react";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
-import type { Album, Track } from "../types";
-import { findCachedItem } from "../utils/findCachedItem";
+import type { Track } from "../types";
 
 export interface PlayerContext {
+  // State management
   isVisible: boolean;
-
-  // Current queue and track information
-  queue: Track[];
-  hasPrevTrack: boolean;
-  hasNextTrack: boolean;
-  isPlaying: boolean;
-  currentTrack?: Track;
-  currentTime: number;
-  duration: number;
-  progressPercentage: number;
-
-  // State Management
-  setCurrentTime(currentTime: number): void;
-  setDuration(duration: number): void;
-  setIsPlaying(isPlaying: boolean): void;
   setIsVisible(isVisible: boolean): void;
 
-  // Queue Management
-  prevTrack(): void;
-  nextTrack(): void;
+  // Queue management
   enqueueAndPlay(tracks: Track[], startWithTrack?: Track): void;
 }
 
 const PlayerContext = createContext<PlayerContext>({
   isVisible: false,
-  queue: [],
-  hasPrevTrack: false,
-  hasNextTrack: false,
-  isPlaying: false,
-  currentTrack: undefined,
-  currentTime: 0,
-  duration: 0,
-  progressPercentage: 0,
-  setCurrentTime: (_currentTime) => {},
-  setDuration: (_duration) => {},
-  setIsPlaying: (_isPlaying) => {},
   setIsVisible: (_isVisible) => {},
-  prevTrack: () => {},
-  nextTrack: () => {},
   enqueueAndPlay: (_tracks, _startWithTrack?) => {},
 });
 
@@ -64,154 +27,15 @@ interface Props {
 }
 
 export const PlayerProvider = ({ children }: Props) => {
-  const {
-    queue,
-    currentTrack,
-    replaceQueue,
-    prevTrack,
-    nextTrack,
-    hasPrevTrack,
-    hasNextTrack,
-  } = useQueue();
+  const { currentTrack, replaceQueue } = useQueue();
 
-  const {
-    isPlaying,
-    setIsPlaying,
-    currentTime,
-    setCurrentTime,
-    duration,
-    setDuration,
-    progressPercentage,
-    scrubAndPlay,
-  } = useAudioManager();
+  const { isPlaying, setIsPlaying, scrubAndPlay } = useAudioManager();
 
   const [isVisible, setIsVisible] = useState(false);
 
-  // If the player should be playing but there is no current track, for example
-  // because the playlist has reached its end, we can update the state to
-  // reflect this.
-  // biome-ignore lint/correctness/useExhaustiveDependencies(setIsPlaying): suppress dependency setIsPlaying
-  // biome-ignore lint/correctness/useExhaustiveDependencies(setCurrentTime): suppress dependency setCurrentTime
-  // biome-ignore lint/correctness/useExhaustiveDependencies(setDuration): suppress dependency setDuration
-  useEffect(() => {
-    if (isPlaying && !currentTrack) {
-      setIsPlaying(false);
-      setCurrentTime(0);
-      setDuration(0);
-    }
-  }, [isPlaying, currentTrack]);
-
-  // Find the currentAlbum from cache so we can display it in the mediaSession
-  const currentAlbum: Album | undefined = useMemo(() => {
-    if (!currentTrack) return undefined;
-    return findCachedItem<Album>(
-      ["albumList", currentTrack?.artistId],
-      currentTrack?.albumId,
-    );
-  }, [currentTrack]);
-
-  // Experimenting with MediaSession
-  // biome-ignore lint/correctness/useExhaustiveDependencies(setIsPlaying): suppress dependency setIsPlaying
-  useEffect(() => {
-    if (!currentTrack) {
-      navigator.mediaSession.metadata = null;
-      navigator.mediaSession.setActionHandler("play", null);
-      navigator.mediaSession.setActionHandler("pause", null);
-      navigator.mediaSession.setActionHandler("stop", null);
-      navigator.mediaSession.setActionHandler("previoustrack", null);
-      navigator.mediaSession.setActionHandler("nexttrack", null);
-
-      // TODO: Look into implementing these:
-      // seekbackward
-      // seekforward
-      // seekto
-    } else {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: currentTrack?.name,
-        artist: currentTrack?.artist?.name,
-        album: currentAlbum?.name,
-        artwork: [],
-      });
-
-      navigator.mediaSession.setActionHandler("play", () => {
-        setIsPlaying(true);
-      });
-
-      navigator.mediaSession.setActionHandler("pause", () => {
-        setIsPlaying(false);
-      });
-
-      navigator.mediaSession.setActionHandler("stop", () => {
-        setIsPlaying(false);
-      });
-
-      navigator.mediaSession.setActionHandler("previoustrack", () => {
-        if (hasPrevTrack) prevTrack();
-        else setIsPlaying(false);
-      });
-
-      navigator.mediaSession.setActionHandler("nexttrack", () => {
-        if (hasNextTrack) nextTrack();
-        else setIsPlaying(false);
-      });
-
-      navigator.mediaSession.setActionHandler("seekbackward", (details) => {
-        console.log("seekbackward", details.seekOffset || 15);
-      });
-
-      navigator.mediaSession.setActionHandler("seekforward", (details) => {
-        console.log("seekforward", details.seekOffset || 15);
-      });
-
-      navigator.mediaSession.setActionHandler("seekto", (details) => {
-        console.log("seekto", details.fastSeek, details.seekTime);
-      });
-    }
-  }, [
-    hasNextTrack,
-    hasPrevTrack,
-    nextTrack,
-    prevTrack,
-    currentTrack,
-    currentAlbum,
-  ]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies(duration): suppress dependency duration
-  useEffect(() => {
-    if (!currentTrack || duration === 0) return;
-    if (!isPlaying) return;
-
-    navigator.mediaSession.playbackState = "playing";
-
-    navigator.mediaSession.setPositionState({
-      duration: duration,
-      playbackRate: 1,
-      position: currentTime,
-    });
-  }, [isPlaying, currentTrack, currentTime]);
-
   const value = {
     isVisible,
-
-    // Current queue and track information
-    queue,
-    hasPrevTrack,
-    hasNextTrack,
-    isPlaying,
-    currentTrack,
-    currentTime,
-    duration,
-    progressPercentage,
-
-    // State Management
-    setCurrentTime,
-    setDuration,
-    setIsPlaying,
     setIsVisible,
-
-    // Queue Management
-    prevTrack,
-    nextTrack,
     enqueueAndPlay(tracks: Track[], startWithTrack?: Track) {
       if (!Array.isArray(tracks)) tracks = [tracks];
       if (tracks.length === 0) return;

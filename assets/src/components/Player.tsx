@@ -5,20 +5,13 @@ import { PlayIcon } from "../components/icons/PlayIcon";
 import { PrevIcon } from "../components/icons/PrevIcon";
 import { NowPlaying } from "../components/NowPlaying";
 import { useAudioManager } from "../hooks/useAudioManager";
-import { usePlayer } from "../hooks/usePlayer";
+import { useQueue } from "../hooks/useQueue";
 
 export function Player() {
   const { t } = useTranslation();
-  const { scrubAndPlay } = useAudioManager();
-  const {
-    isPlaying,
-    setIsPlaying,
-    currentTime,
-    hasNextTrack,
-    hasPrevTrack,
-    prevTrack,
-    nextTrack,
-  } = usePlayer();
+  const { isPlaying, setIsPlaying, currentTime, scrubAndPlay } =
+    useAudioManager();
+  const { hasNextTrack, hasPrevTrack, prevTrack, nextTrack } = useQueue();
 
   return (
     <div className="flex-shrink-0 bg-emerald-600 text-white p-3 text-sm text-center select-none">
