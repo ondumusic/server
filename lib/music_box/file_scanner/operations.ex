@@ -121,10 +121,13 @@ defmodule MusicBox.FileScanner.Operations do
       |> Enum.map(fn %{file: file, artist: artist, is_unknown: is_unknown} ->
         album_name = file.metadata.album || "Unknown Album"
 
+        # For unknown albums we will add a hex prefix, e.g. "b33f-unknown" where
+        # the hex is just a substring of the artist names. As album slugs are
+        # unique by artist_id and we want to allow a "real" Unknown album option
         slug_name =
           if album = file.metadata.album,
             do: Utils.slugify(album),
-            else: [Utils.random_hex(2), "unknown"] |> Enum.join("-")
+            else: [Utils.short_hex(artist.name, 2), "unknown"] |> Enum.join("-")
 
         %{
           artist_id: artist.id,
@@ -141,7 +144,7 @@ defmodule MusicBox.FileScanner.Operations do
       repo.insert_all(Album, entries,
         returning: true,
         conflict_target: [:artist_id, :slug],
-        on_conflict: {:replace_all_except, [:id, :slug, :inserted_at]}
+        on_conflict: {:replace_all_except, [:id, :inserted_at]}
       )
 
     {:ok, albums}

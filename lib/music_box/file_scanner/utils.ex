@@ -45,6 +45,12 @@ defmodule MusicBox.FileScanner.Utils do
     end
   end
 
+  def short_hex(input, len) do
+    :crypto.hash(:md5, input)
+    |> String.slice(0, len)
+    |> Base.encode16(case: :lower)
+  end
+
   def random_hex(len) do
     :crypto.strong_rand_bytes(len)
     |> Base.encode16(case: :lower)
