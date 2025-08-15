@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router";
 import type { AlbumArtist } from "../types";
+import { classNames } from "../utils/classNames";
 
 interface Props {
   albumArtist: AlbumArtist;
@@ -31,7 +32,7 @@ export function ArtistListItem({
   return (
     <li
       ref={refContainer}
-      className={[isSelected ? "bg-emerald-600 text-white" : ""].join(" ")}
+      className={classNames([isSelected && "bg-emerald-600 text-white"])}
     >
       <Link
         to={`/artists/${albumArtist.slug}`}

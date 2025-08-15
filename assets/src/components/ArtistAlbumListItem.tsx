@@ -4,6 +4,7 @@ import { PlayIcon } from "../components/icons/PlayIcon";
 import { usePlayer } from "../hooks/usePlayer";
 import { useQueue } from "../hooks/useQueue";
 import type { Album, AlbumArtist, Track } from "../types";
+import { classNames } from "../utils/classNames";
 import { formatDuration } from "../utils/formatDuration";
 import { formatTotalDuration } from "../utils/formatTotalDuration";
 import { splitTracksByDisc } from "../utils/splitTracksByDisc";
@@ -97,11 +98,11 @@ export function ArtistAlbumListItem({ album }: Props) {
                     ) : null}
                     <div>
                       <span
-                        className={
-                          currentTrack && currentTrack.id === track.id
-                            ? "font-semibold"
-                            : ""
-                        }
+                        className={classNames([
+                          currentTrack &&
+                            currentTrack.id === track.id &&
+                            "font-semibold",
+                        ])}
                       >
                         {track.name}
                       </span>
