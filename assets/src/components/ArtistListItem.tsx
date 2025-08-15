@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router";
+import { Marquee } from "../components/Marquee";
 import type { AlbumArtist } from "../types";
 import { classNames } from "../utils/classNames";
 
@@ -36,12 +37,10 @@ export function ArtistListItem({
     >
       <Link
         to={`/artists/${albumArtist.slug}`}
-        className="px-4 py-2 whitespace-nowrap items-center flex gap-2"
+        className="px-4 whitespace-nowrap items-center flex gap-2"
       >
         <div className="rounded-full bg-stone-200 aspect-square w-8 h-8"></div>
-        <span className="text-ellipsis max-w-full overflow-hidden">
-          {albumArtist.name}
-        </span>
+        <Marquee className="py-3" delay={500} text={albumArtist.name} />
       </Link>
     </li>
   );

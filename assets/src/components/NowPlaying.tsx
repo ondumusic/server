@@ -1,4 +1,5 @@
 import { type ChangeEvent, useMemo, useRef } from "react";
+import { Marquee } from "../components/Marquee";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
 import type { Album } from "../types";
@@ -49,12 +50,15 @@ export function NowPlaying() {
       <div className="relative bg-emerald-700/60 p-2 rounded-lg overflow-hidden cursor-default">
         <div className="flex justify-between items-end tabular-nums text-white/70 pb-1">
           <div className="overflow-hidden mx-12 order-2">
-            <h4 className="whitespace-nowrap text-ellipsis overflow-hidden text-white/90 font-semibold">
-              {currentTrack?.name}
-            </h4>
-            <h5 className="whitespace-nowrap text-ellipsis overflow-hidden mx-8">
-              {currentTrack?.artist?.name} - {currentAlbum?.name}
-            </h5>
+            <Marquee
+              className="text-white/90 font-semibold"
+              text={`${currentTrack?.name}`}
+            />
+            <div className="mx-8">
+              <Marquee
+                text={`${currentTrack?.artist?.name} - ${currentAlbum?.name}`}
+              />
+            </div>
           </div>
 
           <span className="flex-shrink-0 text-xs order-1">
