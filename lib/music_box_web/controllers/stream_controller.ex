@@ -6,12 +6,23 @@ defmodule MusicBoxWeb.StreamController do
   plug :assign_track when action in [:stream]
 
   def stream(conn, _params) do
-    send_download(conn, {:file, conn.assigns.track.file.path},
+    content_type =
+      case conn.assigns.track.file.type do
+        :m4a -> "audio/mp4"
+        :mp3 -> "audio/mpeg"
+        :opus -> "audio/ogg"
+        :ogg -> "audio/ogg"
+        :flac -> "audio/flac"
+        :wav -> "audio/wav"
+      end
+
+    conn
+    |> send_download({:file, conn.assigns.track.file.path},
       disposition: :inline,
       charset: nil,
       encode: false,
-      filename: Path.basename(conn.assigns.track.file.path)
-      # content_type: mime
+      filename: Path.basename(conn.assigns.track.file.path),
+      content_type: content_type
     )
   end
 
