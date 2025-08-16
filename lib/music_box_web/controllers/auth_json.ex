@@ -1,4 +1,6 @@
 defmodule MusicBoxWeb.AuthJSON do
+  use MusicBoxWeb, :json
+
   def logged_in(%{signed_session_token: signed_session_token, current_user: current_user}) do
     %{
       sessionToken: signed_session_token,

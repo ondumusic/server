@@ -5,6 +5,8 @@ defmodule MusicBoxWeb.ErrorJSON do
   See config/config.exs.
   """
 
+  use MusicBoxWeb, :json
+
   # If you want to customize a particular status code,
   # you may add your own clauses, such as:
   #

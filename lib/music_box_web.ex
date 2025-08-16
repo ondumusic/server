@@ -49,6 +49,18 @@ defmodule MusicBoxWeb do
     end
   end
 
+  def json do
+    quote do
+      # Translation
+      use Gettext, backend: MusicBoxWeb.Gettext
+
+      # Routes generation with the ~p sigil
+      unquote(verified_routes())
+
+      use MusicBoxWeb.Helpers.JSON
+    end
+  end
+
   def html do
     quote do
       use Phoenix.Component

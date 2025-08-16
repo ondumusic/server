@@ -1,13 +1,14 @@
 defmodule MusicBoxWeb.LibraryJSON do
-  use MusicBoxWeb, :verified_routes
+  use MusicBoxWeb, :json
+  alias MusicBoxWeb.SharedTrack
 
-  def artists(%{page: page}) do
+  def artists(%{page: page} = assigns) do
     %{
       pageNumber: page.page_number,
       pageSize: page.page_size,
       totalEntries: page.total_entries,
       totalPages: page.total_pages,
-      entries: Enum.map(page.entries, &artist(%{artist: &1}))
+      entries: json_map(assigns, [:page, :entries], :artist)
     }
   end
 
@@ -20,17 +21,17 @@ defmodule MusicBoxWeb.LibraryJSON do
     }
   end
 
-  def albums(%{page: page}) do
+  def albums(%{page: page} = assigns) do
     %{
       pageNumber: page.page_number,
       pageSize: page.page_size,
       totalEntries: page.total_entries,
       totalPages: page.total_pages,
-      entries: Enum.map(page.entries, &album(%{album: &1}))
+      entries: json_map(assigns, [:page, :entries], :album)
     }
   end
 
-  def album(%{album: %{tracks: tracks} = album}) when is_list(tracks) do
+  def album(%{album: album} = assigns) do
     %{
       id: album.id,
       slug: album.slug,
@@ -38,11 +39,13 @@ defmodule MusicBoxWeb.LibraryJSON do
       name: album.name,
       releaseYear: album.release_year,
       isUnknown: album.is_unknown,
-      tracks: Enum.map(tracks, &track(%{track: &1, album: album}))
+      tracks: json_map(assigns, [:album, :tracks], :track, include: [:album])
     }
   end
 
-  def track(%{track: track, album: album}) do
+  def track(%{track: track, album: album, conn: conn}) do
+    signed_token = conn |> SharedTrack.create(track.id) |> URI.encode()
+
     %{
       id: track.id,
       artistId: track.artist_id,
@@ -53,7 +56,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       disc: track.disc,
       number: track.number,
       duration: track.duration,
-      streamUrl: url(~p"/stream/#{track}")
+      streamUrl: url(~p"/stream/#{track}?token=#{signed_token}")
     }
   end
 end
