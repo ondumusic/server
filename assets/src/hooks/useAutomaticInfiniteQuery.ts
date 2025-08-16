@@ -27,6 +27,7 @@ export function useAutomaticInfiniteQuery<T>(
     queryKey,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
+      if (!lastPage) return null;
       const nextPage = lastPage.pageNumber + 1;
       if (nextPage > lastPage.totalPages) return null;
       return nextPage;
@@ -45,7 +46,7 @@ export function useAutomaticInfiniteQuery<T>(
     data,
     error,
     isFetching,
-    isCompleted: hasNextPage === false,
+    isCompleted: !isFetching && hasNextPage === false,
     hasFirstPage: Array.isArray(data) && data.length >= 1,
   };
 }
