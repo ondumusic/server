@@ -1,6 +1,5 @@
 defmodule MusicBox.Files.FileMetadata do
-  use Ecto.Schema
-  import Ecto.Changeset
+  use MusicBox.Schema
 
   @primary_key false
   embedded_schema do

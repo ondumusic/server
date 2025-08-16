@@ -1,31 +1,40 @@
 defmodule MusicBoxWeb.Router do
   use MusicBoxWeb, :router
 
+  import MusicBoxWeb.UserAuth
+
   pipeline :browser do
     plug :accepts, ["html"]
-    plug :fetch_session
     plug :put_root_layout, html: {MusicBoxWeb.Layouts, :root}
-    plug :protect_from_forgery
     plug :put_secure_browser_headers
   end
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug :fetch_current_user
   end
 
   scope "/", MusicBoxWeb do
     pipe_through :browser
 
     get "/", PageController, :react
+    get "/login", PageController, :react
     get "/library", PageController, :react
     get "/artists", PageController, :react
     get "/artists/:id", PageController, :react
 
+    # TODO: Implement basic presigned urls for this
     get "/stream/:track_id", StreamController, :stream
   end
 
   scope "/api", MusicBoxWeb do
-    pipe_through :api
+    pipe_through [:api]
+
+    post "/auth/login", AuthController, :login
+  end
+
+  scope "/api", MusicBoxWeb do
+    pipe_through [:api, :require_authenticated_user]
 
     get "/artists", LibraryController, :artists
     get "/artists/:artist_id", LibraryController, :artist

@@ -1,6 +1,5 @@
 defmodule MusicBox.Albums.Album do
-  use Ecto.Schema
-  import Ecto.Query
+  use MusicBox.Schema
 
   alias MusicBox.Artists.Artist
   alias MusicBox.Tracks.Track

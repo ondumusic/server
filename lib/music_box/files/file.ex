@@ -1,5 +1,5 @@
 defmodule MusicBox.Files.File do
-  use Ecto.Schema
+  use MusicBox.Schema
 
   alias MusicBox.Tracks.Track
   alias MusicBox.Files.FileMetadata

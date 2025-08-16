@@ -1,5 +1,5 @@
 defmodule MusicBox.Tracks.Track do
-  use Ecto.Schema
+  use MusicBox.Schema
 
   alias MusicBox.Artists.Artist
   alias MusicBox.Albums.Album
