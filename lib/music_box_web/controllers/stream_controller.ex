@@ -1,6 +1,7 @@
 defmodule MusicBoxWeb.StreamController do
   use MusicBoxWeb, :controller
 
+  alias MusicBoxWeb.SharedTrack
   alias MusicBox.Tracks
 
   plug :assign_track when action in [:stream]
@@ -27,10 +28,16 @@ defmodule MusicBoxWeb.StreamController do
   end
 
   defp assign_track(conn, _opts) do
-    track_id = Map.get(conn.params, "track_id", "")
-    track = Tracks.get_track!(track_id)
+    with track_id = Map.get(conn.params, "track_id", ""),
+         token = Map.get(conn.params, "token", ""),
+         {:ok, shared_track} <- SharedTrack.verify(conn, token),
+         true <- shared_track.track_id == track_id do
+      track = Tracks.get_track!(track_id)
 
-    conn
-    |> assign(:track, track)
+      conn
+      |> assign(:track, track)
+    else
+      _ -> raise MusicBoxWeb.ForbiddenError
+    end
   end
 end

@@ -91,3 +91,11 @@ defmodule MusicBoxWeb do
     apply(__MODULE__, which, [])
   end
 end
+
+defmodule MusicBoxWeb.UnauthorizedError do
+  defexception message: "unauthorized", plug_status: 401
+end
+
+defmodule MusicBoxWeb.ForbiddenError do
+  defexception message: "forbidden", plug_status: 403
+end

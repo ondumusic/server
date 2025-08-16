@@ -2,7 +2,6 @@ defmodule MusicBoxWeb.UserAuth do
   use MusicBoxWeb, :verified_routes
 
   import Plug.Conn
-  import Phoenix.Controller
 
   alias MusicBox.Sessions
 
@@ -70,10 +69,7 @@ defmodule MusicBoxWeb.UserAuth do
     if conn.assigns[:current_user] do
       conn
     else
-      conn
-      |> put_status(:unauthorized)
-      |> json(%{error: "NOT AUTHENTICATED"})
-      |> halt()
+      raise MusicBoxWeb.UnauthorizedError
     end
   end
 end

@@ -23,7 +23,6 @@ defmodule MusicBoxWeb.Router do
     get "/artists", PageController, :react
     get "/artists/:id", PageController, :react
 
-    # TODO: Implement basic presigned urls for this
     get "/stream/:track_id", StreamController, :stream
   end
 
