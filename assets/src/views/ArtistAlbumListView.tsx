@@ -11,8 +11,7 @@ type Params = { artistId: UUID };
 export function ArtistAlbumListView() {
   const { artistId } = useParams() as Params;
 
-  const { isFetching: isFetchingArtist, data: dataArtist } =
-    useAlbumArtistQuery({ artistId });
+  const { isFetching: isFetchingArtist, data: dataArtist, error: errorArtist } = useAlbumArtistQuery({ artistId });
 
   const { isFetching, hasFirstPage, data, error } =
     useInfiniteArtistAlbumsQuery(
@@ -25,7 +24,9 @@ export function ArtistAlbumListView() {
     );
 
   if ((isFetching || isFetchingArtist) && !hasFirstPage) return "Loading...";
-  if (error) return `An error has occurred: ${error.message}`;
+  if (errorArtist) throw errorArtist
+  if (error) throw error
+  if (!dataArtist) return
 
   return (
     <div className="space-y-8 mx-8 my-8">
