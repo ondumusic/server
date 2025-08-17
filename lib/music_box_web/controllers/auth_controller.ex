@@ -12,7 +12,7 @@ defmodule MusicBoxWeb.AuthController do
     else
       conn
       |> json(%{
-        error: true,
+        ok: false,
         fields: %{
           password: %{message: "Invalid username or password"}
         }

@@ -2,7 +2,7 @@ import { useParams } from "react-router";
 
 import { ArtistListItem } from "../components/ArtistListItem";
 import { useInfiniteArtistsQuery } from "../hooks/useInfiniteArtistsQuery";
-import type { AlbumArtist, UUID } from "../types";
+import type { Artist, UUID } from "../types";
 import { paginatedMap } from "../utils/paginatedMap";
 
 type Params = { artistId: UUID };
@@ -17,14 +17,12 @@ export function ArtistListView() {
 
   return (
     <ul>
-      {paginatedMap<AlbumArtist>(data, (albumArtist) => (
+      {paginatedMap<Artist>(data, (artist) => (
         <ArtistListItem
-          key={albumArtist.id}
-          isSelected={
-            artistId === albumArtist.id || artistId === albumArtist.slug
-          }
+          key={artist.id}
+          isSelected={artistId === artist.id || artistId === artist.slug}
           scrollIntoView={isCompleted}
-          albumArtist={albumArtist}
+          artist={artist}
         />
       ))}
     </ul>

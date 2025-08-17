@@ -3,7 +3,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { PlayIcon } from "../components/icons/PlayIcon";
 import { usePlayer } from "../hooks/usePlayer";
 import { useQueue } from "../hooks/useQueue";
-import type { Album, AlbumArtist, Track } from "../types";
+import type { Album, Artist, Track } from "../types";
 import { classNames } from "../utils/classNames";
 import { formatDuration } from "../utils/formatDuration";
 import { formatTotalDuration } from "../utils/formatTotalDuration";
@@ -11,7 +11,7 @@ import { splitTracksByDisc } from "../utils/splitTracksByDisc";
 
 interface Props {
   album: Album;
-  albumArtist: AlbumArtist;
+  artist: Artist;
 }
 
 export function ArtistAlbumListItem({ album }: Props) {

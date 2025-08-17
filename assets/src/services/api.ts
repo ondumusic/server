@@ -15,8 +15,7 @@ export class ApiError extends Error {
 }
 
 type RequestMethod = "GET" | "POST";
-// biome-ignore lint/suspicious/noExplicitAny: TODO: ignore for now, might need generics here
-type PostBody = BodyInit | undefined | any;
+type PostBody<T> = BodyInit | undefined | T;
 type SearchParams = Record<string, string>;
 
 interface Options {
@@ -34,20 +33,24 @@ class APIClient {
     this.#baseURL = (opts.baseURL || this.#baseURL).replace(/\/$/, "");
   }
 
-  async get(path: string, search: SearchParams = {}) {
-    return this.#request("GET", path, undefined, search);
+  async get<T, R>(path: string, search: SearchParams = {}): Promise<R> {
+    return this.#request<T, R>("GET", path, undefined, search);
   }
 
-  async post(path: string, body: PostBody, search: SearchParams = {}) {
-    return this.#request("POST", path, body, search);
+  async post<T, R>(
+    path: string,
+    body: PostBody<T>,
+    search: SearchParams = {},
+  ): Promise<R> {
+    return this.#request<T, R>("POST", path, body, search);
   }
 
-  async #request(
+  async #request<T, R>(
     method: RequestMethod,
     path: string,
-    body: PostBody,
+    body: PostBody<T>,
     search: SearchParams,
-  ) {
+  ): Promise<R> {
     const requestPath = this.#baseURL + path;
     const url = new URL(requestPath, window.location.href);
     url.search = new URLSearchParams(search).toString();
@@ -68,7 +71,7 @@ class APIClient {
     }
 
     const response = await fetch(url.toString(), {
-      body,
+      body: body as BodyInit,
       method,
       headers,
       credentials: "omit",
@@ -82,7 +85,7 @@ class APIClient {
       throw new ApiError({ message: "Forbidden", response });
     }
 
-    return await response.json();
+    return (await response.json()) as R;
   }
 }
 

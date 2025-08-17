@@ -3,7 +3,7 @@ import { type Location, useLocation, useNavigate } from "react-router";
 import { Button } from "../components/form/Button";
 import { FormActions } from "../components/form/FormActions";
 import { Input } from "../components/form/Input";
-import { type FormState, useForm } from "../hooks/useForm";
+import { type FormErrors, type FormState, useForm } from "../hooks/useForm";
 import { api } from "../services/api";
 
 interface LocationState {
@@ -15,16 +15,29 @@ type LoginFields = {
   password: string | number | null;
 };
 
-interface LoginResponse {
+interface Request {
+  username: string;
+  password: string;
+}
+
+interface ErrorResponse {
+  ok: false;
+  fields: FormErrors;
+}
+
+interface SuccessResponse {
+  ok: true;
   sessionToken: string;
 }
+
+type Response = ErrorResponse | SuccessResponse;
 
 export function LoginView() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { state } = useLocation();
 
-  const onLoginSuccess = (response: LoginResponse) => {
+  const onLoginSuccess = (response: SuccessResponse) => {
     localStorage.sessionToken = response.sessionToken;
 
     if (state) {
@@ -48,11 +61,14 @@ export function LoginView() {
       errors: {},
     };
 
-    const response = await api.post("/auth/login", newState.fields);
-    if (response.error) {
-      newState.errors = response.fields;
-    } else {
+    const response = await api.post<Request, Response>(
+      "/auth/login",
+      newState.fields as Request,
+    );
+    if (response.ok) {
       onLoginSuccess(response);
+    } else {
+      newState.errors = response.fields;
     }
 
     return newState;

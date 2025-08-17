@@ -12,6 +12,9 @@ export interface Options {
   enabled?: boolean;
 }
 
+type Request = undefined;
+type Response<T> = Page<T>;
+
 export function useAutomaticInfiniteQuery<T>(
   { path, queryKey }: Params,
   opts: Options = {},
@@ -32,7 +35,8 @@ export function useAutomaticInfiniteQuery<T>(
       if (nextPage > lastPage.totalPages) return null;
       return nextPage;
     },
-    queryFn: ({ pageParam }) => api.get(path, { page: pageParam as string }),
+    queryFn: ({ pageParam }) =>
+      api.get<Request, Response<T>>(path, { page: pageParam as string }),
     ...opts,
   });
 

@@ -1,17 +1,17 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { Marquee } from "../components/Marquee";
-import type { AlbumArtist } from "../types";
+import type { Artist } from "../types";
 import { classNames } from "../utils/classNames";
 
 interface Props {
-  albumArtist: AlbumArtist;
+  artist: Artist;
   isSelected: boolean;
   scrollIntoView: boolean;
 }
 
 export function ArtistListItem({
-  albumArtist,
+  artist,
   isSelected = false,
   scrollIntoView = false,
 }: Props) {
@@ -36,11 +36,11 @@ export function ArtistListItem({
       className={classNames([isSelected && "bg-emerald-600 text-white"])}
     >
       <Link
-        to={`/artists/${albumArtist.slug}`}
+        to={`/artists/${artist.slug}`}
         className="px-4 whitespace-nowrap items-center flex gap-2"
       >
         <div className="rounded-full bg-stone-200 aspect-square w-8 h-8"></div>
-        <Marquee className="py-3" delay={500} text={albumArtist.name} />
+        <Marquee className="py-3" delay={500} text={artist.name} />
       </Link>
     </li>
   );

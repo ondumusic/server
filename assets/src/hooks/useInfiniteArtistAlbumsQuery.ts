@@ -5,17 +5,20 @@ import {
 } from "./useAutomaticInfiniteQuery";
 
 interface Params {
-  artistId: UUID;
+  artistId?: UUID;
 }
 
 export function useInfiniteArtistAlbumsQuery(
   { artistId }: Params,
   opts: Options = {},
 ) {
+  const queryKey = ["albumList"];
+  if (artistId) queryKey.push(artistId);
+
   return useAutomaticInfiniteQuery<Album>(
     {
       path: `/artists/${artistId}/albums`,
-      queryKey: ["albumList", artistId],
+      queryKey,
     },
     opts,
   );

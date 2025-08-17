@@ -1,15 +1,10 @@
 export type UUID = string;
 
-export interface AlbumArtist {
+export interface Artist {
   id: UUID;
   name: string;
   slug: string;
   albumCount: number;
-}
-
-export interface Artist {
-  id: UUID;
-  name: string;
 }
 
 export interface Album {

@@ -1,8 +1,8 @@
-import type { AlbumArtist } from "../types";
+import type { Artist } from "../types";
 import { useAutomaticInfiniteQuery } from "./useAutomaticInfiniteQuery";
 
 export function useInfiniteArtistsQuery() {
-  return useAutomaticInfiniteQuery<AlbumArtist>({
+  return useAutomaticInfiniteQuery<Artist>({
     path: "/artists",
     queryKey: ["artistList"],
   });
