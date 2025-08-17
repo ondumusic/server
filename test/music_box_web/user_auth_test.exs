@@ -70,6 +70,7 @@ defmodule MusicBoxWeb.UserAuthTest do
     test "does not authenticate if data is missing", %{conn: conn, user: user} do
       _ = Sessions.generate_user_session_token(user)
       conn = UserAuth.fetch_current_user(conn, [])
+      refute conn.assigns[:signed_session_token]
       refute conn.assigns[:session_token]
       refute conn.assigns.current_user
     end
@@ -77,11 +78,9 @@ defmodule MusicBoxWeb.UserAuthTest do
 
   describe "require_authenticated_user/2" do
     test "returns error if user is not authenticated", %{conn: conn} do
-      conn = conn |> UserAuth.require_authenticated_user([])
-      assert conn.halted
-
-      response = json_response(conn, 200)
-      assert %{"error" => "NOT AUTHENTICATED"} = response
+      assert_raise MusicBoxWeb.UnauthorizedError, fn ->
+        conn |> UserAuth.require_authenticated_user([])
+      end
     end
   end
 end
