@@ -3,9 +3,9 @@ import { RootLayout } from "../layouts/RootLayout";
 
 export function PrivateRootLayout() {
   // TODO: use Auth context/service
+  const location = useLocation();
   const token = localStorage.sessionToken;
   if (!token) {
-    const location = useLocation();
     return <Navigate to="/login" replace state={{ redirectTo: location }} />;
   }
 

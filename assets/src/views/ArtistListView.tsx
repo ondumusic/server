@@ -13,7 +13,7 @@ export function ArtistListView() {
     useInfiniteArtistsQuery();
 
   if (isFetching && !hasFirstPage) return "Loading...";
-  if (error) throw error
+  if (error) throw error;
 
   return (
     <ul>

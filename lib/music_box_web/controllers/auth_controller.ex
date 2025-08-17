@@ -10,10 +10,13 @@ defmodule MusicBoxWeb.AuthController do
       |> UserAuth.log_in_user(user)
       |> render(:logged_in)
     else
-      # In order to prevent user enumeration attacks, don't disclose whether the email is registered.
-      # render(conn, :new, error_message: "Invalid email or password")
       conn
-      |> json(%{error: true})
+      |> json(%{
+        error: true,
+        fields: %{
+          password: %{message: "Invalid username or password"}
+        }
+      })
     end
   end
 end

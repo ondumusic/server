@@ -2,8 +2,8 @@ import { createBrowserRouter, redirect } from "react-router";
 import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import i18next from "./i18next";
 import { ArtistsLayout } from "./layouts/ArtistsLayout";
-import { RootLayout } from "./layouts/RootLayout";
 import { PrivateRootLayout } from "./layouts/PrivateRootLayout";
+import { RootLayout } from "./layouts/RootLayout";
 import { ArtistAlbumListView } from "./views/ArtistAlbumListView";
 import { EmptyView } from "./views/EmptyView";
 import { LoginView } from "./views/LoginView";
@@ -20,7 +20,7 @@ export const router = createBrowserRouter([
         path: "/login",
         Component: LoginView,
       },
-    ]
+    ],
   },
   {
     id: "private",

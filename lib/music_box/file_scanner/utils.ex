@@ -17,7 +17,7 @@ defmodule MusicBox.FileScanner.Utils do
     args = ~w(-v quiet -print_format json -show_format -show_streams -i) ++ [path]
 
     with {stdout, 0} <- System.cmd(ffprobe_path, args),
-         {:ok, json} <- Jason.decode(stdout) do
+         {:ok, json} <- JSON.decode(stdout) do
       {:ok, json}
     else
       _ -> {:error, :ffprobe_failed}
