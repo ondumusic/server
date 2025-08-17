@@ -27,8 +27,10 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
-# Use Jason for JSON parsing in Phoenix
-config :phoenix, :json_library, Jason
+# Use new native JSON module for JSON parsing in Phoenix
+config :phoenix, :json_library, JSON
+config :ecto, :json_library, JSON
+config :ecto_sqlite3, :json_library, JSON
 
 config :music_box, MusicBox.FileScanner, producer_module: MusicBox.FileScanner.Producer
 

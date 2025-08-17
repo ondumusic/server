@@ -1,4 +1,4 @@
-erlang 27.2
-elixir 1.17.3-otp-27
+erlang 28
+elixir 1.18.4-otp-28
 nodejs 22.14.0
 pnpm 10.12.1
