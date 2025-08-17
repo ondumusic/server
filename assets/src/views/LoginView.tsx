@@ -1,6 +1,8 @@
+import { Trans, useTranslation } from "react-i18next";
 import { type Location, useLocation, useNavigate } from "react-router";
-import { Label } from "../components/Label";
-import { TextField } from "../components/TextField";
+import { Button } from "../components/form/Button";
+import { FormActions } from "../components/form/FormActions";
+import { Input } from "../components/form/Input";
 import { type FormState, useForm } from "../hooks/useForm";
 import { api } from "../services/api";
 
@@ -19,6 +21,7 @@ interface LoginResponse {
 
 export function LoginView() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { state } = useLocation();
 
   const onLoginSuccess = (response: LoginResponse) => {
@@ -33,10 +36,11 @@ export function LoginView() {
   };
 
   const onSubmit = async (
-    _prevState: FormState<LoginFields>,
+    prevState: FormState<LoginFields>,
     formData: FormData,
   ) => {
     const newState: FormState<LoginFields> = {
+      ...prevState,
       fields: {
         username: formData.get("username") as string,
         password: formData.get("password") as string,
@@ -54,7 +58,7 @@ export function LoginView() {
     return newState;
   };
 
-  const [formState, formAction, isPending] = useForm<LoginFields>(onSubmit);
+  const form = useForm<LoginFields>("loginForm", onSubmit);
 
   return (
     <div className="h-full content-center bg-stone-50">
@@ -62,49 +66,34 @@ export function LoginView() {
         <header className="text-center">
           <div>
             <h1 className="text-lg font-semibold leading-8 text-zinc-800">
-              Login Screen
+              <Trans i18nKey="loginForm.title">Login</Trans>
             </h1>
           </div>
         </header>
 
-        <form action={formAction} className="mt-10 space-y-8">
-          <div>
-            <Label htmlFor="username" title="Username" />
-            <TextField
-              name="username"
-              defaultValue={formState.fields.username || ""}
-              autoFocus
-              required
-            />
-          </div>
-          <div>
-            <Label
-              htmlFor="password"
-              title="Password"
-              hasError={formState.errors.password && !isPending}
-            />
-            <TextField
-              name="password"
-              type="password"
-              required
-              hasError={formState.errors.password && !isPending}
-            />
-            {formState.errors.password && !isPending && (
-              <p className="mt-3 flex text-sm gap-1 leading-6 text-rose-600">
-                <strong>Error:</strong> {formState.errors.password.message}
-              </p>
-            )}
-          </div>
+        <form action={form.action} className="mt-10 space-y-8">
+          <Input<LoginFields>
+            form={form}
+            field="username"
+            label={t("loginForm.field.username", { defaultValue: "Username" })}
+            required
+            autoFocus
+          />
 
-          <div className="mt-2 flex items-center justify-between gap-6">
-            <button
-              disabled={isPending}
-              className="w-full rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3 text-sm font-semibold leading-6 text-white active:text-white/80 disabled:text-white/80 disabled:bg-zinc-900/50"
-              type="submit"
-            >
-              Login
-            </button>
-          </div>
+          <Input<LoginFields>
+            form={form}
+            type="password"
+            field="password"
+            defaultValue=""
+            label={t("loginForm.field.password", { defaultValue: "Password" })}
+            required
+          />
+
+          <FormActions>
+            <Button disabled={form.isPending} type="submit">
+              <Trans i18nKey="loginForm.button.login">Login</Trans>
+            </Button>
+          </FormActions>
         </form>
       </div>
     </div>

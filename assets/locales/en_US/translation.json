@@ -23,5 +23,15 @@
     "minutes_other": "{{ count }} minutes",
     "hoursAndMinutes_one": "{{ count }} hour, $t(formattedDuration.minutes, {\"count\": {{ minutes }}})",
     "hoursAndMinutes_other": "{{ count }} hours, $t(formattedDuration.minutes, {\"count\": {{ minutes }}})"
+  },
+  "loginForm": {
+    "title": "Login",
+    "field": {
+      "username": "Username",
+      "password": "Password"
+    },
+    "button": {
+      "login": "Login"
+    }
   }
 }
