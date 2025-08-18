@@ -5,6 +5,7 @@ import { StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
 import { AudioManagerProvider } from "./hooks/useAudioManager";
+import { AuthProvider } from "./hooks/useAuth";
 import { MediaSessionProvider } from "./hooks/useMediaSession";
 import { PlayerProvider } from "./hooks/usePlayer";
 import { QueueProvider } from "./hooks/useQueue";
@@ -19,17 +20,19 @@ if (appRoot) {
   root.render(
     <StrictMode>
       <Suspense>
-        <QueueProvider>
-          <AudioManagerProvider>
-            <PlayerProvider>
-              <MediaSessionProvider>
-                <QueryClientProvider client={queryClient}>
-                  <RouterProvider router={router} />
-                </QueryClientProvider>
-              </MediaSessionProvider>
-            </PlayerProvider>
-          </AudioManagerProvider>
-        </QueueProvider>
+        <AuthProvider>
+          <QueueProvider>
+            <AudioManagerProvider>
+              <PlayerProvider>
+                <MediaSessionProvider>
+                  <QueryClientProvider client={queryClient}>
+                    <RouterProvider router={router} />
+                  </QueryClientProvider>
+                </MediaSessionProvider>
+              </PlayerProvider>
+            </AudioManagerProvider>
+          </QueueProvider>
+        </AuthProvider>
       </Suspense>
     </StrictMode>,
   );

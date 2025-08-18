@@ -1,10 +1,13 @@
+import { useEffect } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { type Location, useLocation, useNavigate } from "react-router";
 import { Button } from "../components/form/Button";
 import { FormActions } from "../components/form/FormActions";
 import { Input } from "../components/form/Input";
+import { useAuth } from "../hooks/useAuth";
 import { type FormErrors, type FormState, useForm } from "../hooks/useForm";
 import { api } from "../services/api";
+import type { User } from "../types";
 
 interface LocationState {
   redirectTo: Location;
@@ -27,18 +30,25 @@ interface ErrorResponse {
 
 interface SuccessResponse {
   ok: true;
+  currentUser: User;
   sessionToken: string;
 }
 
 type Response = ErrorResponse | SuccessResponse;
 
 export function LoginView() {
+  const { isLoggedIn, completeLogin } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { state } = useLocation();
 
+  // If the user is already logged in there is no need to show the login view.
+  useEffect(() => {
+    if (isLoggedIn) navigate(`/`);
+  }, [isLoggedIn, navigate]);
+
   const onLoginSuccess = (response: SuccessResponse) => {
-    localStorage.sessionToken = response.sessionToken;
+    completeLogin(response.currentUser, response.sessionToken);
 
     if (state) {
       const { redirectTo } = state as LocationState;

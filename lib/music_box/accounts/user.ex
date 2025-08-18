@@ -18,6 +18,7 @@ defmodule MusicBox.Accounts.User do
     |> validate_required([:username])
     |> validate_length(:username, max: 160)
     |> validate_password(opts)
+    |> validate_confirmation(:password, message: "does not match password")
     |> unsafe_validate_unique(:username, MusicBox.Repo)
     |> unique_constraint(:username)
   end

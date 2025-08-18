@@ -111,3 +111,7 @@ end
 defmodule MusicBoxWeb.ForbiddenError do
   defexception message: "forbidden", plug_status: 403
 end
+
+defmodule MusicBoxWeb.ConflictError do
+  defexception message: "conflict", plug_status: 409
+end

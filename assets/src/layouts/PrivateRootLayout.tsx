@@ -1,11 +1,13 @@
 import { Navigate, Outlet, useLocation } from "react-router";
+import { useAuth } from "../hooks/useAuth";
 import { RootLayout } from "../layouts/RootLayout";
 
 export function PrivateRootLayout() {
-  // TODO: use Auth context/service
   const location = useLocation();
-  const token = localStorage.sessionToken;
-  if (!token) {
+  const { isLoggedIn, logout } = useAuth();
+
+  if (!isLoggedIn) {
+    logout();
     return <Navigate to="/login" replace state={{ redirectTo: location }} />;
   }
 

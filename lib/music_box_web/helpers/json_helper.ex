@@ -4,7 +4,15 @@ defmodule MusicBoxWeb.Helpers.JSON do
       def json_map(assigns, path, assign_key, opts \\ []) do
         unquote(__MODULE__).json_map(__MODULE__, assigns, path, assign_key, opts)
       end
+
+      import unquote(__MODULE__)
     end
+  end
+
+  def json_changeset(%Ecto.Changeset{errors: errors}) do
+    Enum.reduce(errors, %{}, fn {field, {message, _validation}}, result ->
+      Map.put(result, field, %{message: message})
+    end)
   end
 
   def json_map(module, assigns, path, assign_key, opts) do

@@ -5,6 +5,8 @@ defmodule MusicBox.Accounts do
   alias MusicBox.Accounts.User
   alias MusicBox.Sessions.Session
 
+  def has_user?, do: Repo.exists?(User)
+
   def get_user_by_username(username) when is_binary(username) do
     Repo.get_by(User, username: username)
   end

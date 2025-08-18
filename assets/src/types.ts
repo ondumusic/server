@@ -41,3 +41,8 @@ export interface Page<T> {
   totalEntries: number;
   entries: T[];
 }
+
+export interface User {
+  id: UUID;
+  username: string;
+}

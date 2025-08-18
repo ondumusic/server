@@ -1,3 +1,5 @@
+import { auth } from "../services/auth";
+
 interface ApiErrorArguments {
   message: string;
   response: Response;
@@ -60,10 +62,8 @@ class APIClient {
       Accept: "application/json",
     };
 
-    // TODO: Move this into separate auth service
-    const { sessionToken } = localStorage;
-    if (sessionToken) {
-      headers.Authorization = `Bearer ${sessionToken}`;
+    if (auth.sessionToken) {
+      headers.Authorization = `Bearer ${auth.sessionToken}`;
     }
 
     if (typeof body === "object") {

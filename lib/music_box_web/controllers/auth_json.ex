@@ -5,7 +5,7 @@ defmodule MusicBoxWeb.AuthJSON do
     %{
       ok: true,
       sessionToken: signed_session_token,
-      current_user: current_user(%{current_user: current_user})
+      currentUser: current_user(%{current_user: current_user})
     }
   end
 
@@ -13,6 +13,13 @@ defmodule MusicBoxWeb.AuthJSON do
     %{
       id: current_user.id,
       username: current_user.username
+    }
+  end
+
+  def signup(%{changeset: changeset}) do
+    %{
+      ok: false,
+      fields: json_changeset(changeset)
     }
   end
 end

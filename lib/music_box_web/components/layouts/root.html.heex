@@ -10,5 +10,9 @@
   </head>
   <body class="bg-emerald-600 overflow-hidden">
     {@inner_content}
+
+    <script :if={assigns[:hydrate]} type="text/javascript">
+      window.hydrateReact = <%= raw JSON.encode!(@hydrate) %>;
+    </script>
   </body>
 </html>
