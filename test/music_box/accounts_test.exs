@@ -126,7 +126,8 @@ defmodule MusicBox.AccountsTest do
     test "allows fields to be set" do
       changeset =
         Accounts.change_user_password(%User{}, %{
-          "password" => "new valid password"
+          "password" => "new valid password",
+          "password_confirmation" => "new valid password"
         })
 
       assert changeset.valid?
@@ -172,7 +173,8 @@ defmodule MusicBox.AccountsTest do
     test "updates the password", %{user: user} do
       {:ok, user} =
         Accounts.update_user_password(user, valid_user_password(), %{
-          password: "new valid password"
+          password: "new valid password",
+          password_confirmation: "new valid password"
         })
 
       assert is_nil(user.password)
@@ -184,7 +186,8 @@ defmodule MusicBox.AccountsTest do
 
       {:ok, _} =
         Accounts.update_user_password(user, valid_user_password(), %{
-          password: "new valid password"
+          password: "new valid password",
+          password_confirmation: "new valid password"
         })
 
       refute Repo.get_by(Session, user_id: user.id)
