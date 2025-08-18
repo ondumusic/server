@@ -32,9 +32,11 @@ defmodule MusicBoxWeb.AuthController do
       raise MusicBoxWeb.ConflictError
     end
 
-    case Accounts.register_user(params) |> IO.inspect() do
+    case Accounts.register_user(params) do
       {:error, changeset} ->
-        render(conn, :signup, changeset: changeset)
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(:signup, changeset: changeset)
 
       {:ok, user} ->
         conn

@@ -1,10 +1,16 @@
 class AuthService {
+  #tokenName = "sessionToken";
+
   get sessionToken(): string | null {
-    return localStorage.sessionToken;
+    return localStorage.getItem(this.#tokenName);
   }
 
   set sessionToken(sessionToken: string | null) {
-    localStorage.sessionToken = sessionToken;
+    if (sessionToken === null) {
+      localStorage.removeItem(this.#tokenName);
+    } else {
+      localStorage.setItem(this.#tokenName, sessionToken);
+    }
   }
 }
 

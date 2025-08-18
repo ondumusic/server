@@ -12,7 +12,7 @@ interface HydratedReact {
 
 declare var hydrateReact: HydratedReact;
 
-const initialOnboardingStep = hydrateReact.onboarding;
+let initialOnboardingStep = hydrateReact.onboarding;
 
 interface Props {
   children?: ReactNode;
@@ -26,6 +26,7 @@ export function RootLayout({ children }: Props) {
   );
 
   const completeOnboarding = (user: User, sessionToken: string) => {
+    initialOnboardingStep = null;
     completeLogin(user, sessionToken);
     setIsOnboarding(false);
   };

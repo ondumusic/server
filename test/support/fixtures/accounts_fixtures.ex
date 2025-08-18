@@ -3,9 +3,12 @@ defmodule MusicBox.AccountsFixtures do
   def valid_user_password, do: "itsamemario!"
 
   def valid_user_attributes(attrs \\ %{}) do
+    password = valid_user_password()
+
     Enum.into(attrs, %{
       username: unique_username(),
-      password: valid_user_password()
+      password: password,
+      password_confirmation: password
     })
   end
 

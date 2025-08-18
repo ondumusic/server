@@ -38,14 +38,16 @@ export const AuthProvider = ({ children }: Props) => {
   const [currentUser, setCurrentUser] = useState<User>();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!auth.sessionToken);
 
+  const logout = () => {
+    auth.sessionToken = null;
+    setCurrentUser(undefined);
+    setIsLoggedIn(false);
+  };
+
   const value = {
     isLoggedIn,
     currentUser,
-    logout: () => {
-      auth.sessionToken = null;
-      setCurrentUser(undefined);
-      setIsLoggedIn(false);
-    },
+    logout,
     completeLogin: (user: User, sessionToken: string) => {
       auth.sessionToken = sessionToken;
       setCurrentUser(user);
@@ -53,6 +55,9 @@ export const AuthProvider = ({ children }: Props) => {
     },
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies(logout): suppress dependency logout
+  // biome-ignore lint/correctness/useExhaustiveDependencies(currentUser): suppress dependency currentUser
+  // biome-ignore lint/correctness/useExhaustiveDependencies(isLoggedIn): suppress dependency isLoggedIn
   useEffect(() => {
     if (!isLoggedIn) return;
     if (!auth.sessionToken) {
@@ -60,10 +65,11 @@ export const AuthProvider = ({ children }: Props) => {
     }
 
     if (currentUser) return;
-    api.get<MeRequest, MeResponse>("/auth/me").then((currentUser) => {
-      setCurrentUser(currentUser);
-    });
-  }, [currentUser, isLoggedIn]);
+    api
+      .get<MeRequest, MeResponse>("/auth/me")
+      .then(setCurrentUser)
+      .catch(logout);
+  }, []);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

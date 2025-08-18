@@ -40,7 +40,8 @@ defmodule TestSeeds do
 
     Accounts.register_user(%{
       username: "testuser",
-      password: "testtest123!"
+      password: "testtest123!",
+      password_confirmation: "testtest123!"
     })
   end
 

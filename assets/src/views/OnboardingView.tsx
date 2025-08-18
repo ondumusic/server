@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { router } from "../router";
+import { useState } from "react";
 import type { User } from "../types";
 import { SignupView } from "../views/onboarding/SignupView";
 
@@ -17,12 +16,6 @@ export function OnboardingView({
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>(
     initialOnboardingStep,
   );
-
-  // If we are onboarding there aren't really any useful other routes yet
-  // so we can just make it
-  useEffect(() => {
-    router.navigate(`/`, { replace: true });
-  }, []);
 
   return (
     <>
