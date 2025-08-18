@@ -38,6 +38,7 @@ defmodule MusicBoxWeb.Router do
     pipe_through [:api, :require_authenticated_user]
 
     get "/auth/me", AuthController, :current_user
+    post "/settings", SettingsController, :update
 
     get "/artists", LibraryController, :artists
     get "/artists/:artist_id", LibraryController, :artist

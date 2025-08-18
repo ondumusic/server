@@ -1,11 +1,13 @@
 defmodule MusicBoxWeb.PageController do
   use MusicBoxWeb, :controller
 
-  alias MusicBox.Accounts
+  alias MusicBox.{Accounts, Settings}
 
   def react(conn, _params) do
+    settings = Settings.get()
+
     has_user? = Accounts.has_user?()
-    # has_settings? = false
+    has_music_path? = not is_nil(settings.music_path)
 
     onboarding_step = nil
 
@@ -14,10 +16,10 @@ defmodule MusicBoxWeb.PageController do
         do: "user",
         else: onboarding_step
 
-    # onboarding_step =
-    #   if not has_settings? and is_nil(onboarding_step),
-    #     do: "settings",
-    #     else: onboarding_step
+    onboarding_step =
+      if not has_music_path? and is_nil(onboarding_step),
+        do: "settings",
+        else: onboarding_step
 
     hydrate = %{
       onboarding: onboarding_step

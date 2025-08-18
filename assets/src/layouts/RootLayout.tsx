@@ -3,7 +3,6 @@ import { Outlet } from "react-router";
 import { Player } from "../components/Player";
 import { useAuth } from "../hooks/useAuth";
 import { usePlayer } from "../hooks/usePlayer";
-import type { User } from "../types";
 import { type OnboardingStep, OnboardingView } from "../views/OnboardingView";
 
 interface HydratedReact {
@@ -19,21 +18,21 @@ interface Props {
 }
 
 export function RootLayout({ children }: Props) {
-  const { completeLogin } = useAuth();
+  const { isLoggedIn, completeLogin } = useAuth();
   const { isVisible } = usePlayer();
   const [isOnboarding, setIsOnboarding] = useState<boolean>(
     initialOnboardingStep !== null,
   );
 
-  const completeOnboarding = (user: User, sessionToken: string) => {
+  const completeOnboarding = () => {
     initialOnboardingStep = null;
-    completeLogin(user, sessionToken);
     setIsOnboarding(false);
   };
 
-  if (isOnboarding) {
+  if (isLoggedIn && isOnboarding) {
     return (
       <OnboardingView
+        completeLogin={completeLogin}
         initialOnboardingStep={initialOnboardingStep}
         completeOnboarding={completeOnboarding}
       />

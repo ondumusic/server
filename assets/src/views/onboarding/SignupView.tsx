@@ -33,14 +33,15 @@ type Response = ErrorResponse | SuccessResponse;
 
 interface Props {
   setOnboardingStep(_nextStep: OnboardingStep): void;
-  completeOnboarding(_user: User, _sessionToken: string): void;
+  completeLogin(_user: User, _sessionToken: string): void;
 }
 
-export function SignupView({ completeOnboarding }: Props) {
+export function SignupView({ setOnboardingStep, completeLogin }: Props) {
   const { t } = useTranslation();
 
   const onSignupSuccess = (response: SuccessResponse) => {
-    completeOnboarding(response.currentUser, response.sessionToken);
+    completeLogin(response.currentUser, response.sessionToken);
+    setOnboardingStep("settings");
   };
 
   const onSubmit = async (
