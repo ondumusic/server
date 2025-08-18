@@ -1,0 +1,423 @@
+defmodule MusicBoxWeb.LibraryControllerTest do
+  use MusicBoxWeb.ConnCase, async: true
+
+  describe "artists" do
+    setup :register_and_log_in_user
+
+    test "returns paginated list of artists", %{conn: conn} do
+      assert %{
+               "pageNumber" => 1,
+               "totalPages" => 1,
+               "totalEntries" => 1,
+               "pageSize" => 100,
+               "entries" => [
+                 %{
+                   "albumCount" => 1,
+                   "name" => "The Beatles",
+                   "slug" => "the-beatles"
+                 }
+               ]
+             } =
+               conn
+               |> get(~p"/api/artists")
+               |> json_response(200)
+    end
+
+    test "returns artist details", %{conn: conn} do
+      assert %{
+               "albumCount" => 1,
+               "name" => "The Beatles",
+               "slug" => "the-beatles"
+             } =
+               conn
+               |> get(~p"/api/artists/the-beatles")
+               |> json_response(200)
+    end
+
+    test "returns paginated list of albums for given artist", %{conn: conn} do
+      assert %{
+               "entries" => [
+                 %{
+                   "name" => "With the Beatles",
+                   "slug" => "with-the-beatles",
+                   "isUnknown" => false,
+                   "releaseYear" => 1963,
+                   "tracks" => [
+                     %{
+                       "duration" => 133.0,
+                       "name" => "It Won't Be Long",
+                       "number" => 1
+                     },
+                     %{
+                       "duration" => 125.0,
+                       "name" => "All I've Got To Do",
+                       "number" => 2
+                     },
+                     %{
+                       "duration" => 129.0,
+                       "name" => "All My Loving",
+                       "number" => 3
+                     },
+                     %{
+                       "duration" => 149.0,
+                       "name" => "Don't Bother Me",
+                       "number" => 4
+                     },
+                     %{
+                       "duration" => 108.0,
+                       "name" => "Little Child",
+                       "number" => 5
+                     },
+                     %{
+                       "duration" => 137.0,
+                       "name" => "Till There Was You",
+                       "number" => 6
+                     },
+                     %{
+                       "duration" => 155.0,
+                       "name" => "Please Mister Postman",
+                       "number" => 7
+                     },
+                     %{
+                       "duration" => 168.0,
+                       "name" => "Roll Over Beethoven",
+                       "number" => 8
+                     },
+                     %{
+                       "duration" => 153.0,
+                       "name" => "Hold Me Tight",
+                       "number" => 9
+                     },
+                     %{
+                       "duration" => 183.0,
+                       "name" => "You've Really Got a Hold on Me",
+                       "number" => 10
+                     },
+                     %{
+                       "duration" => 120.0,
+                       "name" => "I Wanna Be Your Man",
+                       "number" => 11
+                     },
+                     %{
+                       "duration" => 148.0,
+                       "name" => "Devil In Her Heart",
+                       "number" => 12
+                     },
+                     %{
+                       "duration" => 127.0,
+                       "name" => "Not a Second Time",
+                       "number" => 13
+                     },
+                     %{
+                       "duration" => 170.0,
+                       "name" => "Money (That's What I Want)",
+                       "number" => 14
+                     }
+                   ]
+                 }
+               ],
+               "pageNumber" => 1,
+               "pageSize" => 50,
+               "totalEntries" => 1,
+               "totalPages" => 1
+             } =
+               conn
+               |> get(~p"/api/artists/the-beatles/albums")
+               |> json_response(200)
+    end
+
+    test "returns artist albums details ", %{conn: conn} do
+      assert %{
+               "name" => "With the Beatles",
+               "slug" => "with-the-beatles",
+               "isUnknown" => false,
+               "releaseYear" => 1963,
+               "tracks" => [
+                 %{
+                   "disc" => 1,
+                   "duration" => 133.0,
+                   "name" => "It Won't Be Long",
+                   "number" => 1
+                 },
+                 %{
+                   "disc" => 1,
+                   "duration" => 125.0,
+                   "name" => "All I've Got To Do",
+                   "number" => 2
+                 },
+                 %{
+                   "disc" => 1,
+                   "duration" => 129.0,
+                   "name" => "All My Loving",
+                   "number" => 3
+                 },
+                 %{
+                   "disc" => 1,
+                   "duration" => 149.0,
+                   "name" => "Don't Bother Me",
+                   "number" => 4
+                 },
+                 %{
+                   "disc" => 1,
+                   "duration" => 108.0,
+                   "name" => "Little Child",
+                   "number" => 5
+                 },
+                 %{
+                   "disc" => 1,
+                   "duration" => 137.0,
+                   "name" => "Till There Was You",
+                   "number" => 6
+                 },
+                 %{
+                   "disc" => 1,
+                   "duration" => 155.0,
+                   "name" => "Please Mister Postman",
+                   "number" => 7
+                 },
+                 %{
+                   "disc" => 1,
+                   "duration" => 168.0,
+                   "name" => "Roll Over Beethoven",
+                   "number" => 8
+                 },
+                 %{
+                   "disc" => 1,
+                   "duration" => 153.0,
+                   "name" => "Hold Me Tight",
+                   "number" => 9
+                 },
+                 %{
+                   "disc" => 1,
+                   "duration" => 183.0,
+                   "name" => "You've Really Got a Hold on Me",
+                   "number" => 10
+                 },
+                 %{
+                   "disc" => 1,
+                   "duration" => 120.0,
+                   "name" => "I Wanna Be Your Man",
+                   "number" => 11
+                 },
+                 %{
+                   "disc" => 1,
+                   "duration" => 148.0,
+                   "name" => "Devil In Her Heart",
+                   "number" => 12
+                 },
+                 %{
+                   "disc" => 1,
+                   "duration" => 127.0,
+                   "name" => "Not a Second Time",
+                   "number" => 13
+                 },
+                 %{
+                   "disc" => 1,
+                   "duration" => 170.0,
+                   "name" => "Money (That's What I Want)",
+                   "number" => 14
+                 }
+               ]
+             } =
+               conn
+               |> get(~p"/api/artists/the-beatles/albums/with-the-beatles")
+               |> json_response(200)
+    end
+  end
+
+  describe "albums" do
+    setup :register_and_log_in_user
+
+    test "returns paginated list of albums", %{conn: conn} do
+      assert %{
+               "pageNumber" => 1,
+               "totalPages" => 1,
+               "totalEntries" => 1,
+               "pageSize" => 50,
+               "entries" => [
+                 %{
+                   "name" => "With the Beatles",
+                   "slug" => "with-the-beatles",
+                   "isUnknown" => false,
+                   "releaseYear" => 1963,
+                   "tracks" => [
+                     %{
+                       "duration" => 133.0,
+                       "name" => "It Won't Be Long",
+                       "number" => 1
+                     },
+                     %{
+                       "duration" => 125.0,
+                       "name" => "All I've Got To Do",
+                       "number" => 2
+                     },
+                     %{
+                       "duration" => 129.0,
+                       "name" => "All My Loving",
+                       "number" => 3
+                     },
+                     %{
+                       "duration" => 149.0,
+                       "name" => "Don't Bother Me",
+                       "number" => 4
+                     },
+                     %{
+                       "duration" => 108.0,
+                       "name" => "Little Child",
+                       "number" => 5
+                     },
+                     %{
+                       "duration" => 137.0,
+                       "name" => "Till There Was You",
+                       "number" => 6
+                     },
+                     %{
+                       "duration" => 155.0,
+                       "name" => "Please Mister Postman",
+                       "number" => 7
+                     },
+                     %{
+                       "duration" => 168.0,
+                       "name" => "Roll Over Beethoven",
+                       "number" => 8
+                     },
+                     %{
+                       "duration" => 153.0,
+                       "name" => "Hold Me Tight",
+                       "number" => 9
+                     },
+                     %{
+                       "duration" => 183.0,
+                       "name" => "You've Really Got a Hold on Me",
+                       "number" => 10
+                     },
+                     %{
+                       "duration" => 120.0,
+                       "name" => "I Wanna Be Your Man",
+                       "number" => 11
+                     },
+                     %{
+                       "duration" => 148.0,
+                       "name" => "Devil In Her Heart",
+                       "number" => 12
+                     },
+                     %{
+                       "duration" => 127.0,
+                       "name" => "Not a Second Time",
+                       "number" => 13
+                     },
+                     %{
+                       "duration" => 170.0,
+                       "name" => "Money (That's What I Want)",
+                       "number" => 14
+                     }
+                   ]
+                 }
+               ]
+             } =
+               conn
+               |> get(~p"/api/albums")
+               |> json_response(200)
+    end
+
+    test "get album details", %{conn: conn} do
+      album = MusicBox.Repo.get_by(MusicBox.Albums.Album, slug: "with-the-beatles")
+
+      assert %{
+               "name" => "With the Beatles",
+               "slug" => "with-the-beatles",
+               "isUnknown" => false,
+               "releaseYear" => 1963,
+               "tracks" => [
+                 %{
+                   "duration" => 133.0,
+                   "name" => "It Won't Be Long",
+                   "number" => 1
+                 },
+                 %{
+                   "duration" => 125.0,
+                   "name" => "All I've Got To Do",
+                   "number" => 2
+                 },
+                 %{
+                   "duration" => 129.0,
+                   "name" => "All My Loving",
+                   "number" => 3
+                 },
+                 %{
+                   "duration" => 149.0,
+                   "name" => "Don't Bother Me",
+                   "number" => 4
+                 },
+                 %{
+                   "duration" => 108.0,
+                   "name" => "Little Child",
+                   "number" => 5
+                 },
+                 %{
+                   "duration" => 137.0,
+                   "name" => "Till There Was You",
+                   "number" => 6
+                 },
+                 %{
+                   "duration" => 155.0,
+                   "name" => "Please Mister Postman",
+                   "number" => 7
+                 },
+                 %{
+                   "duration" => 168.0,
+                   "name" => "Roll Over Beethoven",
+                   "number" => 8
+                 },
+                 %{
+                   "duration" => 153.0,
+                   "name" => "Hold Me Tight",
+                   "number" => 9
+                 },
+                 %{
+                   "duration" => 183.0,
+                   "name" => "You've Really Got a Hold on Me",
+                   "number" => 10
+                 },
+                 %{
+                   "duration" => 120.0,
+                   "name" => "I Wanna Be Your Man",
+                   "number" => 11
+                 },
+                 %{
+                   "duration" => 148.0,
+                   "name" => "Devil In Her Heart",
+                   "number" => 12
+                 },
+                 %{
+                   "duration" => 127.0,
+                   "name" => "Not a Second Time",
+                   "number" => 13
+                 },
+                 %{
+                   "duration" => 170.0,
+                   "name" => "Money (That's What I Want)",
+                   "number" => 14
+                 }
+               ]
+             } =
+               conn
+               |> get(~p"/api/albums/#{album.id}")
+               |> json_response(200)
+    end
+  end
+
+  describe "forbidden when not authenticated" do
+    test "forbidden on /api/artists", %{conn: conn} do
+      assert_raise MusicBoxWeb.UnauthorizedError, fn ->
+        get(conn, "/api/artists")
+      end
+    end
+
+    test "forbidden on /api/albums", %{conn: conn} do
+      assert_raise MusicBoxWeb.UnauthorizedError, fn ->
+        get(conn, "/api/albums")
+      end
+    end
+  end
+end

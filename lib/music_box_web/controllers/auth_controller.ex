@@ -2,6 +2,7 @@ defmodule MusicBoxWeb.AuthController do
   use MusicBoxWeb, :controller
 
   alias MusicBox.Accounts
+  alias MusicBox.Sessions
   alias MusicBoxWeb.UserAuth
 
   def login(conn, %{"username" => username, "password" => password}) do
@@ -18,5 +19,14 @@ defmodule MusicBoxWeb.AuthController do
         }
       })
     end
+  end
+
+  def logout(conn, _params) do
+    with %{session_token: session_token} <- conn.assigns,
+         :ok <- Sessions.delete_user_session_token(session_token) do
+      :ok
+    end
+
+    json(conn, %{ok: true})
   end
 end

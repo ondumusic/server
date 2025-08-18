@@ -1,0 +1,124 @@
+defmodule TestSeeds do
+  alias MusicBox.FileScanner.Utils
+  alias MusicBox.Artists.Artist
+  alias MusicBox.Albums.Album
+  alias MusicBox.Tracks.Track
+  alias MusicBox.Files.FileMetadata
+  alias MusicBox.Files.File
+  alias MusicBox.Accounts
+  alias MusicBox.Repo
+
+  def reset do
+    [
+      %{
+        name: "The Beatles",
+        albums: [
+          %{
+            name: "With the Beatles",
+            release_year: 1963,
+            tracks: [
+              %{track: 1, name: "It Won't Be Long", duration: seconds("2:13")},
+              %{track: 2, name: "All I've Got To Do", duration: seconds("2:05")},
+              %{track: 3, name: "All My Loving", duration: seconds("2:09")},
+              %{track: 4, name: "Don't Bother Me", duration: seconds("2:29")},
+              %{track: 5, name: "Little Child", duration: seconds("1:48")},
+              %{track: 6, name: "Till There Was You", duration: seconds("2:17")},
+              %{track: 7, name: "Please Mister Postman", duration: seconds("2:35")},
+              %{track: 8, name: "Roll Over Beethoven", duration: seconds("2:48")},
+              %{track: 9, name: "Hold Me Tight", duration: seconds("2:33")},
+              %{track: 10, name: "You've Really Got a Hold on Me", duration: seconds("3:03")},
+              %{track: 11, name: "I Wanna Be Your Man", duration: seconds("2:00")},
+              %{track: 12, name: "Devil In Her Heart", duration: seconds("2:28")},
+              %{track: 13, name: "Not a Second Time", duration: seconds("2:07")},
+              %{track: 14, name: "Money (That's What I Want)", duration: seconds("2:50")}
+            ]
+          }
+        ]
+      }
+    ]
+    |> Enum.map(&insert_artist/1)
+
+    Accounts.register_user(%{
+      username: "testuser",
+      password: "testtest123!"
+    })
+  end
+
+  defp insert_artist(seed) do
+    artist =
+      Repo.insert!(%Artist{
+        name: seed.name,
+        slug: Utils.slugify(seed.name)
+      })
+
+    if albums = seed[:albums],
+      do: Enum.map(albums, &insert_album(artist, &1))
+
+    if tracks = seed[:tracks],
+      do: Enum.map(tracks, &insert_track(artist, nil, &1))
+
+    artist
+  end
+
+  defp insert_album(artist, seed) do
+    album =
+      Repo.insert!(%Album{
+        artist_id: artist.id,
+        name: seed.name,
+        slug: Utils.slugify(seed.name),
+        compilation: seed[:compilation] == true,
+        release_year: seed.release_year
+      })
+
+    if tracks = seed[:tracks],
+      do: Enum.map(tracks, &insert_track(artist, album, &1))
+
+    album
+  end
+
+  defp insert_track(artist, album, seed) do
+    duration = seed[:duration] || 21.0 + :rand.uniform() * 500.5
+
+    file =
+      Repo.insert!(%File{
+        path: "/Path/to/Music/#{seed.name}.mp3",
+        type: seed[:type] || :mp3,
+        checksum: seed[:checksum] || generate_checksum(),
+        size: seed[:size] || round(:rand.uniform() * 1024 * 1024 * 4),
+        metadata: %FileMetadata{
+          artist: if(artist, do: artist.name),
+          album: if(album, do: album.name),
+          album_artist: seed[:album_artist] || if(artist, do: artist.name),
+          disc: seed[:disc],
+          track: seed[:track],
+          release_year: seed[:release_year],
+          compilation: seed[:compilation] == true,
+          duration: duration,
+          genres: seed[:genres] || []
+        }
+      })
+
+    Repo.insert!(%Track{
+      file_id: file.id,
+      artist_id: if(artist, do: artist.id),
+      album_id: if(album, do: album.id),
+      name: seed.name,
+      duration: duration,
+      number: seed[:track],
+      disc: seed[:disc]
+    })
+  end
+
+  defp generate_checksum,
+    do: Base.encode16(:crypto.hash(:md5, to_string(:rand.uniform())))
+
+  defp seconds(duration) do
+    [minutes, seconds] =
+      duration
+      |> String.split(":")
+      |> Enum.map(&Float.parse/1)
+      |> Enum.map(&elem(&1, 0))
+
+    minutes * 60.0 + seconds
+  end
+end

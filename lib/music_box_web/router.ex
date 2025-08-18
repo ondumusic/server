@@ -30,6 +30,7 @@ defmodule MusicBoxWeb.Router do
     pipe_through [:api]
 
     post "/auth/login", AuthController, :login
+    delete "/auth/session", AuthController, :logout
   end
 
   scope "/api", MusicBoxWeb do
