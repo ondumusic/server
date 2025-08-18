@@ -1,4 +1,11 @@
-import { createContext, type ReactNode, useContext, useState } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { api } from "../services/api";
 import { auth } from "../services/auth";
 import type { User } from "../types";
 
@@ -19,6 +26,9 @@ const AuthContext = createContext<AuthContext>({
 export function useAuth() {
   return useContext(AuthContext);
 }
+
+type MeRequest = undefined;
+type MeResponse = User;
 
 interface Props {
   children: ReactNode;
@@ -42,6 +52,18 @@ export const AuthProvider = ({ children }: Props) => {
       setIsLoggedIn(true);
     },
   };
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    if (!auth.sessionToken) {
+      setIsLoggedIn(false);
+    }
+
+    if (currentUser) return;
+    api.get<MeRequest, MeResponse>("/auth/me").then((currentUser) => {
+      setCurrentUser(currentUser);
+    });
+  }, [currentUser, isLoggedIn]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -21,6 +21,11 @@ defmodule MusicBoxWeb.AuthController do
     end
   end
 
+  def current_user(conn, _params) do
+    conn
+    |> render(:current_user)
+  end
+
   def signup(conn, params) do
     # Single-user setups only, so disable signup if we already have a user
     if Accounts.has_user?() do

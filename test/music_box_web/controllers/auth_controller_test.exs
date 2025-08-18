@@ -8,7 +8,7 @@ defmodule MusicBoxWeb.AuthControllerTest do
       username = user.username
 
       assert %{
-               "current_user" => %{"id" => ^user_id, "username" => ^username},
+               "currentUser" => %{"id" => ^user_id, "username" => ^username},
                "ok" => true,
                "sessionToken" => session_token
              } =
@@ -52,7 +52,7 @@ defmodule MusicBoxWeb.AuthControllerTest do
       username = user.username
 
       assert %{
-               "current_user" => %{"id" => ^user_id, "username" => ^username},
+               "currentUser" => %{"id" => ^user_id, "username" => ^username},
                "ok" => true,
                "sessionToken" => session_token
              } =
