@@ -5,6 +5,7 @@ defmodule MusicBox.Schema do
       import Ecto.{Changeset, Query}, warn: false
 
       alias __MODULE__
+      alias MusicBox.Repo
     end
   end
 end
