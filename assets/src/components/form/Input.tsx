@@ -39,14 +39,11 @@ export function Input<T>(props: Props<T>) {
   const hasError = !isPending && !!state.errors[field];
 
   const defaultValue =
-    typeof props.defaultValue !== "undefined"
-      ? props.defaultValue
-      : (fields[field as keyof T] as string);
+    (fields[field as keyof T] as string) || props.defaultValue;
 
+  // Determine what to render based on props.type, default to TextField
   let inputType = "text";
   if (props.type === "select") inputType = props.type;
-
-  if (props.type === "select") console.log(props.options);
 
   return (
     <div>
