@@ -33,8 +33,15 @@ defmodule MusicBox.FileScanner.Producer do
   @impl true
   def handle_info(:start_scan, state) do
     settings = Settings.get()
-    new_entries = [to_entry(settings.music_path, settings.scan_type)]
-    {entries, state} = get_entries(state, state.demand, new_entries)
+
+    {entries, state} =
+      if settings.music_path do
+        new_entries = [to_entry(settings.music_path, settings.scan_type)]
+        get_entries(state, state.demand, new_entries)
+      else
+        {[], schedule_poll(state)}
+      end
+
     {:noreply, entries, state}
   end
 
