@@ -29,7 +29,12 @@ export function RootLayout({ children }: Props) {
     setIsOnboarding(false);
   };
 
-  if (isLoggedIn && isOnboarding) {
+  const showOnboarding =
+    isOnboarding &&
+    (initialOnboardingStep === "user" ||
+      (isLoggedIn && initialOnboardingStep === "settings"));
+
+  if (showOnboarding) {
     return (
       <OnboardingView
         completeLogin={completeLogin}
