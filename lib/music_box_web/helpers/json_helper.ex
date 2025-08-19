@@ -10,7 +10,12 @@ defmodule MusicBoxWeb.Helpers.JSON do
   end
 
   def json_changeset(%Ecto.Changeset{errors: errors}) do
-    Enum.reduce(errors, %{}, fn {field, {message, _validation}}, result ->
+    Enum.reduce(errors, %{}, fn {field, {message, validation}}, result ->
+      message =
+        if count = validation[:count],
+          do: t(message, message, count, validation),
+          else: t(message, validation)
+
       Map.put(result, field, %{message: message})
     end)
   end
@@ -38,4 +43,10 @@ defmodule MusicBoxWeb.Helpers.JSON do
       end
     end)
   end
+
+  defp t(message, message, count, validation),
+    do: Gettext.dngettext(MusicBoxWeb.Gettext, "errors", message, message, count, validation)
+
+  defp t(message, validation),
+    do: Gettext.dgettext(MusicBoxWeb.Gettext, "errors", message, validation)
 end
