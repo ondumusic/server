@@ -10,6 +10,7 @@ interface CommonProps<T> {
   field: string;
   id?: string;
   label?: string;
+  help?: ReactNode;
   autoFocus?: boolean;
   required?: boolean;
 }
@@ -79,6 +80,12 @@ export function Input<T>(props: Props<T>) {
         <p className="mt-3 flex text-sm gap-1 leading-6 text-rose-600">
           {state.errors[field].message}
         </p>
+      )}
+
+      {props.help && (
+        <div className="mt-3 text-sm leading-6 gap-1 text-stone-400">
+          {props.help}
+        </div>
       )}
     </div>
   );

@@ -96,9 +96,13 @@ export function SettingsView({ completeOnboarding }: Props) {
             type="text"
             field="music_path"
             label={t("settingsForm.field.music_path", {
-              defaultValue: "Music Path",
+              defaultValue: "Music Directory",
             })}
             defaultValue="/music"
+            help={t("settingsForm.help.music_path", {
+              defaultValue:
+                "The absolute path to your music collection. When running in a container (like Docker) it will generally be a volume mapped at /music",
+            })}
             required
             autoFocus
           />
@@ -111,9 +115,13 @@ export function SettingsView({ completeOnboarding }: Props) {
               defaultValue: "Scan Type",
             })}
             options={{
-              quick: "Quick Scan (skip existing)",
+              quick: "Quick Scan (skips existing)",
               full: "Full Scan (includes existing files)",
             }}
+            help={t("settingsForm.help.scan_type", {
+              defaultValue:
+                "In general a quick scan is recommended as it is much faster.",
+            })}
             defaultValue="quick"
             required
           />
@@ -125,18 +133,40 @@ export function SettingsView({ completeOnboarding }: Props) {
             label={t("settingsForm.field.poll_interval", {
               defaultValue: "Scan Interval",
             })}
+            help={t("settingsForm.help.poll_interval", {
+              defaultValue: "How often should we scan for new music?",
+            })}
             options={{
-              "5": "Every 5 minutes",
-              "10": "Every 10 minutes",
-              "15": "Every 15 minutes",
-              "20": "Every 20 minutes",
-              "30": "Every half hour",
-              "60": "Every hour",
-              "120": "Every 2 hours",
-              "180": "Every 3 hours",
-              "360": "Every 6 hours",
-              "720": "Every 12 hours",
-              "1440": "Every 24 hours",
+              "5": t("pollInterval.5min", {
+                defaultValue: "Every 5 minutes",
+              }),
+              "10": t("pollInterval.10min", {
+                defaultValue: "Every 10 minutes",
+              }),
+              "15": t("pollInterval.15min", {
+                defaultValue: "Every 15 minutes",
+              }),
+              "30": t("pollInterval.30min", {
+                defaultValue: "Every half hour",
+              }),
+              "60": t("pollInterval.60min", {
+                defaultValue: "Every hour",
+              }),
+              "120": t("pollInterval.120min", {
+                defaultValue: "Every 2 hour",
+              }),
+              "180": t("pollInterval.180min", {
+                defaultValue: "Every 3 hour",
+              }),
+              "360": t("pollInterval.360min", {
+                defaultValue: "Every 6 hour",
+              }),
+              "720": t("pollInterval.720min", {
+                defaultValue: "Every 12 hour",
+              }),
+              "1440": t("pollInterval.1440min", {
+                defaultValue: "Every 24 hour",
+              }),
             }}
             defaultValue="60"
             required
