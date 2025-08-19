@@ -56,7 +56,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       disc: track.disc,
       number: track.number,
       duration: track.duration,
-      streamUrl: url(~p"/stream/#{track}?token=#{signed_token}")
+      streamUrl: ~p"/stream/#{track}?token=#{signed_token}"
     }
   end
 end
