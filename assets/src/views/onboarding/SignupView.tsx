@@ -88,6 +88,7 @@ export function SignupView({ setOnboardingStep, completeLogin }: Props) {
         <form action={form.action} className="mt-10 space-y-8">
           <Input<SignupFields>
             form={form}
+            type="text"
             field="username"
             label={t("signupForm.field.username", { defaultValue: "Username" })}
             required

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Form } from "../../hooks/useForm";
 import { Label } from "./Label";
+import { Select } from "./Select";
 import { TextField } from "./TextField";
 
 interface CommonProps<T> {
@@ -9,19 +10,22 @@ interface CommonProps<T> {
   field: string;
   id?: string;
   label?: string;
-}
-
-// Union type for different input types
-type InputFieldProps = {
-  type?: string;
   autoFocus?: boolean;
   required?: boolean;
+}
+
+type TextInputProps = {
+  type: "text" | "password";
   defaultValue?: string | number;
 };
-// | {
-//     type: "select";
-//     options: string[]
-//   };
+
+type SelectInputProps = {
+  type: "select";
+  options: { [key: string]: string };
+  defaultValue?: string;
+};
+
+type InputFieldProps = SelectInputProps | TextInputProps;
 
 type Props<T> = CommonProps<T> & InputFieldProps;
 
@@ -38,20 +42,38 @@ export function Input<T>(props: Props<T>) {
       ? props.defaultValue
       : (fields[field as keyof T] as string);
 
+  let inputType = "text";
+  if (props.type === "select") inputType = props.type;
+
+  if (props.type === "select") console.log(props.options);
+
   return (
     <div>
       <Label htmlFor={id} hasError={hasError} title={props.label || field} />
 
-      {/* TODO: Add support for other fields once needed */}
-      <TextField
-        id={id}
-        name={field}
-        type={type}
-        hasError={hasError}
-        defaultValue={defaultValue}
-        autoFocus={!!props.autoFocus}
-        required={!!props.required}
-      />
+      {inputType === "select" && (
+        <Select
+          id={id}
+          name={field}
+          hasError={hasError}
+          defaultValue={defaultValue}
+          autoFocus={!!props.autoFocus}
+          required={!!props.required}
+          options={(props as SelectInputProps).options}
+        />
+      )}
+
+      {inputType === "text" && (
+        <TextField
+          id={id}
+          name={field}
+          type={type}
+          hasError={hasError}
+          defaultValue={defaultValue}
+          autoFocus={!!props.autoFocus}
+          required={!!props.required}
+        />
+      )}
 
       {hasError && (
         <p className="mt-3 flex text-sm gap-1 leading-6 text-rose-600">

@@ -100,6 +100,7 @@ export function LoginView() {
         <form action={form.action} className="mt-10 space-y-8">
           <Input<LoginFields>
             form={form}
+            type="text"
             field="username"
             label={t("loginForm.field.username", { defaultValue: "Username" })}
             required

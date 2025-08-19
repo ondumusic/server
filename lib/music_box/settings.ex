@@ -25,7 +25,7 @@ defmodule MusicBox.Settings do
   def set(%Settings{} = settings, attrs) do
     settings
     |> cast(attrs, [:music_path, :scan_type, :poll_interval])
-    |> validate_number(:poll_interval, greater_than_or_equal_to: 5, less_than: 1_440)
+    |> validate_number(:poll_interval, greater_than_or_equal_to: 5, less_than_or_equal_to: 1_440)
     |> validate_music_path()
     |> Repo.insert(
       on_conflict: :replace_all,

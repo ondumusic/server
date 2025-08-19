@@ -5,12 +5,18 @@ import { Input } from "../../components/form/Input";
 import { type FormErrors, type FormState, useForm } from "../../hooks/useForm";
 import { api } from "../../services/api";
 
+type ScanType = "full" | "quick";
+
 type SettingFields = {
   music_path: string | null;
+  scan_type: ScanType;
+  poll_interval: number | null;
 };
 
 interface Request {
   music_path: string;
+  scan_type: ScanType;
+  poll_interval: number;
 }
 
 interface ErrorResponse {
@@ -43,6 +49,11 @@ export function SettingsView({ completeOnboarding }: Props) {
       ...prevState,
       fields: {
         music_path: formData.get("music_path") as string,
+        scan_type: formData.get("scan_type") as ScanType,
+        poll_interval: parseInt(
+          formData.get("poll_interval") as string,
+          10,
+        ) as number,
       },
       errors: {},
     };
@@ -82,6 +93,7 @@ export function SettingsView({ completeOnboarding }: Props) {
         <form action={form.action} className="mt-10 space-y-8">
           <Input<SettingFields>
             form={form}
+            type="text"
             field="music_path"
             label={t("settingsForm.field.music_path", {
               defaultValue: "Music Path",
@@ -89,6 +101,45 @@ export function SettingsView({ completeOnboarding }: Props) {
             defaultValue="/music"
             required
             autoFocus
+          />
+
+          <Input<SettingFields>
+            form={form}
+            type="select"
+            field="scan_type"
+            label={t("settingsForm.field.scan_type", {
+              defaultValue: "Scan Type",
+            })}
+            options={{
+              quick: "Quick Scan (skip existing)",
+              full: "Full Scan (includes existing files)",
+            }}
+            defaultValue="quick"
+            required
+          />
+
+          <Input<SettingFields>
+            form={form}
+            type="select"
+            field="poll_interval"
+            label={t("settingsForm.field.poll_interval", {
+              defaultValue: "Scan Interval",
+            })}
+            options={{
+              "5": "Every 5 minutes",
+              "10": "Every 10 minutes",
+              "15": "Every 15 minutes",
+              "20": "Every 20 minutes",
+              "30": "Every half hour",
+              "60": "Every hour",
+              "120": "Every 2 hours",
+              "180": "Every 3 hours",
+              "360": "Every 6 hours",
+              "720": "Every 12 hours",
+              "1440": "Every 24 hours",
+            }}
+            defaultValue="60"
+            required
           />
 
           <FormActions>
