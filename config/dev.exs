@@ -1,5 +1,7 @@
 import Config
 
+config :music_box, :env, :dev
+
 # Configure your database
 config :music_box, MusicBox.Repo,
   database: Path.expand("../music_box_dev.db", __DIR__),

@@ -14,12 +14,16 @@ defmodule MusicBox.Application do
        repos: Application.fetch_env!(:music_box, :ecto_repos), skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:music_box, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: MusicBox.PubSub},
-      {DynamicSupervisor, name: MusicBox.FileScanner.Supervisor, strategy: :one_for_one},
       # Start a worker by calling: MusicBox.Worker.start_link(arg)
       # {MusicBox.Worker, arg},
       # Start to serve requests, typically the last entry
       MusicBoxWeb.Endpoint
     ]
+
+    children =
+      if MusicBox.env() == :test,
+        do: children,
+        else: children ++ [MusicBox.FileScanner.Pipeline]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

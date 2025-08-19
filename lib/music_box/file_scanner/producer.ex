@@ -9,7 +9,12 @@ defmodule MusicBox.FileScanner.Producer do
 
   @impl true
   def init(path) do
-    {:producer, %State{entries: [to_entry(path)]}}
+    entries =
+      if path,
+        do: [to_entry(path)],
+        else: []
+
+    {:producer, %State{entries: entries}}
   end
 
   @impl true

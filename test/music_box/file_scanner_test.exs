@@ -1,6 +1,7 @@
 defmodule MusicBox.FileScannerTest do
   use MusicBox.DataCase
 
+  alias MusicBox.Settings
   alias MusicBox.FileScanner
   alias MusicBox.FileScanner.Pipeline
   alias MusicBox.FileScanner.Producer
@@ -24,18 +25,19 @@ defmodule MusicBox.FileScannerTest do
   end
 
   describe "filescanner" do
-    test "can be started and stopped" do
-      assert {:ok, pid} = FileScanner.scan(@fixtures_path)
-      assert {:error, {:already_started, ^pid}} = FileScanner.scan(@fixtures_path)
-      assert Process.alive?(pid)
-      FileScanner.stop()
-      refute Process.alive?(pid)
+    test "cannot start scan if music_path not configured" do
+      assert {:error, :missing_music_path} = FileScanner.scan()
+    end
+
+    test "cannot start scan if producer not found" do
+      Settings.set(%{music_path: @fixtures_path})
+      assert {:error, :no_producer_found} = FileScanner.scan()
     end
   end
 
   describe "pipeline" do
     setup do
-      start_supervised!({Pipeline, [path: @fixtures_path]})
+      start_supervised!(Pipeline)
       :ok
     end
 

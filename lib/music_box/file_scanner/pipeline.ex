@@ -2,25 +2,25 @@ defmodule MusicBox.FileScanner.Pipeline do
   use Broadway
   alias Broadway.Message
   alias MusicBox.FileScanner.{Analyzer, Entry, Operations, Utils}
+  alias MusicBox.Settings
 
   def start_link(opts) do
-    path = Keyword.fetch!(opts, :path)
+    default_scan_type = Keyword.get(opts, :scan_type, :quick)
 
-    scan_type =
-      case Keyword.get(opts, :scan_type, :full) do
-        :quick -> :quick
-        :full -> :full
-      end
+    default_path =
+      if Keyword.get(opts, :auto_start, true),
+        do: Settings.get().music_path
 
     producer_module =
-      Application.fetch_env!(:music_box, MusicBox.FileScanner) |> Keyword.fetch!(:producer_module)
+      Application.fetch_env!(:music_box, MusicBox.FileScanner)
+      |> Keyword.fetch!(:producer_module)
 
     Broadway.start_link(__MODULE__,
       name: __MODULE__,
       producer: [
-        module: {producer_module, path},
+        module: {producer_module, default_path},
         concurrency: 1,
-        transformer: {__MODULE__, :transform, [scan_type: scan_type]}
+        transformer: {__MODULE__, :transform, [scan_type: default_scan_type]}
       ],
       processors: [
         default: [concurrency: 5]
