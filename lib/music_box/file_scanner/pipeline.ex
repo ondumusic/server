@@ -18,9 +18,9 @@ defmodule MusicBox.FileScanner.Pipeline do
     Broadway.start_link(__MODULE__,
       name: __MODULE__,
       producer: [
-        module: {producer_module, default_path},
+        module: {producer_module, path: default_path, scan_type: default_scan_type},
         concurrency: 1,
-        transformer: {__MODULE__, :transform, [scan_type: default_scan_type]}
+        transformer: {__MODULE__, :transform, []}
       ],
       processors: [
         default: [concurrency: 5]
@@ -31,12 +31,9 @@ defmodule MusicBox.FileScanner.Pipeline do
     )
   end
 
-  def transform(entry, opts) do
+  def transform(entry, _opts) do
     %Message{
       data: entry,
-      metadata: %{
-        scan_type: Keyword.fetch!(opts, :scan_type)
-      },
       acknowledger: {__MODULE__, :default, :ack_data}
     }
   end
@@ -46,7 +43,7 @@ defmodule MusicBox.FileScanner.Pipeline do
     # If the scan type is quick we can ignore any existing files.
     found_paths =
       messages
-      |> Enum.filter(&(&1.metadata.scan_type == :quick))
+      |> Enum.filter(&(&1.data.scan_type == :quick))
       |> Enum.reject(& &1.data.is_dir)
       |> Enum.map(& &1.data.path)
       |> Operations.filter_existing_paths()

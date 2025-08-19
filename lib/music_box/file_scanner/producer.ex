@@ -8,10 +8,13 @@ defmodule MusicBox.FileScanner.Producer do
   end
 
   @impl true
-  def init(path) do
+  def init(opts) do
+    path = Keyword.fetch!(opts, :path)
+    scan_type = Keyword.fetch!(opts, :scan_type)
+
     entries =
       if path,
-        do: [to_entry(path)],
+        do: [to_entry(path, scan_type)],
         else: []
 
     {:producer, %State{entries: entries}}
@@ -58,14 +61,14 @@ defmodule MusicBox.FileScanner.Producer do
 
   defp walk(%Entry{is_dir: false} = entry), do: [entry]
 
-  defp walk(%Entry{path: path, is_dir: true}) do
+  defp walk(%Entry{path: path, is_dir: true, scan_type: scan_type}) do
     File.ls!(path)
     |> Enum.sort()
     |> Enum.map(&Path.join(path, &1))
-    |> Enum.map(&to_entry/1)
+    |> Enum.map(&to_entry(&1, scan_type))
   end
 
-  defp to_entry(path) when is_binary(path) do
-    %Entry{path: path, is_dir: File.dir?(path)}
+  defp to_entry(path, scan_type) when is_binary(path) do
+    %Entry{path: path, is_dir: File.dir?(path), scan_type: scan_type}
   end
 end

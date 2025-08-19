@@ -3,9 +3,9 @@ defmodule MusicBox.FileScanner do
   alias MusicBox.FileScanner.Entry
   alias MusicBox.Settings
 
-  def scan do
+  def scan(scan_type \\ :quick) do
     settings = Settings.get()
-    entry = %Entry{path: settings.music_path, is_dir: true}
+    entry = %Entry{path: settings.music_path, is_dir: true, scan_type: scan_type}
 
     if entry.path do
       Pipeline
