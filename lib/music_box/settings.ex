@@ -5,6 +5,10 @@ defmodule MusicBox.Settings do
   schema "settings" do
     field :music_path, :string
     field :is_current, :boolean
+    field :scan_type, Ecto.Enum, values: ~w(full quick)a
+
+    # The poll interval is in minutes, defaults to 60 minutes (hourly)
+    field :poll_interval, :integer, default: 60
 
     timestamps(type: :utc_datetime)
   end
@@ -20,7 +24,8 @@ defmodule MusicBox.Settings do
 
   def set(%Settings{} = settings, attrs) do
     settings
-    |> cast(attrs, [:music_path])
+    |> cast(attrs, [:music_path, :scan_type, :poll_interval])
+    |> validate_number(:poll_interval, greater_than_or_equal_to: 5, less_than: 1_440)
     |> validate_music_path()
     |> Repo.insert(
       on_conflict: :replace_all,
