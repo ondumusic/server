@@ -8,7 +8,7 @@ defmodule MusicBoxWeb.Endpoint do
   plug Plug.Static,
     at: "/",
     from: :music_box,
-    gzip: false,
+    gzip: true,
     only: MusicBoxWeb.static_paths()
 
   # Code reloading can be explicitly enabled under the
