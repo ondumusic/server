@@ -3,6 +3,7 @@ defmodule MusicBoxWeb.UserAuth do
 
   import Plug.Conn
 
+  alias MusicBoxWeb.Endpoint
   alias MusicBox.Sessions
 
   @max_age 60 * 60 * 24 * 60
@@ -50,18 +51,29 @@ defmodule MusicBoxWeb.UserAuth do
       |> Enum.reject(&is_nil/1)
       |> List.first()
 
-    with true <- is_binary(signed_session_token),
-         {:ok, signed_session_token} <- Base.decode64(signed_session_token, padding: false),
-         {:ok, session_token} <-
-           Plug.Crypto.verify(conn.secret_key_base, @signing_salt, signed_session_token,
-             max_age: @max_age
-           ) do
+    with {:ok, session_token} <- verify_session_token(signed_session_token) do
       {session_token,
        conn
        |> assign(:session_token, session_token)
        |> assign(:signed_session_token, signed_session_token)}
     else
       _ -> {nil, conn}
+    end
+  end
+
+  def verify_session_token(signed_session_token) do
+    with true <- is_binary(signed_session_token),
+         {:ok, signed_session_token} <- Base.decode64(signed_session_token, padding: false),
+         {:ok, session_token} <-
+           Plug.Crypto.verify(
+             Endpoint.config(:secret_key_base),
+             @signing_salt,
+             signed_session_token,
+             max_age: @max_age
+           ) do
+      {:ok, session_token}
+    else
+      _ -> {:error, :invalid_session_token}
     end
   end
 

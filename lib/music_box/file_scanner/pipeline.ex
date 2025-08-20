@@ -2,6 +2,7 @@ defmodule MusicBox.FileScanner.Pipeline do
   use Broadway
   alias Broadway.Message
   alias MusicBox.FileScanner.{Analyzer, Entry, Operations, Utils}
+  alias MusicBoxWeb.Endpoint
 
   def start_link(opts) do
     auto_start = Keyword.get(opts, :auto_start, true)
@@ -79,6 +80,7 @@ defmodule MusicBox.FileScanner.Pipeline do
     successful
     |> Enum.map(& &1.data)
     |> Operations.batch_insert()
+    |> broadcast
 
     # Send directory entries back to a random producer to walk them and find
     # even more files and/or directories.
@@ -87,4 +89,18 @@ defmodule MusicBox.FileScanner.Pipeline do
     |> Enum.map(& &1.data)
     |> Operations.walk_entries(__MODULE__)
   end
+
+  defp broadcast({:ok, results}) do
+    changes =
+      results
+      |> Map.take([:artists, :albums])
+      |> Enum.map(fn {key, items} ->
+        {key, Enum.map(items, & &1.id)}
+      end)
+      |> Map.new()
+
+    Endpoint.broadcast!("library:updated", "processed", changes)
+  end
+
+  defp broadcast(_), do: :ok
 end

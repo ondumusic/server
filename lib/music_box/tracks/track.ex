@@ -19,4 +19,16 @@ defmodule MusicBox.Tracks.Track do
 
     timestamps(type: :utc_datetime)
   end
+
+  def preloaded(query \\ nil) do
+    query =
+      if query,
+        do: query,
+        else: from(t in __MODULE__, as: :track)
+
+    query
+    |> join(:inner, [track: t], a in assoc(t, :artist), as: :artist)
+    |> join(:inner, [track: t], al in assoc(t, :album), as: :album)
+    |> preload([artist: a, album: al], artist: a, album: al)
+  end
 end

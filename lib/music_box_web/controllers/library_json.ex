@@ -4,6 +4,8 @@ defmodule MusicBoxWeb.LibraryJSON do
 
   def artists(%{page: page} = assigns) do
     %{
+      __type: "page",
+      __subtype: "artist",
       pageNumber: page.page_number,
       pageSize: page.page_size,
       totalEntries: page.total_entries,
@@ -14,6 +16,7 @@ defmodule MusicBoxWeb.LibraryJSON do
 
   def artist(%{artist: artist}) do
     %{
+      __type: "artist",
       id: artist.id,
       name: artist.name,
       slug: artist.slug,
@@ -23,6 +26,8 @@ defmodule MusicBoxWeb.LibraryJSON do
 
   def albums(%{page: page} = assigns) do
     %{
+      __type: "page",
+      __subtype: "album",
       pageNumber: page.page_number,
       pageSize: page.page_size,
       totalEntries: page.total_entries,
@@ -33,6 +38,7 @@ defmodule MusicBoxWeb.LibraryJSON do
 
   def album(%{album: album} = assigns) do
     %{
+      __type: "album",
       id: album.id,
       slug: album.slug,
       artistId: album.artist_id,
@@ -47,6 +53,7 @@ defmodule MusicBoxWeb.LibraryJSON do
     signed_token = conn |> SharedTrack.create(track.id) |> URI.encode()
 
     %{
+      __type: "track",
       id: track.id,
       artistId: track.artist_id,
       albumArtistId: album.artist_id,
