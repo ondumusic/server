@@ -29,6 +29,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: "pnpm"
+        cache-dependency-path: assets/pnpm-lock.yaml
     - name: Cache deps
       id: cache-deps
       uses: actions/cache@v4
