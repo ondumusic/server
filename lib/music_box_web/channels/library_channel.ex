@@ -28,6 +28,7 @@ defmodule MusicBoxWeb.LibraryChannel do
       where: a.id in ^ids
     )
     |> Repo.all()
+    |> Enum.filter(&(&1.album_count > 0))
     |> Enum.map(&LibraryJSON.artist(%{artist: &1}))
   end
 
