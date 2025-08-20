@@ -7,6 +7,7 @@ import { RouterProvider } from "react-router";
 import { AudioManagerProvider } from "./hooks/useAudioManager";
 import { AuthProvider } from "./hooks/useAuth";
 import { MediaSessionProvider } from "./hooks/useMediaSession";
+import { PhoenixSocketProvider } from "./hooks/usePhoenixSocket";
 import { PlayerProvider } from "./hooks/usePlayer";
 import { QueueProvider } from "./hooks/useQueue";
 import { router } from "./router";
@@ -21,17 +22,19 @@ if (appRoot) {
     <StrictMode>
       <Suspense>
         <AuthProvider>
-          <QueueProvider>
-            <AudioManagerProvider>
-              <PlayerProvider>
-                <MediaSessionProvider>
-                  <QueryClientProvider client={queryClient}>
-                    <RouterProvider router={router} />
-                  </QueryClientProvider>
-                </MediaSessionProvider>
-              </PlayerProvider>
-            </AudioManagerProvider>
-          </QueueProvider>
+          <PhoenixSocketProvider>
+            <QueueProvider>
+              <AudioManagerProvider>
+                <PlayerProvider>
+                  <MediaSessionProvider>
+                    <QueryClientProvider client={queryClient}>
+                      <RouterProvider router={router} />
+                    </QueryClientProvider>
+                  </MediaSessionProvider>
+                </PlayerProvider>
+              </AudioManagerProvider>
+            </QueueProvider>
+          </PhoenixSocketProvider>
         </AuthProvider>
       </Suspense>
     </StrictMode>,

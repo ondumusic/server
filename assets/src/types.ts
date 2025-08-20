@@ -1,6 +1,7 @@
 export type UUID = string;
 
 export interface Artist {
+  __type: "artist";
   id: UUID;
   name: string;
   slug: string;
@@ -8,6 +9,7 @@ export interface Artist {
 }
 
 export interface Album {
+  __type: "album";
   id: UUID;
   artistId: UUID;
   name: string;
@@ -17,6 +19,7 @@ export interface Album {
 }
 
 export interface Track {
+  __type: "track";
   id: UUID;
   artistId: UUID;
   albumArtistId: UUID;
@@ -35,6 +38,8 @@ export interface Disc {
 }
 
 export interface Page<T> {
+  __type: "page";
+  __subtype: "artist" | "album";
   pageNumber: number;
   pageSize: number;
   totalPages: number;
