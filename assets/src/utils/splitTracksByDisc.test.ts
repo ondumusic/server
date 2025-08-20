@@ -1,0 +1,157 @@
+import { expect, test } from "vitest";
+import type { Artist, Track } from "../types";
+import { splitTracksByDisc } from "./splitTracksByDisc";
+
+test("adds 1 + 2 to equal 3", () => {
+  const artist: Artist = {
+    __type: "artist",
+    id: "A01",
+    name: "Artist",
+    slug: "artist",
+    albumCount: 1,
+  };
+
+  const tracks: Track[] = [
+    {
+      __type: "track",
+      id: "0101",
+      number: 1,
+      artistId: "1",
+      albumArtistId: "1",
+      albumId: "2",
+      name: "Track One",
+      duration: 12.0,
+      disc: 1,
+      streamUrl: "/0101.mp3",
+      artist,
+    },
+    {
+      __type: "track",
+      id: "0102",
+      number: 2,
+      artistId: "1",
+      albumArtistId: "1",
+      albumId: "2",
+      name: "Track Two",
+      duration: 15.0,
+      disc: 1,
+      streamUrl: "/0102.mp3",
+      artist,
+    },
+    {
+      __type: "track",
+      id: "0201",
+      number: 1,
+      artistId: "1",
+      albumArtistId: "1",
+      albumId: "2",
+      name: "Track One",
+      duration: 11.0,
+      disc: 2,
+      streamUrl: "/0201.mp3",
+      artist,
+    },
+    {
+      __type: "track",
+      id: "0202",
+      number: 2,
+      artistId: "1",
+      albumArtistId: "1",
+      albumId: "2",
+      name: "Track Two",
+      duration: 14.0,
+      disc: 2,
+      streamUrl: "/0202.mp3",
+      artist,
+    },
+  ];
+
+  expect(splitTracksByDisc(tracks)).toStrictEqual([
+    {
+      number: 1,
+      tracks: [
+        {
+          __type: "track",
+          albumArtistId: "1",
+          albumId: "2",
+          artist: {
+            __type: "artist",
+            albumCount: 1,
+            id: "A01",
+            name: "Artist",
+            slug: "artist",
+          },
+          artistId: "1",
+          disc: 1,
+          duration: 12,
+          id: "0101",
+          name: "Track One",
+          number: 1,
+          streamUrl: "/0101.mp3",
+        },
+        {
+          __type: "track",
+          albumArtistId: "1",
+          albumId: "2",
+          artist: {
+            __type: "artist",
+            albumCount: 1,
+            id: "A01",
+            name: "Artist",
+            slug: "artist",
+          },
+          artistId: "1",
+          disc: 1,
+          duration: 15,
+          id: "0102",
+          name: "Track Two",
+          number: 2,
+          streamUrl: "/0102.mp3",
+        },
+      ],
+    },
+    {
+      number: 2,
+      tracks: [
+        {
+          __type: "track",
+          albumArtistId: "1",
+          albumId: "2",
+          artist: {
+            __type: "artist",
+            albumCount: 1,
+            id: "A01",
+            name: "Artist",
+            slug: "artist",
+          },
+          artistId: "1",
+          disc: 2,
+          duration: 11,
+          id: "0201",
+          name: "Track One",
+          number: 1,
+          streamUrl: "/0201.mp3",
+        },
+        {
+          __type: "track",
+          albumArtistId: "1",
+          albumId: "2",
+          artist: {
+            __type: "artist",
+            albumCount: 1,
+            id: "A01",
+            name: "Artist",
+            slug: "artist",
+          },
+          artistId: "1",
+          disc: 2,
+          duration: 14,
+          id: "0202",
+          name: "Track Two",
+          number: 2,
+          streamUrl: "/0202.mp3",
+        },
+      ],
+    },
+  ]);
+});

@@ -40,9 +40,12 @@ jobs:
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
       working-directory: assets
-    - name:
+    - name: typescript
       run: pnpm tsc -b
       working-directory: assets
-    - name:
+    - name: biome check
       run: pnpm biome check
+      working-directory: assets
+    - name: run tests
+      run: pnpm test
       working-directory: assets
