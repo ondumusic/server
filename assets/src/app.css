@@ -1,3 +1,6 @@
 @import "tailwindcss";
+
+/* biome-ignore lint/suspicious/noUnknownAtRules: tailwind specific */
 @config "../tailwind.config.ts";
+/* biome-ignore lint/suspicious/noUnknownAtRules: tailwind specific */
 @plugin "@tailwindcss/forms";

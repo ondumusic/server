@@ -68,7 +68,7 @@ function updatePaginatedCache(oldData: Result<Item>, items: Item[]) {
   if (oldData.pages[0].__subtype !== items[0].__type) return oldData;
 
   // Find existing matches and replace those
-  const newPages = oldData.pages.map((page) => {
+  let newPages = oldData.pages.map((page) => {
     let changed = false;
     const newEntries = page.entries.map((oldEntry) => {
       const newEntryIndex = items.findIndex((entry) =>
@@ -88,7 +88,7 @@ function updatePaginatedCache(oldData: Result<Item>, items: Item[]) {
     items.forEach((entry) => {
       const relevantPageIndex = findRelevantPageIndex(newPages, entry);
 
-      newPages.map((page, pageIndex) => {
+      newPages = newPages.map((page, pageIndex) => {
         if (pageIndex !== relevantPageIndex) return page;
 
         const entries = page.entries;
@@ -101,8 +101,6 @@ function updatePaginatedCache(oldData: Result<Item>, items: Item[]) {
 
         return { ...page, entries };
       });
-
-      return entry;
     });
   }
 
