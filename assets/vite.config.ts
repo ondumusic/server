@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
 import { defineConfig, loadEnv } from "vite";
@@ -8,6 +9,12 @@ export default defineConfig(({ mode }) => {
   return {
     publicDir: "public/",
     plugins: [tailwindcss(), react()],
+    resolve: {
+      alias: {
+        "@/": resolve(__dirname, "./src"),
+        "@test/factory": resolve(__dirname, "./test/factories"),
+      },
+    },
     build: {
       minify: mode === "dev" ? false : "esbuild",
       cssMinify: mode === "dev" ? false : "lightningcss",
