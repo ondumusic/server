@@ -156,7 +156,7 @@ defmodule MusicBox.FileScannerTest do
   describe "producer" do
     test "produces file and directory entries" do
       MusicBox.Settings.set(%{music_path: @fixtures_path})
-      {:ok, producer} = start_supervised(Producer)
+      {:ok, producer} = start_supervised({Producer, auto_start: true})
       {:ok, _cons} = TestConsumer.start_link(producer)
 
       expected = [
@@ -179,7 +179,7 @@ defmodule MusicBox.FileScannerTest do
 
     test "can dive deeper into directories in batches" do
       MusicBox.Settings.set(%{music_path: @fixtures_path})
-      {:ok, producer} = start_supervised(Producer)
+      {:ok, producer} = start_supervised({Producer, auto_start: true})
       {:ok, _cons} = TestConsumer.start_link(producer)
       assert_receive {:received, events}
       path_entries = Enum.filter(events, & &1.is_dir)
