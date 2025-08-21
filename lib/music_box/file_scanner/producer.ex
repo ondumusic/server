@@ -10,7 +10,7 @@ defmodule MusicBox.FileScanner.Producer do
 
   @impl true
   def init(opts) do
-    auto_start = Keyword.get(opts, :auto_start, true)
+    auto_start = Keyword.fetch!(opts, :auto_start)
 
     if auto_start,
       do: send(self(), :start_scan)

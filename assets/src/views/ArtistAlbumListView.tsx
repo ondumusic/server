@@ -1,6 +1,7 @@
 import { useParams } from "react-router";
 import { ArtistAlbumListHeader } from "../components/ArtistAlbumListHeader";
 import { ArtistAlbumListItem } from "../components/ArtistAlbumListItem";
+import { Loading } from "../components/Loading";
 import { useArtistQuery } from "../hooks/useArtistQuery";
 import { useInfiniteArtistAlbumsQuery } from "../hooks/useInfiniteArtistAlbumsQuery";
 import type { Album, UUID } from "../types";
@@ -27,7 +28,7 @@ export function ArtistAlbumListView() {
       },
     );
 
-  if ((isFetching || isFetchingArtist) && !hasFirstPage) return "Loading...";
+  if ((isFetching || isFetchingArtist) && !hasFirstPage) return <Loading />;
   if (errorArtist) throw errorArtist;
   if (error) throw error;
   if (!dataArtist) return;

@@ -99,7 +99,11 @@ function updatePaginatedCache(oldData: Result<Item>, items: Item[]) {
           return 0;
         });
 
-        return { ...page, entries };
+        return {
+          ...page,
+          totalEntries: page.totalEntries + 1,
+          entries: [...entries],
+        };
       });
     });
   }

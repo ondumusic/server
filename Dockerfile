@@ -24,18 +24,19 @@ ARG NODE_BUILDER_IMAGE="docker.io/node:${NODEJS_VERSION}-slim"
 # Step 1. Build assets
 ########################################
 FROM ${NODE_BUILDER_IMAGE} as node-builder
-ENV NODE_ENV=prod
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
 # Prepare the directories
 RUN mkdir -p /app/priv/static
 RUN mkdir -p /app/assets
+RUN mkdir -p /app/lib
 
 # Enable corepack (for pnpm)
 RUN corepack enable
 
-# Copy assets
+# Copy lib (for elixir templates) and assets
+COPY lib /app/lib
 COPY assets /app/assets
 WORKDIR /app/assets
 

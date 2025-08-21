@@ -49,7 +49,11 @@ export const PhoenixSocketProvider = ({ children }: Props) => {
     channel.on("processed", (data) => {
       // For artists we can look at all cached queries
       if (data.artists) {
-        updateCache({ type: "all" }, data.artists);
+        for (const artist of data.artists) {
+          updateCache({ queryKey: ["artist", artist.id] }, [artist]);
+
+          updateCache({ queryKey: ["artistList"], exact: true }, [artist]);
+        }
       }
 
       // For albums we want to make sure they are updated for the correct artist

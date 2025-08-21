@@ -51,6 +51,6 @@ export function useAutomaticInfiniteQuery<T>(
     error,
     isFetching,
     isCompleted: !isFetching && hasNextPage === false,
-    hasFirstPage: Array.isArray(data) && data.length >= 1,
+    hasFirstPage: data && Array.isArray(data.pages) && data.pages.length >= 1,
   };
 }

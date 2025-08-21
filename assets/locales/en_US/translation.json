@@ -15,6 +15,9 @@
     "playCurrentTrack": "Play Current Track",
     "nextTrack": "Next Track"
   },
+  "loading": {
+    "text": "Loading"
+  },
   "emptyView": {
     "noResults": "No Results"
   },

@@ -1,6 +1,7 @@
 import { useParams } from "react-router";
 
 import { ArtistListItem } from "../components/ArtistListItem";
+import { Loading } from "../components/Loading";
 import { useInfiniteArtistsQuery } from "../hooks/useInfiniteArtistsQuery";
 import type { Artist, UUID } from "../types";
 import { paginatedMap } from "../utils/paginatedMap";
@@ -12,7 +13,14 @@ export function ArtistListView() {
   const { isFetching, hasFirstPage, isCompleted, data, error } =
     useInfiniteArtistsQuery();
 
-  if (isFetching && !hasFirstPage) return "Loading...";
+  let hasArtist = hasFirstPage && !artistId;
+  if (hasFirstPage && artistId && data) {
+    hasArtist = !!data.pages?.find(({ entries }) =>
+      entries.find((entry) => entry.id === artistId || entry.slug === artistId),
+    );
+  }
+
+  if (isFetching && !hasArtist) return <Loading />;
   if (error) throw error;
 
   return (

@@ -17,7 +17,7 @@ export interface AuthContext {
 }
 
 const AuthContext = createContext<AuthContext>({
-  isLoggedIn: false,
+  isLoggedIn: !!auth.sessionToken,
   currentUser: undefined,
   logout: () => {},
   completeLogin: (_user: User, _sessionToken: string) => {},
