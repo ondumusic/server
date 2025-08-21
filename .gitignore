@@ -31,6 +31,7 @@ music_box-*.tar
 
 # Ignore assets that are produced by build tools.
 /assets/node_modules/
+/assets/coverage/
 /priv/static/
 
 # Ignore digested assets cache.

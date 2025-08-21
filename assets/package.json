@@ -5,7 +5,9 @@
     "dev:watch": "vite build --mode dev --watch",
     "build": "tsc -b && vite build --mode production",
     "lint": "biome check",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest run --watch",
+    "cov": "vitest run --watch --coverage",
     "format": "biome check --write --unsafe",
     "i18n:extract": "./node_modules/i18next-parser/bin/cli.js 'src/**/*.{ts,tsx}'"
   },
@@ -19,6 +21,7 @@
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.1",
     "@vitejs/plugin-react-swc": "^4.0.1",
+    "@vitest/coverage-v8": "^3.2.4",
     "i18next-parser": "^9.3.0",
     "tailwindcss": "^4.1.12",
     "typescript": "^5.9.2",
