@@ -11,7 +11,7 @@ config :bcrypt_elixir, :log_rounds, 1
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
 config :music_box, MusicBox.Repo,
-  database: Path.expand("../music_box_test.db", __DIR__),
+  database: Path.expand("../db/music_box_test.db", __DIR__),
   pool_size: 5,
   pool: Ecto.Adapters.SQL.Sandbox
 
