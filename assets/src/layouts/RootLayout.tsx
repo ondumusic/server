@@ -1,7 +1,9 @@
 import { type ReactNode, useState } from "react";
 import { Outlet, useNavigate } from "react-router";
+import { Loading } from "../components/Loading";
 import { Player } from "../components/Player";
 import { useAuth } from "../hooks/useAuth";
+import { usePhoenixSocket } from "../hooks/usePhoenixSocket";
 import { usePlayer } from "../hooks/usePlayer";
 import { type OnboardingStep, OnboardingView } from "../views/OnboardingView";
 
@@ -21,15 +23,23 @@ export function RootLayout({ children }: Props) {
   const { isLoggedIn, completeLogin } = useAuth();
   const { isVisible } = usePlayer();
   const navigate = useNavigate();
+  const { waitForUpdate } = usePhoenixSocket();
   const [isOnboarding, setIsOnboarding] = useState<boolean>(
     initialOnboardingStep !== null,
   );
+  const [isWaitingForData, setIsWaitingForData] = useState<boolean>(false);
 
   const completeOnboarding = () => {
-    initialOnboardingStep = null;
-    setIsOnboarding(false);
-    navigate(`/`);
+    setIsWaitingForData(true);
+
+    waitForUpdate(() => {
+      initialOnboardingStep = null;
+      setIsOnboarding(false);
+      navigate("/");
+    });
   };
+
+  if (isWaitingForData) return <Loading />;
 
   const showOnboarding =
     isOnboarding &&

@@ -11,9 +11,15 @@ import { auth } from "../services/auth";
 import type { Album } from "../types";
 import { updateCache } from "../utils/updateCache";
 
-export type PhoenixSocketContext = undefined;
+export type OnInitialDataCallback = () => void;
 
-const PhoenixSocketContext = createContext<PhoenixSocketContext>(undefined);
+export interface PhoenixSocketContext {
+  waitForUpdate(callback: OnInitialDataCallback): void;
+}
+
+const PhoenixSocketContext = createContext<PhoenixSocketContext>({
+  waitForUpdate: (_callback: OnInitialDataCallback) => {},
+});
 
 export function usePhoenixSocket() {
   return useContext(PhoenixSocketContext);
@@ -25,6 +31,7 @@ interface Props {
 
 export const PhoenixSocketProvider = ({ children }: Props) => {
   const { isLoggedIn } = useAuth();
+  const dataCallback = useRef<OnInitialDataCallback>(null);
   const socketRef = useRef<Socket>(null);
 
   useEffect(() => {
@@ -47,6 +54,11 @@ export const PhoenixSocketProvider = ({ children }: Props) => {
     const channel = socketRef.current.channel("library:updated", {});
     channel.join();
     channel.on("processed", (data) => {
+      if (dataCallback.current) {
+        (dataCallback.current as OnInitialDataCallback)();
+        dataCallback.current = null;
+      }
+
       // For artists we can look at all cached queries
       if (data.artists) {
         for (const artist of data.artists) {
@@ -75,8 +87,14 @@ export const PhoenixSocketProvider = ({ children }: Props) => {
     });
   }, [isLoggedIn]);
 
+  const value = {
+    waitForUpdate(callback: OnInitialDataCallback) {
+      dataCallback.current = callback;
+    },
+  };
+
   return (
-    <PhoenixSocketContext.Provider value={undefined}>
+    <PhoenixSocketContext.Provider value={value}>
       {children}
     </PhoenixSocketContext.Provider>
   );
