@@ -2,7 +2,7 @@ import { Trans } from "react-i18next";
 
 export function Loading() {
   return (
-    <div className="h-full content-center bg-stone-50 text-emerald-500/50">
+    <div className="h-full content-center text-emerald-500/50">
       <svg width="60" height="20" viewBox="0 0 120 30" className="mx-auto">
         <title>
           <Trans i18nKey="loading.text">Loading</Trans>

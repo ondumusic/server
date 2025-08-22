@@ -10,7 +10,7 @@ interface Params {
 
 export function useInfiniteArtistAlbumsQuery(
   { artistId }: Params,
-  opts: Options = {},
+  opts: Options<Album> = {},
 ) {
   const queryKey = ["albumList"];
   if (artistId) queryKey.push(artistId);

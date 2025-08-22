@@ -1,9 +1,15 @@
 import type { Artist } from "../types";
-import { useAutomaticInfiniteQuery } from "./useAutomaticInfiniteQuery";
+import {
+  type Options,
+  useAutomaticInfiniteQuery,
+} from "./useAutomaticInfiniteQuery";
 
-export function useInfiniteArtistsQuery() {
-  return useAutomaticInfiniteQuery<Artist>({
-    path: "/artists",
-    queryKey: ["artistList"],
-  });
+export function useInfiniteArtistsQuery(opts: Options<Artist> = {}) {
+  return useAutomaticInfiniteQuery<Artist>(
+    {
+      path: "/artists",
+      queryKey: ["artistList"],
+    },
+    opts,
+  );
 }
