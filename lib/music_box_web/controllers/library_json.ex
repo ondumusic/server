@@ -1,6 +1,5 @@
 defmodule MusicBoxWeb.LibraryJSON do
   use MusicBoxWeb, :json
-  alias MusicBoxWeb.SharedTrack
 
   def artists(%{page: page} = assigns) do
     %{
@@ -49,9 +48,7 @@ defmodule MusicBoxWeb.LibraryJSON do
     }
   end
 
-  def track(%{track: track, album: album, conn: conn}) do
-    signed_token = conn |> SharedTrack.create(track.id) |> URI.encode()
-
+  def track(%{track: track, album: album}) do
     %{
       __type: "track",
       id: track.id,
@@ -63,7 +60,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       disc: track.disc,
       number: track.number,
       duration: track.duration,
-      streamUrl: ~p"/stream/#{track}?token=#{signed_token}"
+      streamUrl: ~p"/stream/#{track}"
     }
   end
 end

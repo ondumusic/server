@@ -1,7 +1,7 @@
 defmodule MusicBoxWeb.StreamController do
   use MusicBoxWeb, :controller
 
-  alias MusicBoxWeb.SharedTrack
+  alias MusicBoxWeb.PlayToken
   alias MusicBox.Tracks
 
   plug :assign_track when action in [:stream]
@@ -30,8 +30,7 @@ defmodule MusicBoxWeb.StreamController do
   defp assign_track(conn, _opts) do
     with track_id = Map.get(conn.params, "track_id", ""),
          token = Map.get(conn.params, "token", ""),
-         {:ok, shared_track} <- SharedTrack.verify(conn, token),
-         true <- shared_track.track_id == track_id do
+         {:ok, _play_token} <- PlayToken.verify(conn, token) do
       track = Tracks.get_track!(track_id)
 
       conn

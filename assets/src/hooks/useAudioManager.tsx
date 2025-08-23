@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { usePlayTokenQuery } from "../hooks/usePlayTokenQuery";
 import { useQueue } from "../hooks/useQueue";
 
 export interface AudioManagerContext {
@@ -50,7 +51,9 @@ export const AudioManagerProvider = ({ children }: Props) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [source, setSource] = useState<string | undefined>(undefined);
   const { currentTrack, nextTrack } = useQueue();
+  const { playToken } = usePlayTokenQuery();
 
   // Calculate the current playback percentage
   let progressPercentage = (currentTime / duration) * 100;
@@ -60,16 +63,19 @@ export const AudioManagerProvider = ({ children }: Props) => {
   useEffect(() => {
     if (!audioRef.current) return;
 
-    if (!isPlaying || !currentTrack) {
+    if (!isPlaying || !source || !currentTrack) {
       audioRef.current.pause();
     } else if (isPlaying) {
       audioRef.current.play();
     }
-  }, [isPlaying, currentTrack]);
+  }, [isPlaying, source, currentTrack]);
 
   // Reset when track changes
+  // We don't want to track when playToken changes because that would interrupt playback
+  // biome-ignore lint/correctness/useExhaustiveDependencies(playToken): suppress dependency playToken
   useEffect(() => {
     if (!currentTrack) {
+      setSource(undefined);
       setIsPlaying(false);
 
       // Make sure to also clear the <audio> tag to avoid the browser
@@ -77,6 +83,8 @@ export const AudioManagerProvider = ({ children }: Props) => {
       if (audioRef.current) {
         audioRef.current.src = "";
       }
+    } else {
+      setSource(`${currentTrack.streamUrl}?token=${playToken}`);
     }
 
     setCurrentTime(0);
@@ -127,7 +135,7 @@ export const AudioManagerProvider = ({ children }: Props) => {
     <AudioManagerContext.Provider value={value}>
       <audio
         ref={audioRef}
-        src={currentTrack?.streamUrl}
+        src={source}
         preload="auto"
         onLoadedMetadata={onLoadedMetadata}
         onTimeUpdate={onTimeUpdate}

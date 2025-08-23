@@ -54,4 +54,9 @@ defmodule MusicBoxWeb.AuthController do
 
     json(conn, %{ok: true})
   end
+
+  def play_token(conn, _params) do
+    play_token = MusicBoxWeb.PlayToken.create(conn)
+    json(conn, %{ok: true, playToken: play_token})
+  end
 end

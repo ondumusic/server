@@ -23,19 +23,19 @@ if (appRoot) {
     <StrictMode>
       <Suspense fallback={<Loading />}>
         <AuthProvider>
-          <PhoenixSocketProvider>
-            <QueueProvider>
-              <AudioManagerProvider>
-                <PlayerProvider>
-                  <MediaSessionProvider>
-                    <QueryClientProvider client={queryClient}>
+          <QueryClientProvider client={queryClient}>
+            <PhoenixSocketProvider>
+              <QueueProvider>
+                <AudioManagerProvider>
+                  <PlayerProvider>
+                    <MediaSessionProvider>
                       <RouterProvider router={router} />
-                    </QueryClientProvider>
-                  </MediaSessionProvider>
-                </PlayerProvider>
-              </AudioManagerProvider>
-            </QueueProvider>
-          </PhoenixSocketProvider>
+                    </MediaSessionProvider>
+                  </PlayerProvider>
+                </AudioManagerProvider>
+              </QueueProvider>
+            </PhoenixSocketProvider>
+          </QueryClientProvider>
         </AuthProvider>
       </Suspense>
     </StrictMode>,
