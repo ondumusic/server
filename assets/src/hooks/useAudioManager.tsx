@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useAuth } from "../hooks/useAuth";
 import { usePlayTokenQuery } from "../hooks/usePlayTokenQuery";
 import { useQueue } from "../hooks/useQueue";
 
@@ -48,12 +49,13 @@ interface Props {
 
 export const AudioManagerProvider = ({ children }: Props) => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const { isLoggedIn } = useAuth();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [source, setSource] = useState<string | undefined>(undefined);
   const { currentTrack, nextTrack } = useQueue();
-  const { playToken } = usePlayTokenQuery();
+  const { playToken } = usePlayTokenQuery({ enabled: isLoggedIn });
 
   // Calculate the current playback percentage
   let progressPercentage = (currentTime / duration) * 100;
