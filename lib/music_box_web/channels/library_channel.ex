@@ -14,8 +14,8 @@ defmodule MusicBoxWeb.LibraryChannel do
     json_changes =
       changes
       |> Enum.map(fn
-        {:artists = k, artist_ids} -> {k, fetch_artists(socket, artist_ids)}
-        {:albums = k, album_ids} -> {k, fetch_albums(socket, album_ids)}
+        {:artists = k, artist_ids} -> {k, fetch_artists(artist_ids)}
+        {:albums = k, album_ids} -> {k, fetch_albums(album_ids)}
       end)
       |> Map.new()
 
@@ -23,7 +23,7 @@ defmodule MusicBoxWeb.LibraryChannel do
     {:noreply, socket}
   end
 
-  defp fetch_artists(_socket, ids) do
+  defp fetch_artists(ids) do
     from(a in MusicBox.Artists.Artist.preloaded(),
       where: a.id in ^ids
     )
@@ -32,19 +32,11 @@ defmodule MusicBoxWeb.LibraryChannel do
     |> Enum.map(&LibraryJSON.artist(%{artist: &1}))
   end
 
-  defp fetch_albums(socket, ids) do
-    # Right now LibraryJSON.album/track expects a conn object and uses that
-    # to get the secret key base and the current_user. This is a quick dirty
-    # workaround but need to rethink the whole auth for streams anyway.
-    conn = %{
-      assigns: socket.assigns,
-      secret_key_base: socket.endpoint.config(:secret_key_base)
-    }
-
+  defp fetch_albums(ids) do
     from(al in MusicBox.Albums.Album.preloaded(),
       where: al.id in ^ids
     )
     |> Repo.all()
-    |> Enum.map(&LibraryJSON.album(%{album: &1, conn: conn}))
+    |> Enum.map(&LibraryJSON.album(%{album: &1}))
   end
 end
