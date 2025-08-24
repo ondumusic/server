@@ -70,8 +70,8 @@ defmodule MusicBox.FileScanner.Operations do
   defp maybe_create_artists(repo, %{files: files}) do
     artist_names =
       files
-      |> Enum.reject(&is_nil(&1.metadata.artist))
       |> Enum.flat_map(&[&1.metadata.album_artist, &1.metadata.artist])
+      |> Enum.reject(&is_nil/1)
       |> Enum.uniq_by(&String.downcase/1)
 
     entries =

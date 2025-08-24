@@ -80,10 +80,16 @@ defmodule MusicBox.FileScanner.Producer do
   defp walk(%Entry{is_dir: false} = entry), do: [entry]
 
   defp walk(%Entry{path: path, is_dir: true, scan_type: scan_type}) do
-    File.ls!(path)
-    |> Enum.sort()
-    |> Enum.map(&Path.join(path, &1))
-    |> Enum.map(&to_entry(&1, scan_type))
+    case File.ls(path) do
+      {:ok, list} ->
+        list
+        |> Enum.sort()
+        |> Enum.map(&Path.join(path, &1))
+        |> Enum.map(&to_entry(&1, scan_type))
+
+      _ ->
+        []
+    end
   end
 
   defp to_entry(path, scan_type) when is_binary(path) do
