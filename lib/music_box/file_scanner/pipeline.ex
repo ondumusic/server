@@ -4,6 +4,8 @@ defmodule MusicBox.FileScanner.Pipeline do
   alias MusicBox.FileScanner.{Analyzer, Entry, Operations, Utils}
   alias MusicBoxWeb.Endpoint
 
+  require Logger
+
   def start_link(opts) do
     auto_start = Keyword.get(opts, :auto_start, true)
 
@@ -59,11 +61,16 @@ defmodule MusicBox.FileScanner.Pipeline do
     do: Message.failed(message, :is_directory)
 
   def handle_message(_processor, %Message{status: :ok} = message, _context) do
+    Logger.info("Analyzing file: #{message.data.path}")
+
     with {:ok, type} <- Utils.detect_file_type(message.data.path),
          {:ok, result} <- Analyzer.analyze(message.data, type: type) do
+      Logger.info("Detected file type #{type} for: #{message.data.path}")
       Message.put_data(message, result)
     else
-      _ -> Message.failed(message, :is_unknown)
+      _ ->
+        Logger.error("Failed to analyze: #{message.data.path}")
+        Message.failed(message, :is_unknown)
     end
   end
 

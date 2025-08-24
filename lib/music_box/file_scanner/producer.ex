@@ -4,6 +4,8 @@ defmodule MusicBox.FileScanner.Producer do
   alias MusicBox.FileScanner.{Entry, State}
   alias MusicBox.Settings
 
+  require Logger
+
   def start_link(init, opts \\ []) do
     GenStage.start_link(__MODULE__, init, opts)
   end
@@ -82,12 +84,15 @@ defmodule MusicBox.FileScanner.Producer do
   defp walk(%Entry{path: path, is_dir: true, scan_type: scan_type}) do
     case File.ls(path) do
       {:ok, list} ->
+        Logger.info("Finding files in: #{path}")
+
         list
         |> Enum.sort()
         |> Enum.map(&Path.join(path, &1))
         |> Enum.map(&to_entry(&1, scan_type))
 
       _ ->
+        Logger.error("Permission denied to: #{path}")
         []
     end
   end
