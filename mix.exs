@@ -47,7 +47,8 @@ defmodule MusicBox.MixProject do
       {:bandit, "~> 1.5"},
       {:broadway, "~> 1.2"},
       {:flop, "~> 0.26.3"},
-      {:slugify, "~> 1.3"}
+      {:slugify, "~> 1.3"},
+      {:observer_cli, "~> 1.8", only: [:dev]}
     ]
   end
 
