@@ -34,7 +34,7 @@ export function ArtistAlbumListItem({ album }: Props) {
 
   return (
     <div className="flex w-full">
-      <div className="flex-shrink-0 pr-18 text-sm w-80">
+      <div className="hidden lg:block flex-shrink-0 pr-18 text-sm w-80">
         <button
           type="button"
           className="aspect-square w-full bg-stone-200 mb-4 shadow-lg cursor-pointer hover:bg-emerald-600/50"
@@ -96,7 +96,7 @@ export function ArtistAlbumListItem({ album }: Props) {
                         </div>
                       </div>
                     ) : null}
-                    <div>
+                    <div className="mr-2">
                       <span
                         className={classNames([
                           currentTrack &&

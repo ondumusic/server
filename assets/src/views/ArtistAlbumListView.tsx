@@ -62,7 +62,7 @@ export function ArtistAlbumListView() {
   if (!dataArtist) return;
 
   return (
-    <div className="space-y-8 mx-8 my-8">
+    <div className="space-y-8 mx-4 lg:mx-8 my-4 lg:my-8">
       <ArtistAlbumListHeader artist={dataArtist} />
       <div className="space-y-16">
         {paginatedMap<Album>(data, (album) => (

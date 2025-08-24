@@ -5,7 +5,7 @@ import { ArtistListView } from "../views/ArtistListView";
 export function ArtistsLayout() {
   return (
     <PanelGroup autoSaveId="artistPage" direction="horizontal">
-      <Panel defaultSize={20} minSize={15} maxSize={30}>
+      <Panel defaultSize={30} minSize={17} maxSize={80}>
         <div className="overflow-y-auto h-full bg-stone-100">
           <ArtistListView />
         </div>

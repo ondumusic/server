@@ -46,32 +46,32 @@ export function NowPlaying() {
   };
 
   return (
-    <div className="flex-shrink-0 relative w-1/2 max-w-xl select-none group/player">
-      <div className="relative bg-emerald-700/60 p-2 rounded-lg overflow-hidden cursor-default">
-        <div className="flex justify-between items-end tabular-nums text-white/70 pb-1">
-          <div className="overflow-hidden mx-12 order-2">
+    <div className="order-1 lg:order-2 relative w-full select-none group/player">
+      <div className="relative bg-emerald-700/60 p-2 pr-16 lg:pr-2 py-3 lg:py-2 lg:rounded-lg overflow-hidden cursor-default">
+        <div className="flex justify-between items-end tabular-nums text-white/70 pt-1 lg:pt-0 lg:pb-1">
+          <div className="text-left lg:text-center overflow-hidden lg:mx-12 order-2">
             <Marquee
               className="text-white/90 font-semibold"
               text={`${currentTrack?.name}`}
             />
-            <div className="mx-8">
+            <div className="lg:mx-8">
               <Marquee
                 text={`${currentTrack?.artist?.name} - ${currentAlbum?.name}`}
               />
             </div>
           </div>
 
-          <span className="flex-shrink-0 text-xs order-1">
+          <span className="hidden lg:block flex-shrink-0 text-xs order-1">
             {formatDuration(currentTime)}
           </span>
-          <span className="flex-shrink-0 text-xs order-3">
+          <span className="hidden lg:block flex-shrink-0 text-xs order-3">
             {formatDuration(duration)}
           </span>
         </div>
 
-        <div className="absolute z-[10] bottom-0 left-0 right-0 bg-emerald-300/40 h-1">
+        <div className="absolute z-[10] top-0 lg:top-auto lg:bottom-0 left-0 right-0 bg-emerald-300/40 h-1">
           <div
-            className="h-1 rounded-tr-lg rounded-br-lg bg-emerald-200"
+            className="h-1 lg:rounded-tr-lg lg:rounded-br-lg bg-emerald-200"
             style={{ width: `${progressPercentage}%` }}
           ></div>
         </div>
@@ -80,14 +80,16 @@ export function NowPlaying() {
         type="range"
         className="
             appearance-none bg-transparent z-[20]
-            absolute left-0 right-0 bottom-0
+            absolute left-0 right-0 top-0 lg:top-auto lg:bottom-0
             [&::-webkit-slider-runnable-track]:bg-transparent
             [&::-webkit-slider-thumb]:appearance-none
             [&::-webkit-slider-thumb]:h-3
             [&::-webkit-slider-thumb]:w-3
             [&::-webkit-slider-thumb]:rounded-md
             [&::-webkit-slider-thumb]:transition-all
-            [&::-webkit-slider-thumb]:translate-y-[4px]
+            [&::-webkit-slider-thumb]:translate-y-[-4px]
+            [&::-webkit-slider-thumb]:shadow-none
+            lg:[&::-webkit-slider-thumb]:translate-y-[4px]
             [&::-webkit-slider-thumb]:translate-x-[-1px]
             [&::-webkit-slider-thumb]:bg-transparent
             group-hover/player:[&::-webkit-slider-thumb]:bg-white
