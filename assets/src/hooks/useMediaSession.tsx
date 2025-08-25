@@ -43,7 +43,7 @@ const NavigatorMediaSessionProvider = ({ children }: Props) => {
     navigator.mediaSession.setPositionState({
       playbackRate: 1,
       duration,
-      position: currentTime,
+      position: Math.max(0, Math.min(duration, currentTime)),
     });
   }, [isPlaying, currentTrack, currentTime]);
 

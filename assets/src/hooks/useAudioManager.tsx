@@ -86,7 +86,7 @@ export const AudioManagerProvider = ({ children }: Props) => {
         audioRef.current.src = "";
       }
     } else {
-      setSource(`${currentTrack.streamUrl}?token=${playToken}`);
+      setSource(`${currentTrack.streamUrl}?transcode=1&token=${playToken}`);
     }
 
     setCurrentTime(0);
@@ -107,7 +107,9 @@ export const AudioManagerProvider = ({ children }: Props) => {
 
   // Audio Event Listeners
   const onLoadedMetadata = (event: ChangeEvent<HTMLAudioElement>) => {
-    setDuration(event.target.duration);
+    let duration = event.target.duration;
+    if (!Number.isFinite(duration)) duration = currentTrack?.duration ?? 0;
+    setDuration(duration);
   };
 
   const onTimeUpdate = (event: ChangeEvent<HTMLAudioElement>) => {
