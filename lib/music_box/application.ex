@@ -23,7 +23,7 @@ defmodule MusicBox.Application do
     children =
       if MusicBox.env() == :test,
         do: children,
-        else: children ++ [MusicBox.FileScanner.Pipeline]
+        else: children ++ [MusicBox.FileScanner.Pipeline, MusicBox.Transcoder]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

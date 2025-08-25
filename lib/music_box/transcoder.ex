@@ -1,0 +1,117 @@
+defmodule MusicBox.Transcoder do
+  use GenServer
+  require Logger
+
+  alias MusicBox.Transcoder.{Job, State}
+  alias MusicBox.Files.File
+
+  @chunks_table :transcoder_chunks
+  @jobs_table :transcoder_jobs
+  @max_concurrency 3
+
+  def start_link(_opts) do
+    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+  end
+
+  def init(_) do
+    if :ets.whereis(@chunks_table) == :undefined,
+      do: :ets.new(@chunks_table, [:set, :public, :named_table])
+
+    if :ets.whereis(@jobs_table) == :undefined,
+      do: :ets.new(@jobs_table, [:set, :public, :named_table])
+
+    {:ok, %State{}}
+  end
+
+  def request_chunk(file, chunk_index) do
+    GenServer.call(__MODULE__, {:request_chunk, file, chunk_index}, 30_000)
+  end
+
+  def handle_call({:request_chunk, %File{} = file, chunk_index}, from, state) do
+    lookup_key = {file.id, chunk_index}
+
+    case :ets.lookup(@chunks_table, lookup_key) do
+      [{^lookup_key, chunk_data}] -> {:reply, {:ok, chunk_data}, state}
+      [] -> start_or_enqueue(file, chunk_index, from, state)
+    end
+  end
+
+  # Too many concurrent jobs, queue the request
+  defp start_or_enqueue(file, chunk_index, from, %{jobs: jobs} = state)
+       when map_size(jobs) >= @max_concurrency,
+       do: enqueue_chunk_request(file, chunk_index, from, state)
+
+  # Request already transcoding, queue the request
+  defp start_or_enqueue(%File{id: file_id} = file, chunk_index, from, %{jobs: jobs} = state)
+       when is_map_key(jobs, file_id),
+       do: enqueue_chunk_request(file, chunk_index, from, state)
+
+  # Start a new transcoding job
+  defp start_or_enqueue(file, chunk_index, from, state),
+    do: start_transcoding(file, chunk_index, from, state)
+
+  defp start_transcoding(%File{} = file, chunk_index, from, state) do
+    job = Job.start(file)
+    Process.monitor(job.pid)
+
+    new_jobs = Map.put(state.jobs, file.id, job)
+    new_state = %{state | jobs: new_jobs}
+
+    enqueue_chunk_request(file, chunk_index, from, new_state)
+  end
+
+  defp enqueue_chunk_request(%File{} = file, chunk_index, from, state) do
+    lookup_key = {file.id, chunk_index}
+    pending_requests = Map.get(state.requests, lookup_key, [])
+
+    new_requests = Map.put(state.requests, lookup_key, [from | pending_requests])
+    new_state = %{state | requests: new_requests}
+
+    {:noreply, new_state}
+  end
+
+  def handle_info({:chunk, file, chunk_index, data}, state) do
+    lookup_key = {file.id, chunk_index}
+    :ets.insert(@chunks_table, {lookup_key, data})
+
+    state.requests
+    |> Map.get(lookup_key, [])
+    |> Enum.each(fn from ->
+      GenServer.reply(from, {:ok, data})
+    end)
+
+    new_requests = Map.delete(state.requests, lookup_key)
+    {:noreply, %{state | requests: new_requests}}
+  end
+
+  def handle_info({:transcoding_complete, file}, state) do
+    new_jobs = Map.delete(state.jobs, file.id)
+    {:noreply, %{state | jobs: new_jobs}}
+  end
+
+  def handle_info({:transcoding_failed, file}, state) do
+    # Notify all pending requests for this file (any chunk)
+    state.requests
+    |> Enum.filter(fn {{file_id, _}, _requests} -> file_id == file.id end)
+    |> Enum.each(fn from ->
+      GenServer.reply(from, {:error, :transcoding_failed})
+    end)
+
+    # Remove job and pending requests from state
+    new_requests = Map.reject(state.requests, fn {{file_id, _}, _} -> file_id == file.id end)
+    new_jobs = Map.delete(state.jobs, file.id)
+
+    {:noreply, %{state | jobs: new_jobs, requests: new_requests}}
+  end
+
+  def handle_info({:DOWN, _ref, :process, pid, reason}, state) do
+    active_job = Enum.find(state.jobs, fn {_, job} -> job.pid == pid end)
+
+    if active_job do
+      Logger.error("Failed transcoding file: #{active_job.file.id} - Error: #{reason}")
+      send(self(), {:transcoding_failed, active_job.file})
+    end
+
+    {:noreply, state}
+  end
+end
