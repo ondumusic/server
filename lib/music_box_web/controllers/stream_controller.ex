@@ -29,6 +29,27 @@ defmodule MusicBoxWeb.StreamController do
     end
   end
 
+  def stream(conn, _params) do
+    content_type =
+      case conn.assigns.track.file.type do
+        :m4a -> "audio/mp4"
+        :mp3 -> "audio/mpeg"
+        :opus -> "audio/ogg"
+        :ogg -> "audio/ogg"
+        :flac -> "audio/flac"
+        :wav -> "audio/wav"
+      end
+
+    conn
+    |> send_download({:file, conn.assigns.track.file.path},
+      disposition: :inline,
+      charset: nil,
+      encode: false,
+      filename: Path.basename(conn.assigns.track.file.path),
+      content_type: content_type
+    )
+  end
+
   defp put_stream_headers(conn) do
     conn
     |> put_resp_header("content-type", "audio/webm")
@@ -122,27 +143,6 @@ defmodule MusicBoxWeb.StreamController do
       _ ->
         {:error, :invalid_range}
     end
-  end
-
-  def stream(conn, _params) do
-    content_type =
-      case conn.assigns.track.file.type do
-        :m4a -> "audio/mp4"
-        :mp3 -> "audio/mpeg"
-        :opus -> "audio/ogg"
-        :ogg -> "audio/ogg"
-        :flac -> "audio/flac"
-        :wav -> "audio/wav"
-      end
-
-    conn
-    |> send_download({:file, conn.assigns.track.file.path},
-      disposition: :inline,
-      charset: nil,
-      encode: false,
-      filename: Path.basename(conn.assigns.track.file.path),
-      content_type: content_type
-    )
   end
 
   defp assign_track(conn, _opts) do
