@@ -4,6 +4,7 @@ defmodule MusicBox.Transcoder.Utils do
 
   def bitrate_kbps, do: 256
   def chunk_size, do: 1024 * 1024
+  def timestamp, do: DateTime.utc_now() |> DateTime.to_unix()
 
   def estimate_opus_size(%File{metadata: %{duration: duration}}) do
     audio_bytes = bitrate_kbps() * 1000 * duration / 8

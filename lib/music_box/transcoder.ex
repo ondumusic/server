@@ -2,13 +2,14 @@ defmodule MusicBox.Transcoder do
   use GenServer
   require Logger
 
-  alias MusicBox.Transcoder.{Job, State}
+  alias MusicBox.Transcoder.{Job, Result, State, Utils}
   alias MusicBox.Files.File
 
   @chunks_table :transcoder_chunks
-  @jobs_table :transcoder_jobs
   @meta_table :transcoder_meta
   @max_concurrency 3
+  @max_cached_files 5
+  @cleanup_timer_ms 5_000
 
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
@@ -17,9 +18,6 @@ defmodule MusicBox.Transcoder do
   def init(_) do
     if :ets.whereis(@chunks_table) == :undefined,
       do: :ets.new(@chunks_table, [:set, :public, :named_table])
-
-    if :ets.whereis(@jobs_table) == :undefined,
-      do: :ets.new(@jobs_table, [:set, :public, :named_table])
 
     if :ets.whereis(@meta_table) == :undefined,
       do: :ets.new(@meta_table, [:set, :public, :named_table])
@@ -36,7 +34,6 @@ defmodule MusicBox.Transcoder do
 
   def clear_cache do
     :ets.delete_all_objects(@chunks_table)
-    :ets.delete_all_objects(@jobs_table)
     :ets.delete_all_objects(@meta_table)
   end
 
@@ -74,7 +71,7 @@ defmodule MusicBox.Transcoder do
     do: start_transcoding(file, chunk_index, from, state)
 
   defp start_transcoding(%File{} = file, chunk_index, from, state) do
-    upsert_meta(file, %{started_at: DateTime.utc_now()})
+    upsert_meta(file, %{started_at: Utils.timestamp()})
 
     job = Job.start(file)
     Process.monitor(job.pid)
@@ -113,18 +110,19 @@ defmodule MusicBox.Transcoder do
     file_size = transcoded_file_size(file)
 
     upsert_meta(file, %{
-      completed_at: DateTime.utc_now(),
+      completed_at: Utils.timestamp(),
       file_size: file_size,
       chunk_count: chunk_count
     })
 
     new_jobs = Map.delete(state.jobs, file.id)
+    state = schedule_cleanup(state)
 
     {:noreply, %{state | jobs: new_jobs}}
   end
 
   def handle_info({:transcoding_failed, file}, state) do
-    upsert_meta(file, %{failed_at: DateTime.utc_now()})
+    upsert_meta(file, %{failed_at: Utils.timestamp()})
 
     # Notify all pending requests for this file (any chunk)
     state.requests
@@ -136,8 +134,43 @@ defmodule MusicBox.Transcoder do
     # Remove job and pending requests from state
     new_requests = Map.reject(state.requests, fn {{file_id, _}, _} -> file_id == file.id end)
     new_jobs = Map.delete(state.jobs, file.id)
+    state = schedule_cleanup(state)
 
     {:noreply, %{state | jobs: new_jobs, requests: new_requests}}
+  end
+
+  def handle_info(:cleanup, state) do
+    # Cleanup failed files
+    @meta_table
+    |> :ets.select([{{:"$1", %{failed_at: :"$2"}}, [{:"/=", :"$2", nil}], [:"$1"]}])
+    |> Enum.each(fn file_id ->
+      :ets.delete(@meta_table, file_id)
+      :ets.select_delete(@chunks_table, [{{{:"$1", :_}, :_}, [{:==, :"$1", file_id}], [true]}])
+    end)
+
+    # Find the oldest valid timestamp (most X recent)
+    cutoff_timestamp =
+      @meta_table
+      |> :ets.select([
+        {{:_, %{__struct__: Result, started_at: :"$1"}}, [], [:"$1"]}
+      ])
+      |> Enum.sort(:desc)
+      |> Enum.at(@max_cached_files - 1)
+
+    # If needed, delete all files/chunks older than the top X
+    if cutoff_timestamp do
+      @meta_table
+      |> :ets.select([
+        {{:"$1", %{__struct__: Result, started_at: :"$2"}}, [{:<, :"$2", cutoff_timestamp}],
+         [:"$1"]}
+      ])
+      |> Enum.each(fn file_id ->
+        :ets.delete(@meta_table, file_id)
+        :ets.select_delete(@chunks_table, [{{{:"$1", :_}, :_}, [{:==, :"$1", file_id}], [true]}])
+      end)
+    end
+
+    {:noreply, state}
   end
 
   def handle_info({:DOWN, _ref, :process, pid, reason}, state) do
@@ -145,21 +178,27 @@ defmodule MusicBox.Transcoder do
 
     if active_job do
       Logger.error("Failed transcoding file: #{active_job.file.id} - Error: #{reason}")
-      upsert_meta(active_job.file, %{failed_at: DateTime.utc_now()})
+      upsert_meta(active_job.file, %{failed_at: Utils.timestamp()})
       send(self(), {:transcoding_failed, active_job.file})
     end
 
-    {:noreply, state}
+    {:noreply, schedule_cleanup(state)}
+  end
+
+  defp schedule_cleanup(state) do
+    if state.cleanup_timer do
+      Process.cancel_timer(state.cleanup_timer)
+    end
+
+    cleanup_timer = Process.send_after(self(), :cleanup, @cleanup_timer_ms)
+    %{state | cleanup_timer: cleanup_timer}
   end
 
   defp upsert_meta(%File{id: file_id}, params) do
     current =
       case :ets.lookup(@meta_table, file_id) do
-        [{^file_id, map}] ->
-          map
-
-        _ ->
-          %{started_at: nil, completed_at: nil, failed_at: nil, chunk_count: nil, file_size: nil}
+        [{^file_id, map}] -> map
+        _ -> %Result{}
       end
 
     new_map = Map.merge(current, params)
