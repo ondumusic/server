@@ -13,7 +13,8 @@ defmodule MusicBox.Transcoder.Job do
       Task.start(fn ->
         try do
           Logger.info("Starting transcoding file: #{file.id}")
-          chunk_count = transcode_file(file, parent)
+          last_chunk_index = transcode_file(file, parent)
+          chunk_count = last_chunk_index + 1
           Logger.info("Finished transcoding file: #{file.id} (#{chunk_count} chunks)")
           send(parent, {:transcoding_complete, file, chunk_count})
         rescue
