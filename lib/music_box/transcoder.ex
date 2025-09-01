@@ -7,6 +7,7 @@ defmodule MusicBox.Transcoder do
 
   @chunks_table :transcoder_chunks
   @jobs_table :transcoder_jobs
+  @meta_table :transcoder_meta
   @max_concurrency 3
 
   def start_link(_opts) do
@@ -20,7 +21,23 @@ defmodule MusicBox.Transcoder do
     if :ets.whereis(@jobs_table) == :undefined,
       do: :ets.new(@jobs_table, [:set, :public, :named_table])
 
+    if :ets.whereis(@meta_table) == :undefined,
+      do: :ets.new(@meta_table, [:set, :public, :named_table])
+
     {:ok, %State{}}
+  end
+
+  def get_meta(%File{id: file_id}) do
+    case :ets.lookup(@meta_table, file_id) do
+      [{^file_id, %{} = meta}] -> meta
+      _ -> nil
+    end
+  end
+
+  def clear_cache do
+    :ets.delete_all_objects(@chunks_table)
+    :ets.delete_all_objects(@jobs_table)
+    :ets.delete_all_objects(@meta_table)
   end
 
   def request_chunk(file, chunk_index) do
@@ -28,11 +45,17 @@ defmodule MusicBox.Transcoder do
   end
 
   def handle_call({:request_chunk, %File{} = file, chunk_index}, from, state) do
+    meta = get_meta(file)
     lookup_key = {file.id, chunk_index}
+    chunk_count = if(meta && meta.completed_at, do: meta.chunk_count)
 
-    case :ets.lookup(@chunks_table, lookup_key) do
-      [{^lookup_key, chunk_data}] -> {:reply, {:ok, chunk_data}, state}
-      [] -> start_or_enqueue(file, chunk_index, from, state)
+    if not is_nil(chunk_count) and chunk_index > chunk_count do
+      {:reply, {:error, :unknown_chunk}}
+    else
+      case :ets.lookup(@chunks_table, lookup_key) do
+        [{^lookup_key, chunk_data}] -> {:reply, {:ok, chunk_data}, state}
+        [] -> start_or_enqueue(file, chunk_index, from, state)
+      end
     end
   end
 
@@ -51,6 +74,8 @@ defmodule MusicBox.Transcoder do
     do: start_transcoding(file, chunk_index, from, state)
 
   defp start_transcoding(%File{} = file, chunk_index, from, state) do
+    upsert_meta(file, %{started_at: DateTime.utc_now()})
+
     job = Job.start(file)
     Process.monitor(job.pid)
 
@@ -84,12 +109,16 @@ defmodule MusicBox.Transcoder do
     {:noreply, %{state | requests: new_requests}}
   end
 
-  def handle_info({:transcoding_complete, file}, state) do
+  def handle_info({:transcoding_complete, file, chunk_count}, state) do
+    upsert_meta(file, %{completed_at: DateTime.utc_now(), chunk_count: chunk_count})
     new_jobs = Map.delete(state.jobs, file.id)
+
     {:noreply, %{state | jobs: new_jobs}}
   end
 
   def handle_info({:transcoding_failed, file}, state) do
+    upsert_meta(file, %{failed_at: DateTime.utc_now()})
+
     # Notify all pending requests for this file (any chunk)
     state.requests
     |> Enum.filter(fn {{file_id, _}, _requests} -> file_id == file.id end)
@@ -109,9 +138,21 @@ defmodule MusicBox.Transcoder do
 
     if active_job do
       Logger.error("Failed transcoding file: #{active_job.file.id} - Error: #{reason}")
+      upsert_meta(active_job.file, %{failed_at: DateTime.utc_now()})
       send(self(), {:transcoding_failed, active_job.file})
     end
 
     {:noreply, state}
+  end
+
+  defp upsert_meta(%File{id: file_id}, params) do
+    current =
+      case :ets.lookup(@meta_table, file_id) do
+        [{^file_id, map}] -> map
+        _ -> %{started_at: nil, completed_at: nil, failed_at: nil, chunk_count: nil}
+      end
+
+    new_map = Map.merge(current, params)
+    :ets.insert(@meta_table, {file_id, new_map})
   end
 end

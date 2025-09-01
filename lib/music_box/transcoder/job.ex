@@ -13,9 +13,9 @@ defmodule MusicBox.Transcoder.Job do
       Task.start(fn ->
         try do
           Logger.info("Starting transcoding file: #{file.id}")
-          transcode_file(file, parent)
-          Logger.info("Finished transcoding file: #{file.id}")
-          send(parent, {:transcoding_complete, file})
+          chunk_count = transcode_file(file, parent)
+          Logger.info("Finished transcoding file: #{file.id} (#{chunk_count} chunks)")
+          send(parent, {:transcoding_complete, file, chunk_count})
         rescue
           error ->
             Logger.error("Failed transcoding file: #{file.id} - Error: #{error}")
@@ -83,6 +83,7 @@ defmodule MusicBox.Transcoder.Job do
         end
 
         if Port.info(port), do: Port.close(port)
+        chunk_index
 
       {^port, {:exit_status, status}} ->
         if Port.info(port), do: Port.close(port)
