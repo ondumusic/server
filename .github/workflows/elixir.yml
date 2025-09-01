@@ -51,7 +51,7 @@ jobs:
         sudo apt install -fy libvips libvips-tools ffmpeg --fix-missing
 
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Cache deps
       id: cache-deps
