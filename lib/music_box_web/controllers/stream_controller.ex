@@ -8,23 +8,46 @@ defmodule MusicBoxWeb.StreamController do
   plug :assign_track when action in [:stream]
 
   def stream(conn, %{"transcode" => "1"}) do
-    case parse_range_header(conn) do
-      {:ok, start_byte, end_byte} ->
-        conn
-        |> put_stream_headers()
-        |> send_file_chunk(start_byte, end_byte)
+    meta = Transcoder.get_meta(conn.assigns.track.file)
+    estimated_file_size = Utils.estimate_opus_size(conn.assigns.track.file)
+    actual_file_size = meta && meta.file_size
 
+    complete_file_ranges =
+      [
+        actual_file_size,
+        estimated_file_size
+      ]
+      |> Enum.reject(&is_nil/1)
+      |> Enum.map(&(&1 - 1))
+
+    conn
+    |> get_req_header("range")
+    |> Utils.parse_range_header()
+    |> case do
+      # For some reason browser prefers to request 0-$filesize instead of just
+      # not using a ranged request. So we will treat that scenario as a client
+      # that just wants to receive the entire file.
+      {:ok, 0, file_size} ->
+        if file_size in complete_file_ranges do
+          send_transcoded_file(conn)
+        else
+          send_transcoded_chunk(conn, 0, file_size)
+        end
+
+      # Alright this client actually wants a small chunk
+      {:ok, start_byte, end_byte} ->
+        send_transcoded_chunk(conn, start_byte, end_byte)
+
+      # No range? No problem! Send the entire file!
       :no_range ->
-        conn
-        |> put_stream_headers()
-        |> send_complete_file()
+        send_transcoded_file(conn)
 
       {:error, _reason} ->
-        estimated_file_size = Utils.estimate_opus_size(conn.assigns.track.file)
+        file_size = actual_file_size || estimated_file_size
 
         conn
         |> put_status(416)
-        |> put_resp_header("content-range", "bytes */#{estimated_file_size}")
+        |> put_resp_header("content-range", "bytes */#{file_size}")
         |> text("Range Not Satisfiable")
     end
   end
@@ -51,6 +74,8 @@ defmodule MusicBoxWeb.StreamController do
   end
 
   defp put_stream_headers(conn) do
+    duration = conn.assigns.track.duration
+
     conn
     |> put_resp_header("content-type", "audio/webm")
     |> put_resp_header("accept-ranges", "bytes")
@@ -59,89 +84,61 @@ defmodule MusicBoxWeb.StreamController do
     |> put_resp_header("expires", "0")
     |> put_resp_header("connection", "keep-alive")
     |> put_resp_header("x-content-type-options", "nosniff")
+    |> put_resp_header("x-content-duration", Float.to_string(duration))
   end
 
-  defp send_file_chunk(conn, start_byte, end_byte) do
-    estimated_file_size = Utils.estimate_opus_size(conn.assigns.track.file)
-    end_byte = min(end_byte, estimated_file_size - 1)
-    range_header = "bytes #{start_byte}-#{end_byte}/#{estimated_file_size}"
-    content_length = end_byte - start_byte + 1
-
+  defp send_transcoded_file(conn) do
     conn
-    |> put_resp_header("content-range", range_header)
-    |> put_resp_header("content-length", to_string(content_length))
-    |> send_chunked(206)
-    |> transcode(start_byte, end_byte)
-  end
-
-  defp send_complete_file(conn) do
-    estimated_file_size = Utils.estimate_opus_size(conn.assigns.track.file)
-
-    conn
-    |> put_resp_header("content-length", to_string(estimated_file_size))
+    |> put_stream_headers()
     |> send_chunked(200)
-    |> transcode(0, estimated_file_size - 1)
+    |> transcode_file()
   end
 
-  defp transcode(conn, start_byte, end_byte) do
+  defp transcode_file(conn, chunk_index \\ 0) do
+    with true <- Utils.continue_stream?(conn.assigns.track.file, chunk_index),
+         {:ok, chunk_data} <- Transcoder.request_chunk(conn.assigns.track.file, chunk_index),
+         {:ok, new_conn} <- chunk(conn, chunk_data) do
+      transcode_file(new_conn, chunk_index + 1)
+    else
+      _ -> conn
+    end
+  end
+
+  defp send_transcoded_chunk(conn, start_byte, end_byte) do
+    meta = Transcoder.get_meta(conn.assigns.track.file)
+    estimated_file_size = Utils.estimate_opus_size(conn.assigns.track.file)
+    actual_file_size = meta && meta.file_size
+    file_size = actual_file_size || estimated_file_size
+
+    end_byte = min(end_byte, file_size - 1)
+    range_header = "bytes #{start_byte}-#{end_byte}/#{file_size}"
+
+    conn
+    |> put_stream_headers()
+    |> put_resp_header("content-range", range_header)
+    |> send_chunked(206)
+    |> transcode_range(Range.new(start_byte, end_byte))
+  end
+
+  defp transcode_range(conn, %Range{first: start_byte, last: end_byte}) do
     chunk_size = Utils.chunk_size()
     start_chunk = div(start_byte, chunk_size)
-    end_chunk = div(end_byte, chunk_size)
-
-    Enum.reduce_while(start_chunk..end_chunk, conn, fn chunk_index, conn ->
-      case Transcoder.request_chunk(conn.assigns.track.file, chunk_index) do
-        {:ok, chunk_data} ->
-          # Calculate which portion of this chunk we actually need
-          chunk_start = chunk_index * chunk_size
-          chunk_end = min(chunk_start + byte_size(chunk_data) - 1, end_byte)
-
-          # If this chunk contains data within the requested range
-          if chunk_end >= start_byte and chunk_start <= end_byte do
-            # Calculate byte offsets within this chunk
-            byte_start_in_chunk = max(0, start_byte - chunk_start)
-            byte_end_in_chunk = min(byte_size(chunk_data) - 1, end_byte - chunk_start)
-            bytes_to_send = byte_end_in_chunk - byte_start_in_chunk + 1
-
-            # Get the binary chunk
-            chunk_data = binary_part(chunk_data, byte_start_in_chunk, bytes_to_send)
-
-            # Attempt to send to the client
-            case chunk(conn, chunk_data) do
-              {:ok, new_conn} -> {:cont, new_conn}
-              {:error, _reason} -> {:halt, conn}
-            end
-          else
-            {:cont, conn}
-          end
-
-        {:error, _reason} ->
-          {:halt, conn}
-      end
-    end)
+    offset = max(0, start_byte - start_chunk * chunk_size)
+    transcode_range(conn, start_chunk, offset, end_byte - start_byte)
   end
 
-  defp parse_range_header(conn) do
-    case get_req_header(conn, "range") do
-      ["bytes=" <> range] ->
-        case String.split(range, "-", parts: 2) do
-          [start_str, end_str] ->
-            with {start_byte, ""} when start_byte >= 0 <- Integer.parse(start_str),
-                 {end_byte, ""} when end_byte >= 0 <- Integer.parse(end_str) do
-              # end_byte <- parse_end_byte(end_str, start_byte) do
-              {:ok, start_byte, end_byte}
-            else
-              _ -> {:error, :invalid_range}
-            end
+  defp transcode_range(conn, _chunk_index, _offset, 0), do: conn
 
-          _ ->
-            {:error, :invalid_range}
-        end
-
-      [] ->
-        :no_range
-
-      _ ->
-        {:error, :invalid_range}
+  defp transcode_range(conn, chunk_index, offset, remaining_bytes)
+       when is_integer(remaining_bytes) do
+    with true <- Utils.continue_stream?(conn.assigns.track.file, chunk_index),
+         {:ok, chunk_data} <- Transcoder.request_chunk(conn.assigns.track.file, chunk_index),
+         {chunk_part_data, remaining_bytes} <-
+           Utils.get_chunk_part(chunk_data, offset, remaining_bytes),
+         {:ok, new_conn} <- chunk(conn, chunk_part_data) do
+      transcode_range(new_conn, chunk_index + 1, 0, remaining_bytes)
+    else
+      _ -> conn
     end
   end
 

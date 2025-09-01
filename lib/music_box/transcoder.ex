@@ -50,7 +50,7 @@ defmodule MusicBox.Transcoder do
     chunk_count = if(meta && meta.completed_at, do: meta.chunk_count)
 
     if not is_nil(chunk_count) and chunk_index > chunk_count do
-      {:reply, {:error, :unknown_chunk}}
+      {:reply, {:error, :unknown_chunk}, state}
     else
       case :ets.lookup(@chunks_table, lookup_key) do
         [{^lookup_key, chunk_data}] -> {:reply, {:ok, chunk_data}, state}
@@ -110,7 +110,14 @@ defmodule MusicBox.Transcoder do
   end
 
   def handle_info({:transcoding_complete, file, chunk_count}, state) do
-    upsert_meta(file, %{completed_at: DateTime.utc_now(), chunk_count: chunk_count})
+    file_size = transcoded_file_size(file)
+
+    upsert_meta(file, %{
+      completed_at: DateTime.utc_now(),
+      file_size: file_size,
+      chunk_count: chunk_count
+    })
+
     new_jobs = Map.delete(state.jobs, file.id)
 
     {:noreply, %{state | jobs: new_jobs}}
@@ -148,11 +155,23 @@ defmodule MusicBox.Transcoder do
   defp upsert_meta(%File{id: file_id}, params) do
     current =
       case :ets.lookup(@meta_table, file_id) do
-        [{^file_id, map}] -> map
-        _ -> %{started_at: nil, completed_at: nil, failed_at: nil, chunk_count: nil}
+        [{^file_id, map}] ->
+          map
+
+        _ ->
+          %{started_at: nil, completed_at: nil, failed_at: nil, chunk_count: nil, file_size: nil}
       end
 
     new_map = Map.merge(current, params)
     :ets.insert(@meta_table, {file_id, new_map})
+  end
+
+  defp transcoded_file_size(%File{id: file_id}) do
+    :ets.select(@chunks_table, [
+      {{{file_id, :"$1"}, :"$2"}, [], [:"$_"]}
+    ])
+    |> Enum.reduce(0, fn {_key, data}, acc ->
+      acc + byte_size(data)
+    end)
   end
 end
