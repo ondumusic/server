@@ -65,12 +65,12 @@ export const AudioManagerProvider = ({ children }: Props) => {
   useEffect(() => {
     if (!audioRef.current) return;
 
-    if (!isPlaying || !source || !currentTrack) {
+    if (!isPlaying) {
       audioRef.current.pause();
-    } else if (isPlaying) {
+    } else if (audioRef.current.src) {
       audioRef.current.play();
     }
-  }, [isPlaying, source, currentTrack]);
+  }, [isPlaying]);
 
   // Reset when track changes
   // We don't want to track when playToken changes because that would interrupt playback
@@ -120,6 +120,17 @@ export const AudioManagerProvider = ({ children }: Props) => {
     nextTrack();
   };
 
+  const onPause = (_event: ChangeEvent<HTMLAudioElement>) => {
+    if (!audioRef.current) return;
+    if (audioRef.current.ended) return;
+    setIsPlaying(false);
+  };
+
+  const onCanPlay = (_event: ChangeEvent<HTMLAudioElement>) => {
+    if (!audioRef.current) return;
+    audioRef.current.play();
+  };
+
   const value = {
     isPlaying,
     duration,
@@ -137,14 +148,21 @@ export const AudioManagerProvider = ({ children }: Props) => {
 
   return (
     <AudioManagerContext.Provider value={value}>
-      <audio
-        ref={audioRef}
-        src={source}
-        preload="auto"
-        onLoadedMetadata={onLoadedMetadata}
-        onTimeUpdate={onTimeUpdate}
-        onEnded={onEnded}
-      />
+      {source && (
+        <audio
+          ref={audioRef}
+          src={source}
+          preload="auto"
+          controls={true}
+          className="absolute top-0 left-0 z-[1000]"
+          onLoadedMetadata={onLoadedMetadata}
+          onTimeUpdate={onTimeUpdate}
+          onCanPlay={onCanPlay}
+          onPause={onPause}
+          onPlay={() => setIsPlaying(true)}
+          onEnded={onEnded}
+        />
+      )}
       {children}
     </AudioManagerContext.Provider>
   );
