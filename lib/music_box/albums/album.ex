@@ -27,6 +27,6 @@ defmodule MusicBox.Albums.Album do
 
     query
     |> join(:inner, [album: al], a in assoc(al, :artist), as: :artist)
-    |> preload([artist: a], artist: a, tracks: [:artist])
+    |> preload([artist: a], artist: a, tracks: ^Track.preloaded())
   end
 end
