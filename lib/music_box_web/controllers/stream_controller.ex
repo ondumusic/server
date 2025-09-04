@@ -24,9 +24,22 @@ defmodule MusicBoxWeb.StreamController do
     |> get_req_header("range")
     |> Utils.parse_range_header()
     |> case do
+      # The client wants the rest, but already has everything.
+      {:ok, ^actual_file_size, :infinity} ->
+        send_transcode_completed(conn, actual_file_size)
+
+      {:ok, 0, :infinity} ->
+        if actual_file_size do
+          send_transcoded_chunk(conn, 0, actual_file_size)
+        else
+          end_byte = Utils.default_range_size() - 1
+          send_transcoded_chunk(conn, 0, end_byte)
+        end
+
       # For some reason browser prefers to request 0-$filesize instead of just
       # not using a ranged request. So we will treat that scenario as a client
-      # that just wants to receive the entire file.
+      # that just wants to receive the entire file, as it might be using the
+      # estimated file size which is often too small or too big.
       {:ok, 0, file_size} ->
         if file_size in complete_file_ranges do
           send_transcoded_file(conn)
@@ -42,7 +55,7 @@ defmodule MusicBoxWeb.StreamController do
       :no_range ->
         send_transcoded_file(conn)
 
-      {:error, _reason} ->
+      _error ->
         file_size = actual_file_size || estimated_file_size
 
         conn
@@ -53,15 +66,7 @@ defmodule MusicBoxWeb.StreamController do
   end
 
   def stream(conn, _params) do
-    content_type =
-      case conn.assigns.track.file.type do
-        :m4a -> "audio/mp4"
-        :mp3 -> "audio/mpeg"
-        :opus -> "audio/ogg"
-        :ogg -> "audio/ogg"
-        :flac -> "audio/flac"
-        :wav -> "audio/wav"
-      end
+    content_type = MusicBox.Files.File.mimetype(conn.assigns.track.file)
 
     conn
     |> send_download({:file, conn.assigns.track.file.path},
@@ -104,13 +109,20 @@ defmodule MusicBoxWeb.StreamController do
     end
   end
 
+  defp send_transcode_completed(conn, file_size) do
+    conn
+    |> put_stream_headers()
+    |> put_resp_header("content-range", "bytes #{file_size}-#{file_size - 1}/#{file_size}")
+    |> send_resp(200, <<>>)
+  end
+
   defp send_transcoded_chunk(conn, start_byte, end_byte) do
     meta = Transcoder.get_meta(conn.assigns.track.file)
     estimated_file_size = Utils.estimate_opus_size(conn.assigns.track.file)
     actual_file_size = meta && meta.file_size
     file_size = actual_file_size || estimated_file_size
-
     end_byte = min(end_byte, file_size - 1)
+
     range_header = "bytes #{start_byte}-#{end_byte}/#{file_size}"
 
     conn

@@ -57,9 +57,9 @@ defmodule MusicBox.Transcoder do
   end
 
   # Too many concurrent jobs, queue the request
-  defp start_or_enqueue(file, chunk_index, from, %{jobs: jobs} = state)
+  defp start_or_enqueue(_file, _chunk_index, _from, %{jobs: jobs} = _state)
        when map_size(jobs) >= @max_concurrency,
-       do: enqueue_chunk_request(file, chunk_index, from, state)
+       do: raise("TODO: Not Implemented Yet")
 
   # Request already transcoding, queue the request
   defp start_or_enqueue(%File{id: file_id} = file, chunk_index, from, %{jobs: jobs} = state)
@@ -115,10 +115,26 @@ defmodule MusicBox.Transcoder do
       chunk_count: chunk_count
     })
 
-    new_jobs = Map.delete(state.jobs, file.id)
-    state = schedule_cleanup(state)
+    # If there are still pending requests we should deal with them
+    state.requests
+    |> Enum.filter(fn {{file_id, _}, _requests} -> file_id == file.id end)
+    |> Enum.filter(fn {{_, chunk_index}, _requests} -> chunk_index >= chunk_count end)
+    |> Enum.each(fn {lookup_key, requests} ->
+      case :ets.lookup(@chunks_table, lookup_key) do
+        # The chunk should exist, unless it was already cleaned up?
+        [{^lookup_key, chunk_data}] ->
+          Enum.map(requests, fn from ->
+            GenServer.reply(from, {:ok, chunk_data})
+          end)
 
-    {:noreply, %{state | jobs: new_jobs}}
+        [] ->
+          Enum.map(requests, fn from ->
+            GenServer.reply(from, {:error, :no_longer_available})
+          end)
+      end
+    end)
+
+    {:noreply, cleanup_file(state, file)}
   end
 
   def handle_info({:transcoding_failed, file}, state) do
@@ -127,16 +143,12 @@ defmodule MusicBox.Transcoder do
     # Notify all pending requests for this file (any chunk)
     state.requests
     |> Enum.filter(fn {{file_id, _}, _requests} -> file_id == file.id end)
+    |> Enum.flat_map(fn {_, requests} -> requests end)
     |> Enum.each(fn from ->
       GenServer.reply(from, {:error, :transcoding_failed})
     end)
 
-    # Remove job and pending requests from state
-    new_requests = Map.reject(state.requests, fn {{file_id, _}, _} -> file_id == file.id end)
-    new_jobs = Map.delete(state.jobs, file.id)
-    state = schedule_cleanup(state)
-
-    {:noreply, %{state | jobs: new_jobs, requests: new_requests}}
+    {:noreply, cleanup_file(state, file)}
   end
 
   def handle_info(:cleanup, state) do
@@ -183,6 +195,14 @@ defmodule MusicBox.Transcoder do
     end
 
     {:noreply, schedule_cleanup(state)}
+  end
+
+  defp cleanup_file(state, file) do
+    new_requests = Map.reject(state.requests, fn {{file_id, _}, _} -> file_id == file.id end)
+    new_jobs = Map.delete(state.jobs, file.id)
+    state = schedule_cleanup(state)
+
+    %{state | jobs: new_jobs, requests: new_requests}
   end
 
   defp schedule_cleanup(state) do

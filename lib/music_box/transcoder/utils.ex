@@ -4,6 +4,7 @@ defmodule MusicBox.Transcoder.Utils do
 
   def bitrate_kbps, do: 256
   def chunk_size, do: 1024 * 1024
+  def default_range_size, do: 1024 * 1024
   def timestamp, do: DateTime.utc_now() |> DateTime.to_unix()
 
   def estimate_opus_size(%File{metadata: %{duration: duration}}) do
@@ -44,13 +45,20 @@ defmodule MusicBox.Transcoder.Utils do
   end
 
   def parse_range_header([]), do: :no_range
+  def parse_range_header(["bytes=0-"]), do: {:ok, 0, :infinity}
 
   def parse_range_header(["bytes=" <> range]) do
     case String.split(range, "-", parts: 2) do
+      [start_str, ""] ->
+        with {start_byte, ""} when start_byte >= 0 <- Integer.parse(start_str) do
+          {:ok, start_byte, :infinity}
+        else
+          _ -> {:error, :invalid_range}
+        end
+
       [start_str, end_str] ->
         with {start_byte, ""} when start_byte >= 0 <- Integer.parse(start_str),
              {end_byte, ""} when end_byte >= 0 <- Integer.parse(end_str) do
-          # end_byte <- parse_end_byte(end_str, start_byte) do
           {:ok, start_byte, end_byte}
         else
           _ -> {:error, :invalid_range}

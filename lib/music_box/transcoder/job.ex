@@ -32,10 +32,10 @@ defmodule MusicBox.Transcoder.Job do
 
   defp ffmpeg_args(%File{path: path, metadata: %{duration: duration}}) do
     ["-i", path] ++ ~w(
-        -c:a libopus -b:a 256k -f webm -ar 48000 -ac 2
-        -fflags +nobuffer -max_delay 0 -write_crc 1
+        -c:a libopus -b:a 256k -f webm -ar 48000
+        -fflags +genpts+nobuffer -max_delay 0 -write_crc 1
         -avoid_negative_ts make_zero
-        -t #{duration}
+        -ss 0 -t #{duration} -cluster_time_limit 0
         -v quiet -nostats
         pipe:1
       )
