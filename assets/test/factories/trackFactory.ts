@@ -26,6 +26,7 @@ export const trackFactory = Factory.define<Track, {}, Track, TrackParams>(
       duration: faker.number.float({ min: 5, max: 600 }),
       number: sequence,
       disc: 1,
+      mimetype: "audio/mp4",
       streamUrl: faker.internet.url(),
     };
   },

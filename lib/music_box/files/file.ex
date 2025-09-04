@@ -20,4 +20,15 @@ defmodule MusicBox.Files.File do
     field :last_modified_at, :utc_datetime
     timestamps(type: :utc_datetime)
   end
+
+  def mimetype(%__MODULE__{type: type}) do
+    case type do
+      :m4a -> "audio/mp4"
+      :mp3 -> "audio/mpeg"
+      :opus -> "audio/ogg"
+      :ogg -> "audio/ogg"
+      :flac -> "audio/flac"
+      :wav -> "audio/wav"
+    end
+  end
 end

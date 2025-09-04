@@ -49,6 +49,8 @@ defmodule MusicBoxWeb.LibraryJSON do
   end
 
   def track(%{track: track, album: album}) do
+    mimetype = MusicBox.Files.File.mimetype(track.file)
+
     %{
       __type: "track",
       id: track.id,
@@ -60,6 +62,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       disc: track.disc,
       number: track.number,
       duration: track.duration,
+      mimetype: mimetype,
       streamUrl: ~p"/stream/#{track}"
     }
   end

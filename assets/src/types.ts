@@ -29,6 +29,7 @@ export interface Track {
   disc: number;
   number: number;
   duration: number;
+  mimetype: string;
   streamUrl: string;
 }
 
