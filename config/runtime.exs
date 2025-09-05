@@ -28,9 +28,18 @@ if config_env() == :prod do
       For example: /etc/music_box/music_box.db
       """
 
+  transcode_cache_path =
+    System.get_env("TRANSCODE_CACHE_PATH") ||
+      raise """
+      environment variable TRANSCODE_CACHE_PATH is missing.
+      For example: /tmp/transcode-cache/
+      """
+
   config :music_box, MusicBox.Repo,
     database: database_path,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5")
+
+  config :music_box, MusicBox.Transcoder, cache_path: transcode_cache_path
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you

@@ -28,9 +28,21 @@ defmodule MusicBox.Transcoder do
   def get_meta(%File{id: file_id}, preset) do
     lookup_key = {file_id, preset}
 
-    case :ets.lookup(@meta_table, lookup_key) do
-      [{^lookup_key, %{} = meta}] -> meta
-      _ -> nil
+    path = cache_file_path(file_id, preset)
+    persisted? = Elixir.File.exists?(path)
+
+    if persisted? do
+      file_size = Elixir.File.stat!(path).size
+
+      %Result{
+        file_size: file_size,
+        chunk_count: ceil(file_size / Utils.chunk_size())
+      }
+    else
+      case :ets.lookup(@meta_table, lookup_key) do
+        [{^lookup_key, %{} = meta}] -> meta
+        _ -> nil
+      end
     end
   end
 
@@ -48,13 +60,37 @@ defmodule MusicBox.Transcoder do
     lookup_key = {file.id, preset, chunk_index}
     chunk_count = if(meta && meta.completed_at, do: meta.chunk_count)
 
-    if not is_nil(chunk_count) and chunk_index > chunk_count do
-      {:reply, {:error, :unknown_chunk}, state}
-    else
-      case :ets.lookup(@chunks_table, lookup_key) do
-        [{^lookup_key, chunk_data}] -> {:reply, {:ok, chunk_data}, state}
-        [] -> start_or_enqueue(file, preset, chunk_index, from, state)
-      end
+    path = cache_file_path(file.id, preset)
+    persisted? = Elixir.File.exists?(path)
+
+    cond do
+      not is_nil(chunk_count) and chunk_index > chunk_count ->
+        {:reply, {:error, :unknown_chunk}, state}
+
+      persisted? ->
+        filesize = Elixir.File.stat!(path).size
+        start_byte = chunk_index * Utils.chunk_size()
+        end_byte = min(filesize, start_byte + Utils.chunk_size())
+        bytes_to_read = max(0, end_byte - start_byte)
+
+        # Looks like maybe requesting one too many
+
+        case Elixir.File.open(path, [:binary, :read]) do
+          {:ok, file} ->
+            :file.position(file, start_byte)
+            chunk_data = IO.binread(file, bytes_to_read)
+            Elixir.File.close(file)
+            {:reply, {:ok, chunk_data}, state}
+
+          _ ->
+            {:reply, {:error, :unknown_chunk}, state}
+        end
+
+      true ->
+        case :ets.lookup(@chunks_table, lookup_key) do
+          [{^lookup_key, chunk_data}] -> {:reply, {:ok, chunk_data}, state}
+          [] -> start_or_enqueue(file, preset, chunk_index, from, state)
+        end
     end
   end
 
@@ -145,6 +181,9 @@ defmodule MusicBox.Transcoder do
           end)
       end
     end)
+
+    # Persist cache
+    persist_cache(job)
 
     {:noreply, cleanup_job(state, job)}
   end
@@ -259,4 +298,34 @@ defmodule MusicBox.Transcoder do
       acc + byte_size(data)
     end)
   end
+
+  defp persist_cache(job) do
+    %{file: %{id: file_id}, preset: preset} = job
+    path = cache_file_path(file_id, preset)
+    Elixir.File.mkdir_p!(Path.dirname(path))
+
+    case Elixir.File.open(path, [:write, :binary, :exclusive]) do
+      {:ok, file} ->
+        :ets.select(@chunks_table, [
+          {{{file_id, preset, :"$1"}, :"$2"}, [], [:"$_"]}
+        ])
+        |> Enum.sort_by(fn {{_, _, n}, _} -> n end)
+        |> Enum.reduce(0, fn {_key, data}, _acc ->
+          :ok = IO.binwrite(file, data)
+        end)
+
+        Elixir.File.close(file)
+
+      _ ->
+        :ok
+    end
+  end
+
+  defp cache_file_path(file_id, preset) do
+    filename = "#{file_id}-#{preset}.webm"
+    Path.join(config(:cache_path), filename)
+  end
+
+  defp config(key),
+    do: Application.get_env(:music_box, MusicBox.Transcoder) |> Keyword.get(key)
 end

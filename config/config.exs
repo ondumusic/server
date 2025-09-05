@@ -34,6 +34,8 @@ config :ecto_sqlite3, :json_library, JSON
 
 config :music_box, MusicBox.FileScanner, producer_module: MusicBox.FileScanner.Producer
 
+config :music_box, MusicBox.Transcoder, cache_path: Path.absname("./tmp")
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
