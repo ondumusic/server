@@ -18,8 +18,8 @@ defmodule MusicBox.Transcoder.Utils do
     round(audio_bytes + webm_container_overhead + opus_header_overhead)
   end
 
-  def continue_stream?(file, chunk_index) do
-    meta = Transcoder.get_meta(file)
+  def continue_stream?(file, preset, chunk_index) do
+    meta = Transcoder.get_meta(file, preset)
 
     if meta do
       continue? = is_nil(meta.failed_at)
