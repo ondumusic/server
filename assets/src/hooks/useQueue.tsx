@@ -8,6 +8,7 @@ export interface QueueContext {
   hasNextTrack: boolean;
   prevTrack(): void;
   nextTrack(): void;
+  getNextTrack(): Track | undefined;
   replaceQueue(tracks: Track[], startWithTrack?: Track): void;
 }
 
@@ -18,6 +19,7 @@ const QueueContext = createContext<QueueContext>({
   hasNextTrack: false,
   prevTrack: () => {},
   nextTrack: () => {},
+  getNextTrack: () => {},
   replaceQueue: (_tracks, _startWithTrack?) => {},
 });
 
@@ -41,6 +43,14 @@ export const QueueProvider = ({ children }: Props) => {
     currentTrack,
     hasPrevTrack,
     hasNextTrack,
+    getNextTrack() {
+      const nextTrackIndex = queueIndex + 1;
+      if (nextTrackIndex >= queue.length) {
+        return;
+      }
+
+      return queue[nextTrackIndex];
+    },
     prevTrack() {
       const prevTrackIndex = Math.max(-1, queueIndex - 1);
       setQueueIndex(prevTrackIndex);

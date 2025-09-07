@@ -10,6 +10,7 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import { usePlayTokenQuery } from "../hooks/usePlayTokenQuery";
 import { useQueue } from "../hooks/useQueue";
+import { api } from "../services/api";
 
 export interface AudioManagerContext {
   isPlaying: boolean;
@@ -51,15 +52,31 @@ export const AudioManagerProvider = ({ children }: Props) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const { isLoggedIn } = useAuth();
   const [isPlaying, setIsPlaying] = useState(false);
+  const [hasPreloadedNext, setHasPreloadedNext] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [source, setSource] = useState<string | undefined>(undefined);
-  const { currentTrack, nextTrack } = useQueue();
+  const { currentTrack, nextTrack, hasNextTrack, getNextTrack } = useQueue();
   const { playToken } = usePlayTokenQuery({ enabled: isLoggedIn });
 
   // Calculate the current playback percentage
   let progressPercentage = (currentTime / duration) * 100;
   if (Number.isNaN(progressPercentage)) progressPercentage = 0;
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies(getNextTrack): suppress dependency getNextTrack
+  useEffect(() => {
+    if (hasPreloadedNext) return;
+    if (!hasNextTrack) return;
+    if (progressPercentage < 70) return;
+
+    setHasPreloadedNext(true);
+    const nextTrack = getNextTrack();
+    if (!nextTrack) return;
+
+    // We don't really care about the response for this, it returns a static
+    // ok response because the transcoder starts as a background process.
+    api.post(`/transcode/${nextTrack.id}`, null);
+  }, [hasNextTrack, hasPreloadedNext, progressPercentage]);
 
   // Pause/resume functionality
   useEffect(() => {
@@ -89,6 +106,7 @@ export const AudioManagerProvider = ({ children }: Props) => {
       setSource(`${currentTrack.streamUrl}?transcode=1&token=${playToken}`);
     }
 
+    setHasPreloadedNext(false);
     setCurrentTime(0);
     setDuration(0);
   }, [currentTrack]);
