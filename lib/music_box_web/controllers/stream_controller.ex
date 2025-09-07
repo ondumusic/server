@@ -5,8 +5,23 @@ defmodule MusicBoxWeb.StreamController do
   alias MusicBox.Transcoder.Utils
   alias MusicBox.Tracks
 
-  plug :assign_track when action in [:stream]
-  plug :assign_preset when action in [:stream]
+  plug :assign_track
+  plug :assign_preset
+
+  def transcode(conn, _params) do
+    %{track: track, preset: preset} = conn.assigns
+
+    require Logger
+    Logger.info("Starting transcoder!")
+
+    # By requesting the first chunk the transcoding will start (if needed).
+    Task.start(fn ->
+      Transcoder.request_chunk(track.file, preset, 0)
+    end)
+
+    conn
+    |> json(%{ok: true})
+  end
 
   def stream(conn, %{"transcode" => "1"}) do
     meta = Transcoder.get_meta(conn.assigns.track.file, conn.assigns.preset)
@@ -161,8 +176,7 @@ defmodule MusicBoxWeb.StreamController do
 
   defp assign_track(conn, _opts) do
     with track_id = Map.get(conn.params, "track_id", ""),
-         token = Map.get(conn.params, "token", ""),
-         {:ok, _play_token} <- MusicBoxWeb.PlayToken.verify(conn, token) do
+         true <- authenticated?(conn) do
       track = Tracks.get_track!(track_id)
 
       conn
@@ -178,4 +192,15 @@ defmodule MusicBoxWeb.StreamController do
       _ -> assign(conn, :preset, :default)
     end
   end
+
+  defp authenticated?(%{assigns: %{current_user: %{id: _id}}}), do: true
+
+  defp authenticated?(%{params: %{"token" => token}} = conn) do
+    case MusicBoxWeb.PlayToken.verify(conn, token) do
+      {:ok, _play_token} -> true
+      _ -> false
+    end
+  end
+
+  defp authenticated?(_conn), do: false
 end
