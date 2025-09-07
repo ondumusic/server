@@ -84,7 +84,7 @@ defmodule MusicBox.FileScanner.Producer do
   defp walk(%Entry{path: path, is_dir: true, scan_type: scan_type}) do
     case File.ls(path) do
       {:ok, list} ->
-        Logger.info("Finding files in: #{path}")
+        Logger.debug("Finding files in: #{path}")
 
         list
         |> Enum.sort()

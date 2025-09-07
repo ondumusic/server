@@ -20,10 +20,10 @@ defmodule MusicBox.Transcoder.Job do
         try do
           job = %{job | pid: self()}
 
-          Logger.info("Starting transcoding file: #{job.file.id}")
+          Logger.debug("Starting transcoding file: #{job.file.id}")
           last_chunk_index = transcode_file(job, parent)
           chunk_count = last_chunk_index + 1
-          Logger.info("Finished transcoding file: #{job.file.id} (#{chunk_count} chunks)")
+          Logger.debug("Finished transcoding file: #{job.file.id} (#{chunk_count} chunks)")
           send(parent, {:transcoding_complete, job, chunk_count})
         rescue
           error ->
