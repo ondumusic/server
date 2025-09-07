@@ -19,7 +19,7 @@ const QueueContext = createContext<QueueContext>({
   hasNextTrack: false,
   prevTrack: () => {},
   nextTrack: () => {},
-  getNextTrack: () => {},
+  getNextTrack: () => undefined,
   replaceQueue: (_tracks, _startWithTrack?) => {},
 });
 
