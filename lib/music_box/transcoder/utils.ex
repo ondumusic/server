@@ -3,8 +3,8 @@ defmodule MusicBox.Transcoder.Utils do
   alias MusicBox.Files.File
 
   def bitrate_kbps, do: 256
-  def chunk_size, do: 1024 * 1024
-  def default_range_size, do: 1024 * 1024
+  def chunk_size, do: 1024 * 128
+  def default_range_size, do: 1024 * 128
   def timestamp, do: DateTime.utc_now() |> DateTime.to_unix()
 
   def estimate_opus_size(%File{metadata: %{duration: duration}}) do
