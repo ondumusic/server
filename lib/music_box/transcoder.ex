@@ -32,11 +32,12 @@ defmodule MusicBox.Transcoder do
     persisted? = Elixir.File.exists?(path)
 
     if persisted? do
-      file_size = Elixir.File.stat!(path).size
+      stat = Elixir.File.stat!(path, time: :posix)
 
       %Result{
-        file_size: file_size,
-        chunk_count: ceil(file_size / Utils.chunk_size())
+        completed_at: DateTime.from_unix(stat.ctime),
+        file_size: stat.size,
+        chunk_count: ceil(stat.size / Utils.chunk_size())
       }
     else
       case :ets.lookup(@meta_table, lookup_key) do
@@ -52,7 +53,7 @@ defmodule MusicBox.Transcoder do
   end
 
   def request_chunk(file, preset, chunk_index) do
-    GenServer.call(__MODULE__, {:request_chunk, file, preset, chunk_index}, 30_000)
+    GenServer.call(__MODULE__, {:request_chunk, file, preset, chunk_index}, 10_000)
   end
 
   def handle_call({:request_chunk, %File{} = file, preset, chunk_index}, from, state) do
