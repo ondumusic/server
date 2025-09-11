@@ -194,7 +194,7 @@ defmodule MusicBox.Transcoder do
 
     # Notify all pending requests for this file (any chunk)
     state.requests
-    |> Enum.filter(fn {{file_id, _}, _requests} -> file_id == file.id end)
+    |> Enum.filter(fn {{file_id, _, _}, _requests} -> file_id == file.id end)
     |> Enum.flat_map(fn {_, requests} -> requests end)
     |> Enum.each(fn from ->
       GenServer.reply(from, {:error, :transcoding_failed})
@@ -232,12 +232,14 @@ defmodule MusicBox.Transcoder do
   end
 
   def handle_info({:DOWN, _ref, :process, pid, reason}, state) do
-    active_job = Enum.find(state.jobs, fn {_, job} -> job.pid == pid end)
+    case Enum.find(state.jobs, fn {_, job} -> job.pid == pid end) do
+      {{_file_id, _preset}, active_job} ->
+        Logger.error("Failed transcoding file: #{active_job.file.id} - Error: #{inspect(reason)}")
+        upsert_meta(active_job, %{failed_at: Utils.timestamp()})
+        send(self(), {:transcoding_failed, active_job.file})
 
-    if active_job do
-      Logger.error("Failed transcoding file: #{active_job.file.id} - Error: #{reason}")
-      upsert_meta(active_job, %{failed_at: Utils.timestamp()})
-      send(self(), {:transcoding_failed, active_job.file})
+      nil ->
+        :noop
     end
 
     {:noreply, schedule_cleanup(state)}
