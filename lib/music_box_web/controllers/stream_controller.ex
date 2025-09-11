@@ -79,6 +79,7 @@ defmodule MusicBoxWeb.StreamController do
         |> put_resp_header("content-range", "bytes */#{file_size}")
         |> text("Range Not Satisfiable")
     end
+    |> halt()
   end
 
   def stream(conn, _params) do
