@@ -35,26 +35,24 @@ defmodule MusicBox.Transcoder.Job do
     %{job | pid: pid}
   end
 
-  defp ffmpeg_args(%Job{file: %File{} = file, preset: :mobile}) do
-    ["-i", file.path] ++ ~w(
-        -c:a libopus -b:a 128k -f webm -ar 24000
+  defp ffmpeg_shared_args(%File{} = file, bitrate, sample_rate) do
+    ~w(
+        -c:a libopus -b:a #{bitrate}k -f webm -ar #{sample_rate}
         -fflags +genpts+nobuffer -max_delay 0 -write_crc 1
-        -avoid_negative_ts make_zero
-        -ss 0 -t #{file.metadata.duration} -cluster_time_limit 0
+        -avoid_negative_ts make_zero -vbr on
+        -ss 0 -t #{file.metadata.duration}
+        -cluster_time_limit 4000 -cues_to_front 1
         -v quiet -nostats
         pipe:1
       )
   end
 
+  defp ffmpeg_args(%Job{file: %File{} = file, preset: :mobile}) do
+    ["-i", file.path] ++ ffmpeg_shared_args(file, 128, 48_000)
+  end
+
   defp ffmpeg_args(%Job{file: %File{} = file, preset: _preset}) do
-    ["-i", file.path] ++ ~w(
-        -c:a libopus -b:a 256k -f webm -ar 48000
-        -fflags +genpts+nobuffer -max_delay 0 -write_crc 1
-        -avoid_negative_ts make_zero
-        -ss 0 -t #{file.metadata.duration} -cluster_time_limit 0
-        -v quiet -nostats
-        pipe:1
-      )
+    ["-i", file.path] ++ ffmpeg_shared_args(file, 160, 48_000)
   end
 
   defp transcode_file(%Job{} = job, parent) do
