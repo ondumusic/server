@@ -23,15 +23,4 @@ defmodule MusicBox.Albums.Artwork do
       :last_fetch_attempt
     ])
   end
-
-  def preloaded(query \\ nil) do
-    query =
-      if query,
-        do: query,
-        else: from(al in __MODULE__, as: :album)
-
-    query
-    |> join(:inner, [album: al], a in assoc(al, :artist), as: :artist)
-    |> preload([artist: a], artist: a, tracks: ^Track.preloaded())
-  end
 end
