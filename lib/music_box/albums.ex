@@ -2,7 +2,7 @@ defmodule MusicBox.Albums do
   import Ecto.Query, warn: false
   alias MusicBox.Repo
 
-  alias MusicBox.Albums.Album
+  alias MusicBox.Albums.{Album, Artwork}
   alias MusicBox.Artists.Artist
 
   def paginate_albums(params) do
@@ -33,5 +33,13 @@ defmodule MusicBox.Albums do
     |> where([album: al], al.artist_id == ^artist_id)
     |> where([album: al], al.id == ^id_or_slug or al.slug == ^id_or_slug)
     |> Repo.one!()
+  end
+
+  def update_artwork(%Album{id: album_id}, attrs) do
+    %Artwork{
+      album_id: album_id
+    }
+    |> Artwork.changeset(attrs)
+    |> Repo.insert(on_conflict: :replace_all)
   end
 end

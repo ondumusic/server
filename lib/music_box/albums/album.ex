@@ -1,6 +1,7 @@
 defmodule MusicBox.Albums.Album do
   use MusicBox.Schema
 
+  alias MusicBox.Albums.Artwork
   alias MusicBox.Artists.Artist
   alias MusicBox.Tracks.Track
 
@@ -15,6 +16,7 @@ defmodule MusicBox.Albums.Album do
 
     belongs_to :artist, Artist
     has_many :tracks, Track, preload_order: [asc: :disc, asc_nulls_last: :number, asc: :name]
+    has_one :artwork, Artwork
 
     timestamps(type: :utc_datetime)
   end
@@ -27,6 +29,7 @@ defmodule MusicBox.Albums.Album do
 
     query
     |> join(:inner, [album: al], a in assoc(al, :artist), as: :artist)
-    |> preload([artist: a], artist: a, tracks: ^Track.preloaded())
+    |> join(:left, [album: al], art in assoc(al, :artwork), as: :artwork)
+    |> preload([artist: a, artwork: art], artist: a, artwork: art, tracks: ^Track.preloaded())
   end
 end

@@ -15,9 +15,9 @@ defmodule MusicBox.Files.FileMetadata do
     field :genres, {:array, :string}
   end
 
-  def changeset(metadata, params) do
+  def changeset(metadata, attrs) do
     metadata
-    |> cast(params, [
+    |> cast(attrs, [
       :artist,
       :album,
       :album_artist,
