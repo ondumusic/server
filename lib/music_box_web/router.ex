@@ -23,6 +23,7 @@ defmodule MusicBoxWeb.Router do
     get "/artists", PageController, :react
     get "/artists/:id", PageController, :react
 
+    get "/artwork/:filename", ArtworkController, :show
     get "/stream/:track_id", StreamController, :stream
   end
 

@@ -16,6 +16,7 @@ export interface Album {
   releaseYear: number;
   tracks: Track[];
   isUnknown: boolean;
+  artworkUrl?: string;
 }
 
 export interface Track {

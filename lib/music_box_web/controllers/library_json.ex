@@ -36,6 +36,12 @@ defmodule MusicBoxWeb.LibraryJSON do
   end
 
   def album(%{album: album} = assigns) do
+    artwork_filename =
+      case album do
+        %{artwork: %{path: path}} -> Path.basename(path)
+        _ -> nil
+      end
+
     %{
       __type: "album",
       id: album.id,
@@ -44,6 +50,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       name: album.name,
       releaseYear: album.release_year,
       isUnknown: album.is_unknown,
+      artworkUrl: ~p"/artwork/#{artwork_filename}",
       tracks: json_map(assigns, [:album, :tracks], :track, include: [:album])
     }
   end

@@ -40,7 +40,9 @@ export function ArtistAlbumListItem({ album }: Props) {
           className="aspect-square w-full bg-stone-200 mb-4 shadow-lg cursor-pointer hover:bg-emerald-600/50"
           onClick={() => enqueueAndPlay(album.tracks)}
           onKeyDown={() => enqueueAndPlay(album.tracks)}
-        ></button>
+        >
+          {album.artworkUrl && <img src={album.artworkUrl} alt="" />}
+        </button>
         <span className="font-light text-stone-400">
           <Trans
             i18nKey="album.trackCount"
