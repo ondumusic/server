@@ -23,4 +23,6 @@ defmodule MusicBox.Albums.Artwork do
       :last_fetch_attempt
     ])
   end
+
+  def fetchers, do: @fetchers
 end
