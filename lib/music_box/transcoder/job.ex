@@ -37,7 +37,7 @@ defmodule MusicBox.Transcoder.Job do
 
   defp ffmpeg_shared_args(%File{} = file, bitrate, sample_rate) do
     ~w(
-        -c:a libopus -b:a #{bitrate}k -f webm -ar #{sample_rate}
+        -c:a libopus -b:a #{bitrate}k -f webm -ar #{sample_rate} -vn
         -fflags +genpts+nobuffer -max_delay 0 -write_crc 1
         -avoid_negative_ts make_zero -vbr on
         -ss 0 -t #{file.metadata.duration}
