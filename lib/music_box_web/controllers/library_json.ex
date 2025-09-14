@@ -38,9 +38,13 @@ defmodule MusicBoxWeb.LibraryJSON do
   def album(%{album: album} = assigns) do
     artwork_filename =
       case album do
-        %{artwork: %{path: path}} -> Path.basename(path)
+        %{artwork: %{path: path}} when is_binary(path) -> Path.basename(path)
         _ -> nil
       end
+
+    artwork_url =
+      if artwork_filename,
+        do: ~p"/artwork/#{artwork_filename}"
 
     %{
       __type: "album",
@@ -50,7 +54,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       name: album.name,
       releaseYear: album.release_year,
       isUnknown: album.is_unknown,
-      artworkUrl: ~p"/artwork/#{artwork_filename}",
+      artworkUrl: artwork_url,
       tracks: json_map(assigns, [:album, :tracks], :track, include: [:album])
     }
   end
