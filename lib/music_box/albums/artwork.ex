@@ -3,7 +3,7 @@ defmodule MusicBox.Albums.Artwork do
 
   alias MusicBox.Albums.Album
 
-  @fetchers ~w(embedded)a
+  @fetchers ~w(embedded custom_api)a
 
   @primary_key {:album_id, :binary_id, autogenerate: false}
   @foreign_key_type :binary_id

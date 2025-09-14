@@ -48,6 +48,7 @@ defmodule MusicBox.MixProject do
       {:broadway, "~> 1.2"},
       {:flop, "~> 0.26.3"},
       {:slugify, "~> 1.3"},
+      {:req, "~> 0.5.15"},
       {:observer_cli, "~> 1.8", only: [:dev]}
     ]
   end
