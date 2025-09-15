@@ -32,10 +32,8 @@ defmodule MusicBox.Artwork.Fetcher.MusicBrainz do
       query: to_query(search)
     }
 
-    query = "fmt=#{params.fmt}&limit=#{params.limit}&query=#{params.query}"
-
     uri = URI.parse(@endpoint)
-    uri = %{uri | query: query}
+    uri = %{uri | query: params_to_query(params)}
 
     with {:ok, %{status: 200, body: %{} = body}} <- Req.get(uri),
          [_ | _] = releases <- Map.get(body, "releases", []) do
@@ -54,6 +52,14 @@ defmodule MusicBox.Artwork.Fetcher.MusicBrainz do
       {:ok, %{status: 200, body: bytes}} -> {:ok, bytes}
       _ -> find_artwork(releases)
     end
+  end
+
+  defp params_to_query(%{} = params) do
+    params
+    |> Enum.map(fn {k, v} ->
+      to_string(k) <> "=" <> to_string(v)
+    end)
+    |> Enum.join("&")
   end
 
   defp to_query(%{} = map) do
