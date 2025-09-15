@@ -45,7 +45,7 @@ defmodule MusicBox.Artwork.Fetcher.MusicBrainz do
 
   defp find_artwork([]), do: {:error, :not_found}
 
-  defp find_artwork([%{"id" => mbid} = r | releases]) do
+  defp find_artwork([%{"id" => mbid} | releases]) do
     archive_url = "http://coverartarchive.org/release/" <> mbid <> "/front-500"
 
     case Req.get(archive_url, max_redirects: 3) do
