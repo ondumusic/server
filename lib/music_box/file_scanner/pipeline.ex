@@ -106,6 +106,7 @@ defmodule MusicBox.FileScanner.Pipeline do
       end)
       |> Map.new()
 
+    MusicBox.Artwork.Worker.work()
     Endpoint.broadcast!("library:updated", "processed", changes)
   end
 
