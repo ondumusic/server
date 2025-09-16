@@ -16,8 +16,9 @@ defmodule MusicBox.Artwork do
     case get_next_fetcher(album) do
       {:ok, fetcher} ->
         case fetcher_module(fetcher).find(album) do
-          {:ok, path} -> update_album(album, fetcher, path)
-          {:error, :not_found} -> update_album(album, fetcher, nil)
+          {:ok, path} -> update_album(album, %{fetcher: fetcher, path: path})
+          {:error, :skip} -> update_and_skip(album, %{fetcher: fetcher})
+          {:error, :not_found} -> update_album(album, %{fetcher: fetcher})
           {:error, _error} = error -> error
         end
 
@@ -51,12 +52,20 @@ defmodule MusicBox.Artwork do
     fetcher_module
   end
 
-  defp update_album(album, fetcher, path) do
-    Albums.update_artwork(album, %{
-      path: path,
-      fetcher: fetcher,
-      last_fetch_attempt: DateTime.utc_now()
-    })
+  defp update_and_skip(album, params) do
+    case update_album(album, params) do
+      {:ok, artwork} -> find_and_update(%{album | artwork: artwork})
+      error -> error
+    end
+  end
+
+  defp update_album(album, params) do
+    Albums.update_artwork(
+      album,
+      Map.merge(params, %{
+        last_fetch_attempt: DateTime.utc_now()
+      })
+    )
     |> tap(&broadcast/1)
   end
 

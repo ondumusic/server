@@ -4,7 +4,7 @@ defmodule MusicBox.Artwork.Fetcher.CustomApi do
   @endpoint Application.compile_env!(:music_box, :custom_artwork_endpoint)
 
   if is_nil(@endpoint) do
-    def find(_album), do: {:error, :not_found}
+    def find(_album), do: {:error, :skip}
   else
     alias MusicBox.Repo
 
