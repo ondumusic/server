@@ -13,13 +13,10 @@ defmodule MusicBox.Artwork.Fetcher do
     path = artwork_path(album)
     File.mkdir_p!(Path.dirname(path))
 
-    case File.open(path, [:write, :binary, :exclusive]) do
+    case File.open(path, [:write, :binary]) do
       {:ok, file} ->
         IO.binwrite(file, bytes)
         File.close(file)
-        {:ok, path}
-
-      {:error, :eexist} ->
         {:ok, path}
 
       _error ->
