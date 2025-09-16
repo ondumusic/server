@@ -21,11 +21,6 @@ defmodule MusicBox.Artwork.Fetcher.MusicBrainz do
       release: album.name
     }
 
-    search =
-      if album.release_year,
-        do: Map.put(search, :date, to_string(album.release_year)),
-        else: search
-
     params = %{
       fmt: :json,
       limit: 3,
@@ -39,7 +34,11 @@ defmodule MusicBox.Artwork.Fetcher.MusicBrainz do
          [_ | _] = releases <- Map.get(body, "releases", []) do
       {:ok, releases}
     else
-      _ -> {:error, :not_found}
+      {:ok, %{status: 503}} ->
+        {:error, :retry_later}
+
+      _ ->
+        {:error, :not_found}
     end
   end
 

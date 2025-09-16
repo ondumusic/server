@@ -18,6 +18,7 @@ defmodule MusicBox.Artwork do
         case fetcher_module(fetcher).find(album) do
           {:ok, path} -> update_album(album, %{fetcher: fetcher, path: path})
           {:error, :skip} -> update_and_skip(album, %{fetcher: fetcher})
+          {:error, :retry_later} -> update_album(album, %{})
           {:error, :not_found} -> update_album(album, %{fetcher: fetcher})
           {:error, _error} = error -> error
         end
