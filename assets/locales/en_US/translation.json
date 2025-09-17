@@ -3,11 +3,6 @@
     "albumCount_one": "{{count}} album",
     "albumCount_other": "{{count}} albums"
   },
-  "album": {
-    "trackCount_one": "{{count}} track, {{duration}}",
-    "trackCount_other": "{{count}} tracks, {{duration}}",
-    "discNumber": "Disc {{disc}}"
-  },
   "button": {
     "playSelectedTrack": "Play {{ trackName }}",
     "previousTrack": "Previous Track",
@@ -15,17 +10,25 @@
     "playCurrentTrack": "Play Current Track",
     "nextTrack": "Next Track"
   },
+  "album": {
+    "trackCount_one": "{{count}} track, {{duration}}",
+    "trackCount_other": "{{count}} tracks, {{duration}}",
+    "discNumber": "Disc {{disc}}"
+  },
   "loading": {
     "text": "Loading"
-  },
-  "emptyView": {
-    "noResults": "No Results"
   },
   "formattedDuration": {
     "minutes_one": "{{ count }} minute",
     "minutes_other": "{{ count }} minutes",
     "hoursAndMinutes_one": "{{ count }} hour, $t(formattedDuration.minutes, {\"count\": {{ minutes }}})",
     "hoursAndMinutes_other": "{{ count }} hours, $t(formattedDuration.minutes, {\"count\": {{ minutes }}})"
+  },
+  "emptyView": {
+    "noResults": "No Results"
+  },
+  "onboarding": {
+    "firstLoadWait": "Finding your music..."
   },
   "loginForm": {
     "title": "Login",

@@ -1,10 +1,10 @@
 import { type ReactNode, useState } from "react";
 import { Outlet, useNavigate } from "react-router";
-import { Loading } from "../components/Loading";
 import { Player } from "../components/Player";
 import { useAuth } from "../hooks/useAuth";
 import { usePhoenixSocket } from "../hooks/usePhoenixSocket";
 import { usePlayer } from "../hooks/usePlayer";
+import { FirstLoadView } from "../views/FirstLoadView";
 import { type OnboardingStep, OnboardingView } from "../views/OnboardingView";
 
 interface HydratedReact {
@@ -39,7 +39,7 @@ export function RootLayout({ children }: Props) {
     });
   };
 
-  if (isWaitingForData) return <Loading />;
+  if (isWaitingForData) return <FirstLoadView />;
 
   const showOnboarding =
     isOnboarding &&

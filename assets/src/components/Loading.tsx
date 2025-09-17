@@ -1,6 +1,11 @@
+import type { ReactNode } from "react";
 import { Trans } from "react-i18next";
 
-export function Loading() {
+interface Props {
+  children?: ReactNode;
+}
+
+export function Loading({ children }: Props) {
   return (
     <div className="h-full content-center text-emerald-500/50">
       <svg width="60" height="20" viewBox="0 0 120 30" className="mx-auto">
@@ -44,6 +49,7 @@ export function Loading() {
           ></animate>
         </circle>
       </svg>
+      {children}
     </div>
   );
 }
