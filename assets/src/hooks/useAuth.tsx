@@ -5,7 +5,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { api } from "../services/api";
+import { ApiError, api } from "../services/api";
 import { auth } from "../services/auth";
 import type { User } from "../types";
 
@@ -44,6 +44,12 @@ export const AuthProvider = ({ children }: Props) => {
     setIsLoggedIn(false);
   };
 
+  const maybeLogout = (error: ApiError) => {
+    if (error instanceof ApiError && error.response.status === 401) {
+      logout();
+    }
+  };
+
   const value = {
     isLoggedIn,
     currentUser,
@@ -55,7 +61,7 @@ export const AuthProvider = ({ children }: Props) => {
     },
   };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies(logout): suppress dependency logout
+  // biome-ignore lint/correctness/useExhaustiveDependencies(maybeLogout): suppress dependency maybeLogout
   // biome-ignore lint/correctness/useExhaustiveDependencies(currentUser): suppress dependency currentUser
   // biome-ignore lint/correctness/useExhaustiveDependencies(isLoggedIn): suppress dependency isLoggedIn
   useEffect(() => {
@@ -68,7 +74,7 @@ export const AuthProvider = ({ children }: Props) => {
     api
       .get<MeRequest, MeResponse>("/auth/me")
       .then(setCurrentUser)
-      .catch(logout);
+      .catch(maybeLogout);
   }, []);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
