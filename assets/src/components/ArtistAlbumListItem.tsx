@@ -37,11 +37,26 @@ export function ArtistAlbumListItem({ album }: Props) {
       <div className="hidden lg:block flex-shrink-0 pr-18 text-sm w-80">
         <button
           type="button"
-          className="aspect-square w-full bg-stone-200 mb-4 shadow-lg cursor-pointer hover:bg-emerald-600/50"
+          className="relative aspect-square w-full bg-stone-200 mb-4 shadow-xl cursor-pointer rounded-sm overflow-hidden group/cover"
           onClick={() => enqueueAndPlay(album.tracks)}
           onKeyDown={() => enqueueAndPlay(album.tracks)}
         >
-          {album.artworkUrl && <img src={album.artworkUrl} alt="" />}
+          {album.artworkUrl && (
+            <img
+              src={album.artworkUrl}
+              alt=""
+              className="w-full h-full object-cover object-center"
+            />
+          )}
+          <div className="absolute w-full h-full top-0 left-0 content-center bg-black opacity-0 transition-opacity group-hover/cover:opacity-30">
+            <PlayIcon
+              className="absolute size-20 text-white top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2"
+              title={t("button.playSelectedTrack", {
+                defaultValue: "Play {{ albumName }}",
+                albumName: album.name,
+              })}
+            />
+          </div>
         </button>
         <span className="font-light text-stone-400">
           <Trans
