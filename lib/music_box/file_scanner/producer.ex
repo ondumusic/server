@@ -15,7 +15,7 @@ defmodule MusicBox.FileScanner.Producer do
     auto_start = Keyword.fetch!(opts, :auto_start)
 
     if auto_start,
-      do: send(self(), :start_scan)
+      do: send(self(), {:start_scan, []})
 
     {:producer, %State{}}
   end
@@ -33,12 +33,13 @@ defmodule MusicBox.FileScanner.Producer do
   end
 
   @impl true
-  def handle_info(:start_scan, state) do
+  def handle_info({:start_scan, opts}, state) do
     settings = Settings.get()
+    scan_type = Keyword.get(opts, :type, settings.scan_type)
 
     {entries, state} =
       if settings.music_path do
-        new_entries = [to_entry(settings.music_path, settings.scan_type)]
+        new_entries = [to_entry(settings.music_path, scan_type)]
         get_entries(state, state.demand, new_entries)
       else
         {[], schedule_poll(state)}
@@ -102,13 +103,21 @@ defmodule MusicBox.FileScanner.Producer do
   end
 
   defp schedule_poll(%State{poll_timer: timer_ref} = state) do
+    track_count =
+      if state.entries == [],
+        do: MusicBox.Repo.aggregate(MusicBox.Tracks.Track, :count, log: false)
+
     poll_minutes = Settings.get().poll_interval
-    poll_ms = poll_minutes * 60 * 1_000
+
+    poll_ms =
+      if track_count == 0,
+        do: :timer.seconds(5),
+        else: :timer.minutes(poll_minutes)
 
     if timer_ref,
       do: Process.cancel_timer(timer_ref)
 
-    timer_ref = Process.send_after(self(), :start_scan, poll_ms)
+    timer_ref = Process.send_after(self(), {:start_scan, []}, poll_ms)
     %{state | poll_timer: timer_ref}
   end
 end

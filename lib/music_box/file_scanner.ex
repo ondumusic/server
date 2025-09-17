@@ -1,14 +1,11 @@
 defmodule MusicBox.FileScanner do
   alias MusicBox.FileScanner.Pipeline
-  alias MusicBox.FileScanner.Entry
   alias MusicBox.Settings
 
   def scan(scan_type \\ nil) do
     settings = Settings.get()
-    scan_type = scan_type || settings.scan_type
-    entry = %Entry{path: settings.music_path, is_dir: true, scan_type: scan_type}
 
-    if entry.path do
+    if settings.music_path do
       Pipeline
       |> Broadway.producer_names()
       |> Enum.random()
@@ -18,7 +15,7 @@ defmodule MusicBox.FileScanner do
 
         producer ->
           if producer_available?(producer) do
-            GenStage.call(producer, {:walk, [entry]})
+            send(producer, {:start_scan, type: scan_type})
             {:ok, :scan_started}
           else
             {:error, :no_producer_found}
