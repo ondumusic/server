@@ -3,6 +3,8 @@ defmodule MusicBox.Artwork do
   alias MusicBox.Albums
   alias MusicBox.Repo
 
+  require Logger
+
   def find(%Album{} = album) do
     album = Repo.preload(album, [:artwork])
 
@@ -61,6 +63,9 @@ defmodule MusicBox.Artwork do
   end
 
   defp update_album(album, params) do
+    if path = Map.get(params, :path),
+      do: process_image(album, path)
+
     Albums.update_artwork(
       album,
       Map.merge(params, %{
@@ -68,6 +73,32 @@ defmodule MusicBox.Artwork do
       })
     )
     |> tap(&broadcast/1)
+  end
+
+  defp process_image(album, path) do
+    vipsthumbnail = System.find_executable("vipsthumbnail") || throw(:vipsthumbnail_not_found)
+
+    args =
+      ~w(-t --size=500x500 --smartcrop attention) ++
+        [
+          "--output=#{path}[Q=85]",
+          path
+        ]
+
+    Logger.debug("Resizing artwork for album #{album.id}, file: #{path}")
+
+    with true <- File.exists?(path),
+         {_stdout, 0} <- System.cmd(vipsthumbnail, args) do
+      :ok
+    else
+      false ->
+        Logger.error("Failed to resize artwork for album #{album.id}, file not found?")
+        {:error, :file_not_found}
+
+      {_stdout, exitcode} ->
+        Logger.error("Failed to resize artwork for album #{album.id}, exit code #{exitcode}")
+        {:error, :failed_to_resize}
+    end
   end
 
   defp broadcast({:ok, %{path: path} = artwork}) when not is_nil(path) do
