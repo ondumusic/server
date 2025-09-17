@@ -2,13 +2,15 @@ defmodule MusicBox.Transcoder.Utils do
   alias MusicBox.Transcoder
   alias MusicBox.Files.File
 
-  def bitrate_kbps, do: 256
+  def bitrate_kbps(:mobile), do: 128
+  def bitrate_kbps(_default), do: 160
+
   def chunk_size, do: 1024 * 128
   def default_range_size, do: 1024 * 128
   def timestamp, do: DateTime.utc_now() |> DateTime.to_unix()
 
-  def estimate_opus_size(%File{metadata: %{duration: duration}}) do
-    audio_bytes = bitrate_kbps() * 1000 * duration / 8
+  def estimate_opus_size(%File{metadata: %{duration: duration}}, preset) do
+    audio_bytes = bitrate_kbps(preset) * 1000 * duration / 8
 
     # Estimate the container and opus overhead (just add a %)
     webm_container_overhead = audio_bytes * 0.015

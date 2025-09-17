@@ -25,7 +25,7 @@ defmodule MusicBoxWeb.StreamController do
 
   def stream(conn, %{"transcode" => "1"}) do
     meta = Transcoder.get_meta(conn.assigns.track.file, conn.assigns.preset)
-    estimated_file_size = Utils.estimate_opus_size(conn.assigns.track.file)
+    estimated_file_size = Utils.estimate_opus_size(conn.assigns.track.file, conn.assigns.preset)
     actual_file_size = meta && meta.file_size
 
     complete_file_ranges =
@@ -137,7 +137,7 @@ defmodule MusicBoxWeb.StreamController do
 
   defp send_transcoded_chunk(conn, start_byte, end_byte) do
     meta = Transcoder.get_meta(conn.assigns.track.file, conn.assigns.preset)
-    estimated_file_size = Utils.estimate_opus_size(conn.assigns.track.file)
+    estimated_file_size = Utils.estimate_opus_size(conn.assigns.track.file, conn.assigns.preset)
     actual_file_size = meta && meta.file_size
     file_size = actual_file_size || estimated_file_size
     end_byte = min(end_byte, file_size - 1)
