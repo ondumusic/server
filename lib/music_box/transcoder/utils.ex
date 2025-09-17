@@ -6,18 +6,17 @@ defmodule MusicBox.Transcoder.Utils do
   def bitrate_kbps(_default), do: 160
 
   def chunk_size, do: 1024 * 128
-  def default_range_size, do: 1024 * 128
+  def default_range_size, do: 1024 * 256
   def timestamp, do: DateTime.utc_now() |> DateTime.to_unix()
 
   def estimate_opus_size(%File{metadata: %{duration: duration}}, preset) do
     audio_bytes = bitrate_kbps(preset) * 1000 * duration / 8
 
-    # Estimate the container and opus overhead (just add a %)
-    webm_container_overhead = audio_bytes * 0.015
-    opus_header_overhead = audio_bytes * 0.005
-
-    # Return rounded number
-    round(audio_bytes + webm_container_overhead + opus_header_overhead)
+    # Estimate the container and opus overhead (6%)
+    # this is most likely too much, but that's preferred because if we
+    # underestimate the transcode stream might end abruptly depending on client
+    est_overhead = 1.06
+    round(audio_bytes * est_overhead)
   end
 
   def continue_stream?(file, preset, chunk_index) do

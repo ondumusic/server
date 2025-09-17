@@ -52,6 +52,10 @@ defmodule MusicBoxWeb.StreamController do
           send_transcoded_chunk(conn, 0, end_byte)
         end
 
+      {:ok, start_byte, :infinity} ->
+        end_byte = start_byte + Utils.default_range_size() - 1
+        send_transcoded_chunk(conn, start_byte, end_byte)
+
       # For some reason browser prefers to request 0-$filesize instead of just
       # not using a ranged request. So we will treat that scenario as a client
       # that just wants to receive the entire file, as it might be using the
@@ -131,7 +135,7 @@ defmodule MusicBoxWeb.StreamController do
   defp send_transcode_completed(conn, file_size) do
     conn
     |> put_stream_headers()
-    |> put_resp_header("content-range", "bytes #{file_size}-#{file_size - 1}/#{file_size}")
+    |> put_resp_header("content-range", "bytes */#{file_size}")
     |> send_resp(200, <<>>)
   end
 
@@ -158,7 +162,9 @@ defmodule MusicBoxWeb.StreamController do
     transcode_range(conn, start_chunk, offset, end_byte - start_byte)
   end
 
-  defp transcode_range(conn, _chunk_index, _offset, 0), do: conn
+  defp transcode_range(conn, _chunk_index, _offset, 0) do
+    conn
+  end
 
   defp transcode_range(conn, chunk_index, offset, remaining_bytes)
        when is_integer(remaining_bytes) do

@@ -10,7 +10,6 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import { usePlayTokenQuery } from "../hooks/usePlayTokenQuery";
 import { useQueue } from "../hooks/useQueue";
-import { api } from "../services/api";
 
 export interface AudioManagerContext {
   isPlaying: boolean;
@@ -50,6 +49,7 @@ interface Props {
 
 export const AudioManagerProvider = ({ children }: Props) => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const endedTimer = useRef<ReturnType<typeof setTimeout>>(null);
   const { isLoggedIn } = useAuth();
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasPreloadedNext, setHasPreloadedNext] = useState(false);
@@ -75,11 +75,12 @@ export const AudioManagerProvider = ({ children }: Props) => {
 
     // We don't really care about the response for this, it returns a static
     // ok response because the transcoder starts as a background process.
-    api.post(`/transcode/${nextTrack.id}`, null);
+    // api.post(`/transcode/${nextTrack.id}`, null);
   }, [hasNextTrack, hasPreloadedNext, progressPercentage]);
 
   // Pause/resume functionality
   useEffect(() => {
+    if (endedTimer.current) clearTimeout(endedTimer.current);
     if (!audioRef.current) return;
 
     if (!isPlaying) {
@@ -93,6 +94,7 @@ export const AudioManagerProvider = ({ children }: Props) => {
   // We don't want to track when playToken changes because that would interrupt playback
   // biome-ignore lint/correctness/useExhaustiveDependencies(playToken): suppress dependency playToken
   useEffect(() => {
+    if (endedTimer.current) clearTimeout(endedTimer.current);
     if (!currentTrack) {
       setSource(undefined);
       setIsPlaying(false);
@@ -131,14 +133,25 @@ export const AudioManagerProvider = ({ children }: Props) => {
   };
 
   const onTimeUpdate = (event: ChangeEvent<HTMLAudioElement>) => {
+    if (endedTimer.current) clearTimeout(endedTimer.current);
+
+    if (
+      currentTrack &&
+      currentTrack.duration - event.target.currentTime < 0.2
+    ) {
+      endedTimer.current = setTimeout(nextTrack, 200);
+    }
+
     setCurrentTime(event.target.currentTime);
   };
 
   const onEnded = (_event: ChangeEvent<HTMLAudioElement>) => {
+    if (endedTimer.current) clearTimeout(endedTimer.current);
     nextTrack();
   };
 
   const onPause = (_event: ChangeEvent<HTMLAudioElement>) => {
+    if (endedTimer.current) clearTimeout(endedTimer.current);
     if (!audioRef.current) return;
     if (audioRef.current.ended) return;
     setIsPlaying(false);
@@ -172,7 +185,7 @@ export const AudioManagerProvider = ({ children }: Props) => {
           src={source}
           preload="auto"
           controls={true}
-          className="absolute top-0 left-0 z-[1000]"
+          className="hidden absolute top-0 left-0 z-[1000]"
           onLoadedMetadata={onLoadedMetadata}
           onTimeUpdate={onTimeUpdate}
           onCanPlay={onCanPlay}
