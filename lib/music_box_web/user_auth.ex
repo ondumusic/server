@@ -7,7 +7,7 @@ defmodule MusicBoxWeb.UserAuth do
   alias MusicBox.Sessions
 
   @max_age 60 * 60 * 24 * 60
-  @signing_salt "_musicbox_session_token"
+  @signing_salt "_music_box_session_token"
 
   def log_in_user(conn, current_user) do
     session_token = Sessions.generate_user_session_token(current_user)

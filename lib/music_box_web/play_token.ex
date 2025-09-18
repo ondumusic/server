@@ -3,7 +3,7 @@ defmodule MusicBoxWeb.PlayToken do
 
   alias MusicBox.Accounts.User
 
-  @signing_salt "_musicbox_play_token"
+  @signing_salt "_music_box_play_token"
   @max_age 3600
   def create(%{assigns: %{current_user: %User{id: user_id}}} = conn) do
     Plug.Crypto.sign(
