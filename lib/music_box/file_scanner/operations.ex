@@ -112,8 +112,8 @@ defmodule MusicBox.FileScanner.Operations do
 
     artist_albums =
       linked_file_artists
-      |> Enum.uniq_by(fn %{is_unknown: u, file: %{metadata: m}} ->
-        {u, m.album || ""}
+      |> Enum.uniq_by(fn %{is_unknown: u, artist: a, file: %{metadata: m}} ->
+        {u, a, m.album || ""}
       end)
 
     entries =
