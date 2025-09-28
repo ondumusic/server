@@ -60,16 +60,18 @@ defmodule MusicBox.Transcoder do
   end
 
   def handle_call({:request_chunk, %File{} = file, preset, chunk_index}, from, state) do
-    meta = get_meta(file, preset)
+    meta = get_meta(file, preset) || %Result{}
     lookup_key = {file.id, preset, chunk_index}
-    chunk_count = if(meta && meta.completed_at, do: meta.chunk_count)
+    completed? = not is_nil(Map.get(meta, :completed_at))
+    persisted? = Map.get(meta, :persisted, false)
+    chunk_count = if(completed?, do: meta.chunk_count)
     path = cache_file_path(file.id, preset)
 
     if not is_nil(chunk_count) and chunk_index > chunk_count do
       throw({:unknown_chunk, state})
     end
 
-    if meta && meta.persisted do
+    if persisted? do
       start_byte = chunk_index * Utils.chunk_size()
       end_byte = min(meta.file_size, start_byte + Utils.chunk_size())
       bytes_to_read = max(0, end_byte - start_byte)
