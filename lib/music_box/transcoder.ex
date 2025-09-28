@@ -69,7 +69,7 @@ defmodule MusicBox.Transcoder do
       throw({:unknown_chunk, state})
     end
 
-    if meta.persisted do
+    if meta && meta.persisted do
       start_byte = chunk_index * Utils.chunk_size()
       end_byte = min(meta.file_size, start_byte + Utils.chunk_size())
       bytes_to_read = max(0, end_byte - start_byte)
