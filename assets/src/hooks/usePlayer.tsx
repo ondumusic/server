@@ -28,9 +28,7 @@ interface Props {
 
 export const PlayerProvider = ({ children }: Props) => {
   const { currentTrack, replaceQueue } = useQueue();
-
   const { isPlaying, setIsPlaying, scrubAndPlay } = useAudioManager();
-
   const [isVisible, setIsVisible] = useState(false);
 
   const value = {

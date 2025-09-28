@@ -45,19 +45,19 @@ export function NowPlaying() {
     scrubAndPlay(scrubTime.current);
   };
 
+  const trackName = currentTrack?.name || "";
+  const artistAlbum = [currentTrack?.artist?.name, currentAlbum?.name].filter(
+    (name) => !!name,
+  );
+
   return (
     <div className="order-1 lg:order-2 relative w-full select-none group/player">
       <div className="relative bg-emerald-700/60 p-2 pr-16 lg:pr-2 py-3 lg:py-2 lg:rounded-lg overflow-hidden cursor-default">
         <div className="flex justify-between items-end tabular-nums text-white/70 pt-1 lg:pt-0 lg:pb-1">
           <div className="text-left lg:text-center overflow-hidden lg:mx-12 order-2">
-            <Marquee
-              className="text-white/90 font-semibold"
-              text={`${currentTrack?.name}`}
-            />
+            <Marquee className="text-white/90 font-semibold" text={trackName} />
             <div className="lg:mx-8">
-              <Marquee
-                text={`${currentTrack?.artist?.name} - ${currentAlbum?.name}`}
-              />
+              <Marquee text={artistAlbum.join(" - ")} />
             </div>
           </div>
 
