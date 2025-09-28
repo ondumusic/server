@@ -88,5 +88,8 @@ jobs:
     - name: Check Gettext
       run: mix gettext.extract --check-up-to-date
 
+    - name: Run credo
+      run: mix credo --all --strict
+
     - name: Run tests
       run: mix test
