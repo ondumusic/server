@@ -4,6 +4,8 @@ defmodule MusicBox.Artwork.Fetcher.MusicBrainz do
 
   @endpoint "https://musicbrainz.org/ws/2/release/"
 
+  def find(%{is_unknown: true}), do: {:error, :not_found}
+
   def find(album) do
     album = Repo.preload(album, [:artist])
 
