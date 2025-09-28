@@ -51,13 +51,26 @@ export const AudioManagerProvider = ({ children }: Props) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const endedTimer = useRef<ReturnType<typeof setTimeout>>(null);
   const { isLoggedIn } = useAuth();
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, realSetIsPlaying] = useState(false);
   const [hasPreloadedNext, setHasPreloadedNext] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [source, setSource] = useState<string | undefined>(undefined);
   const { currentTrack, nextTrack, hasNextTrack, getNextTrack } = useQueue();
   const { playToken } = usePlayTokenQuery({ enabled: isLoggedIn });
+
+  // Control play/pause directly but also update state.
+  const setIsPlaying = (isPlaying: boolean) => {
+    if (endedTimer.current) clearTimeout(endedTimer.current);
+    realSetIsPlaying(isPlaying);
+    if (!audioRef.current) return;
+
+    if (!isPlaying) {
+      audioRef.current.pause();
+    } else if (audioRef.current.src) {
+      audioRef.current.play();
+    }
+  };
 
   // Calculate the current playback percentage
   let progressPercentage = (currentTime / duration) * 100;
@@ -78,21 +91,10 @@ export const AudioManagerProvider = ({ children }: Props) => {
     // api.post(`/transcode/${nextTrack.id}`, null);
   }, [hasNextTrack, hasPreloadedNext, progressPercentage]);
 
-  // Pause/resume functionality
-  useEffect(() => {
-    if (endedTimer.current) clearTimeout(endedTimer.current);
-    if (!audioRef.current) return;
-
-    if (!isPlaying) {
-      audioRef.current.pause();
-    } else if (audioRef.current.src) {
-      audioRef.current.play();
-    }
-  }, [isPlaying]);
-
   // Reset when track changes
   // We don't want to track when playToken changes because that would interrupt playback
   // biome-ignore lint/correctness/useExhaustiveDependencies(playToken): suppress dependency playToken
+  // biome-ignore lint/correctness/useExhaustiveDependencies(setIsPlaying): suppress dependency setIsPlaying
   useEffect(() => {
     if (endedTimer.current) clearTimeout(endedTimer.current);
     if (!currentTrack) {
