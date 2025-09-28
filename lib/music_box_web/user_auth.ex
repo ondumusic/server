@@ -1,10 +1,12 @@
 defmodule MusicBoxWeb.UserAuth do
+  @moduledoc false
+
   use MusicBoxWeb, :verified_routes
 
   import Plug.Conn
 
-  alias MusicBoxWeb.Endpoint
   alias MusicBox.Sessions
+  alias MusicBoxWeb.Endpoint
 
   @max_age 60 * 60 * 24 * 60
   @signing_salt "_music_box_session_token"
@@ -51,13 +53,15 @@ defmodule MusicBoxWeb.UserAuth do
       |> Enum.reject(&is_nil/1)
       |> List.first()
 
-    with {:ok, session_token} <- verify_session_token(signed_session_token) do
-      {session_token,
-       conn
-       |> assign(:session_token, session_token)
-       |> assign(:signed_session_token, signed_session_token)}
-    else
-      _ -> {nil, conn}
+    case verify_session_token(signed_session_token) do
+      {:ok, session_token} ->
+        {session_token,
+         conn
+         |> assign(:session_token, session_token)
+         |> assign(:signed_session_token, signed_session_token)}
+
+      _ ->
+        {nil, conn}
     end
   end
 

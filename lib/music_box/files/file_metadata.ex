@@ -1,5 +1,9 @@
 defmodule MusicBox.Files.FileMetadata do
+  @moduledoc false
+
   use MusicBox.Schema
+
+  @type t() :: %__MODULE__{}
 
   @primary_key false
   embedded_schema do

@@ -1,4 +1,6 @@
 defmodule MusicBox.Albums do
+  @moduledoc false
+
   import Ecto.Query, warn: false
   alias MusicBox.Repo
 

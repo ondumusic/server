@@ -1,4 +1,6 @@
 defmodule MusicBox.Settings do
+  @moduledoc false
+
   use MusicBox.Schema
 
   @primary_key false

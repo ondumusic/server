@@ -1,4 +1,6 @@
 defmodule MusicBox.FileScanner.Producer do
+  @moduledoc false
+
   use GenStage
 
   alias MusicBox.FileScanner.{Entry, State}

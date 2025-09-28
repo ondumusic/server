@@ -1,8 +1,10 @@
 defmodule MusicBox.Accounts do
+  @moduledoc false
+
   import Ecto.Query, warn: false
 
-  alias MusicBox.Repo
   alias MusicBox.Accounts.User
+  alias MusicBox.Repo
   alias MusicBox.Sessions.Session
 
   def has_user?, do: Repo.exists?(User)

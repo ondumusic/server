@@ -1,4 +1,6 @@
 defmodule MusicBoxWeb.Router do
+  @moduledoc false
+
   use MusicBoxWeb, :router
 
   import MusicBoxWeb.UserAuth

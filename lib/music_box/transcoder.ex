@@ -1,9 +1,11 @@
 defmodule MusicBox.Transcoder do
+  @moduledoc false
+
   use GenServer
   require Logger
 
-  alias MusicBox.Transcoder.{Job, Result, State, Utils}
   alias MusicBox.Files.File
+  alias MusicBox.Transcoder.{Job, Result, State, Utils}
 
   @chunks_table :transcoder_chunks
   @meta_table :transcoder_meta
@@ -37,7 +39,8 @@ defmodule MusicBox.Transcoder do
       %Result{
         completed_at: DateTime.from_unix(stat.ctime),
         file_size: stat.size,
-        chunk_count: ceil(stat.size / Utils.chunk_size())
+        chunk_count: ceil(stat.size / Utils.chunk_size()),
+        persisted: true
       }
     else
       case :ets.lookup(@meta_table, lookup_key) do
@@ -60,39 +63,32 @@ defmodule MusicBox.Transcoder do
     meta = get_meta(file, preset)
     lookup_key = {file.id, preset, chunk_index}
     chunk_count = if(meta && meta.completed_at, do: meta.chunk_count)
-
     path = cache_file_path(file.id, preset)
-    persisted? = Elixir.File.exists?(path)
 
-    cond do
-      not is_nil(chunk_count) and chunk_index > chunk_count ->
-        {:reply, {:error, :unknown_chunk}, state}
-
-      persisted? ->
-        filesize = Elixir.File.stat!(path).size
-        start_byte = chunk_index * Utils.chunk_size()
-        end_byte = min(filesize, start_byte + Utils.chunk_size())
-        bytes_to_read = max(0, end_byte - start_byte)
-
-        # Looks like maybe requesting one too many
-
-        case Elixir.File.open(path, [:binary, :read]) do
-          {:ok, file} ->
-            :file.position(file, start_byte)
-            chunk_data = IO.binread(file, bytes_to_read)
-            Elixir.File.close(file)
-            {:reply, {:ok, chunk_data}, state}
-
-          _ ->
-            {:reply, {:error, :unknown_chunk}, state}
-        end
-
-      true ->
-        case :ets.lookup(@chunks_table, lookup_key) do
-          [{^lookup_key, chunk_data}] -> {:reply, {:ok, chunk_data}, state}
-          [] -> start_or_enqueue(file, preset, chunk_index, from, state)
-        end
+    if not is_nil(chunk_count) and chunk_index > chunk_count do
+      throw({:unknown_chunk, state})
     end
+
+    if meta.persisted do
+      start_byte = chunk_index * Utils.chunk_size()
+      end_byte = min(meta.file_size, start_byte + Utils.chunk_size())
+      bytes_to_read = max(0, end_byte - start_byte)
+      chunk_data = read_file_bytes(path, start_byte, bytes_to_read)
+
+      if chunk_data do
+        {:reply, {:ok, chunk_data}, state}
+      else
+        throw({:unknown_chunk, state})
+      end
+    else
+      case :ets.lookup(@chunks_table, lookup_key) do
+        [{^lookup_key, chunk_data}] -> {:reply, {:ok, chunk_data}, state}
+        [] -> start_or_enqueue(file, preset, chunk_index, from, state)
+      end
+    end
+  catch
+    {:unknown_chunk, state} -> {:reply, {:error, :unknown_chunk}, state}
+    error -> error
   end
 
   # Too many concurrent jobs, queue the request
@@ -143,9 +139,7 @@ defmodule MusicBox.Transcoder do
 
     state.requests
     |> Map.get(lookup_key, [])
-    |> Enum.each(fn from ->
-      GenServer.reply(from, {:ok, data})
-    end)
+    |> send_reply({:ok, data})
 
     new_requests = Map.delete(state.requests, lookup_key)
     {:noreply, %{state | requests: new_requests}}
@@ -164,22 +158,17 @@ defmodule MusicBox.Transcoder do
     # If there are still pending requests we should deal with them
     state.requests
     |> Enum.filter(fn
-      {{file_id, ^preset, _}, _requests} -> file_id == file.id
-      _ -> false
+      {{file_id, ^preset, chunk_index}, _requests} ->
+        file_id == file.id and chunk_index >= chunk_count
+
+      _ ->
+        false
     end)
-    |> Enum.filter(fn {{_, _, chunk_index}, _requests} -> chunk_index >= chunk_count end)
     |> Enum.each(fn {lookup_key, requests} ->
       case :ets.lookup(@chunks_table, lookup_key) do
         # The chunk should exist, unless it was already cleaned up?
-        [{^lookup_key, chunk_data}] ->
-          Enum.map(requests, fn from ->
-            GenServer.reply(from, {:ok, chunk_data})
-          end)
-
-        [] ->
-          Enum.map(requests, fn from ->
-            GenServer.reply(from, {:error, :no_longer_available})
-          end)
+        [{^lookup_key, chunk_data}] -> send_reply(requests, {:ok, chunk_data})
+        [] -> send_reply(requests, {:error, :no_longer_available})
       end
     end)
 
@@ -197,9 +186,7 @@ defmodule MusicBox.Transcoder do
     state.requests
     |> Enum.filter(fn {{file_id, _, _}, _requests} -> file_id == file.id end)
     |> Enum.flat_map(fn {_, requests} -> requests end)
-    |> Enum.each(fn from ->
-      GenServer.reply(from, {:error, :transcoding_failed})
-    end)
+    |> send_reply({:error, :transcoding_failed})
 
     {:noreply, cleanup_job(state, job)}
   end
@@ -244,6 +231,25 @@ defmodule MusicBox.Transcoder do
     end
 
     {:noreply, schedule_cleanup(state)}
+  end
+
+  defp send_reply(requests, reply) do
+    Enum.each(requests, fn from ->
+      GenServer.reply(from, reply)
+    end)
+  end
+
+  defp read_file_bytes(path, start_byte, bytes_to_read) do
+    case Elixir.File.open(path, [:binary, :read]) do
+      {:ok, file} ->
+        :file.position(file, start_byte)
+        chunk_data = IO.binread(file, bytes_to_read)
+        Elixir.File.close(file)
+        chunk_data
+
+      _ ->
+        nil
+    end
   end
 
   defp cleanup_lookup_key(lookup_key) do
@@ -313,7 +319,7 @@ defmodule MusicBox.Transcoder do
           {{{file_id, preset, :"$1"}, :"$2"}, [], [:"$_"]}
         ])
         |> Enum.sort_by(fn {{_, _, n}, _} -> n end)
-        |> Enum.reduce(0, fn {_key, data}, _acc ->
+        |> Enum.each(fn {_key, data} ->
           :ok = IO.binwrite(file, data)
         end)
 

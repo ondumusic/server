@@ -1,4 +1,6 @@
 defmodule MusicBox.Artwork.Worker do
+  @moduledoc false
+
   use GenServer
 
   alias MusicBox.Albums.Album

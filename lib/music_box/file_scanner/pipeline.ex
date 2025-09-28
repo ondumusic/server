@@ -1,6 +1,9 @@
 defmodule MusicBox.FileScanner.Pipeline do
+  @moduledoc false
+
   use Broadway
   alias Broadway.Message
+  alias MusicBox.Artwork.Worker
   alias MusicBox.FileScanner.{Analyzer, Entry, Operations, Utils}
   alias MusicBoxWeb.Endpoint
 
@@ -106,7 +109,7 @@ defmodule MusicBox.FileScanner.Pipeline do
       end)
       |> Map.new()
 
-    MusicBox.Artwork.Worker.work()
+    Worker.work()
     Endpoint.broadcast!("library:updated", "processed", changes)
   end
 

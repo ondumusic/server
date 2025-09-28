@@ -1,6 +1,8 @@
 defmodule MusicBox.Artwork do
-  alias MusicBox.Albums.Album
+  @moduledoc false
+
   alias MusicBox.Albums
+  alias MusicBox.Albums.Album
   alias MusicBox.Repo
 
   require Logger
@@ -31,7 +33,7 @@ defmodule MusicBox.Artwork do
   end
 
   defp get_next_fetcher(album) do
-    available_fetchers = MusicBox.Albums.Artwork.fetchers()
+    available_fetchers = Albums.Artwork.fetchers()
 
     next_fetcher =
       case album do

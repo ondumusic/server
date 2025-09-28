@@ -1,4 +1,6 @@
 defmodule MusicBox.FileScanner.FileTypes do
+  @moduledoc false
+
   @m4a_signature <<0x66::size(8), 0x74::size(8), 0x79::size(8), 0x70::size(8), 0x4D::size(8),
                    0x34::size(8),
                    0x41::size(8)>> ||

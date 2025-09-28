@@ -1,4 +1,6 @@
 defmodule MusicBoxWeb.Endpoint do
+  @moduledoc false
+
   use Phoenix.Endpoint, otp_app: :music_box
 
   socket "/socket", MusicBoxWeb.UserSocket,

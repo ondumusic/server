@@ -1,4 +1,6 @@
 defmodule MusicBox.Artwork.Fetcher.MusicBrainz do
+  @moduledoc false
+
   use MusicBox.Artwork.Fetcher
   alias MusicBox.Repo
 
@@ -57,18 +59,16 @@ defmodule MusicBox.Artwork.Fetcher.MusicBrainz do
 
   defp params_to_query(%{} = params) do
     params
-    |> Enum.map(fn {k, v} ->
+    |> Enum.map_join("&", fn {k, v} ->
       to_string(k) <> "=" <> to_string(v)
     end)
-    |> Enum.join("&")
   end
 
   defp to_query(%{} = map) do
     map
-    |> Enum.map(fn {field, query} ->
+    |> Enum.map_join(" AND ", fn {field, query} ->
       "#{field}:(#{escape(query)})"
     end)
-    |> Enum.join(" AND ")
     |> String.replace(" ", "%20")
   end
 
@@ -79,7 +79,6 @@ defmodule MusicBox.Artwork.Fetcher.MusicBrainz do
     |> String.replace(@escape_chars_regex, "\\\\\\1")
     |> String.split(~r/\s+/)
     |> Enum.map(&URI.encode/1)
-    |> Enum.map(&("+" <> &1))
-    |> Enum.join(" ")
+    |> Enum.map_join(" ", &("+" <> &1))
   end
 end

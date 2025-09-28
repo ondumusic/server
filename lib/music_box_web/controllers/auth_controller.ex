@@ -47,9 +47,8 @@ defmodule MusicBoxWeb.AuthController do
   end
 
   def logout(conn, _params) do
-    with %{session_token: session_token} <- conn.assigns,
-         :ok <- Sessions.delete_user_session_token(session_token) do
-      :ok
+    with %{session_token: session_token} <- conn.assigns do
+      Sessions.delete_user_session_token(session_token)
     end
 
     json(conn, %{ok: true})

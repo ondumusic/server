@@ -1,4 +1,6 @@
 defmodule MusicBox.Artwork.Fetcher.Embedded do
+  @moduledoc false
+
   use MusicBox.Artwork.Fetcher
 
   alias MusicBox.Files.File

@@ -1,7 +1,11 @@
 defmodule MusicBox.Albums.Artwork do
+  @moduledoc false
+
   use MusicBox.Schema
 
   alias MusicBox.Albums.Album
+
+  @type t() :: %__MODULE__{}
 
   @fetchers ~w(embedded custom_api music_brainz)a
 

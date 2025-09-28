@@ -1,4 +1,6 @@
 defmodule MusicBox.AccountsFixtures do
+  @moduledoc false
+
   def unique_username, do: "user-#{System.unique_integer()}"
   def valid_user_password, do: "itsamemario!"
 

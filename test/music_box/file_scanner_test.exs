@@ -1,11 +1,11 @@
 defmodule MusicBox.FileScannerTest do
   use MusicBox.DataCase
 
-  alias MusicBox.Settings
   alias MusicBox.FileScanner
+  alias MusicBox.FileScanner.Entry
   alias MusicBox.FileScanner.Pipeline
   alias MusicBox.FileScanner.Producer
-  alias MusicBox.FileScanner.Entry
+  alias MusicBox.Settings
 
   @fixtures_path Path.expand("../support/fixtures/music_files", __DIR__)
 
@@ -53,7 +53,7 @@ defmodule MusicBox.FileScannerTest do
       assert_receive {:ack, ^ref, [%{data: data}], []}
       assert data.path == entry.path
       assert data.type == :mp3
-      assert data.size == 55170
+      assert data.size == 55_170
       assert data.checksum == "1392cce60f3309ed44d089500ae92e77dc5c966a"
       assert data.last_modified_at
       refute data.metadata.artist

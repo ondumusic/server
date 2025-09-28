@@ -1,8 +1,12 @@
 defmodule MusicBox.Sessions.Session do
+  @moduledoc false
+
   use MusicBox.Schema
 
   @session_validity_in_days 60
   @rand_size 32
+
+  @type t() :: %__MODULE__{}
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id

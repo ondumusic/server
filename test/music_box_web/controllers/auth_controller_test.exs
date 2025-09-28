@@ -91,9 +91,9 @@ defmodule MusicBoxWeb.AuthControllerTest do
       MusicBox.Repo.delete_all(MusicBox.Accounts.User)
 
       assert %{
-               "currentUser" => %{"id" => _userId, "username" => "testuser"},
+               "currentUser" => %{"id" => _user_id, "username" => "testuser"},
                "ok" => true,
-               "sessionToken" => _sessionToken
+               "sessionToken" => _session_token
              } =
                conn
                |> post(~p"/api/auth/signup", %{

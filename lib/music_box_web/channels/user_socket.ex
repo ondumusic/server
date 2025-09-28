@@ -1,8 +1,11 @@
 defmodule MusicBoxWeb.UserSocket do
+  @moduledoc false
+
   use Phoenix.Socket
-  alias MusicBoxWeb.UserAuth
+
   alias MusicBox.Accounts.User
   alias MusicBox.Sessions
+  alias MusicBoxWeb.UserAuth
 
   channel "library:*", MusicBoxWeb.LibraryChannel
 

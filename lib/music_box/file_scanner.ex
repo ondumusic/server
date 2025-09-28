@@ -1,4 +1,6 @@
 defmodule MusicBox.FileScanner do
+  @moduledoc false
+
   alias MusicBox.FileScanner.Pipeline
   alias MusicBox.Settings
 
@@ -9,27 +11,26 @@ defmodule MusicBox.FileScanner do
       Pipeline
       |> Broadway.producer_names()
       |> Enum.random()
-      |> case do
-        nil ->
-          {:error, :no_producer_found}
-
-        producer ->
-          if producer_available?(producer) do
-            send(producer, {:start_scan, type: scan_type})
-            {:ok, :scan_started}
-          else
-            {:error, :no_producer_found}
-          end
-      end
+      |> start_scanner(scan_type)
     else
       {:error, :missing_music_path}
     end
   end
 
-  defp producer_available?(producer) do
-    with pid when not is_nil(pid) <- Process.whereis(producer) do
-      Process.alive?(pid)
+  defp start_scanner(nil, _scan_type), do: {:error, :no_producer_found}
+
+  defp start_scanner(producer, scan_type) do
+    if producer_available?(producer) do
+      send(producer, {:start_scan, type: scan_type})
+      {:ok, :scan_started}
     else
+      {:error, :no_producer_found}
+    end
+  end
+
+  defp producer_available?(producer) do
+    case Process.whereis(producer) do
+      pid when not is_nil(pid) -> Process.alive?(pid)
       _ -> false
     end
   end

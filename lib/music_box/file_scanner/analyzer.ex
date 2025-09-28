@@ -1,7 +1,11 @@
 defmodule MusicBox.FileScanner.Analyzer do
+  @moduledoc false
+
   alias MusicBox.FileScanner.{Entry, Utils}
 
   defmodule Metadata do
+    @moduledoc false
+
     defstruct [
       :artist,
       :album,
@@ -17,6 +21,8 @@ defmodule MusicBox.FileScanner.Analyzer do
   end
 
   defmodule Result do
+    @moduledoc false
+
     defstruct [
       :path,
       :size,
@@ -30,18 +36,20 @@ defmodule MusicBox.FileScanner.Analyzer do
   def analyze(%Entry{path: path}, opts \\ []) do
     %{size: size, mtime: mtime} = File.stat!(path, time: :posix)
 
-    with {:ok, metadata} <- get_metadata(path) do
-      {:ok,
-       %Result{
-         path: path,
-         size: size,
-         type: Keyword.get(opts, :type, :unknown),
-         last_modified_at: DateTime.from_unix!(mtime),
-         checksum: Utils.calculate_checksum(path),
-         metadata: metadata
-       }}
-    else
-      {:error, :ffprobe_failed} -> {:error, :analyzing_failed}
+    case get_metadata(path) do
+      {:ok, metadata} ->
+        {:ok,
+         %Result{
+           path: path,
+           size: size,
+           type: Keyword.get(opts, :type, :unknown),
+           last_modified_at: DateTime.from_unix!(mtime),
+           checksum: Utils.calculate_checksum(path),
+           metadata: metadata
+         }}
+
+      {:error, :ffprobe_failed} ->
+        {:error, :analyzing_failed}
     end
   end
 

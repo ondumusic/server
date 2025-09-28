@@ -1,8 +1,8 @@
 defmodule MusicBoxWeb.LibraryController do
   use MusicBoxWeb, :controller
 
-  alias MusicBox.Artists
   alias MusicBox.Albums
+  alias MusicBox.Artists
 
   plug :assign_artist when action in [:artist, :artist_albums, :artist_album]
   plug :assign_album when action in [:album, :artist_album]

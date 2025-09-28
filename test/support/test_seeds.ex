@@ -1,12 +1,14 @@
 defmodule TestSeeds do
-  alias MusicBox.FileScanner.Utils
-  alias MusicBox.Artists.Artist
-  alias MusicBox.Albums.Album
-  alias MusicBox.Tracks.Track
-  alias MusicBox.Files.FileMetadata
-  alias MusicBox.Files.File
+  @moduledoc false
+
   alias MusicBox.Accounts
+  alias MusicBox.Albums.Album
+  alias MusicBox.Artists.Artist
+  alias MusicBox.Files.File
+  alias MusicBox.Files.FileMetadata
+  alias MusicBox.FileScanner.Utils
   alias MusicBox.Repo
+  alias MusicBox.Tracks.Track
 
   def reset do
     [
@@ -36,7 +38,7 @@ defmodule TestSeeds do
         ]
       }
     ]
-    |> Enum.map(&insert_artist/1)
+    |> Enum.each(&insert_artist/1)
 
     Accounts.register_user(%{
       username: "testuser",
@@ -52,11 +54,11 @@ defmodule TestSeeds do
         slug: Utils.slugify(seed.name)
       })
 
-    if albums = seed[:albums],
-      do: Enum.map(albums, &insert_album(artist, &1))
+    if albums = Map.get(seed, :albums),
+      do: Enum.each(albums, &insert_album(artist, &1))
 
-    if tracks = seed[:tracks],
-      do: Enum.map(tracks, &insert_track(artist, nil, &1))
+    if tracks = Map.get(seed, :tracks),
+      do: Enum.each(tracks, &insert_track(artist, nil, &1))
 
     artist
   end
@@ -67,35 +69,35 @@ defmodule TestSeeds do
         artist_id: artist.id,
         name: seed.name,
         slug: Utils.slugify(seed.name),
-        compilation: seed[:compilation] == true,
+        compilation: Map.get(seed, :compilation) == true,
         release_year: seed.release_year
       })
 
-    if tracks = seed[:tracks],
-      do: Enum.map(tracks, &insert_track(artist, album, &1))
+    if tracks = Map.get(seed, :tracks),
+      do: Enum.each(tracks, &insert_track(artist, album, &1))
 
     album
   end
 
   defp insert_track(artist, album, seed) do
-    duration = seed[:duration] || 21.0 + :rand.uniform() * 500.5
+    duration = Map.get(seed, :duration, 21.0 + :rand.uniform() * 500.5)
 
     file =
       Repo.insert!(%File{
         path: "/Path/to/Music/#{seed.name}.mp3",
-        type: seed[:type] || :mp3,
-        checksum: seed[:checksum] || generate_checksum(),
-        size: seed[:size] || round(:rand.uniform() * 1024 * 1024 * 4),
+        type: Map.get(seed, :type, :mp3),
+        checksum: Map.get(seed, :checksum, generate_checksum()),
+        size: Map.get(seed, :size, round(:rand.uniform() * 1024 * 1024 * 4)),
         metadata: %FileMetadata{
           artist: if(artist, do: artist.name),
           album: if(album, do: album.name),
-          album_artist: seed[:album_artist] || if(artist, do: artist.name),
-          disc: seed[:disc],
-          track: seed[:track],
-          release_year: seed[:release_year],
-          compilation: seed[:compilation] == true,
+          album_artist: Map.get(seed, :album_artist, if(artist, do: artist.name)),
+          disc: Map.get(seed, :disc),
+          track: Map.get(seed, :track),
+          release_year: Map.get(seed, :release_year),
+          compilation: Map.get(seed, :compilation) == true,
           duration: duration,
-          genres: seed[:genres] || []
+          genres: Map.get(seed, :genres, [])
         }
       })
 
@@ -105,8 +107,8 @@ defmodule TestSeeds do
       album_id: if(album, do: album.id),
       name: seed.name,
       duration: duration,
-      number: seed[:track],
-      disc: seed[:disc]
+      number: Map.get(seed, :track),
+      disc: Map.get(seed, :disc)
     })
   end
 

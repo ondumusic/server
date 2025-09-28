@@ -1,9 +1,11 @@
 defmodule MusicBox.Artists do
+  @moduledoc false
+
   import Ecto.Query, warn: false
   alias MusicBox.Repo
 
-  alias MusicBox.Artists.Artist
   alias MusicBox.Albums.Album
+  alias MusicBox.Artists.Artist
   alias MusicBox.Tracks.Track
 
   def paginate_artists(params) do

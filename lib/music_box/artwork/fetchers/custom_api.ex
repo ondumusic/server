@@ -1,4 +1,6 @@
 defmodule MusicBox.Artwork.Fetcher.CustomApi do
+  @moduledoc false
+
   use MusicBox.Artwork.Fetcher
 
   @endpoint Application.compile_env!(:music_box, :custom_artwork_endpoint)

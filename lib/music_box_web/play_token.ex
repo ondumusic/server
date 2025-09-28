@@ -1,4 +1,6 @@
 defmodule MusicBoxWeb.PlayToken do
+  @moduledoc false
+
   defstruct [:user_id]
 
   alias MusicBox.Accounts.User

@@ -1,9 +1,11 @@
 defmodule MusicBox.Transcoder.Job do
+  @moduledoc false
+
   defstruct [:pid, :file, :preset]
 
-  alias MusicBox.Transcoder.{Job, Utils}
-  alias MusicBox.Files.File
   alias __MODULE__
+  alias MusicBox.Files.File
+  alias MusicBox.Transcoder.{Job, Utils}
 
   require Logger
 

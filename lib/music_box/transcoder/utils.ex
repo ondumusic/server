@@ -1,6 +1,8 @@
 defmodule MusicBox.Transcoder.Utils do
-  alias MusicBox.Transcoder
+  @moduledoc false
+
   alias MusicBox.Files.File
+  alias MusicBox.Transcoder
 
   def bitrate_kbps(:mobile), do: 128
   def bitrate_kbps(_default), do: 160
@@ -51,9 +53,8 @@ defmodule MusicBox.Transcoder.Utils do
   def parse_range_header(["bytes=" <> range]) do
     case String.split(range, "-", parts: 2) do
       [start_str, ""] ->
-        with {start_byte, ""} when start_byte >= 0 <- Integer.parse(start_str) do
-          {:ok, start_byte, :infinity}
-        else
+        case Integer.parse(start_str) do
+          {start_byte, ""} when start_byte >= 0 -> {:ok, start_byte, :infinity}
           _ -> {:error, :invalid_range}
         end
 

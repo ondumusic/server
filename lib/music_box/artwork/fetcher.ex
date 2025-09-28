@@ -1,4 +1,6 @@
 defmodule MusicBox.Artwork.Fetcher do
+  @moduledoc false
+
   defmacro __using__(_opts) do
     quote do
       @behaviour unquote(__MODULE__)
@@ -6,8 +8,9 @@ defmodule MusicBox.Artwork.Fetcher do
     end
   end
 
-  # TODO: use proper types
-  @callback find(album :: any()) :: any()
+  alias MusicBox.Albums.Album
+
+  @callback find(album :: Album.t()) :: any()
 
   def save_artwork(album, bytes) do
     path = artwork_path(album)

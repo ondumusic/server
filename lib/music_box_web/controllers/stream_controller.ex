@@ -1,9 +1,10 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule MusicBoxWeb.StreamController do
   use MusicBoxWeb, :controller
 
+  alias MusicBox.Tracks
   alias MusicBox.Transcoder
   alias MusicBox.Transcoder.Utils
-  alias MusicBox.Tracks
 
   plug :assign_track
   plug :assign_preset
@@ -182,15 +183,15 @@ defmodule MusicBoxWeb.StreamController do
   end
 
   defp assign_track(conn, _opts) do
-    with track_id = Map.get(conn.params, "track_id", ""),
-         true <- authenticated?(conn) do
-      track = Tracks.get_track!(track_id)
+    track_id = Map.get(conn.params, "track_id", "")
 
-      conn
-      |> assign(:track, track)
-    else
-      _ -> raise MusicBoxWeb.ForbiddenError
-    end
+    if not authenticated?(conn),
+      do: raise(MusicBoxWeb.ForbiddenError)
+
+    track = Tracks.get_track!(track_id)
+
+    conn
+    |> assign(:track, track)
   end
 
   defp assign_preset(conn, _opts) do

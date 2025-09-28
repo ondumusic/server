@@ -1,4 +1,6 @@
 defmodule MusicBox.FileScanner.Utils do
+  @moduledoc false
+
   alias MusicBox.FileScanner.FileTypes
 
   def slugify(input) do

@@ -1,13 +1,14 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule MusicBox.FileScanner.Operations do
-  alias MusicBox.FileScanner.Analyzer
-  alias MusicBox.FileScanner.Utils
-  alias MusicBox.Files.File
-  alias MusicBox.Files.FileMetadata
-  alias MusicBox.Artists.Artist
-  alias MusicBox.Albums.Album
-  alias MusicBox.Tracks.Track
-  alias MusicBox.Repo
+  @moduledoc false
+
   alias Ecto.Multi
+  alias MusicBox.Albums.Album
+  alias MusicBox.Artists.Artist
+  alias MusicBox.Files.{File, FileMetadata}
+  alias MusicBox.FileScanner.{Analyzer, Utils}
+  alias MusicBox.Repo
+  alias MusicBox.Tracks.Track
 
   import Ecto.Query
 
@@ -182,10 +183,10 @@ defmodule MusicBox.FileScanner.Operations do
               match_artist = String.downcase(metadata.album_artist)
               album_artist = Enum.find(artists, &(String.downcase(&1.name) == match_artist))
 
+              # credo:disable-for-next-line Credo.Check.Refactor.Nesting
               if album_artist do
                 albums
-                |> Enum.filter(&(&1.artist_id == album_artist.id))
-                |> Enum.filter(& &1.is_unknown)
+                |> Enum.filter(&(&1.artist_id == album_artist.id and &1.is_unknown))
                 |> List.first()
               end
 

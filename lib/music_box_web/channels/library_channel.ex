@@ -1,7 +1,13 @@
 defmodule MusicBoxWeb.LibraryChannel do
+  @moduledoc false
+
   use Phoenix.Channel
-  alias MusicBoxWeb.LibraryJSON
+
+  alias MusicBox.Albums.Album
+  alias MusicBox.Artists.Artist
   alias MusicBox.Repo
+  alias MusicBoxWeb.LibraryJSON
+
   import Ecto.Query
 
   intercept ["processed"]
@@ -24,7 +30,7 @@ defmodule MusicBoxWeb.LibraryChannel do
   end
 
   defp fetch_artists(ids) do
-    from(a in MusicBox.Artists.Artist.preloaded(),
+    from(a in Artist.preloaded(),
       where: a.id in ^ids
     )
     |> Repo.all()
@@ -33,7 +39,7 @@ defmodule MusicBoxWeb.LibraryChannel do
   end
 
   defp fetch_albums(ids) do
-    from(al in MusicBox.Albums.Album.preloaded(),
+    from(al in Album.preloaded(),
       where: al.id in ^ids
     )
     |> Repo.all()

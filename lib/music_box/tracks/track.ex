@@ -1,9 +1,13 @@
 defmodule MusicBox.Tracks.Track do
+  @moduledoc false
+
   use MusicBox.Schema
 
-  alias MusicBox.Artists.Artist
   alias MusicBox.Albums.Album
+  alias MusicBox.Artists.Artist
   alias MusicBox.Files.File
+
+  @type t() :: %__MODULE__{}
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id

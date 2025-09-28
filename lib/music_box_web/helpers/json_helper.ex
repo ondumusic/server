@@ -1,4 +1,6 @@
 defmodule MusicBoxWeb.Helpers.JSON do
+  @moduledoc false
+
   defmacro __using__(_opts) do
     quote do
       def json_map(assigns, path, assign_key, opts \\ []) do
