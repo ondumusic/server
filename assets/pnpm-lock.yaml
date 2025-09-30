@@ -15,8 +15,8 @@ importers:
         specifier: ^25.5.2
         version: 25.5.2(typescript@5.9.2)
       phoenix:
-        specifier: ^1.8.0
-        version: 1.8.0
+        specifier: ^1.8.1
+        version: 1.8.1
       react:
         specifier: ^19.1.1
         version: 19.1.1
@@ -2109,8 +2109,8 @@ packages:
     resolution: {integrity: sha512-//nshmD55c46FuFw26xV/xFAaB5HF9Xdap7HJBBnrKdAd6/GxDBaNA1870O79+9ueg61cZLSVc+OaFlfmObYVQ==}
     engines: {node: '>= 14.16'}
 
-  phoenix@1.8.0:
-    resolution: {integrity: sha512-hRBoaOuxQIGrN/JPbCYjC5Xkdz83sbkzBLT41lSROsQmkFUyE+w3ElhwaW4z/i2nkPtrLYoXyVunvntE6Zm1DA==}
+  phoenix@1.8.1:
+    resolution: {integrity: sha512-7i2a5f5y0Qhzi2g/+iuaGr4TzRt5ucqI0JeV2Q9K0swqY8L2C7CLR66RcGCpcQKGOY73B5GLKMYEl13o/9l/Cg==}
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -4450,7 +4450,7 @@ snapshots:
 
   pathval@2.0.1: {}
 
-  phoenix@1.8.0: {}
+  phoenix@1.8.1: {}
 
   picocolors@1.1.1: {}
 
