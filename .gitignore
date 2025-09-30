@@ -39,3 +39,6 @@ music_box-*.tar
 
 # Local config files
 /config/*.local.exs
+
+*storybook.log
+storybook-static
