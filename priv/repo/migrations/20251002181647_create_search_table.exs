@@ -9,8 +9,11 @@ defmodule MusicBox.Repo.Migrations.CreateSearchTable do
       album_id unindexed,
       file_id unindexed,
       artist_name,
+      artist_slug,
       album_name,
+      album_slug,
       track_name,
+      track_slug,
       tokenize='unicode61 remove_diacritics 2'
     )
     """
@@ -23,8 +26,11 @@ defmodule MusicBox.Repo.Migrations.CreateSearchTable do
       artist_id,
       album_id,
       artist_name,
+      artist_slug,
       album_name,
-      track_name
+      album_slug,
+      track_name,
+      track_slug
     )
     select
       t.file_id as file_id,
@@ -32,8 +38,11 @@ defmodule MusicBox.Repo.Migrations.CreateSearchTable do
       ar.id as artist_id,
       al.id as album_id,
       ar.name as artist_name,
+      ar.slug as artist_slug,
       al.name as album_name,
-      t.name as track_name
+      al.slug as album_slug,
+      t.name as track_name,
+      t.slug as track_slug
     from tracks t
     left join albums al on al.id = t.album_id
     left join artists ar on ar.id = t.artist_id or ar.id = al.artist_id
@@ -50,8 +59,11 @@ defmodule MusicBox.Repo.Migrations.CreateSearchTable do
         artist_id,
         album_id,
         artist_name,
+        artist_slug,
         album_name,
-        track_name
+        album_slug,
+        track_name,
+        track_slug
       )
       select
         t.file_id as file_id,
@@ -59,8 +71,11 @@ defmodule MusicBox.Repo.Migrations.CreateSearchTable do
         ar.id as artist_id,
         al.id as album_id,
         ar.name as artist_name,
+        ar.slug as artist_slug,
         al.name as album_name,
-        t.name as track_name
+        al.slug as album_slug,
+        t.name as track_name,
+        t.slug as track_slug
       from tracks t
       left join albums al on al.id = t.album_id
       left join artists ar on ar.id = t.artist_id or ar.id = al.artist_id
@@ -80,8 +95,11 @@ defmodule MusicBox.Repo.Migrations.CreateSearchTable do
         artist_id = ar.id,
         album_id = al.id,
         artist_name = ar.name,
+        artist_slug = ar.slug,
         album_name = al.name,
-        track_name = t.name
+        album_slug = al.slug,
+        track_name = t.name,
+        track_slug = t.slug
       from files f
       left join tracks t on t.file_id = f.id
       left join albums al on al.id = t.album_id
