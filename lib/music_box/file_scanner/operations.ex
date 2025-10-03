@@ -217,7 +217,8 @@ defmodule MusicBox.FileScanner.Operations do
           duration: file.metadata.duration,
           number: file.metadata.track,
           disc: file.metadata.disc,
-          name: title
+          name: title,
+          slug: Utils.slugify(title)
         }
       end)
       |> Enum.map(&add_timestamps/1)

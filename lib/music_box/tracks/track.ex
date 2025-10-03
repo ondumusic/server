@@ -13,6 +13,7 @@ defmodule MusicBox.Tracks.Track do
   @foreign_key_type :binary_id
   schema "tracks" do
     field :name, :string
+    field :slug, :string
     field :duration, :float
     field :number, :integer
     field :disc, :integer, default: 1
