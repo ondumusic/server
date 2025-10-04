@@ -4,7 +4,7 @@ defmodule MusicBox.Transcoder.Utils do
   alias MusicBox.Files.File
   alias MusicBox.Transcoder
 
-  @spec bitrate_kbps(atom()) :: non_neg_integer()
+  @spec bitrate_kbps(Transcoder.preset()) :: non_neg_integer()
   def bitrate_kbps(:mobile), do: 128
   def bitrate_kbps(_default), do: 160
 
@@ -17,7 +17,7 @@ defmodule MusicBox.Transcoder.Utils do
   @spec timestamp() :: non_neg_integer()
   def timestamp, do: DateTime.utc_now() |> DateTime.to_unix()
 
-  @spec estimate_opus_size(File.t(), atom()) :: non_neg_integer()
+  @spec estimate_opus_size(File.t(), Transcoder.preset()) :: non_neg_integer()
   def estimate_opus_size(%File{metadata: %{duration: duration}}, preset) do
     audio_bytes = bitrate_kbps(preset) * 1000 * duration / 8
 
@@ -28,7 +28,7 @@ defmodule MusicBox.Transcoder.Utils do
     round(audio_bytes * est_overhead)
   end
 
-  @spec continue_stream?(File.t(), atom(), non_neg_integer()) :: boolean()
+  @spec continue_stream?(File.t(), Transcoder.preset(), non_neg_integer()) :: boolean()
   def continue_stream?(file, preset, chunk_index) do
     meta = Transcoder.get_meta(file, preset)
 

@@ -1,7 +1,7 @@
 defmodule MusicBox.FileScanner.Analyzer do
   @moduledoc false
 
-  alias MusicBox.FileScanner.{Entry, Utils}
+  alias MusicBox.FileScanner.{Entry, FileTypes, Utils}
 
   defmodule Metadata do
     @moduledoc false
@@ -37,7 +37,7 @@ defmodule MusicBox.FileScanner.Analyzer do
     @type t :: %__MODULE__{}
   end
 
-  @type analyze_opts :: {:type, atom()}
+  @type analyze_opts :: {:type, FileTypes.t()}
   @spec analyze(Entry.t(), [analyze_opts()]) :: {:ok, Result.t()} | {:error, :analyzing_failed}
   def analyze(%Entry{path: path}, opts \\ []) do
     %{size: size, mtime: mtime} = File.stat!(path, time: :posix)

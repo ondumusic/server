@@ -13,6 +13,8 @@ defmodule MusicBox.Transcoder do
   @max_cached_files 5
   @cleanup_timer_ms 5_000
 
+  @type preset :: :default | :mobile
+
   @spec start_link(Keyword.t()) :: {:ok, pid()}
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
@@ -29,7 +31,7 @@ defmodule MusicBox.Transcoder do
     {:ok, %State{}}
   end
 
-  @spec get_meta(File.t(), atom()) :: Result.t() | nil
+  @spec get_meta(File.t(), preset()) :: Result.t() | nil
   def get_meta(%File{id: file_id}, preset) do
     lookup_key = {file_id, preset}
 
@@ -61,7 +63,7 @@ defmodule MusicBox.Transcoder do
   end
 
   @type chunk_error :: :unknown_chunk | :transcoding_failed | :no_longer_available
-  @spec request_chunk(File.t(), atom(), non_neg_integer()) ::
+  @spec request_chunk(File.t(), preset(), non_neg_integer()) ::
           {:ok, binary()} | {:error, chunk_error()}
   def request_chunk(file, preset, chunk_index) do
     GenServer.call(__MODULE__, {:request_chunk, file, preset, chunk_index}, 10_000)

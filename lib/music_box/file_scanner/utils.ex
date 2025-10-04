@@ -40,7 +40,7 @@ defmodule MusicBox.FileScanner.Utils do
     end
   end
 
-  @spec detect_file_type(String.t()) :: {:ok, atom()} | {:error, :unknown}
+  @spec detect_file_type(String.t()) :: {:ok, FileTypes.t()} | {:error, :unknown}
   def detect_file_type(path) do
     with {:ok, file} <- File.open(path, [:binary, :read]),
          header_bytes <- IO.binread(file, 262),

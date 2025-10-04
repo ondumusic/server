@@ -7,6 +7,7 @@ defmodule MusicBox.Albums.Artwork do
 
   @type t :: %__MODULE__{}
 
+  @type fetcher :: :embedded | :custom_api | :music_brainz
   @fetchers ~w(embedded custom_api music_brainz)a
 
   @primary_key {:album_id, :binary_id, autogenerate: false}
@@ -29,6 +30,6 @@ defmodule MusicBox.Albums.Artwork do
     ])
   end
 
-  @spec fetchers() :: [atom()]
+  @spec fetchers() :: [fetcher()]
   def fetchers, do: @fetchers
 end

@@ -23,10 +23,8 @@ defmodule MusicBox.Repo do
         }
 
   @type paginate_opts ::
-          {:repo, atom()}
-          | {:max_limit, non_neg_integer()}
+          {:max_limit, non_neg_integer()}
           | {:default_limit, non_neg_integer()}
-          | {:replace_invalid_params, boolean()}
   @spec paginate(Ecto.Queryable.t(), map(), [paginate_opts()]) :: page(Ecto.Schema.t())
   def paginate(queryable, params, opts \\ []) when is_map(params) do
     opts = Keyword.merge(@paginate_opts, opts)

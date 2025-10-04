@@ -10,7 +10,7 @@ defmodule MusicBox.Sessions.Session do
 
   @type t :: %__MODULE__{}
   @type token :: binary()
-  @type context :: String.t() | atom()
+  @type context :: String.t() | :all
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id

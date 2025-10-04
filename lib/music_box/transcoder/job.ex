@@ -7,11 +7,12 @@ defmodule MusicBox.Transcoder.Job do
 
   alias __MODULE__
   alias MusicBox.Files.File
+  alias MusicBox.Transcoder
   alias MusicBox.Transcoder.{Job, Utils}
 
   require Logger
 
-  @spec start(File.t(), atom()) :: t()
+  @spec start(File.t(), Transcoder.preset()) :: t()
   def start(%File{} = file, preset) do
     parent = self()
 

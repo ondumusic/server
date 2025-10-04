@@ -51,7 +51,7 @@ defmodule MusicBox.MixProject do
       {:req, "~> 0.5.15"},
       {:observer_cli, "~> 1.8", only: [:dev]},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.4", only: [:dev, :test]}
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
   end
 
