@@ -50,7 +50,8 @@ defmodule MusicBox.MixProject do
       {:slugify, "~> 1.3"},
       {:req, "~> 0.5.15"},
       {:observer_cli, "~> 1.8", only: [:dev]},
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test]}
     ]
   end
 
