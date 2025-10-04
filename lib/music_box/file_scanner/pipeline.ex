@@ -9,6 +9,8 @@ defmodule MusicBox.FileScanner.Pipeline do
 
   require Logger
 
+  @type start_link_opts :: {:auto_start, boolean()}
+  @spec start_link([start_link_opts()]) :: {:ok, pid()}
   def start_link(opts) do
     auto_start = Keyword.get(opts, :auto_start, true)
 
@@ -32,6 +34,7 @@ defmodule MusicBox.FileScanner.Pipeline do
     )
   end
 
+  @spec transform(Entry.t(), Keyword.t()) :: Message.t()
   def transform(entry, _opts) do
     %Message{
       data: entry,

@@ -11,6 +11,7 @@ defmodule MusicBox.Artwork.Worker do
   @max_concurrency 2
   @interval_ms :timer.seconds(2)
 
+  @spec start_link(Keyword.t()) :: {:ok, pid()}
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
   end

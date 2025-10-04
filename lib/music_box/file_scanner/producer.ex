@@ -8,6 +8,8 @@ defmodule MusicBox.FileScanner.Producer do
 
   require Logger
 
+  @type start_link_opts :: {:auto_start, boolean()}
+  @spec start_link([start_link_opts()]) :: {:ok, pid()}
   def start_link(init, opts \\ []) do
     GenStage.start_link(__MODULE__, init, opts)
   end

@@ -12,6 +12,16 @@ defmodule MusicBox.FileScanner.Operations do
 
   import Ecto.Query
 
+  @spec batch_insert([Analyzer.Result.t()]) ::
+          :noop
+          | {:ok,
+             %{
+               artists: [Artist],
+               albums: [Album],
+               tracks: [Track],
+               files: [File]
+             }}
+          | Ecto.Multi.failure()
   def batch_insert([]), do: :noop
 
   def batch_insert([%Analyzer.Result{} | _] = files) do

@@ -51,7 +51,7 @@ defmodule MusicBox.Accounts do
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, changeset)
     |> Ecto.Multi.delete_all(:sessions, Session.by_user_and_contexts_query(user, :all))
-    |> Repo.transaction()
+    |> Repo.transact()
     |> case do
       {:ok, %{user: user}} -> {:ok, user}
       {:error, :user, changeset, _} -> {:error, changeset}

@@ -3,6 +3,8 @@ defmodule MusicBox.FileScanner.FileTypes do
 
   @type t :: :m4a | :mp3 | :opus | :ogg | :flac | :wav
 
+  @spec detect(binary()) :: {:ok, t()} | {:error, :unknown_type}
+
   @m4a_signature <<0x66::size(8), 0x74::size(8), 0x79::size(8), 0x70::size(8), 0x4D::size(8),
                    0x34::size(8),
                    0x41::size(8)>> ||

@@ -4,8 +4,9 @@ defmodule MusicBoxWeb.Telemetry do
   use Supervisor
   import Telemetry.Metrics
 
-  def start_link(arg) do
-    Supervisor.start_link(__MODULE__, arg, name: __MODULE__)
+  @spec start_link(Keyword.t()) :: {:ok, pid()}
+  def start_link(opts) do
+    Supervisor.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   @impl true
