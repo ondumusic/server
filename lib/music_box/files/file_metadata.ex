@@ -3,7 +3,7 @@ defmodule MusicBox.Files.FileMetadata do
 
   use MusicBox.Schema
 
-  @type t() :: %__MODULE__{}
+  @type t :: %__MODULE__{}
 
   @primary_key false
   embedded_schema do
@@ -19,6 +19,7 @@ defmodule MusicBox.Files.FileMetadata do
     field :genres, {:array, :string}
   end
 
+  @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(metadata, attrs) do
     metadata
     |> cast(attrs, [

@@ -3,7 +3,7 @@ defmodule MusicBox.Accounts.User do
 
   use MusicBox.Schema
 
-  @type t() :: %__MODULE__{}
+  @type t :: %__MODULE__{}
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -16,6 +16,8 @@ defmodule MusicBox.Accounts.User do
     timestamps(type: :utc_datetime)
   end
 
+  @type password_opts :: {:hash_password, boolean()}
+  @spec registration_changeset(t(), map(), [password_opts()]) :: Ecto.Changeset.t()
   def registration_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:username, :password])
@@ -48,6 +50,7 @@ defmodule MusicBox.Accounts.User do
     end
   end
 
+  @spec password_changeset(t(), map(), [password_opts()]) :: Ecto.Changeset.t()
   def password_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:password])
@@ -55,6 +58,7 @@ defmodule MusicBox.Accounts.User do
     |> validate_password(opts)
   end
 
+  @spec valid_password?(User.t(), String.t()) :: boolean()
   def valid_password?(%User{hashed_password: hashed_password}, password)
       when is_binary(hashed_password) and byte_size(password) > 0 do
     Bcrypt.verify_pass(password, hashed_password)
@@ -65,6 +69,7 @@ defmodule MusicBox.Accounts.User do
     false
   end
 
+  @spec validate_current_password(Ecto.Changeset.t(), String.t()) :: Ecto.Changeset.t()
   def validate_current_password(changeset, password) do
     changeset = cast(changeset, %{current_password: password}, [:current_password])
 

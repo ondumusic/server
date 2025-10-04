@@ -7,18 +7,22 @@ defmodule MusicBox.Accounts do
   alias MusicBox.Repo
   alias MusicBox.Sessions.Session
 
+  @spec has_user?() :: boolean()
   def has_user?, do: Repo.exists?(User)
 
+  @spec get_user_by_username(String.t()) :: User.t() | nil
   def get_user_by_username(username) when is_binary(username) do
     Repo.get_by(User, username: username)
   end
 
+  @spec get_user_by_username_and_password(String.t(), String.t()) :: User.t() | nil
   def get_user_by_username_and_password(username, password)
       when is_binary(username) and is_binary(password) do
     user = Repo.get_by(User, username: username)
     if User.valid_password?(user, password), do: user
   end
 
+  @spec get_user!(Ecto.UUID.t()) :: User.t() | nil
   def get_user!(id), do: Repo.get!(User, id)
 
   def register_user(attrs) do
@@ -27,14 +31,17 @@ defmodule MusicBox.Accounts do
     |> Repo.insert()
   end
 
+  @spec change_user_registration(User.t(), map()) :: Ecto.Changeset.t()
   def change_user_registration(%User{} = user, attrs \\ %{}) do
-    User.registration_changeset(user, attrs, hash_password: false, validate_email: false)
+    User.registration_changeset(user, attrs, hash_password: false)
   end
 
+  @spec change_user_password(User.t(), map()) :: Ecto.Changeset.t()
   def change_user_password(user, attrs \\ %{}) do
     User.password_changeset(user, attrs, hash_password: false)
   end
 
+  @spec update_user_password(User.t(), String.t(), map()) :: Repo.result(User.t())
   def update_user_password(user, password, attrs) do
     changeset =
       user

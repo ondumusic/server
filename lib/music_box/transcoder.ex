@@ -13,10 +13,12 @@ defmodule MusicBox.Transcoder do
   @max_cached_files 5
   @cleanup_timer_ms 5_000
 
+  @spec start_link(Keyword.t()) :: {:ok, pid()}
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
   end
 
+  @impl true
   def init(_) do
     if :ets.whereis(@chunks_table) == :undefined,
       do: :ets.new(@chunks_table, [:set, :public, :named_table])
@@ -27,6 +29,7 @@ defmodule MusicBox.Transcoder do
     {:ok, %State{}}
   end
 
+  @spec get_meta(File.t(), atom()) :: Result.t() | nil
   def get_meta(%File{id: file_id}, preset) do
     lookup_key = {file_id, preset}
 
@@ -50,15 +53,21 @@ defmodule MusicBox.Transcoder do
     end
   end
 
+  @spec clear_cache() :: :ok
   def clear_cache do
     :ets.delete_all_objects(@chunks_table)
     :ets.delete_all_objects(@meta_table)
+    :ok
   end
 
+  @type chunk_error :: :unknown_chunk | :transcoding_failed | :no_longer_available
+  @spec request_chunk(File.t(), atom(), non_neg_integer()) ::
+          {:ok, binary()} | {:error, chunk_error()}
   def request_chunk(file, preset, chunk_index) do
     GenServer.call(__MODULE__, {:request_chunk, file, preset, chunk_index}, 10_000)
   end
 
+  @impl true
   def handle_call({:request_chunk, %File{} = file, preset, chunk_index}, from, state) do
     meta = get_meta(file, preset) || %Result{}
     lookup_key = {file.id, preset, chunk_index}
@@ -134,6 +143,7 @@ defmodule MusicBox.Transcoder do
     {:noreply, new_state}
   end
 
+  @impl true
   def handle_info({:chunk, %Job{} = job, chunk_index, data}, state) do
     %{file: file, preset: preset} = job
     lookup_key = {file.id, preset, chunk_index}

@@ -19,6 +19,9 @@ defmodule MusicBox.Search do
     belongs_to :track, Track
   end
 
+  @type t :: %__MODULE__{}
+
+  @spec search(String.t()) :: [t()]
   def search(query) do
     query = parse_query(query)
 

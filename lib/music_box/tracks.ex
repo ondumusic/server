@@ -6,5 +6,6 @@ defmodule MusicBox.Tracks do
 
   alias MusicBox.Tracks.Track
 
+  @spec get_track!(Ecto.UUID.t()) :: Track.t()
   def get_track!(id), do: Repo.get!(Track, id) |> Repo.preload([:artist, :album, :file])
 end

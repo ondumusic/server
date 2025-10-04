@@ -18,6 +18,8 @@ defmodule MusicBox.FileScanner.Analyzer do
       disc: 1,
       genres: []
     ]
+
+    @type t :: %__MODULE__{}
   end
 
   defmodule Result do
@@ -31,8 +33,12 @@ defmodule MusicBox.FileScanner.Analyzer do
       :checksum,
       metadata: %Metadata{}
     ]
+
+    @type t :: %__MODULE__{}
   end
 
+  @type analyze_opts :: {:type, atom()}
+  @spec analyze(Entry.t(), [analyze_opts()]) :: {:ok, Result.t()} | {:error, :analyzing_failed}
   def analyze(%Entry{path: path}, opts \\ []) do
     %{size: size, mtime: mtime} = File.stat!(path, time: :posix)
 
@@ -44,7 +50,7 @@ defmodule MusicBox.FileScanner.Analyzer do
            size: size,
            type: Keyword.get(opts, :type, :unknown),
            last_modified_at: DateTime.from_unix!(mtime),
-           checksum: Utils.calculate_checksum(path),
+           checksum: Utils.calculate_checksum!(path),
            metadata: metadata
          }}
 

@@ -6,7 +6,7 @@ defmodule MusicBox.Files.File do
   alias MusicBox.Files.FileMetadata
   alias MusicBox.Tracks.Track
 
-  @type t() :: %__MODULE__{}
+  @type t :: %__MODULE__{}
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -25,6 +25,7 @@ defmodule MusicBox.Files.File do
     timestamps(type: :utc_datetime)
   end
 
+  @spec mimetype(t()) :: String.t()
   def mimetype(%__MODULE__{type: type}) do
     case type do
       :m4a -> "audio/mp4"

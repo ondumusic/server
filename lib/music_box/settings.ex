@@ -15,6 +15,9 @@ defmodule MusicBox.Settings do
     timestamps(type: :utc_datetime)
   end
 
+  @type t :: %__MODULE__{}
+
+  @spec get() :: t()
   def get do
     case Repo.get_by(Settings, is_current: true) do
       %Settings{} = settings -> settings
@@ -22,8 +25,10 @@ defmodule MusicBox.Settings do
     end
   end
 
+  @spec set(map()) :: Repo.result(t())
   def set(attrs), do: set(get(), attrs)
 
+  @spec set(t(), map()) :: Repo.result(t())
   def set(%Settings{} = settings, attrs) do
     settings
     |> cast(attrs, [:music_path, :scan_type, :poll_interval])

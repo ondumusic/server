@@ -3,12 +3,15 @@ defmodule MusicBox.Transcoder.Job do
 
   defstruct [:pid, :file, :preset]
 
+  @type t :: %__MODULE__{}
+
   alias __MODULE__
   alias MusicBox.Files.File
   alias MusicBox.Transcoder.{Job, Utils}
 
   require Logger
 
+  @spec start(File.t(), atom()) :: t()
   def start(%File{} = file, preset) do
     parent = self()
 

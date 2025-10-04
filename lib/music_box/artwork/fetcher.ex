@@ -10,8 +10,10 @@ defmodule MusicBox.Artwork.Fetcher do
 
   alias MusicBox.Albums.Album
 
-  @callback find(album :: Album.t()) :: any()
+  @type find_error :: :skip | :not_found | :retry_later
+  @callback find(album :: Album.t()) :: {:ok, String.t()} | {:error, find_error()}
 
+  @spec save_artwork(Album.t(), binary()) :: {:ok, String.t()} | {:error, :failed_to_write}
   def save_artwork(album, bytes) do
     path = artwork_path(album)
     File.mkdir_p!(Path.dirname(path))

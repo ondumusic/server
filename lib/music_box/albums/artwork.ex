@@ -5,7 +5,7 @@ defmodule MusicBox.Albums.Artwork do
 
   alias MusicBox.Albums.Album
 
-  @type t() :: %__MODULE__{}
+  @type t :: %__MODULE__{}
 
   @fetchers ~w(embedded custom_api music_brainz)a
 
@@ -19,6 +19,7 @@ defmodule MusicBox.Albums.Artwork do
     field :last_fetch_attempt, :utc_datetime
   end
 
+  @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(%__MODULE__{} = struct, attrs) do
     struct
     |> cast(attrs, [
@@ -28,5 +29,6 @@ defmodule MusicBox.Albums.Artwork do
     ])
   end
 
+  @spec fetchers() :: [atom()]
   def fetchers, do: @fetchers
 end

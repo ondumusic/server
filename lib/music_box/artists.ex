@@ -8,6 +8,7 @@ defmodule MusicBox.Artists do
   alias MusicBox.Artists.Artist
   alias MusicBox.Tracks.Track
 
+  @spec paginate_artists(map()) :: Repo.page(Artist)
   def paginate_artists(params) do
     album_artists_query =
       from(
@@ -35,6 +36,7 @@ defmodule MusicBox.Artists do
     |> Repo.paginate(params, default_limit: 100)
   end
 
+  @spec get_artist!(Ecto.UUID.t()) :: Album.t()
   def get_artist!(id_or_slug) do
     Artist.preloaded()
     |> where([artist: a], a.id == ^id_or_slug or a.slug == ^id_or_slug)

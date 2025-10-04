@@ -4,13 +4,20 @@ defmodule MusicBox.Transcoder.Utils do
   alias MusicBox.Files.File
   alias MusicBox.Transcoder
 
+  @spec bitrate_kbps(atom()) :: non_neg_integer()
   def bitrate_kbps(:mobile), do: 128
   def bitrate_kbps(_default), do: 160
 
+  @spec chunk_size() :: non_neg_integer()
   def chunk_size, do: 1024 * 128
+
+  @spec default_range_size() :: non_neg_integer()
   def default_range_size, do: 1024 * 256
+
+  @spec timestamp() :: non_neg_integer()
   def timestamp, do: DateTime.utc_now() |> DateTime.to_unix()
 
+  @spec estimate_opus_size(File.t(), atom()) :: non_neg_integer()
   def estimate_opus_size(%File{metadata: %{duration: duration}}, preset) do
     audio_bytes = bitrate_kbps(preset) * 1000 * duration / 8
 
@@ -21,6 +28,7 @@ defmodule MusicBox.Transcoder.Utils do
     round(audio_bytes * est_overhead)
   end
 
+  @spec continue_stream?(File.t(), atom(), non_neg_integer()) :: boolean()
   def continue_stream?(file, preset, chunk_index) do
     meta = Transcoder.get_meta(file, preset)
 
@@ -38,6 +46,8 @@ defmodule MusicBox.Transcoder.Utils do
     end
   end
 
+  @spec get_chunk_part(binary(), non_neg_integer(), non_neg_integer()) ::
+          {binary(), non_neg_integer()}
   def get_chunk_part(data, offset, size) do
     offset = max(0, offset)
     size_in_chunk = min(byte_size(data) - offset - 1, size - offset)
@@ -47,7 +57,10 @@ defmodule MusicBox.Transcoder.Utils do
     {chunk_part_data, remaining_bytes}
   end
 
-  def parse_range_header([]), do: :no_range
+  @type range_error :: :no_range | :invalid_range
+  @spec parse_range_header([String.t()]) ::
+          {:ok, non_neg_integer(), non_neg_integer() | :infinity} | {:error, range_error()}
+  def parse_range_header([]), do: {:error, :no_range}
   def parse_range_header(["bytes=0-"]), do: {:ok, 0, :infinity}
 
   def parse_range_header(["bytes=" <> range]) do
@@ -71,5 +84,5 @@ defmodule MusicBox.Transcoder.Utils do
     end
   end
 
-  def parse_range_header(_), do: :invalid_range
+  def parse_range_header(_), do: {:error, :invalid_range}
 end

@@ -6,7 +6,7 @@ defmodule MusicBox.Artists.Artist do
   alias MusicBox.Albums.Album
   alias MusicBox.Tracks.Track
 
-  @type t() :: %__MODULE__{}
+  @type t :: %__MODULE__{}
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -22,6 +22,7 @@ defmodule MusicBox.Artists.Artist do
     timestamps(type: :utc_datetime)
   end
 
+  @spec preloaded(Ecto.Queryable.t() | nil) :: Ecto.Queryable.t()
   def preloaded(query \\ nil) do
     query =
       if query,

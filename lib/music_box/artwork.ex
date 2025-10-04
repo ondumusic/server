@@ -3,15 +3,17 @@ defmodule MusicBox.Artwork do
 
   alias MusicBox.Albums
   alias MusicBox.Albums.Album
+  alias MusicBox.Artwork.Fetcher
   alias MusicBox.Repo
 
   require Logger
 
+  @spec find(Album.t()) :: Repo.result(Albums.Artwork.t()) | {:error, Fetcher.find_error()}
   def find(%Album{} = album) do
     album = Repo.preload(album, [:artwork])
 
     case album do
-      %{artwork: %{path: path}} when is_binary(path) -> {:ok, album}
+      %{artwork: %{path: path}} when is_binary(path) -> {:ok, album.artwork}
       _ -> find_and_update(album)
     end
   end

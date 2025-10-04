@@ -73,10 +73,10 @@ defmodule MusicBoxWeb.StreamController do
         send_transcoded_chunk(conn, start_byte, end_byte)
 
       # No range? No problem! Send the entire file!
-      :no_range ->
+      {:error, :no_range} ->
         send_transcoded_file(conn)
 
-      _error ->
+      {:error, :invalid_range} ->
         file_size = actual_file_size || estimated_file_size
 
         conn

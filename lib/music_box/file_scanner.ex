@@ -4,6 +4,9 @@ defmodule MusicBox.FileScanner do
   alias MusicBox.FileScanner.Pipeline
   alias MusicBox.Settings
 
+  @type scan_type :: :full | :quick
+  @type scan_error :: :missing_music_path | :no_producer_found
+  @spec scan(scan_type() | nil) :: {:ok, :scan_started} | {:error, scan_error()}
   def scan(scan_type \\ nil) do
     settings = Settings.get()
 

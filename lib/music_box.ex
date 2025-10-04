@@ -7,5 +7,6 @@ defmodule MusicBox do
   if it comes from the database, an external API or others.
   """
 
+  @spec env() :: :dev | :test | :prod
   def env, do: Application.get_env(:music_box, :env)
 end
