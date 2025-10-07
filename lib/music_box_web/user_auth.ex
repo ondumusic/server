@@ -5,12 +5,15 @@ defmodule MusicBoxWeb.UserAuth do
 
   import Plug.Conn
 
+  alias MusicBox.Accounts.User
   alias MusicBox.Sessions
+  alias MusicBox.Sessions.Session
   alias MusicBoxWeb.Endpoint
 
   @max_age 60 * 60 * 24 * 60
   @signing_salt "_music_box_session_token"
 
+  @spec log_in_user(Plug.Conn.t(), User.t()) :: Plug.Conn.t()
   def log_in_user(conn, current_user) do
     session_token = Sessions.generate_user_session_token(current_user)
 
@@ -25,6 +28,7 @@ defmodule MusicBoxWeb.UserAuth do
     |> assign(:current_user, current_user)
   end
 
+  @spec log_out_user(Plug.Conn.t()) :: Plug.Conn.t()
   def log_out_user(conn) do
     {session_token, conn} = ensure_session_token(conn)
     session_token && Sessions.delete_user_session_token(session_token)
@@ -32,6 +36,7 @@ defmodule MusicBoxWeb.UserAuth do
     %{conn | assigns: new_assigns}
   end
 
+  @spec fetch_current_user(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
   def fetch_current_user(conn, _opts) do
     {session_token, conn} = ensure_session_token(conn)
     current_user = session_token && Sessions.get_user_by_session_token(session_token)
@@ -65,6 +70,8 @@ defmodule MusicBoxWeb.UserAuth do
     end
   end
 
+  @spec verify_session_token(String.t()) ::
+          {:ok, Session.token()} | {:error, :invalid_session_token}
   def verify_session_token(signed_session_token) do
     with true <- is_binary(signed_session_token),
          {:ok, signed_session_token} <- Base.decode64(signed_session_token, padding: false),
@@ -81,6 +88,7 @@ defmodule MusicBoxWeb.UserAuth do
     end
   end
 
+  @spec require_authenticated_user(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
   def require_authenticated_user(conn, _opts) do
     if conn.assigns[:current_user] do
       conn

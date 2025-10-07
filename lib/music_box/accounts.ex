@@ -3,6 +3,7 @@ defmodule MusicBox.Accounts do
 
   import Ecto.Query, warn: false
 
+  alias Ecto.Multi
   alias MusicBox.Accounts.User
   alias MusicBox.Repo
   alias MusicBox.Sessions.Session
@@ -48,9 +49,9 @@ defmodule MusicBox.Accounts do
       |> User.password_changeset(attrs)
       |> User.validate_current_password(password)
 
-    Ecto.Multi.new()
-    |> Ecto.Multi.update(:user, changeset)
-    |> Ecto.Multi.delete_all(:sessions, Session.by_user_and_contexts_query(user, :all))
+    Multi.new()
+    |> Multi.update(:user, changeset)
+    |> Multi.delete_all(:sessions, Session.by_user_and_contexts_query(user, :all))
     |> Repo.transact()
     |> case do
       {:ok, %{user: user}} -> {:ok, user}

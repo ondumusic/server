@@ -11,6 +11,7 @@ defmodule MusicBoxWeb.Helpers.JSON do
     end
   end
 
+  @spec json_changeset(Ecto.Changeset.t()) :: %{atom() => %{message: String.t()}}
   def json_changeset(%Ecto.Changeset{errors: errors}) do
     Enum.reduce(errors, %{}, fn {field, {message, validation}}, result ->
       message =
@@ -22,6 +23,8 @@ defmodule MusicBoxWeb.Helpers.JSON do
     end)
   end
 
+  @type json_map_opt :: {:include, [atom()]} | {:as, (map() -> map())}
+  @spec json_map(atom(), map(), Access.t(), atom(), [json_map_opt()]) :: [map()]
   def json_map(module, assigns, path, assign_key, opts) do
     path =
       Enum.map(path, fn
