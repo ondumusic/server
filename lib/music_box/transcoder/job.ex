@@ -33,7 +33,10 @@ defmodule MusicBox.Transcoder.Job do
           send(parent, {:transcoding_complete, job, chunk_count})
         rescue
           error ->
-            Logger.error("Failed transcoding file: #{job.file.id} - Error: #{error}")
+            Logger.error(
+              "Failed transcoding file: #{job.file.id} - Error: #{Exception.message(error)}"
+            )
+
             send(parent, {:transcoding_failed, job})
         end
       end)
