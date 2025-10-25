@@ -1,5 +1,8 @@
 defmodule MusicBox.FileScannerTest do
-  use MusicBox.DataCase
+  use MusicBox.DataCase, async: false
+
+  setup :set_mox_global
+  setup :verify_on_exit!
 
   alias MusicBox.FileScanner
   alias MusicBox.FileScanner.Entry
@@ -41,7 +44,7 @@ defmodule MusicBox.FileScannerTest do
   describe "pipeline" do
     setup do
       MusicBox.Settings.set(%{music_path: @fixtures_path})
-      start_supervised!(Pipeline)
+      start_supervised!({Pipeline, auto_start: false})
       :ok
     end
 
@@ -51,6 +54,10 @@ defmodule MusicBox.FileScannerTest do
           path: Path.join(@fixtures_path, "without_tags/sample.mp3"),
           is_dir: false
         }
+
+      expect_probe(fn _path ->
+        {:ok, %{format: %{duration: "3.448125"}}}
+      end)
 
       ref = Broadway.test_message(Pipeline, entry, metadata: [scan_type: :full])
       assert_receive {:ack, ^ref, [%{data: data}], []}
@@ -82,6 +89,23 @@ defmodule MusicBox.FileScannerTest do
 
       for path <- files do
         entry = %Entry{path: path, is_dir: false}
+
+        expect_probe(fn ^path ->
+          {:ok,
+           %{
+             format: %{
+               tags: %{
+                 artist: "Test Artist",
+                 album: "Test Album",
+                 title: "Test Title",
+                 genre: "Jazz",
+                 date: "2000-01-01",
+                 track: "3"
+               }
+             }
+           }}
+        end)
+
         ref = Broadway.test_message(Pipeline, entry, metadata: [scan_type: :full])
         assert_receive {:ack, ^ref, [%{data: data}], []}
         assert data.path == entry.path
@@ -117,6 +141,8 @@ defmodule MusicBox.FileScannerTest do
 
       for {type, path} <- files do
         entry = %Entry{path: path, is_dir: false}
+        expect_probe(fn ^path -> {:ok, %{}} end)
+
         ref = Broadway.test_message(Pipeline, entry, metadata: [scan_type: :full])
         assert_receive {:ack, ^ref, [%{data: data}], []}
         assert data.path == entry.path
@@ -139,7 +165,11 @@ defmodule MusicBox.FileScannerTest do
     end
 
     test "skips existing files when doing a quick scan" do
-      entry = %Entry{path: Path.join(@fixtures_path, "with_tags/sample.m4a"), is_dir: false}
+      path = Path.join(@fixtures_path, "with_tags/sample.m4a")
+      entry = %Entry{path: path, is_dir: false}
+
+      expect_probe(fn ^path -> {:ok, %{}} end)
+
       ref = Broadway.test_message(Pipeline, entry, metadata: [scan_type: :quick])
       assert_receive {:ack, ^ref, [%{data: data} = message], []}
       Pipeline.ack(:default, [message], [])
@@ -147,7 +177,7 @@ defmodule MusicBox.FileScannerTest do
       assert file = Repo.get_by(MusicBox.Files.File, path: entry.path)
 
       # Second run
-      entry = %Entry{path: Path.join(@fixtures_path, "with_tags/sample.m4a"), is_dir: false}
+      entry = %Entry{path: path, is_dir: false}
       ref = Broadway.test_message(Pipeline, entry, metadata: [scan_type: :quick])
       assert_receive {:ack, ^ref, [], [message]}
       Pipeline.ack(:default, [], [message])
@@ -266,5 +296,20 @@ defmodule MusicBox.FileScannerTest do
     for entry <- entries do
       assert entry in events
     end
+  end
+
+  defp expect_probe(fun) do
+    expect(MusicBox.Tool.ProbeMock, :exec, fn path ->
+      case fun.(path) do
+        {:ok, result} ->
+          {:ok,
+           result
+           |> JSON.encode!()
+           |> JSON.decode!()}
+
+        error ->
+          error
+      end
+    end)
   end
 end

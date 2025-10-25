@@ -174,7 +174,7 @@ defmodule MusicBox.FileScanner.Analyzer do
   end
 
   defp parse(%Metadata{} = metadata, [:duration = key | keys], json) do
-    value = get_in(json, ["format", "duration"])
+    value = get_in(json, ["format", "duration"]) || ""
 
     duration =
       case Float.parse(value) do

@@ -18,13 +18,10 @@ defmodule MusicBox.FileScanner.Utils do
 
   @spec ffprobe(String.t()) :: {:ok, map()} | {:error, :ffprobe_failed}
   def ffprobe(path) do
-    ffprobe_path = System.find_executable("ffprobe") || throw(:ffprobe_not_found)
-    args = ~w(-v quiet -print_format json -show_format -show_streams -i) ++ [path]
+    probe_tool = Application.get_env(:music_box, :probe_tool)
 
-    with {stdout, 0} <- System.cmd(ffprobe_path, args),
-         {:ok, json} <- JSON.decode(stdout) do
-      {:ok, json}
-    else
+    case probe_tool.exec(path) do
+      {:ok, %{}} = result -> result
       _ -> {:error, :ffprobe_failed}
     end
   end
