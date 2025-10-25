@@ -8,15 +8,15 @@ defmodule MusicBox.FileScanner do
   @type scan_error :: :missing_music_path | :no_producer_found
   @spec scan(scan_type() | nil) :: {:ok, :scan_started} | {:error, scan_error()}
   def scan(scan_type \\ nil) do
-    settings = Settings.get()
-
-    if settings.music_path do
+    with %Settings{music_path: "" <> _path} <- Settings.get(),
+         pid when is_pid(pid) <- GenServer.whereis(Pipeline) do
       Pipeline
       |> Broadway.producer_names()
       |> Enum.random()
       |> start_scanner(scan_type)
     else
-      {:error, :missing_music_path}
+      %Settings{} -> {:error, :missing_music_path}
+      _ -> {:error, :no_producer_found}
     end
   end
 

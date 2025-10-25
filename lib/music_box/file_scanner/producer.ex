@@ -31,6 +31,11 @@ defmodule MusicBox.FileScanner.Producer do
   end
 
   @impl true
+  def handle_call(:start, _from, state) do
+    {:ok, entries, state} = start_scan(state, [])
+    {:reply, :ok, entries, state}
+  end
+
   def handle_call({:walk, new_entries}, _from, state) do
     {entries, state} = get_entries(state, state.demand, new_entries)
     {:reply, :ok, entries, state}
@@ -38,6 +43,11 @@ defmodule MusicBox.FileScanner.Producer do
 
   @impl true
   def handle_info({:start_scan, opts}, state) do
+    {:ok, entries, state} = start_scan(state, opts)
+    {:noreply, entries, state}
+  end
+
+  defp start_scan(state, opts) do
     settings = Settings.get()
     scan_type = Keyword.get(opts, :type, settings.scan_type)
 
@@ -49,7 +59,7 @@ defmodule MusicBox.FileScanner.Producer do
         {[], schedule_poll(state)}
       end
 
-    {:noreply, entries, state}
+    {:ok, entries, state}
   end
 
   defp get_entries(state, demand, prepend_entries \\ []) do

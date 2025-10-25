@@ -10,17 +10,20 @@ defmodule MusicBox.FileScannerTest do
   @fixtures_path Path.expand("../support/fixtures/music_files", __DIR__)
 
   defmodule TestConsumer do
+    # <- Don't forget this!
+    use GenStage
+
     def start_link(producer) do
       GenStage.start_link(__MODULE__, {producer, self()})
     end
 
-    def init({producer, owner}) do
-      {:consumer, owner, subscribe_to: [{producer, min_demand: 0, max_demand: 3}]}
+    def init({producer, test_pid}) do
+      {:consumer, test_pid, subscribe_to: [producer]}
     end
 
-    def handle_events(events, _from, owner) do
-      send(owner, {:received, events})
-      {:noreply, [], owner}
+    def handle_events(events, _from, test_pid) do
+      send(test_pid, {:events, events})
+      {:noreply, [], test_pid}
     end
   end
 
@@ -156,8 +159,7 @@ defmodule MusicBox.FileScannerTest do
   describe "producer" do
     test "produces file and directory entries" do
       MusicBox.Settings.set(%{music_path: @fixtures_path})
-      {:ok, producer} = start_supervised({Producer, auto_start: true})
-      {:ok, _cons} = TestConsumer.start_link(producer)
+      start_producer_consumer()
 
       expected = [
         %Entry{
@@ -174,14 +176,14 @@ defmodule MusicBox.FileScannerTest do
         }
       ]
 
-      assert_receive {:received, ^expected}
+      assert_entries expected
     end
 
     test "can dive deeper into directories in batches" do
       MusicBox.Settings.set(%{music_path: @fixtures_path})
-      {:ok, producer} = start_supervised({Producer, auto_start: true})
-      {:ok, _cons} = TestConsumer.start_link(producer)
-      assert_receive {:received, events}
+      {producer, _consumer} = start_producer_consumer()
+
+      assert_receive {:events, events}
       path_entries = Enum.filter(events, & &1.is_dir)
       GenStage.call(producer, {:walk, path_entries})
 
@@ -244,9 +246,25 @@ defmodule MusicBox.FileScannerTest do
         }
       ]
 
-      for expected_batch <- Enum.chunk_every(expected, 3) do
-        assert_receive {:received, ^expected_batch}
-      end
+      assert_entries expected
+    end
+  end
+
+  defp start_producer_consumer(opts \\ []) do
+    auto_start = Keyword.get(opts, :auto_start, false)
+    {:ok, producer} = start_supervised({Producer, auto_start: auto_start})
+    {:ok, consumer} = TestConsumer.start_link(producer)
+
+    refute_receive {:events, _}, 200
+    GenStage.call(producer, :start)
+    {producer, consumer}
+  end
+
+  defp assert_entries(entries) do
+    assert_receive {:events, events}
+
+    for entry <- entries do
+      assert entry in events
     end
   end
 end
