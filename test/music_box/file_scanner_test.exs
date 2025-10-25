@@ -176,7 +176,7 @@ defmodule MusicBox.FileScannerTest do
         }
       ]
 
-      assert_entries expected
+      assert_entries(expected)
     end
 
     test "can dive deeper into directories in batches" do
@@ -246,7 +246,7 @@ defmodule MusicBox.FileScannerTest do
         }
       ]
 
-      assert_entries expected
+      assert_entries(expected)
     end
   end
 
