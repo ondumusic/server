@@ -36,7 +36,9 @@ config :music_box, MusicBox.FileScanner, producer_module: MusicBox.FileScanner.P
 
 config :music_box, custom_artwork_endpoint: nil
 
-config :music_box, probe_tool: MusicBox.Tool.Probe
+config :music_box,
+  extract_artwork_tool: MusicBox.Tool.ExtractArtwork,
+  probe_tool: MusicBox.Tool.Probe
 
 config :music_box, MusicBox.Transcoder,
   artwork_path: Path.absname("./tmp/artwork"),
