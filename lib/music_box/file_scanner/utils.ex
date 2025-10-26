@@ -16,16 +16,6 @@ defmodule MusicBox.FileScanner.Utils do
     |> Base.encode16(case: :lower)
   end
 
-  @spec ffprobe(String.t()) :: {:ok, map()} | {:error, :ffprobe_failed}
-  def ffprobe(path) do
-    probe_tool = Application.get_env(:music_box, :probe_tool)
-
-    case probe_tool.exec(path) do
-      {:ok, %{}} = result -> result
-      _ -> {:error, :ffprobe_failed}
-    end
-  end
-
   @spec to_integer(String.t() | integer() | nil) :: integer() | nil
   def to_integer(nil), do: nil
   def to_integer(n) when is_integer(n), do: n

@@ -11,7 +11,7 @@ defmodule MusicBox.Tool.Probe do
          {:ok, json} <- JSON.decode(stdout) do
       {:ok, json}
     else
-      _ -> {:error, :ffprobe_failed}
+      _ -> {:error, :probe_failed}
     end
   end
 end

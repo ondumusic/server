@@ -2,6 +2,7 @@ defmodule MusicBox.FileScanner.Analyzer do
   @moduledoc false
 
   alias MusicBox.FileScanner.{Entry, FileTypes, Utils}
+  alias MusicBox.Tool
 
   defmodule Metadata do
     @moduledoc false
@@ -54,13 +55,13 @@ defmodule MusicBox.FileScanner.Analyzer do
            metadata: metadata
          }}
 
-      {:error, :ffprobe_failed} ->
+      {:error, :probe_failed} ->
         {:error, :analyzing_failed}
     end
   end
 
   defp get_metadata(path) do
-    with {:ok, json} <- Utils.ffprobe(path) do
+    with {:ok, json} <- Tool.probe(path) do
       metadata = %Metadata{}
       keys = Map.keys(metadata)
       {:ok, parse(metadata, keys, json)}
