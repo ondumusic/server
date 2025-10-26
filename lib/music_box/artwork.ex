@@ -5,6 +5,7 @@ defmodule MusicBox.Artwork do
   alias MusicBox.Albums.Album
   alias MusicBox.Artwork.Fetcher
   alias MusicBox.Repo
+  alias MusicBox.Tool
 
   require Logger
 
@@ -68,7 +69,7 @@ defmodule MusicBox.Artwork do
 
   defp update_album(album, params) do
     if path = Map.get(params, :path),
-      do: process_image(album, path)
+      do: Tool.resize_artwork(%{album: album, path: path})
 
     Albums.update_artwork(
       album,
@@ -77,32 +78,6 @@ defmodule MusicBox.Artwork do
       })
     )
     |> tap(&broadcast/1)
-  end
-
-  defp process_image(album, path) do
-    vipsthumbnail = System.find_executable("vipsthumbnail") || throw(:vipsthumbnail_not_found)
-
-    args =
-      ~w(-t --size=500x500 --smartcrop attention) ++
-        [
-          "--output=#{path}[Q=85]",
-          path
-        ]
-
-    Logger.debug("Resizing artwork for album #{album.id}, file: #{path}")
-
-    with true <- File.exists?(path),
-         {_stdout, 0} <- System.cmd(vipsthumbnail, args) do
-      :ok
-    else
-      false ->
-        Logger.error("Failed to resize artwork for album #{album.id}, file not found?")
-        {:error, :file_not_found}
-
-      {_stdout, exitcode} ->
-        Logger.error("Failed to resize artwork for album #{album.id}, exit code #{exitcode}")
-        {:error, :failed_to_resize}
-    end
   end
 
   defp broadcast({:ok, %{path: path} = artwork}) when not is_nil(path) do
