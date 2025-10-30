@@ -33,22 +33,24 @@ defmodule MusicBox.FileScanner.Operations do
     |> Repo.transact()
   end
 
-  def filter_existing_paths([]), do: []
+  def broadcast(results) do
+    changes =
+      results
+      |> Map.take([:artists, :albums])
+      |> Enum.map(fn {key, items} ->
+        {key, Enum.map(items, & &1.id)}
+      end)
+      |> Map.new()
 
-  def filter_existing_paths(paths) do
-    from(f in File, where: f.path in ^paths, select: f.path)
-    |> Repo.all()
+    MusicBoxWeb.Endpoint.broadcast!("library:updated", "processed", changes)
+    MusicBox.Artwork.Worker.work()
   end
 
-  def walk_entries([], _pipeline), do: :ok
+  def find_existing_paths([]), do: []
 
-  def walk_entries(entries, pipeline) when is_atom(pipeline) do
-    Broadway.producer_names(pipeline)
-    |> Enum.random()
-    |> case do
-      nil -> :noop
-      producer -> GenStage.call(producer, {:walk, entries})
-    end
+  def find_existing_paths(paths) do
+    from(f in File, where: f.path in ^paths, select: f.path)
+    |> Repo.all()
   end
 
   defp maybe_create_files(repo, files, _results) do

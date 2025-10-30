@@ -1,7 +1,8 @@
 defmodule MusicBox.FileScanner.Analyzer do
   @moduledoc false
 
-  alias MusicBox.FileScanner.{Entry, FileTypes, Utils}
+  alias MusicBox.FileScanner.FileTypes
+  alias MusicBox.FileScanner.Utils
   alias MusicBox.Tool
 
   defmodule Metadata do
@@ -38,25 +39,38 @@ defmodule MusicBox.FileScanner.Analyzer do
     @type t :: %__MODULE__{}
   end
 
-  @type analyze_opts :: {:type, FileTypes.t()}
-  @spec analyze(Entry.t(), [analyze_opts()]) :: {:ok, Result.t()} | {:error, :analyzing_failed}
-  def analyze(%Entry{path: path}, opts \\ []) do
+  @spec analyze(path :: String.t()) :: {:ok, Result.t()} | {:error, :analyzing_failed}
+  def analyze("" <> path) do
     %{size: size, mtime: mtime} = File.stat!(path, time: :posix)
 
-    case get_metadata(path) do
-      {:ok, metadata} ->
-        {:ok,
-         %Result{
-           path: path,
-           size: size,
-           type: Keyword.get(opts, :type, :unknown),
-           last_modified_at: DateTime.from_unix!(mtime),
-           checksum: Utils.calculate_checksum!(path),
-           metadata: metadata
-         }}
+    with {:ok, type} <- detect_file_type(path),
+         {:ok, metadata} <- get_metadata(path) do
+      {:ok,
+       %Result{
+         path: path,
+         size: size,
+         type: type,
+         last_modified_at: DateTime.from_unix!(mtime),
+         checksum: Utils.calculate_checksum!(path),
+         metadata: metadata
+       }}
+    else
+      {:error, :unknown_type} ->
+        {:error, :analyzing_failed}
 
       {:error, :probe_failed} ->
         {:error, :analyzing_failed}
+    end
+  end
+
+  defp detect_file_type(path) do
+    with {:ok, file} <- File.open(path, [:binary, :read]),
+         header_bytes <- IO.binread(file, 262),
+         _ <- File.close(file),
+         {:ok, type} <- FileTypes.detect(header_bytes) do
+      {:ok, type}
+    else
+      _ -> {:error, :unknown_type}
     end
   end
 

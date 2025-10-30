@@ -32,8 +32,6 @@ config :phoenix, :json_library, JSON
 config :ecto, :json_library, JSON
 config :ecto_sqlite3, :json_library, JSON
 
-config :music_box, MusicBox.FileScanner, producer_module: MusicBox.FileScanner.Producer
-
 config :music_box, custom_artwork_endpoint: nil
 
 config :music_box,

@@ -24,7 +24,7 @@ defmodule MusicBox.Application do
         else:
           children ++
             [
-              MusicBox.FileScanner.Pipeline,
+              MusicBox.FileScanner.Supervisor,
               MusicBox.Transcoder,
               MusicBox.Artwork.Worker
             ]
