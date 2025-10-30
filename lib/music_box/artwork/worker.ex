@@ -19,11 +19,8 @@ defmodule MusicBox.Artwork.Worker do
   @impl true
   def init(_) do
     default_state = []
+    Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:updated")
     {:ok, schedule_next_batch(default_state)}
-  end
-
-  def work do
-    GenServer.cast(__MODULE__, :next_batch)
   end
 
   @impl true
@@ -32,6 +29,15 @@ defmodule MusicBox.Artwork.Worker do
   end
 
   @impl true
+  def handle_info(%{topic: "library:updated", payload: payload}, state) do
+    state =
+      if Map.get(payload, :albums, []) != [],
+        do: schedule_next_batch(state),
+        else: state
+
+    {:noreply, state}
+  end
+
   def handle_info(:next_batch, state) do
     {:noreply, next_batch(state)}
   end

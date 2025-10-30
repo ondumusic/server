@@ -2,6 +2,8 @@
 defmodule MusicBox.FileScanner.Operations do
   @moduledoc false
 
+  import Phoenix.Channel.Server, only: [broadcast: 4]
+
   alias Ecto.Multi
   alias MusicBox.Albums.Album
   alias MusicBox.Artists.Artist
@@ -42,8 +44,7 @@ defmodule MusicBox.FileScanner.Operations do
       end)
       |> Map.new()
 
-    MusicBoxWeb.Endpoint.broadcast!("library:updated", "processed", changes)
-    MusicBox.Artwork.Worker.work()
+    broadcast(MusicBox.PubSub, "library:updated", "processed", changes)
   end
 
   def find_existing_paths([]), do: []
