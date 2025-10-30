@@ -45,7 +45,6 @@ defmodule MusicBox.MixProject do
       {:gettext, "~> 1.0"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-      {:broadway, "~> 1.2"},
       {:flop, "~> 0.26.3"},
       {:slugify, "~> 1.3"},
       {:req, "~> 0.5.15"},
