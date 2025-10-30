@@ -19,6 +19,8 @@ defmodule MusicBox.Artwork.Fetcher.MusicBrainz do
     end
   end
 
+  defp find_releases(%{artist: nil}), do: {:error, :not_found}
+
   defp find_releases(album) do
     search = %{
       artist: album.artist.name,
