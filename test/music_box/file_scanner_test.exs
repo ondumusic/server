@@ -6,6 +6,7 @@ defmodule MusicBox.FileScannerTest do
 
   alias MusicBox.FileScanner
   alias MusicBox.FileScanner.Analyzer
+  alias MusicBox.FileScanner.Walker
   alias MusicBox.Settings
 
   @fixtures_path Path.expand("../support/fixtures/music_files", __DIR__)
@@ -196,6 +197,32 @@ defmodule MusicBox.FileScannerTest do
       for path <- files do
         assert {:error, :analyzing_failed} = Analyzer.analyze(path)
       end
+    end
+  end
+
+  describe "walker" do
+    test "walks given directory to find all files" do
+      walker = Walker.walk(@fixtures_path)
+
+      expected = [
+        Path.join(@fixtures_path, "/README.md"),
+        Path.join(@fixtures_path, "/without_tags/sample.opus"),
+        Path.join(@fixtures_path, "/without_tags/sample.mp3"),
+        Path.join(@fixtures_path, "/without_tags/sample.m4a"),
+        Path.join(@fixtures_path, "/without_tags/sample.flac"),
+        Path.join(@fixtures_path, "/without_tags/sample.ogg"),
+        Path.join(@fixtures_path, "/without_tags/sample.wav"),
+        Path.join(@fixtures_path, "/with_tags/sample.id3v11.mp3"),
+        Path.join(@fixtures_path, "/with_tags/sample.m4a"),
+        Path.join(@fixtures_path, "/with_tags/sample.flac"),
+        Path.join(@fixtures_path, "/with_tags/sample.multipage.ogg"),
+        Path.join(@fixtures_path, "/with_tags/sample.id3v22.mp3"),
+        Path.join(@fixtures_path, "/with_tags/sample.ogg"),
+        Path.join(@fixtures_path, "/with_tags/sample.id3v23.mp3"),
+        Path.join(@fixtures_path, "/with_tags/sample.id3v24.mp3")
+      ]
+
+      assert ^expected = Enum.into(walker, [])
     end
   end
 
