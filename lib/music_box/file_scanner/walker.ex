@@ -27,7 +27,11 @@ defmodule MusicBox.FileScanner.Walker do
         {[], rest}
 
       {:ok, entries} ->
-        new_paths = Enum.map(entries, &Path.join(current, &1))
+        new_paths =
+          entries
+          |> Enum.sort()
+          |> Enum.map(&Path.join(current, &1))
+
         {[], new_paths ++ rest}
 
       {:error, reason} ->

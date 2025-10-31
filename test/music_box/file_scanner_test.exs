@@ -206,20 +206,20 @@ defmodule MusicBox.FileScannerTest do
 
       expected = [
         Path.join(@fixtures_path, "/README.md"),
-        Path.join(@fixtures_path, "/without_tags/sample.opus"),
-        Path.join(@fixtures_path, "/without_tags/sample.mp3"),
-        Path.join(@fixtures_path, "/without_tags/sample.m4a"),
-        Path.join(@fixtures_path, "/without_tags/sample.flac"),
-        Path.join(@fixtures_path, "/without_tags/sample.ogg"),
-        Path.join(@fixtures_path, "/without_tags/sample.wav"),
-        Path.join(@fixtures_path, "/with_tags/sample.id3v11.mp3"),
-        Path.join(@fixtures_path, "/with_tags/sample.m4a"),
         Path.join(@fixtures_path, "/with_tags/sample.flac"),
-        Path.join(@fixtures_path, "/with_tags/sample.multipage.ogg"),
+        Path.join(@fixtures_path, "/with_tags/sample.id3v11.mp3"),
         Path.join(@fixtures_path, "/with_tags/sample.id3v22.mp3"),
-        Path.join(@fixtures_path, "/with_tags/sample.ogg"),
         Path.join(@fixtures_path, "/with_tags/sample.id3v23.mp3"),
-        Path.join(@fixtures_path, "/with_tags/sample.id3v24.mp3")
+        Path.join(@fixtures_path, "/with_tags/sample.id3v24.mp3"),
+        Path.join(@fixtures_path, "/with_tags/sample.m4a"),
+        Path.join(@fixtures_path, "/with_tags/sample.multipage.ogg"),
+        Path.join(@fixtures_path, "/with_tags/sample.ogg"),
+        Path.join(@fixtures_path, "/without_tags/sample.flac"),
+        Path.join(@fixtures_path, "/without_tags/sample.m4a"),
+        Path.join(@fixtures_path, "/without_tags/sample.mp3"),
+        Path.join(@fixtures_path, "/without_tags/sample.ogg"),
+        Path.join(@fixtures_path, "/without_tags/sample.opus"),
+        Path.join(@fixtures_path, "/without_tags/sample.wav")
       ]
 
       assert ^expected = Enum.into(walker, [])
