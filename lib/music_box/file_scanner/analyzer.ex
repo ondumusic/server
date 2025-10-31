@@ -41,25 +41,20 @@ defmodule MusicBox.FileScanner.Analyzer do
 
   @spec analyze(path :: String.t()) :: {:ok, Result.t()} | {:error, :analyzing_failed}
   def analyze("" <> path) do
-    %{size: size, mtime: mtime} = File.stat!(path, time: :posix)
-
-    with {:ok, type} <- detect_file_type(path),
+    with {:ok, stat} <- File.stat(path, time: :posix),
+         {:ok, type} <- detect_file_type(path),
          {:ok, metadata} <- get_metadata(path) do
       {:ok,
        %Result{
          path: path,
-         size: size,
+         size: stat.size,
          type: type,
-         last_modified_at: DateTime.from_unix!(mtime),
+         last_modified_at: DateTime.from_unix!(stat.mtime),
          checksum: Utils.calculate_checksum!(path),
          metadata: metadata
        }}
     else
-      {:error, :unknown_type} ->
-        {:error, :analyzing_failed}
-
-      {:error, :probe_failed} ->
-        {:error, :analyzing_failed}
+      {:error, _} -> {:error, :analyzing_failed}
     end
   end
 
