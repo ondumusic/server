@@ -9,7 +9,6 @@ defmodule MusicBox.Artwork.Worker do
   import Ecto.Query
 
   @max_concurrency 2
-  @interval_ms :timer.seconds(2)
 
   @spec start_link(Keyword.t()) :: {:ok, pid()}
   def start_link(_opts) do
@@ -20,19 +19,14 @@ defmodule MusicBox.Artwork.Worker do
   def init(_) do
     default_state = []
     Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:updated")
-    {:ok, schedule_next_batch(default_state)}
-  end
-
-  @impl true
-  def handle_cast(:next_batch, state) do
-    {:noreply, next_batch(state)}
+    {:ok, next_batch(default_state)}
   end
 
   @impl true
   def handle_info(%{topic: "library:updated", payload: payload}, state) do
     state =
       if Map.get(payload, :albums, []) != [],
-        do: schedule_next_batch(state),
+        do: next_batch(state),
         else: state
 
     {:noreply, state}
@@ -44,7 +38,7 @@ defmodule MusicBox.Artwork.Worker do
 
   def handle_info({:processed, album}, state) do
     new_state = Enum.reject(state, &(&1.id == album.id))
-    {:noreply, schedule_next_batch(new_state)}
+    {:noreply, next_batch(new_state)}
   end
 
   def handle_info({:DOWN, ref, :process, _pid, _reason}, state) do
@@ -86,10 +80,5 @@ defmodule MusicBox.Artwork.Worker do
       Artwork.find(album)
       send(myself, {:processed, album})
     end)
-  end
-
-  defp schedule_next_batch(state) do
-    Process.send_after(self(), :next_batch, @interval_ms)
-    state
   end
 end
