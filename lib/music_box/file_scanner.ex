@@ -4,12 +4,13 @@ defmodule MusicBox.FileScanner do
   alias MusicBox.FileScanner.Agent
   alias MusicBox.FileScanner.Analyzer
   alias MusicBox.FileScanner.Operations
+  alias MusicBox.FileScanner.PeriodicWorker
   alias MusicBox.FileScanner.Walker
   alias MusicBox.Settings
 
-  @type scan_type :: :full | :quick
-  @type scan_error :: :missing_music_path | :already_running
-  @spec scan(scan_type() | nil) :: {:ok, :scan_completed} | {:error, scan_error()}
+  @type scan_type :: :full | :quick | nil
+  @type scan_error :: :missing_music_path | :already_running | :unknown_error
+  @spec scan(scan_type :: scan_type()) :: {:ok, :scan_completed} | {:error, scan_error()}
   def scan(scan_type \\ nil) do
     with %Settings{music_path: "" <> _path} <- Settings.get(),
          {:agent, false} <- {:agent, Agent.running?()} do
@@ -17,6 +18,19 @@ defmodule MusicBox.FileScanner do
     else
       %Settings{} -> {:error, :missing_music_path}
       {:agent, true} -> {:error, :already_running}
+    end
+  end
+
+  @spec scan(scan_type :: scan_type()) :: {:ok, :scan_started} | {:error, scan_error()}
+  def scan_async(scan_type) do
+    with %Settings{music_path: "" <> _path} <- Settings.get(),
+         {:agent, false} <- {:agent, Agent.running?()},
+         :ok <- PeriodicWorker.scan(scan_type) do
+      {:ok, :scan_started}
+    else
+      %Settings{} -> {:error, :missing_music_path}
+      {:agent, true} -> {:error, :already_running}
+      _error -> {:error, :unknown_error}
     end
   end
 

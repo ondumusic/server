@@ -15,7 +15,7 @@ defmodule MusicBoxWeb.SettingsController do
 
       {:ok, new_settings} ->
         if settings.music_path !== new_settings.music_path,
-          do: FileScanner.scan()
+          do: FileScanner.scan_async(:full)
 
         conn
         |> put_status(:ok)
