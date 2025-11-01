@@ -10,7 +10,8 @@ defmodule MusicBox.FileScanner.Supervisor do
   def init(_arg) do
     Supervisor.init(
       [
-        MusicBox.FileScanner.Agent
+        MusicBox.FileScanner.Agent,
+        MusicBox.FileScanner.PeriodicWorker
       ],
       strategy: :one_for_one,
       name: __MODULE__
