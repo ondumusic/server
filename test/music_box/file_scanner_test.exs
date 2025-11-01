@@ -26,15 +26,6 @@ defmodule MusicBox.FileScannerTest do
         Phoenix.PubSub.unsubscribe(MusicBox.PubSub, "library:updated")
       end)
 
-      :ok
-    end
-
-    test "cannot start twice" do
-      FileScanner.Agent.start(:full)
-      assert {:error, :already_running} = FileScanner.scan(:full)
-    end
-
-    test "skips existing files when doing a quick scan" do
       stub_probe(fn _path ->
         {:ok,
          %{
@@ -52,6 +43,15 @@ defmodule MusicBox.FileScannerTest do
          }}
       end)
 
+      :ok
+    end
+
+    test "cannot start twice" do
+      FileScanner.Agent.start(:full)
+      assert {:error, :already_running} = FileScanner.scan(:full)
+    end
+
+    test "skips existing files when doing a quick scan" do
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
       file_count = Repo.aggregate(MusicBox.Files.File, :count)
       assert_receive %{topic: "library:updated", payload: payload}
@@ -65,23 +65,6 @@ defmodule MusicBox.FileScannerTest do
     end
 
     test "rescans existing files when doing a full scan" do
-      stub_probe(fn _path ->
-        {:ok,
-         %{
-           format: %{
-             duration: "3.448125",
-             tags: %{
-               artist: "Test Artist",
-               album: "Test Album",
-               title: "Test Title",
-               genre: "Jazz",
-               date: "2000-01-01",
-               track: "3"
-             }
-           }
-         }}
-      end)
-
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
       file_count = Repo.aggregate(MusicBox.Files.File, :count)
       assert_receive %{topic: "library:updated", payload: payload}
@@ -91,6 +74,13 @@ defmodule MusicBox.FileScannerTest do
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
       new_file_count = Repo.aggregate(MusicBox.Files.File, :count)
       assert file_count == new_file_count
+      assert_receive %{topic: "library:updated", payload: payload}
+      assert [_album_id] = payload.albums
+      assert [_artist_id] = payload.artists
+    end
+
+    test "can start async" do
+      {:ok, :scan_started} = FileScanner.scan_async(:full)
       assert_receive %{topic: "library:updated", payload: payload}
       assert [_album_id] = payload.albums
       assert [_artist_id] = payload.artists
