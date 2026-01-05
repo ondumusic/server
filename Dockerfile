@@ -24,9 +24,11 @@ ARG NODE_BUILDER_IMAGE="docker.io/node:${NODEJS_VERSION}-slim"
 ########################################
 # Step 1. Build assets
 ########################################
-FROM ${NODE_BUILDER_IMAGE} as node-builder
+FROM --platform=linux/amd64 ${NODE_BUILDER_IMAGE} AS node-builder
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+ENV CI=true
 
 # Prepare the directories
 RUN mkdir -p /app/priv/static
@@ -45,7 +47,8 @@ WORKDIR /app/assets
 RUN pnpm install --frozen-lockfile
 
 # Build the pnpm project
-RUN pnpm run build
+RUN pnpm tsc -b
+RUN pnpm vite build --mode production
 
 
 ########################################
@@ -101,8 +104,8 @@ ENV MIX_ENV="prod"
 
 # Install software
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
-    libstdc++6 openssl libncurses5 locales \
+  && apt-get install --fix-missing -y --no-install-recommends \
+    libstdc++6 openssl libncurses6 locales \
     ca-certificates libvips libvips-tools ffmpeg \
   && rm -rf /var/lib/apt/lists/*
 

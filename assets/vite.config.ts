@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      minify: mode === "dev" ? false : "esbuild",
+      minify: mode === "dev" ? false : "terser",
       cssMinify: mode === "dev" ? false : "lightningcss",
       sourcemap: mode === "dev",
       outDir: "../priv/static",
@@ -29,6 +29,7 @@ export default defineConfig(({ mode }) => {
           chunkFileNames: "[name].js",
           entryFileNames: "assets/[name].js",
         },
+        maxParallelFileOps: 1,
       },
     },
     define: {
