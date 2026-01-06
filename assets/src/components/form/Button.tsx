@@ -27,8 +27,8 @@ const styleColors = (style?: ButtonStyle): Colors => {
     default:
       return {
         button:
-          "bg-emerald-700 hover:bg-emerald-800 text-white active:text-white/80 disabled:text-white/80 disabled:bg-emerald-900/50",
-        link: "text-emerald-600 hover:text-zinc-700 active:text-black disabled:text-zinc-400",
+          "bg-accent-700 hover:bg-accent-800 text-white active:text-white/80 disabled:text-white/80 disabled:bg-accent-900/50",
+        link: "text-accent-600 hover:text-zinc-700 active:text-black disabled:text-zinc-400",
       };
   }
 };

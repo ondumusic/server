@@ -52,10 +52,13 @@ export function NowPlaying() {
 
   return (
     <div className="order-1 lg:order-2 relative w-full select-none group/player">
-      <div className="relative bg-emerald-700/60 p-2 pr-16 lg:pr-2 py-3 lg:py-2 lg:rounded-lg overflow-hidden cursor-default">
-        <div className="flex justify-between items-end tabular-nums text-white/70 pt-1 lg:pt-0 lg:pb-1">
+      <div className="relative bg-accent-100 p-2 pr-16 lg:pr-2 py-3 lg:py-2 lg:rounded-lg overflow-hidden cursor-default">
+        <div className="flex justify-between items-end tabular-nums transition-colors text-selected/70 pt-1 lg:pt-0 lg:pb-1">
           <div className="text-left lg:text-center overflow-hidden lg:mx-12 order-2">
-            <Marquee className="text-white/90 font-semibold" text={trackName} />
+            <Marquee
+              className="transition-colors text-selected/90 font-semibold"
+              text={trackName}
+            />
             <div className="lg:mx-8">
               <Marquee text={artistAlbum.join(" - ")} />
             </div>
@@ -69,9 +72,9 @@ export function NowPlaying() {
           </span>
         </div>
 
-        <div className="absolute z-[10] top-0 lg:top-auto lg:bottom-0 left-0 right-0 bg-emerald-300/40 h-1">
+        <div className="absolute z-[10] top-0 lg:top-auto lg:bottom-0 left-0 right-0 bg-accent-300/40 h-1">
           <div
-            className="h-1 lg:rounded-tr-lg lg:rounded-br-lg bg-emerald-200"
+            className="h-1 lg:rounded-tr-lg lg:rounded-br-lg bg-accent-400"
             style={{ width: `${progressPercentage}%` }}
           ></div>
         </div>
@@ -79,7 +82,7 @@ export function NowPlaying() {
       <input
         type="range"
         className="
-            appearance-none bg-transparent z-[20]
+            appearance-none bg-transparent z-[20] transition-colors
             absolute left-0 right-0 top-0 lg:top-auto lg:bottom-0
             [&::-webkit-slider-runnable-track]:bg-transparent
             [&::-webkit-slider-thumb]:appearance-none
@@ -92,7 +95,7 @@ export function NowPlaying() {
             lg:[&::-webkit-slider-thumb]:translate-y-[4px]
             [&::-webkit-slider-thumb]:translate-x-[-1px]
             [&::-webkit-slider-thumb]:bg-transparent
-            group-hover/player:[&::-webkit-slider-thumb]:bg-white
+            group-hover/player:[&::-webkit-slider-thumb]:bg-accent-600
             group-hover/player:[&::-webkit-slider-thumb]:shadow-xl
           "
         value={currentTime}

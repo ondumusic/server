@@ -40,6 +40,8 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.16",
+    "@types/culori": "^4.0.1",
+    "culori": "^4.0.2",
     "i18next": "^25.7.3",
     "phoenix": "^1.8.3",
     "react": "^19.2.3",

@@ -33,13 +33,15 @@ export function ArtistListItem({
   return (
     <li
       ref={refContainer}
-      className={classNames([isSelected && "bg-emerald-600 text-white"])}
+      className={classNames([
+        "transition-colors",
+        isSelected && "bg-accent-200 text-selected",
+      ])}
     >
       <Link
         to={`/artists/${artist.slug}`}
         className="px-4 whitespace-nowrap items-center flex gap-2"
       >
-        <div className="rounded-full bg-stone-200 aspect-square w-8 h-8"></div>
         <Marquee className="py-3" delay={500} text={artist.name} />
       </Link>
     </li>

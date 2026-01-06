@@ -14,7 +14,7 @@ export function Player() {
   const { hasNextTrack, hasPrevTrack, prevTrack, nextTrack } = useQueue();
 
   return (
-    <div className="sticky bottom-0 lg:text-md flex-shrink-0 bg-emerald-600 text-white lg:p-3 text-sm lg:text-sm text-center select-none">
+    <div className="sticky bottom-0 lg:text-md flex-shrink-0 bg-accent-200 transition-colors text-accent-600 lg:p-3 text-sm lg:text-sm text-center select-none">
       <div className="flex justify-center items-center w-full lg:max-w-3/4 lg:mx-auto">
         <div className="flex flex-shrink-0 lg:mr-4 order-2 lg:order-1">
           <button

@@ -1,3 +1,39 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 @plugin "@tailwindcss/forms";
+
+@layer base {
+  :root {
+    --accent-50: var(--color-slate-50);
+    --accent-100: var(--color-slate-100);
+    --accent-200: var(--color-slate-200);
+    --accent-300: var(--color-slate-300);
+    --accent-400: var(--color-slate-400);
+    --accent-500: var(--color-slate-500);
+    --accent-600: var(--color-slate-600);
+    --accent-700: var(--color-slate-700);
+    --accent-800: var(--color-slate-800);
+    --accent-900: var(--color-slate-900);
+    --accent-950: var(--color-slate-950);
+
+    --text-base: var(--color-black);
+    --text-selected: var(--color-black);
+  }
+}
+
+@theme inline {
+  --color-accent-50: var(--accent-50);
+  --color-accent-100: var(--accent-100);
+  --color-accent-200: var(--accent-200);
+  --color-accent-300: var(--accent-300);
+  --color-accent-400: var(--accent-400);
+  --color-accent-500: var(--accent-500);
+  --color-accent-600: var(--accent-600);
+  --color-accent-700: var(--accent-700);
+  --color-accent-800: var(--accent-800);
+  --color-accent-900: var(--accent-900);
+  --color-accent-950: var(--accent-950);
+
+  --color-base: var(--text-base);
+  --color-selected: var(--text-selected);
+}
