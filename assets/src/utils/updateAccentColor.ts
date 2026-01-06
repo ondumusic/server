@@ -5,13 +5,15 @@
  * it seems to be fine. Room for improvement, but this is not the main focus
  * right now as it's just an experiment.
  **/
+
 import { formatCss, oklch } from "culori";
 
 // Extract accent color from image element (avoiding extremes)
 function extractAccentColor(img: HTMLImageElement): [number, number, number] {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
-  if (!ctx) return [0, 0, 0];
+  const defaultResult: [number, number, number] = [100, 100, 100];
+  if (!ctx) return defaultResult;
 
   // Scale down for performance
   const scale = 0.1;
@@ -21,8 +23,8 @@ function extractAccentColor(img: HTMLImageElement): [number, number, number] {
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
-  // Count colors (bucketed for clustering) with edge weighting
-  const colors = new Map<
+  // First pass: count ALL colors (with edge weighting) before filtering
+  const allColors = new Map<
     string,
     { rgb: [number, number, number]; count: number }
   >();
@@ -36,84 +38,120 @@ function extractAccentColor(img: HTMLImageElement): [number, number, number] {
       b = data[i + 2],
       a = data[i + 3];
 
-    // Skip transparent pixels
     if (a < 128) continue;
 
-    // Basic brightness filter - avoid pure black/white extremes
-    const brightness = (r + g + b) / 3;
-    if (brightness < 40 || brightness > 240) continue;
-
-    // Check saturation - prefer colors with some saturation
+    // Calculate saturation for this pixel
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
     const saturation = max === 0 ? 0 : (max - min) / max;
 
-    // Skip very desaturated (gray) colors, but allow darker saturated colors
-    if (saturation < 0.15) continue;
-
-    // Calculate edge weight (pixels farther from center get more weight)
+    // Calculate edge weight
     const pixelIndex = i / 4;
     const x = pixelIndex % canvas.width;
     const y = Math.floor(pixelIndex / canvas.width);
     const distFromCenter = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-    const edgeWeight = (distFromCenter / maxDist) ** 1.5; // Power > 1 emphasizes edges more
-    const weight = Math.max(1, Math.round(edgeWeight * 3)); // 1-3x weight based on distance
+    const edgeWeight = (distFromCenter / maxDist) ** 1.5;
 
-    // Bucket colors for clustering
-    const key = `${Math.floor(r / 32)},${Math.floor(g / 32)},${Math.floor(b / 32)}`;
-    const entry = colors.get(key);
+    // Boost weight for saturated colors (accent colors should be colorful)
+    const saturationBoost = saturation > 0.3 ? 3 : 1;
+    const weight = Math.max(1, Math.round(edgeWeight * 3 * saturationBoost));
+
+    const key = `${Math.floor(r / 16)},${Math.floor(g / 16)},${Math.floor(b / 16)}`;
+    const entry = allColors.get(key);
     if (entry) {
       entry.count += weight;
     } else {
-      colors.set(key, { rgb: [r, g, b], count: weight });
+      allColors.set(key, { rgb: [r, g, b], count: weight });
     }
   }
 
-  // Find most frequent color that passed our filters
-  let max = 0,
-    accent: [number, number, number] = [100, 100, 200];
-  for (const { rgb, count } of colors.values()) {
-    if (count > max) {
-      max = count;
-      accent = rgb;
-    }
+  // Sort by frequency and try to find a good accent color
+  const sortedColors = Array.from(allColors.values()).sort(
+    (a, b) => b.count - a.count,
+  );
+
+  // Debug: log top 5 colors
+  // console.log('Top colors:', sortedColors.slice(0, 20).map(c => ({
+  //   rgb: c.rgb,
+  //   count: c.count,
+  //   brightness: (c.rgb[0] + c.rgb[1] + c.rgb[2]) / 3,
+  //   saturation: ((Math.max(...c.rgb) - Math.min(...c.rgb)) / Math.max(...c.rgb))
+  // })));
+
+  // Try top 20 colors to find a good accent (increased from implicit top-all)
+  for (const { rgb } of sortedColors.slice(0, 20)) {
+    const [r, g, b] = rgb;
+
+    // Basic brightness filter - avoid only pure black/white extremes
+    const brightness = (r + g + b) / 3;
+    if (brightness < 30 || brightness > 245) continue;
+
+    // Check saturation - require actual color, not gray
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const saturation = max === 0 ? 0 : (max - min) / max;
+
+    // Require meaningful saturation to avoid grays
+    if (saturation < 0.2) continue;
+
+    // This color passes our filters and is most dominant - use it
+    return rgb;
   }
 
-  // If no suitable color found, fall back to less strict criteria
-  if (max === 0) {
-    const fallbackColors = new Map<
-      string,
-      { rgb: [number, number, number]; count: number }
-    >();
-
-    for (let i = 0; i < data.length; i += 4) {
-      const r = data[i],
-        g = data[i + 1],
-        b = data[i + 2],
-        a = data[i + 3];
-      if (a < 128) continue;
-
-      const brightness = (r + g + b) / 3;
-      if (brightness < 40 || brightness > 220) continue;
-
-      const key = `${Math.floor(r / 32)},${Math.floor(g / 32)},${Math.floor(b / 32)}`;
-      const entry = fallbackColors.get(key);
-      if (entry) {
-        entry.count++;
-      } else {
-        fallbackColors.set(key, { rgb: [r, g, b], count: 1 });
-      }
-    }
-
-    for (const { rgb, count } of fallbackColors.values()) {
-      if (count > max) {
-        max = count;
-        accent = rgb;
-      }
-    }
+  // Fallback: if no color passes filters, take the most dominant color regardless
+  if (sortedColors.length > 0) {
+    return sortedColors[0].rgb;
   }
 
-  return accent;
+  return defaultResult;
+}
+
+// Generate Tailwind palette using OKLCH
+export function generateTailwindPalette(
+  rgb: [number, number, number],
+): Record<string, string> {
+  const [r, g, b] = rgb;
+  const base = oklch(`rgb(${r}, ${g}, ${b})`);
+
+  if (!base) return {};
+
+  // Normalize base lightness to a standard value (0.55) for 500 shade
+  // This prevents issues with very light colors like yellow
+  const normalizedBase = { ...base, l: 0.55 };
+
+  const shades = {
+    50: 0.98,
+    100: 0.95,
+    200: 0.9,
+    300: 0.82,
+    400: 0.7,
+    500: 0.55, // normalized base
+    600: 0.45,
+    700: 0.38,
+    800: 0.3,
+    900: 0.23,
+    950: 0.18,
+  };
+
+  const palette: Record<string, string> = {};
+
+  Object.entries(shades).forEach(([shade, lightness]) => {
+    // Reduce chroma for very light/dark shades
+    let chroma = normalizedBase.c;
+    if (parseInt(shade, 10) <= 100) chroma *= 0.5;
+    else if (parseInt(shade, 10) <= 200) chroma *= 0.7;
+    else if (parseInt(shade, 10) >= 900) chroma *= 0.9;
+
+    const color = {
+      mode: "oklch" as const,
+      l: lightness,
+      c: chroma,
+      h: normalizedBase.h || 0,
+    };
+    palette[`accent-${shade}`] = formatCss(color);
+  });
+
+  return palette;
 }
 
 // Determine if text should be black or white based on background color
@@ -125,7 +163,7 @@ export function getTextColor(backgroundColor: string): "black" | "white" {
   // OKLCH lightness threshold: 0.65 is roughly where contrast flips
   // Below 0.65 = use white text
   // Above 0.65 = use black text
-  return color.l > 0.7 ? "black" : "white";
+  return color.l > 0.65 ? "black" : "white";
 }
 
 // Get text colors for entire palette
@@ -139,50 +177,6 @@ export function getTextColorsForPalette(
   });
 
   return textColors;
-}
-
-// Generate Tailwind palette using OKLCH
-export function generateTailwindPalette(
-  rgb: [number, number, number],
-): Record<string, string> {
-  const [r, g, b] = rgb;
-  const base = oklch(`rgb(${r}, ${g}, ${b})`);
-
-  if (!base) return {};
-
-  const shades = {
-    50: 0.99,
-    100: 0.95,
-    200: 0.9,
-    300: 0.82,
-    400: 0.7,
-    500: base.l, // base color
-    600: base.l * 0.88,
-    700: base.l * 0.75,
-    800: base.l * 0.62,
-    900: base.l * 0.5,
-    950: base.l * 0.4,
-  };
-
-  const palette: Record<string, string> = {};
-
-  Object.entries(shades).forEach(([shade, lightness]) => {
-    // Reduce chroma for very light/dark shades
-    let chroma = base.c;
-    if (parseInt(shade, 10) <= 100) chroma *= 0.25;
-    else if (parseInt(shade, 10) <= 200) chroma *= 0.5;
-    else if (parseInt(shade, 10) >= 900) chroma *= 0.7;
-
-    const color = {
-      mode: "oklch" as const,
-      l: lightness,
-      c: chroma,
-      h: base.h || 0,
-    };
-    palette[`accent-${shade}`] = formatCss(color);
-  });
-
-  return palette;
 }
 
 // All-in-one function

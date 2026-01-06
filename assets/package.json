@@ -21,6 +21,7 @@
     "@storybook/react-vite": "^10.1.11",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/vite": "^4.1.18",
+    "@types/culori": "^4.0.1",
     "@types/node": "^25.0.3",
     "@types/phoenix": "^1.6.7",
     "@types/react": "^19.2.7",
@@ -40,7 +41,6 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.16",
-    "@types/culori": "^4.0.1",
     "culori": "^4.0.2",
     "i18next": "^25.7.3",
     "phoenix": "^1.8.3",
