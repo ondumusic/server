@@ -75,7 +75,7 @@ export function SettingsView({ completeOnboarding }: Props) {
   const form = useForm<SettingFields>("settingsForm", onSubmit);
 
   return (
-    <div className="h-full content-center bg-stone-50">
+    <div className="h-full content-center">
       <div className="mx-auto max-w-md rounded-md p-6 shadow-md bg-white">
         <header className="text-center">
           <div>

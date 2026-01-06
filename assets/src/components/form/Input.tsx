@@ -74,13 +74,13 @@ export function Input<T>(props: Props<T>) {
       )}
 
       {hasError && (
-        <p className="mt-3 flex text-sm gap-1 leading-6 text-rose-600">
+        <p className="mt-3 flex text-sm gap-1 leading-6 text-error">
           {state.errors[field].message}
         </p>
       )}
 
       {props.help && (
-        <div className="mt-3 text-sm leading-6 gap-1 text-stone-400">
+        <div className="mt-3 text-sm leading-6 gap-1 text-muted">
           {props.help}
         </div>
       )}

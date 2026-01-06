@@ -4,20 +4,26 @@
 
 @layer base {
   :root {
-    --accent-50: var(--color-slate-50);
-    --accent-100: var(--color-slate-100);
-    --accent-200: var(--color-slate-200);
-    --accent-300: var(--color-slate-300);
-    --accent-400: var(--color-slate-400);
-    --accent-500: var(--color-slate-500);
-    --accent-600: var(--color-slate-600);
-    --accent-700: var(--color-slate-700);
-    --accent-800: var(--color-slate-800);
-    --accent-900: var(--color-slate-900);
-    --accent-950: var(--color-slate-950);
+    --accent-50: var(--color-stone-50);
+    --accent-100: var(--color-stone-100);
+    --accent-200: var(--color-stone-200);
+    --accent-300: var(--color-stone-300);
+    --accent-400: var(--color-stone-400);
+    --accent-500: var(--color-stone-500);
+    --accent-600: var(--color-stone-600);
+    --accent-700: var(--color-stone-700);
+    --accent-800: var(--color-stone-800);
+    --accent-900: var(--color-stone-900);
+    --accent-950: var(--color-stone-950);
 
     --text-base: var(--color-black);
     --text-selected: var(--color-black);
+
+    --panel-bg: var(--color-white);
+    --panel-fg: var(--color-zinc-800);
+    --label-fg: var(--color-zinc-800);
+    --error-fg: var(--color-rose-600);
+    --muted-fg: var(--color-stone-400);
   }
 }
 
@@ -36,4 +42,10 @@
 
   --color-base: var(--text-base);
   --color-selected: var(--text-selected);
+
+  --color-panel-bg: var(--panel-bg);
+  --color-panel-fg: var(--panel-fg);
+  --color-label: var(--label-fg);
+  --color-error: var(--error-fg);
+  --color-muted: var(--muted-fg);
 }

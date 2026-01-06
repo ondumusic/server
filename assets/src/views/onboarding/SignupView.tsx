@@ -75,7 +75,7 @@ export function SignupView({ setOnboardingStep, completeLogin }: Props) {
   const form = useForm<SignupFields>("signupForm", onSubmit);
 
   return (
-    <div className="h-full content-center bg-stone-50">
+    <div className="h-full content-center">
       <div className="mx-auto max-w-md rounded-md p-6 shadow-md bg-white">
         <header className="text-center">
           <div>

@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => {
           chunkFileNames: "[name].js",
           entryFileNames: "assets/[name].js",
         },
-        maxParallelFileOps: 1,
+        maxParallelFileOps: "CI" in process.env ? 1 : 8,
       },
     },
     define: {

@@ -4,6 +4,7 @@ import { type Location, useLocation, useNavigate } from "react-router";
 import { Button } from "../components/form/Button";
 import { FormActions } from "../components/form/FormActions";
 import { Input } from "../components/form/Input";
+import { Panel } from "../components/Panel";
 import { useAuth } from "../hooks/useAuth";
 import { type FormErrors, type FormState, useForm } from "../hooks/useForm";
 import { api } from "../services/api";
@@ -87,15 +88,9 @@ export function LoginView() {
   const form = useForm<LoginFields>("loginForm", onSubmit);
 
   return (
-    <div className="h-full content-center bg-stone-50">
-      <div className="mx-auto max-w-md rounded-md p-6 shadow-md bg-white">
-        <header className="text-center">
-          <div>
-            <h1 className="text-lg font-semibold leading-8 text-zinc-800">
-              <Trans i18nKey="loginForm.title">Login</Trans>
-            </h1>
-          </div>
-        </header>
+    <div className="h-full content-center">
+      <Panel>
+        <Panel.Header title={t("loginForm.title", { defaultValue: "Login" })} />
 
         <form action={form.action} className="mt-10 space-y-8">
           <Input<LoginFields>
@@ -122,7 +117,7 @@ export function LoginView() {
             </Button>
           </FormActions>
         </form>
-      </div>
+      </Panel>
     </div>
   );
 }

@@ -12,8 +12,8 @@ export function Label(props: Props) {
       htmlFor={props.htmlFor}
       className={classNames([
         "block text-sm font-semibold leading-6",
-        !props.hasError && "text-zinc-800",
-        props.hasError && "text-rose-600",
+        !props.hasError && "text-label",
+        props.hasError && "text-error",
       ])}
     >
       {props.title}
