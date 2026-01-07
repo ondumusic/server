@@ -4,6 +4,7 @@
     "albumCount_other": "{{count}} albums"
   },
   "button": {
+    "playSelectedAlbum": "Play {{ albumName }}",
     "playSelectedTrack": "Play {{ trackName }}",
     "previousTrack": "Previous Track",
     "pauseCurrentTrack": "Pause Current Track",
@@ -17,6 +18,11 @@
   },
   "loading": {
     "text": "Loading"
+  },
+  "player": {
+    "noTrack": {
+      "trackName": "No Track"
+    }
   },
   "formattedDuration": {
     "minutes_one": "{{ count }} minute",

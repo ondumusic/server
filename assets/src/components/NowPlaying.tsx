@@ -1,10 +1,15 @@
-import { type ChangeEvent, useMemo, useRef } from "react";
+import { type ChangeEvent, useEffect, useMemo, useRef } from "react";
 import { Marquee } from "../components/Marquee";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
+import i18next from "../i18next";
 import type { Album } from "../types";
 import { findCachedItem } from "../utils/findCachedItem";
 import { formatDuration } from "../utils/formatDuration";
+import {
+  resetAccentColor,
+  updateAccentColor,
+} from "../utils/updateAccentColor";
 
 export function NowPlaying() {
   const {
@@ -21,11 +26,19 @@ export function NowPlaying() {
 
   const currentAlbum = useMemo(() => {
     if (!currentTrack) return;
+
     return findCachedItem<Album>(
       ["albumList", currentTrack.albumArtistId],
       currentTrack.albumId,
     );
   }, [currentTrack]);
+
+  useEffect(() => {
+    if (!currentAlbum) return;
+    if (!currentAlbum.artworkUrl) {
+      resetAccentColor();
+    }
+  }, [currentAlbum]);
 
   const onScrubStart = () => {
     isScrubbing.current = true;
@@ -51,60 +64,70 @@ export function NowPlaying() {
   );
 
   return (
-    <div className="order-1 lg:order-2 relative w-full select-none group/player">
-      <div className="relative bg-accent-100 p-2 pr-16 lg:pr-2 py-3 lg:py-2 lg:rounded-lg overflow-hidden cursor-default">
-        <div className="flex justify-between items-end tabular-nums transition-colors text-selected/70 pt-1 lg:pt-0 lg:pb-1">
-          <div className="text-left lg:text-center overflow-hidden lg:mx-12 order-2">
-            <Marquee
-              className="transition-colors text-selected/90 font-semibold"
-              text={trackName}
-            />
-            <div className="lg:mx-8">
-              <Marquee text={artistAlbum.join(" - ")} />
-            </div>
-          </div>
+    <div className="w-full cursor-default">
+      {currentAlbum?.artworkUrl && (
+        <img
+          src={currentAlbum?.artworkUrl}
+          alt=""
+          className="w-full aspect-square object-cover object-center rounded-md overflow-hidden shadow-md mb-4"
+          onLoad={(e) => updateAccentColor(e.target as HTMLImageElement)}
+        />
+      )}
 
-          <span className="hidden lg:block flex-shrink-0 text-xs order-1">
-            {formatDuration(currentTime)}
-          </span>
-          <span className="hidden lg:block flex-shrink-0 text-xs order-3">
-            {formatDuration(duration)}
-          </span>
+      <div className="text-center overflow-hidden mb-2">
+        <Marquee
+          className="transition-colors text-selected font-semibold"
+          text={
+            trackName ||
+            i18next.t("player.noTrack.trackName", {
+              defaultValue: "No Track",
+            })
+          }
+        />
+        <div className="text-sm text-selected/60">
+          <Marquee text={artistAlbum.join(" - ")} />
         </div>
+      </div>
 
+      <div className="flex justify-between items-end tabular-nums transition-colors text-selected/60 text-xs mb-2">
+        <span>{formatDuration(currentTime)}</span>
+        <span>{formatDuration(duration)}</span>
+      </div>
+
+      <div className="relative group/timeline">
         <div className="absolute z-[10] top-0 lg:top-auto lg:bottom-0 left-0 right-0 bg-accent-300/40 h-1">
           <div
             className="h-1 lg:rounded-tr-lg lg:rounded-br-lg bg-accent-400"
             style={{ width: `${progressPercentage}%` }}
           ></div>
         </div>
+        <input
+          type="range"
+          className="
+              appearance-none bg-transparent z-[20] transition-colors
+              absolute left-0 right-0 top-0 lg:top-auto lg:bottom-0
+              [&::-webkit-slider-runnable-track]:bg-transparent
+              [&::-webkit-slider-thumb]:appearance-none
+              [&::-webkit-slider-thumb]:h-3
+              [&::-webkit-slider-thumb]:w-3
+              [&::-webkit-slider-thumb]:rounded-md
+              [&::-webkit-slider-thumb]:transition-all
+              [&::-webkit-slider-thumb]:translate-y-[-4px]
+              [&::-webkit-slider-thumb]:shadow-none
+              lg:[&::-webkit-slider-thumb]:translate-y-[4px]
+              [&::-webkit-slider-thumb]:translate-x-[-1px]
+              [&::-webkit-slider-thumb]:bg-transparent
+              group-hover/timeline:[&::-webkit-slider-thumb]:bg-accent-600
+              group-hover/timeline:[&::-webkit-slider-thumb]:shadow-xl
+            "
+          value={currentTime}
+          min={0}
+          max={duration}
+          onChange={onScrub}
+          onMouseDown={onScrubStart}
+          onMouseUp={onScrubEnd}
+        />
       </div>
-      <input
-        type="range"
-        className="
-            appearance-none bg-transparent z-[20] transition-colors
-            absolute left-0 right-0 top-0 lg:top-auto lg:bottom-0
-            [&::-webkit-slider-runnable-track]:bg-transparent
-            [&::-webkit-slider-thumb]:appearance-none
-            [&::-webkit-slider-thumb]:h-3
-            [&::-webkit-slider-thumb]:w-3
-            [&::-webkit-slider-thumb]:rounded-md
-            [&::-webkit-slider-thumb]:transition-all
-            [&::-webkit-slider-thumb]:translate-y-[-4px]
-            [&::-webkit-slider-thumb]:shadow-none
-            lg:[&::-webkit-slider-thumb]:translate-y-[4px]
-            [&::-webkit-slider-thumb]:translate-x-[-1px]
-            [&::-webkit-slider-thumb]:bg-transparent
-            group-hover/player:[&::-webkit-slider-thumb]:bg-accent-600
-            group-hover/player:[&::-webkit-slider-thumb]:shadow-xl
-          "
-        value={currentTime}
-        min={0}
-        max={duration}
-        onChange={onScrub}
-        onMouseDown={onScrubStart}
-        onMouseUp={onScrubEnd}
-      />
     </div>
   );
 }

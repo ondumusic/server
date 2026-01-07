@@ -8,10 +8,6 @@ import { classNames } from "../utils/classNames";
 import { formatDuration } from "../utils/formatDuration";
 import { formatTotalDuration } from "../utils/formatTotalDuration";
 import { splitTracksByDisc } from "../utils/splitTracksByDisc";
-import {
-  resetAccentColor,
-  updateAccentColor,
-} from "../utils/updateAccentColor";
 
 interface Props {
   album: Album;
@@ -38,19 +34,11 @@ export function ArtistAlbumListItem({ album }: Props) {
 
   return (
     <div className="flex w-full">
-      <div className="hidden lg:block flex-shrink-0 pr-18 text-sm w-80">
+      <div className="hidden lg:block flex-shrink-0 pr-12 text-sm w-64">
         <button
           type="button"
           className="relative aspect-square w-full bg-stone-200 mb-4 shadow-xl cursor-pointer rounded-sm overflow-hidden group/cover"
-          onClick={(e) => {
-            e.preventDefault();
-            if (!(e.target instanceof HTMLElement)) return;
-            const img = e.target.closest("button")?.querySelector("img");
-
-            enqueueAndPlay(album.tracks);
-            if (img) updateAccentColor(img);
-            else resetAccentColor();
-          }}
+          onClick={() => enqueueAndPlay(album.tracks)}
           onKeyDown={() => enqueueAndPlay(album.tracks)}
         >
           {album.artworkUrl && (
@@ -61,30 +49,16 @@ export function ArtistAlbumListItem({ album }: Props) {
             />
           )}
 
-          {/*<div className="absolute w-full h-full top-0 left-0 content-center bg-black opacity-0 transition-opacity group-hover/cover:opacity-30">
+          <div className="absolute w-full h-full top-0 left-0 content-center bg-black opacity-0 transition-opacity group-hover/cover:opacity-30">
             <PlayIcon
               className="absolute size-20 text-white top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2"
-              title={t("button.playSelectedTrack", {
+              title={t("button.playSelectedAlbum", {
                 defaultValue: "Play {{ albumName }}",
                 albumName: album.name,
               })}
             />
-          </div>*/}
+          </div>
         </button>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <div className="aspect-square w-6 bg-accent-50"></div>
-          <div className="aspect-square w-6 bg-accent-100"></div>
-          <div className="aspect-square w-6 bg-accent-200"></div>
-          <div className="aspect-square w-6 bg-accent-300"></div>
-          <div className="aspect-square w-6 bg-accent-400"></div>
-          <div className="aspect-square w-6 bg-accent-500"></div>
-          <div className="aspect-square w-6 bg-accent-600"></div>
-          <div className="aspect-square w-6 bg-accent-700"></div>
-          <div className="aspect-square w-6 bg-accent-800"></div>
-          <div className="aspect-square w-6 bg-accent-900"></div>
-          <div className="aspect-square w-6 bg-accent-950"></div>
-        </div>
 
         <span className="font-light text-stone-400">
           <Trans

@@ -62,8 +62,8 @@ export const AudioManagerProvider = ({ children }: Props) => {
   // Control play/pause directly but also update state.
   const setIsPlaying = (isPlaying: boolean) => {
     if (endedTimer.current) clearTimeout(endedTimer.current);
-    realSetIsPlaying(isPlaying);
     if (!audioRef.current) return;
+    realSetIsPlaying(isPlaying);
 
     if (!isPlaying) {
       audioRef.current.pause();
