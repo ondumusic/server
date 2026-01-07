@@ -1,20 +1,14 @@
-import { createContext, type ReactNode, useContext, useState } from "react";
+import { createContext, type ReactNode, useContext } from "react";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
 import type { Track } from "../types";
 
 export interface PlayerContext {
-  // State management
-  isVisible: boolean;
-  setIsVisible(isVisible: boolean): void;
-
   // Queue management
   enqueueAndPlay(tracks: Track[], startWithTrack?: Track): void;
 }
 
 const PlayerContext = createContext<PlayerContext>({
-  isVisible: false,
-  setIsVisible: (_isVisible) => {},
   enqueueAndPlay: (_tracks, _startWithTrack?) => {},
 });
 
@@ -29,15 +23,11 @@ interface Props {
 export const PlayerProvider = ({ children }: Props) => {
   const { currentTrack, replaceQueue } = useQueue();
   const { isPlaying, setIsPlaying, scrubAndPlay } = useAudioManager();
-  const [isVisible, setIsVisible] = useState(false);
 
   const value = {
-    isVisible,
-    setIsVisible,
     enqueueAndPlay(tracks: Track[], startWithTrack?: Track) {
       if (!Array.isArray(tracks)) tracks = [tracks];
       if (tracks.length === 0) return;
-      setIsVisible(true);
 
       replaceQueue(tracks, startWithTrack);
       if (!isPlaying) setIsPlaying(true);

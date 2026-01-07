@@ -4,7 +4,6 @@ import { Panel } from "../components/Panel";
 import { Player } from "../components/Player";
 import { useAuth } from "../hooks/useAuth";
 import { usePhoenixSocket } from "../hooks/usePhoenixSocket";
-import { usePlayer } from "../hooks/usePlayer";
 import { FirstLoadView } from "../views/FirstLoadView";
 import { type OnboardingStep, OnboardingView } from "../views/OnboardingView";
 
@@ -22,7 +21,6 @@ interface Props {
 
 export function RootLayout({ children }: Props) {
   const { isLoggedIn, completeLogin } = useAuth();
-  const { isVisible } = usePlayer();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -79,7 +77,7 @@ export function RootLayout({ children }: Props) {
             : " lg:translate-x-full xl:translate-x-[150%]")
         }
       >
-        {isVisible && !isOnboarding && <Player />}
+        {!isOnboarding && <Player />}
         <button
           type="button"
           className="mt-4"
