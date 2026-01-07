@@ -53,7 +53,7 @@ function extractAccentColor(img: HTMLImageElement): [number, number, number] {
     const edgeWeight = (distFromCenter / maxDist) ** 1.5;
 
     // Boost weight for saturated colors (accent colors should be colorful)
-    const saturationBoost = saturation > 0.3 ? 3 : 1;
+    const saturationBoost = saturation > 0.3 ? 5 : 1;
     const weight = Math.max(1, Math.round(edgeWeight * 3 * saturationBoost));
 
     const key = `${Math.floor(r / 16)},${Math.floor(g / 16)},${Math.floor(b / 16)}`;
@@ -70,13 +70,26 @@ function extractAccentColor(img: HTMLImageElement): [number, number, number] {
     (a, b) => b.count - a.count,
   );
 
-  // Debug: log top 5 colors
-  // console.log('Top colors:', sortedColors.slice(0, 20).map(c => ({
-  //   rgb: c.rgb,
-  //   count: c.count,
-  //   brightness: (c.rgb[0] + c.rgb[1] + c.rgb[2]) / 3,
-  //   saturation: ((Math.max(...c.rgb) - Math.min(...c.rgb)) / Math.max(...c.rgb))
-  // })));
+  // Check if image is predominantly grayscale
+  const totalCount = sortedColors.reduce((sum, c) => sum + c.count, 0);
+  let saturatedCount = 0;
+
+  for (const { rgb, count } of sortedColors) {
+    const max = Math.max(...rgb);
+    const min = Math.min(...rgb);
+    const saturation = max === 0 ? 0 : (max - min) / max;
+
+    if (saturation > 0.2) {
+      saturatedCount += count;
+    }
+  }
+
+  const saturatedPercentage = saturatedCount / totalCount;
+
+  // If less than 10% of the image is colorful, return a neutral gray
+  if (saturatedPercentage < 0.15) {
+    return [128, 128, 128]; // Mid-gray for neutral palette
+  }
 
   // Try top 20 colors to find a good accent (increased from implicit top-all)
   for (const { rgb } of sortedColors.slice(0, 20)) {
@@ -107,7 +120,7 @@ function extractAccentColor(img: HTMLImageElement): [number, number, number] {
 }
 
 // Generate Tailwind palette using OKLCH
-export function generateTailwindPalette(
+function generateTailwindPalette(
   rgb: [number, number, number],
 ): Record<string, string> {
   const [r, g, b] = rgb;
@@ -155,7 +168,7 @@ export function generateTailwindPalette(
 }
 
 // Determine if text should be black or white based on background color
-export function getTextColor(backgroundColor: string): "black" | "white" {
+function getTextColor(backgroundColor: string): "black" | "white" {
   const color = oklch(backgroundColor);
 
   if (!color || color.l === undefined) return "white";
@@ -167,7 +180,7 @@ export function getTextColor(backgroundColor: string): "black" | "white" {
 }
 
 // Get text colors for entire palette
-export function getTextColorsForPalette(
+function getTextColorsForPalette(
   palette: Record<string, string>,
 ): Record<string, "black" | "white"> {
   const textColors: Record<string, "black" | "white"> = {};
@@ -179,21 +192,24 @@ export function getTextColorsForPalette(
   return textColors;
 }
 
-// All-in-one function
 export function updateAccentColor(img: HTMLImageElement) {
   const color = extractAccentColor(img);
   const palette = generateTailwindPalette(color);
   const textColors = getTextColorsForPalette(palette);
+  const root = document.documentElement;
 
   for (const name in palette) {
-    document.documentElement.style.setProperty(`--${name}`, palette[name]);
+    root.style.setProperty(`--${name}`, palette[name]);
 
     if (name === "accent-200") {
-      document.documentElement.style.setProperty(
-        `--text-selected`,
-        textColors[name],
-      );
+      root.style.setProperty(`--text-selected`, textColors[name]);
     }
+  }
+
+  const themeColor = root.style.getPropertyValue("--accent-50");
+  const themeTags = root.querySelectorAll("meta[name=theme-color]");
+  for (const tag of themeTags) {
+    tag.setAttribute("content", themeColor);
   }
 }
 
