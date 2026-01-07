@@ -1,12 +1,20 @@
 import type { ReactNode } from "react";
+import { classNames } from "../utils/classNames";
 
 interface Props {
+  main?: boolean;
   children: ReactNode;
 }
 
-export function Panel({ children }: Props) {
+export function Panel({ children, main }: Props) {
   return (
-    <div className="mx-auto max-w-md rounded-md p-6 shadow-lg bg-panel-bg text-panel-fg">
+    <div
+      className={classNames([
+        "flex mx-auto rounded-md shadow-lg overflow-hidden bg-panel-bg text-panel-fg border border-accent-100",
+        main && "h-full w-full",
+        !main && "max-w-md p-6 flex-col",
+      ])}
+    >
       {children}
     </div>
   );

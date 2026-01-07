@@ -7,7 +7,7 @@ interface Props {
 
 export function Loading({ children }: Props) {
   return (
-    <div className="h-full content-center text-accent-500/50">
+    <div className="w-full h-full content-center text-accent-500/50">
       <svg width="60" height="20" viewBox="0 0 120 30" className="mx-auto">
         <title>
           <Trans i18nKey="loading.text">Loading</Trans>

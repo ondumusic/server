@@ -15,18 +15,19 @@ export function ArtistsLayout() {
 
   return (
     <Group
+      className="w-full"
       defaultLayout={defaultLayout}
       onLayoutChange={onLayoutChange}
       orientation="horizontal"
     >
-      <Panel id="left" defaultSize="30%" minSize="17%" maxSize="80%">
-        <div className="overflow-y-auto h-screen bg-accent-50 transition-colors">
+      <Panel id="left" defaultSize="30%" minSize="17%" maxSize="40%">
+        <div className="h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-accent-50/40">
           <ArtistListView />
         </div>
       </Panel>
-      <Separator className="w-1 bg-white border-l border-accent-200" />
-      <Panel id="right" minSize="30%">
-        <div className="overflow-y-auto h-screen p-4 bg-white">
+      <Separator className="w-[2px] bg-accent-200 [&[data-separator='hover']]:bg-accent-300 [&[data-separator='active']]:bg-accent-300" />
+      <Panel id="right" minSize="60%">
+        <div className="h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Outlet />
         </div>
       </Panel>
