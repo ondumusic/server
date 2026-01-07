@@ -11,7 +11,7 @@ export function Panel({ children, main }: Props) {
     <div
       className={classNames([
         "flex mx-auto rounded-md shadow-lg overflow-hidden bg-panel-bg text-panel-fg",
-        main && "h-full w-full border-[2px] border-accent-200",
+        main && "h-full w-full border-[1px] border-accent-200",
         !main && "max-w-md p-6 flex-col",
       ])}
     >
