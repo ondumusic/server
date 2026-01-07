@@ -74,9 +74,9 @@ export function NowPlaying() {
         />
       )}
 
-      <div className="text-center overflow-hidden mb-2">
+      <div className="text-center overflow-hidden mb-4">
         <Marquee
-          className="transition-colors text-selected font-semibold"
+          className="transition-colors text-accent-600 text-lg font-medium"
           text={
             trackName ||
             i18next.t("player.noTrack.trackName", {
@@ -84,49 +84,51 @@ export function NowPlaying() {
             })
           }
         />
-        <div className="text-sm text-selected/60">
+        <div className="font-normal text-sm text-accent-400">
           <Marquee text={artistAlbum.join(" - ")} />
         </div>
       </div>
 
-      <div className="flex justify-between items-end tabular-nums transition-colors text-selected/60 text-xs mb-2">
-        <span>{formatDuration(currentTime)}</span>
-        <span>{formatDuration(duration)}</span>
-      </div>
-
-      <div className="relative group/timeline">
-        <div className="absolute z-[10] top-0 lg:top-auto lg:bottom-0 left-0 right-0 bg-accent-300/40 h-1">
-          <div
-            className="h-1 lg:rounded-tr-lg lg:rounded-br-lg bg-accent-400"
-            style={{ width: `${progressPercentage}%` }}
-          ></div>
+      <div className="group/timeline">
+        <div className="flex justify-between items-end tabular-nums transition-colors text-accent-400 text-xs mb-2">
+          <span>{formatDuration(currentTime)}</span>
+          <span>{formatDuration(duration)}</span>
         </div>
-        <input
-          type="range"
-          className="
-              appearance-none bg-transparent z-[20] transition-colors
-              absolute left-0 right-0 top-0 lg:top-auto lg:bottom-0
-              [&::-webkit-slider-runnable-track]:bg-transparent
-              [&::-webkit-slider-thumb]:appearance-none
-              [&::-webkit-slider-thumb]:h-3
-              [&::-webkit-slider-thumb]:w-3
-              [&::-webkit-slider-thumb]:rounded-md
-              [&::-webkit-slider-thumb]:transition-all
-              [&::-webkit-slider-thumb]:translate-y-[-4px]
-              [&::-webkit-slider-thumb]:shadow-none
-              lg:[&::-webkit-slider-thumb]:translate-y-[4px]
-              [&::-webkit-slider-thumb]:translate-x-[-1px]
-              [&::-webkit-slider-thumb]:bg-transparent
-              group-hover/timeline:[&::-webkit-slider-thumb]:bg-accent-600
-              group-hover/timeline:[&::-webkit-slider-thumb]:shadow-xl
-            "
-          value={currentTime}
-          min={0}
-          max={duration}
-          onChange={onScrub}
-          onMouseDown={onScrubStart}
-          onMouseUp={onScrubEnd}
-        />
+
+        <div className="relative">
+          <div className="absolute z-[10] top-0 lg:top-auto lg:bottom-0 left-0 right-0 bg-accent-300/40 h-1">
+            <div
+              className="h-1 lg:rounded-tr-lg lg:rounded-br-lg bg-accent-400"
+              style={{ width: `${progressPercentage}%` }}
+            ></div>
+          </div>
+          <input
+            type="range"
+            className="
+                appearance-none bg-transparent z-[20] transition-colors
+                absolute left-0 right-0 top-0 lg:top-auto lg:bottom-0
+                [&::-webkit-slider-runnable-track]:bg-transparent
+                [&::-webkit-slider-thumb]:appearance-none
+                [&::-webkit-slider-thumb]:h-3
+                [&::-webkit-slider-thumb]:w-3
+                [&::-webkit-slider-thumb]:rounded-md
+                [&::-webkit-slider-thumb]:transition-all
+                [&::-webkit-slider-thumb]:translate-y-[-4px]
+                [&::-webkit-slider-thumb]:shadow-none
+                lg:[&::-webkit-slider-thumb]:translate-y-[4px]
+                [&::-webkit-slider-thumb]:translate-x-[-1px]
+                [&::-webkit-slider-thumb]:bg-transparent
+                group-hover/timeline:[&::-webkit-slider-thumb]:bg-accent-600
+                group-hover/timeline:[&::-webkit-slider-thumb]:shadow-xl
+              "
+            value={currentTime}
+            min={0}
+            max={duration}
+            onChange={onScrub}
+            onMouseDown={onScrubStart}
+            onMouseUp={onScrubEnd}
+          />
+        </div>
       </div>
     </div>
   );
