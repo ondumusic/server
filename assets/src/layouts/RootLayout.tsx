@@ -4,6 +4,7 @@ import { Panel } from "../components/Panel";
 import { Player } from "../components/Player";
 import { useAuth } from "../hooks/useAuth";
 import { usePhoenixSocket } from "../hooks/usePhoenixSocket";
+import { useQueue } from "../hooks/useQueue";
 import { FirstLoadView } from "../views/FirstLoadView";
 import { type OnboardingStep, OnboardingView } from "../views/OnboardingView";
 
@@ -23,10 +24,13 @@ export function RootLayout({ children }: Props) {
   const { isLoggedIn, completeLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { queue } = useQueue();
 
   const { waitForUpdate } = usePhoenixSocket();
   const [isWaitingForData, setIsWaitingForData] = useState<boolean>(false);
-  const [isPanelOpen, setIsPanelOpen] = useState(location.pathname !== "/");
+  const [isPanelOpen, setIsPanelOpen] = useState(
+    location.pathname !== "/" || queue.length === 0,
+  );
 
   const [isOnboarding, setIsOnboarding] = useState<boolean>(
     initialOnboardingStep !== null,
