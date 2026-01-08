@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { PlayIcon } from "../components/icons/PlayIcon";
+import { useContextMenu } from "../hooks/useContextMenu";
 import { usePlayer } from "../hooks/usePlayer";
 import { useQueue } from "../hooks/useQueue";
 import type { Album, Artist, Track } from "../types";
@@ -16,7 +17,8 @@ interface Props {
 }
 
 export function ArtistAlbumListItem({ album, scrollIntoView = false }: Props) {
-  const { enqueueAndPlay } = usePlayer();
+  const { createContextMenu } = useContextMenu();
+  const { enqueueAndPlay, enqueueNext } = usePlayer();
   const { currentTrack } = useQueue();
   const { t } = useTranslation();
   const refContainer = useRef<HTMLDivElement>(null);
@@ -106,9 +108,18 @@ export function ArtistAlbumListItem({ album, scrollIntoView = false }: Props) {
                 {disc.tracks.map((track: Track) => (
                   <li
                     key={track.id}
-                    className="relative py-1.5 flex justify-between cursor-pointer group/song"
+                    className="relative py-1.5 flex justify-between cursor-pointer select-none group/song"
                     onClick={() => enqueueAndPlay(album.tracks, track)}
                     onKeyDown={() => enqueueAndPlay(album.tracks, track)}
+                    onContextMenu={createContextMenu<HTMLLIElement>([
+                      {
+                        key: "play_next",
+                        label: "Play Next",
+                        onClick() {
+                          enqueueNext([track]);
+                        },
+                      },
+                    ])}
                   >
                     {track.number ? (
                       <div className="absolute right-full text-right mr-2">

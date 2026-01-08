@@ -7,6 +7,7 @@ import { RouterProvider } from "react-router";
 import { Loading } from "./components/Loading";
 import { AudioManagerProvider } from "./hooks/useAudioManager";
 import { AuthProvider } from "./hooks/useAuth";
+import { ContextMenuProvider } from "./hooks/useContextMenu";
 import { MediaSessionProvider } from "./hooks/useMediaSession";
 import { PhoenixSocketProvider } from "./hooks/usePhoenixSocket";
 import { PlayerProvider } from "./hooks/usePlayer";
@@ -29,7 +30,9 @@ if (appRoot) {
                 <AudioManagerProvider>
                   <PlayerProvider>
                     <MediaSessionProvider>
-                      <RouterProvider router={router} />
+                      <ContextMenuProvider>
+                        <RouterProvider router={router} />
+                      </ContextMenuProvider>
                     </MediaSessionProvider>
                   </PlayerProvider>
                 </AudioManagerProvider>
