@@ -6,10 +6,12 @@ import type { Track } from "../types";
 export interface PlayerContext {
   // Queue management
   enqueueAndPlay(tracks: Track[], startWithTrack?: Track): void;
+  playNext(tracks: Track[]): void;
 }
 
 const PlayerContext = createContext<PlayerContext>({
   enqueueAndPlay: (_tracks, _startWithTrack?) => {},
+  playNext: (_tracks) => {},
 });
 
 export function usePlayer() {
@@ -21,12 +23,11 @@ interface Props {
 }
 
 export const PlayerProvider = ({ children }: Props) => {
-  const { currentTrack, replaceQueue } = useQueue();
+  const { currentTrack, replaceQueue, addQueueNext } = useQueue();
   const { isPlaying, setIsPlaying, scrubAndPlay } = useAudioManager();
 
   const value = {
     enqueueAndPlay(tracks: Track[], startWithTrack?: Track) {
-      if (!Array.isArray(tracks)) tracks = [tracks];
       if (tracks.length === 0) return;
 
       replaceQueue(tracks, startWithTrack);
@@ -37,6 +38,12 @@ export const PlayerProvider = ({ children }: Props) => {
       if (isPlaying && startWithTrack === currentTrack) {
         scrubAndPlay(0);
       }
+    },
+    playNext(tracks: Track[]) {
+      if (tracks.length === 0) return;
+
+      addQueueNext(tracks);
+      if (!isPlaying) setIsPlaying(true);
     },
   };
 

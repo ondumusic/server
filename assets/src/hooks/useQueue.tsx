@@ -9,6 +9,7 @@ export interface QueueContext {
   prevTrack(): void;
   nextTrack(): void;
   getNextTrack(): Track | undefined;
+  addQueueNext(tracks: Track[]): void;
   replaceQueue(tracks: Track[], startWithTrack?: Track): void;
 }
 
@@ -20,6 +21,7 @@ const QueueContext = createContext<QueueContext>({
   prevTrack: () => {},
   nextTrack: () => {},
   getNextTrack: () => undefined,
+  addQueueNext: (_tracks) => {},
   replaceQueue: (_tracks, _startWithTrack?) => {},
 });
 
@@ -63,8 +65,17 @@ export const QueueProvider = ({ children }: Props) => {
 
       setQueueIndex(nextTrackIndex);
     },
+    addQueueNext(tracks: Track[]) {
+      const updatedQueue = [...queue];
+      updatedQueue.splice(queueIndex + 1, 0, ...tracks);
+      setQueue(updatedQueue);
+
+      // Reset queue index to 0 if the queue was empty previously.
+      if (queue.length === 0) {
+        setQueueIndex(0);
+      }
+    },
     replaceQueue(tracks: Track[], startWithTrack?: Track) {
-      if (!Array.isArray(tracks)) tracks = [tracks];
       let startIndex = tracks.findIndex(({ id }) => id === startWithTrack?.id);
       startIndex = Math.max(Math.min(tracks.length - 1, startIndex), 0);
       setQueue(tracks);
