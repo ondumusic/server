@@ -56,7 +56,13 @@ export const AudioManagerProvider = ({ children }: Props) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [source, setSource] = useState<string | undefined>(undefined);
-  const { currentTrack, nextTrack, hasNextTrack, getNextTrack } = useQueue();
+  const {
+    currentTrack,
+    currentTrackIndex,
+    nextTrack,
+    hasNextTrack,
+    getNextTrack,
+  } = useQueue();
   const { playToken } = usePlayTokenQuery({ enabled: isLoggedIn });
 
   // Control play/pause directly but also update state.
@@ -93,10 +99,17 @@ export const AudioManagerProvider = ({ children }: Props) => {
 
   // Reset when track changes
   // We don't want to track when playToken changes because that would interrupt playback
+  // We do want to track when the currentTrackIndex changes; track could be identical
   // biome-ignore lint/correctness/useExhaustiveDependencies(playToken): suppress dependency playToken
   // biome-ignore lint/correctness/useExhaustiveDependencies(setIsPlaying): suppress dependency setIsPlaying
+  // biome-ignore lint/correctness/useExhaustiveDependencies(currentTrackIndex): suppress dependency currentTrackIndex.
   useEffect(() => {
     if (endedTimer.current) clearTimeout(endedTimer.current);
+
+    // If the same track is in the queue multiple times in a row React will
+    // consider it as nothing changed. So we need to deal with it ourselves.
+    let isSameTrack = false;
+
     if (!currentTrack) {
       setSource(undefined);
       setIsPlaying(false);
@@ -107,13 +120,28 @@ export const AudioManagerProvider = ({ children }: Props) => {
         audioRef.current.src = "";
       }
     } else {
-      setSource(`${currentTrack.streamUrl}?transcode=1&token=${playToken}`);
+      const streamUrl = `${currentTrack.streamUrl}?transcode=1&token=${playToken}`;
+
+      if (audioRef.current) {
+        isSameTrack = audioRef.current.src.indexOf(streamUrl) !== -1;
+      }
+
+      setSource(streamUrl);
     }
 
     setHasPreloadedNext(false);
-    setCurrentTime(0);
-    setDuration(0);
-  }, [currentTrack]);
+
+    if (audioRef.current && isSameTrack) {
+      // The same track again? We can just rewind!
+      setCurrentTime(0);
+      audioRef.current.currentTime = 0;
+    } else {
+      // Otherwise we'll reset everything and onLoadedMetadata will set it
+      // to the correct values again.
+      setCurrentTime(0);
+      setDuration(0);
+    }
+  }, [currentTrack, currentTrackIndex]);
 
   // Scrubbing functionality
   const scrubTo = (updatedTime: number) => {

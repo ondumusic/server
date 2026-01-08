@@ -4,6 +4,7 @@ import type { Track } from "../types";
 export interface QueueContext {
   queue: Track[];
   currentTrack?: Track;
+  currentTrackIndex: number;
   hasPrevTrack: boolean;
   hasNextTrack: boolean;
   prevTrack(): void;
@@ -16,6 +17,7 @@ export interface QueueContext {
 const QueueContext = createContext<QueueContext>({
   queue: [],
   currentTrack: undefined,
+  currentTrackIndex: -1,
   hasPrevTrack: false,
   hasNextTrack: false,
   prevTrack: () => {},
@@ -43,6 +45,7 @@ export const QueueProvider = ({ children }: Props) => {
   const value = {
     queue,
     currentTrack,
+    currentTrackIndex: queueIndex,
     hasPrevTrack,
     hasNextTrack,
     getNextTrack() {
@@ -70,7 +73,8 @@ export const QueueProvider = ({ children }: Props) => {
       updatedQueue.splice(queueIndex + 1, 0, ...tracks);
       setQueue(updatedQueue);
 
-      // Reset queue index to 0 if the queue was empty previously.
+      // Set queue index to 0 if the queue was empty previously,
+      // indicating that the current track is the 1st track of the new queue.
       if (queue.length === 0) {
         setQueueIndex(0);
       }
