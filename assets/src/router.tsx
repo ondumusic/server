@@ -46,6 +46,10 @@ export const router = createBrowserRouter([
                 path: ":artistId",
                 Component: () => <ArtistAlbumListView />,
               },
+              {
+                path: ":artistId/:albumId",
+                Component: () => <ArtistAlbumListView />,
+              },
             ],
           },
         ],

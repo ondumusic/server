@@ -10,11 +10,19 @@ import type { Album, UUID } from "../types";
 import { paginatedMap } from "../utils/paginatedMap";
 import { EmptyView } from "../views/EmptyView";
 
-type Params = { artistId: UUID };
+type Params = {
+  artistId: UUID;
+  albumId?: UUID;
+};
+
+function isAlbum(album: Album, albumId?: string): boolean {
+  if (!albumId) return false;
+  return album.id === albumId || album.slug === albumId;
+}
 
 export function ArtistAlbumListView() {
   const navigationType = useNavigationType();
-  const { artistId } = useParams() as Params;
+  const { artistId, albumId } = useParams() as Params;
   const hasArtistId = !!artistId;
   const [useSuspense, setUseSuspense] = useState(
     hasArtistId && navigationType === "POP",
@@ -23,6 +31,10 @@ export function ArtistAlbumListView() {
   useEffect(() => {
     if (useSuspense) setUseSuspense(false);
   });
+
+  const suspendUntil = albumId
+    ? (entry: Album) => isAlbum(entry, albumId)
+    : undefined;
 
   const {
     isFetching: isFetchingArtist,
@@ -36,7 +48,7 @@ export function ArtistAlbumListView() {
     },
   );
 
-  const { isFetching, hasFirstPage, data, error } =
+  const { isFetching, hasFirstPage, hasItem, data, error } =
     useInfiniteArtistAlbumsQuery(
       {
         artistId: dataArtist?.id,
@@ -44,6 +56,7 @@ export function ArtistAlbumListView() {
       {
         enabled: !!dataArtist?.id,
         suspense: useSuspense,
+        suspendUntil,
       },
     );
 
@@ -70,6 +83,7 @@ export function ArtistAlbumListView() {
             key={album.id}
             artist={dataArtist}
             album={album}
+            scrollIntoView={hasItem === true && isAlbum(album, albumId)}
           />
         ))}
       </div>

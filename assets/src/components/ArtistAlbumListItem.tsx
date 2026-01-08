@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { PlayIcon } from "../components/icons/PlayIcon";
 import { usePlayer } from "../hooks/usePlayer";
@@ -12,12 +12,23 @@ import { splitTracksByDisc } from "../utils/splitTracksByDisc";
 interface Props {
   album: Album;
   artist: Artist;
+  scrollIntoView: boolean;
 }
 
-export function ArtistAlbumListItem({ album }: Props) {
+export function ArtistAlbumListItem({ album, scrollIntoView = false }: Props) {
   const { enqueueAndPlay } = usePlayer();
   const { currentTrack } = useQueue();
   const { t } = useTranslation();
+  const refContainer = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollIntoView) {
+      refContainer.current?.scrollIntoView({
+        behavior: "instant",
+        block: "center",
+      });
+    }
+  }, [scrollIntoView]);
 
   // For UX we want to split multi-disc albums into separate arrays so we
   // can display them a bit nicer.
@@ -33,7 +44,7 @@ export function ArtistAlbumListItem({ album }: Props) {
   const totalFormattedDuration = formatTotalDuration(album.tracks);
 
   return (
-    <div className="flex w-full">
+    <div ref={refContainer} className="flex w-full">
       <div className="hidden lg:block flex-shrink-0 pr-12 text-sm w-64">
         <button
           type="button"

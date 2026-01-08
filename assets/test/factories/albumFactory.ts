@@ -18,10 +18,13 @@ export const albumFactory = Factory.define<Album, {}, Album, AlbumParams>(
     const tracks =
       params.tracks || trackFactory.buildList(trackCount, { albumId, artist });
 
+    const name = faker.lorem.sentence({ min: 1, max: 10 });
+
     return {
       __type: "album",
       id: albumId,
-      name: faker.lorem.sentence({ min: 1, max: 10 }),
+      name,
+      slug: faker.helpers.slugify(name.toLowerCase().replace(/\./g, "")),
       artistId: artist.id,
       releaseYear: faker.date
         .birthdate({ mode: "age", min: 0, max: 30 })
