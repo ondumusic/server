@@ -18,7 +18,7 @@ interface Props {
 
 export function ArtistAlbumListItem({ album, scrollIntoView = false }: Props) {
   const { createContextMenu } = useContextMenu();
-  const { enqueueAndPlay, enqueueNext } = usePlayer();
+  const { enqueueAndPlay, enqueueNext, enqueueAfter } = usePlayer();
   const { currentTrack } = useQueue();
   const { t } = useTranslation();
   const refContainer = useRef<HTMLDivElement>(null);
@@ -117,6 +117,13 @@ export function ArtistAlbumListItem({ album, scrollIntoView = false }: Props) {
                         label: "Play Next",
                         onClick() {
                           enqueueNext([track]);
+                        },
+                      },
+                      {
+                        key: "play_after",
+                        label: "Play After",
+                        onClick() {
+                          enqueueAfter([track]);
                         },
                       },
                     ])}
