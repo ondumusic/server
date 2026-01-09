@@ -1,11 +1,7 @@
-import type { ReactNode } from "react";
+import type { PropsWithChildren } from "react";
 import { Trans } from "react-i18next";
 
-interface Props {
-  children?: ReactNode;
-}
-
-export function Loading({ children }: Props) {
+export function Loading({ children }: PropsWithChildren) {
   return (
     <div className="w-full h-full content-center text-accent-500/50">
       <svg width="60" height="20" viewBox="0 0 120 30" className="mx-auto">

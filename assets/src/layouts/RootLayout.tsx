@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type PropsWithChildren, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { Panel } from "../components/Panel";
 import { Player } from "../components/Player";
@@ -16,11 +16,7 @@ declare var hydrateReact: HydratedReact;
 
 let initialOnboardingStep = hydrateReact.onboarding;
 
-interface Props {
-  children?: ReactNode;
-}
-
-export function RootLayout({ children }: Props) {
+export function RootLayout({ children }: PropsWithChildren) {
   const { isLoggedIn, completeLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();

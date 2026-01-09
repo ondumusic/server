@@ -1,12 +1,12 @@
-import type { ReactNode } from "react";
+import type { PropsWithChildren } from "react";
 import { classNames } from "../utils/classNames";
 
-interface Props {
+export function Panel({
+  children,
+  main,
+}: PropsWithChildren<{
   main?: boolean;
-  children: ReactNode;
-}
-
-export function Panel({ children, main }: Props) {
+}>) {
   return (
     <div
       className={classNames([
@@ -20,12 +20,11 @@ export function Panel({ children, main }: Props) {
   );
 }
 
-interface HeaderProps {
-  children?: ReactNode;
+Panel.Header = ({
+  title,
+}: PropsWithChildren<{
   title: string;
-}
-
-Panel.Header = ({ title }: HeaderProps) => (
+}>) => (
   <header className="text-center">
     <div>
       <h1 className="text-2xl font-semibold leading-8 text-panel-fg">

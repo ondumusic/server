@@ -1,6 +1,6 @@
 import {
   createContext,
-  type ReactNode,
+  type PropsWithChildren,
   useContext,
   useEffect,
   useState,
@@ -30,11 +30,7 @@ export function useAuth() {
 type MeRequest = undefined;
 type MeResponse = User;
 
-interface Props {
-  children: ReactNode;
-}
-
-export const AuthProvider = ({ children }: Props) => {
+export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [currentUser, setCurrentUser] = useState<User>();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!auth.sessionToken);
 

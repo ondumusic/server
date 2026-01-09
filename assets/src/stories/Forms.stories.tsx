@@ -1,15 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import type { ReactNode } from "react";
+import type { PropsWithChildren } from "react";
 import { Button } from "../components/form/Button";
 import { FormActions } from "../components/form/FormActions";
 import { Input } from "../components/form/Input";
 import type { Form } from "../hooks/useForm";
 
-interface Props {
-  children?: ReactNode;
-}
-
-const FormComponent = ({ children }: Props) => (
+const FormComponent = ({ children }: PropsWithChildren) => (
   <form
     className="p-8 rounded-lg space-y-8 shadow-xl w-[40em]"
     onSubmit={(e) => e.preventDefault()}

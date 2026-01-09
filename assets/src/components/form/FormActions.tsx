@@ -1,11 +1,11 @@
-import type { ReactNode } from "react";
+import type { PropsWithChildren } from "react";
 
-interface Props {
+export function FormActions({
+  className = "gap-4",
+  children,
+}: PropsWithChildren<{
   className?: string;
-  children: ReactNode;
-}
-
-export function FormActions({ className = "gap-4", children }: Props) {
+}>) {
   return (
     <div className={`mt-2 flex items-center justify-between ${className}`}>
       {children}

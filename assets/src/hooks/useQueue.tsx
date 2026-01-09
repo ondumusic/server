@@ -1,4 +1,9 @@
-import { createContext, type ReactNode, useContext, useState } from "react";
+import {
+  createContext,
+  type PropsWithChildren,
+  useContext,
+  useState,
+} from "react";
 import type { Track } from "../types";
 
 export interface QueueContext {
@@ -31,11 +36,7 @@ export function useQueue() {
   return useContext(QueueContext);
 }
 
-interface Props {
-  children: ReactNode;
-}
-
-export const QueueProvider = ({ children }: Props) => {
+export const QueueProvider = ({ children }: PropsWithChildren) => {
   const [queue, setQueue] = useState<Track[]>([]);
   const [queueIndex, setQueueIndex] = useState(-1);
   const currentTrack = queue[queueIndex] ?? undefined;

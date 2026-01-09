@@ -1,15 +1,7 @@
-import type { ReactNode } from "react";
+import type { PropsWithChildren } from "react";
 import { classNames } from "../../utils/classNames";
 
 type ButtonStyle = "primary" | "secondary";
-
-interface Props {
-  children: ReactNode;
-  disabled?: boolean;
-  style?: ButtonStyle;
-  link?: boolean;
-  type: "submit" | "button";
-}
 
 interface Colors {
   button: string;
@@ -33,7 +25,18 @@ const styleColors = (style?: ButtonStyle): Colors => {
   }
 };
 
-export function Button({ children, disabled, link, style, type }: Props) {
+export function Button({
+  children,
+  disabled,
+  link,
+  style,
+  type,
+}: PropsWithChildren<{
+  disabled?: boolean;
+  style?: ButtonStyle;
+  link?: boolean;
+  type: "submit" | "button";
+}>) {
   const colors: Colors = styleColors(style);
 
   return (

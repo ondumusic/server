@@ -1,11 +1,10 @@
-import type { ReactNode } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 import type { Form } from "../../hooks/useForm";
 import { Label } from "./Label";
 import { Select } from "./Select";
 import { TextField } from "./TextField";
 
 interface CommonProps<T> {
-  children?: ReactNode;
   form: Form<T>;
   field: string;
   id?: string;
@@ -28,7 +27,7 @@ type SelectInputProps = {
 
 type InputFieldProps = SelectInputProps | TextInputProps;
 
-type Props<T> = CommonProps<T> & InputFieldProps;
+type Props<T> = CommonProps<T> & InputFieldProps & PropsWithChildren;
 
 export function Input<T>(props: Props<T>) {
   const { form, field, type = "text" } = props;

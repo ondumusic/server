@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext } from "react";
+import { createContext, type PropsWithChildren, useContext } from "react";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
 import type { Track } from "../types";
@@ -18,11 +18,7 @@ export function usePlayer() {
   return useContext(PlayerContext);
 }
 
-interface Props {
-  children: ReactNode;
-}
-
-export const PlayerProvider = ({ children }: Props) => {
+export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const { currentTrack, replaceQueue, addQueueNext } = useQueue();
   const { isPlaying, setIsPlaying, scrubAndPlay } = useAudioManager();
 
@@ -43,7 +39,7 @@ export const PlayerProvider = ({ children }: Props) => {
       if (tracks.length === 0) return;
 
       addQueueNext(tracks);
-      if (!isPlaying) setIsPlaying(true);
+      if (!isPlaying && !currentTrack) setIsPlaying(true);
     },
   };
 

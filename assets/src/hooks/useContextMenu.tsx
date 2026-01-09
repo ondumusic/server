@@ -1,8 +1,8 @@
 import {
   createContext,
   type MouseEventHandler,
+  type PropsWithChildren,
   type MouseEvent as ReactMouseEvent,
-  type ReactNode,
   useContext,
   useEffect,
   useRef,
@@ -35,14 +35,15 @@ export function useContextMenu() {
   return useContext(ContextMenuContext);
 }
 
-interface ContextMenuProps {
-  children?: ReactNode;
+export function ContextMenu({
+  position,
+  items,
+  onClose,
+}: PropsWithChildren<{
   items: ContextMenuItem[];
   position: ContextMenuPosition;
   onClose(): void;
-}
-
-export function ContextMenu({ position, items, onClose }: ContextMenuProps) {
+}>) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [adjustedPosition, setAdjustedPosition] = useState<{
     x: number;
@@ -155,11 +156,7 @@ export function ContextMenu({ position, items, onClose }: ContextMenuProps) {
   );
 }
 
-interface Props {
-  children?: ReactNode;
-}
-
-export function ContextMenuProvider({ children }: Props) {
+export function ContextMenuProvider({ children }: PropsWithChildren) {
   const [items, setItems] = useState<ContextMenuItem[]>([]);
   const [position, setPosition] = useState<ContextMenuPosition | null>(null);
 

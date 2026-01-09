@@ -1,7 +1,7 @@
 import {
   type ChangeEvent,
   createContext,
-  type ReactNode,
+  type PropsWithChildren,
   useContext,
   useEffect,
   useRef,
@@ -43,11 +43,7 @@ export function useAudioManager() {
   return useContext(AudioManagerContext);
 }
 
-interface Props {
-  children: ReactNode;
-}
-
-export const AudioManagerProvider = ({ children }: Props) => {
+export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const endedTimer = useRef<ReturnType<typeof setTimeout>>(null);
   const { isLoggedIn } = useAuth();

@@ -1,6 +1,6 @@
 import {
   createContext,
-  type ReactNode,
+  type PropsWithChildren,
   useContext,
   useEffect,
   useMemo,
@@ -16,11 +16,7 @@ export function useMediaSession() {
   return useContext(MediaSessionContext);
 }
 
-interface Props {
-  children: ReactNode;
-}
-
-const NavigatorMediaSessionProvider = ({ children }: Props) => {
+const NavigatorMediaSessionProvider = ({ children }: PropsWithChildren) => {
   const { currentTrack, prevTrack, nextTrack } = useQueue();
   const { isPlaying, setIsPlaying, currentTime, duration, scrubAndPlay } =
     useAudioManager();
@@ -106,7 +102,7 @@ const NavigatorMediaSessionProvider = ({ children }: Props) => {
   );
 };
 
-const UnsupportedMediaSessionProvider = ({ children }: Props) => {
+const UnsupportedMediaSessionProvider = ({ children }: PropsWithChildren) => {
   const value = {};
   return (
     <MediaSessionContext.Provider value={value}>

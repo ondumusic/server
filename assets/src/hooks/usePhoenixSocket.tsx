@@ -1,7 +1,7 @@
 import { Socket } from "phoenix";
 import {
   createContext,
-  type ReactNode,
+  type PropsWithChildren,
   useContext,
   useEffect,
   useRef,
@@ -25,11 +25,7 @@ export function usePhoenixSocket() {
   return useContext(PhoenixSocketContext);
 }
 
-interface Props {
-  children: ReactNode;
-}
-
-export const PhoenixSocketProvider = ({ children }: Props) => {
+export const PhoenixSocketProvider = ({ children }: PropsWithChildren) => {
   const { isLoggedIn } = useAuth();
   const dataCallback = useRef<OnInitialDataCallback>(null);
   const socketRef = useRef<Socket>(null);
