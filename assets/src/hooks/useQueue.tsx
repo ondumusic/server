@@ -45,8 +45,6 @@ export const QueueProvider = ({ children }: PropsWithChildren) => {
   const hasNextTrack = queueIndex < queue.length - 1;
   const hasPrevTrack = queueIndex > 0;
 
-  console.log(queue.map((i) => i.name));
-
   const value = {
     queue,
     currentTrack,
