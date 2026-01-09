@@ -96,7 +96,7 @@ export function NowPlaying() {
         </div>
 
         <div className="relative">
-          <div className="absolute z-[10] top-0 lg:top-auto lg:bottom-0 left-0 right-0 bg-accent-300/40 h-1">
+          <div className="absolute z-[10] top-0 lg:top-auto lg:bottom-0 left-0 right-0 bg-accent-300/40 h-1 rounded-lg overflow-hidden">
             <div
               className="h-1 lg:rounded-tr-lg lg:rounded-br-lg bg-accent-400"
               style={{ width: `${progressPercentage}%` }}
