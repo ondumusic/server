@@ -7,11 +7,13 @@ export interface PlayerContext {
   // Queue management
   enqueueAndPlay(tracks: Track[], startWithTrack?: Track): void;
   enqueueNext(tracks: Track[]): void;
+  enqueueAfter(tracks: Track[]): void;
 }
 
 const PlayerContext = createContext<PlayerContext>({
   enqueueAndPlay: (_tracks, _startWithTrack?) => {},
   enqueueNext: (_tracks) => {},
+  enqueueAfter: (_tracks) => {},
 });
 
 export function usePlayer() {
@@ -19,7 +21,8 @@ export function usePlayer() {
 }
 
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
-  const { currentTrack, replaceQueue, addQueueNext } = useQueue();
+  const { currentTrack, replaceQueue, addQueueNext, addQueueAfter } =
+    useQueue();
   const { isPlaying, setIsPlaying, scrubAndPlay } = useAudioManager();
 
   const value = {
@@ -39,6 +42,12 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
       if (tracks.length === 0) return;
 
       addQueueNext(tracks);
+      if (!isPlaying && !currentTrack) setIsPlaying(true);
+    },
+    enqueueAfter(tracks: Track[]) {
+      if (tracks.length === 0) return;
+
+      addQueueAfter(tracks);
       if (!isPlaying && !currentTrack) setIsPlaying(true);
     },
   };
