@@ -27,6 +27,8 @@
   "formattedDuration": {
     "minutes_one": "{{ count }} minute",
     "minutes_other": "{{ count }} minutes",
+    "hours_one": "{{ count }} hour",
+    "hours_other": "{{ count }} hours",
     "hoursAndMinutes_one": "{{ count }} hour, $t(formattedDuration.minutes, {\"count\": {{ minutes }}})",
     "hoursAndMinutes_other": "{{ count }} hours, $t(formattedDuration.minutes, {\"count\": {{ minutes }}})"
   },

@@ -15,6 +15,13 @@ export function formatTotalDuration(tracks: Track[]): string {
     });
   }
 
+  if (minutes === 0) {
+    return i18next.t("formattedDuration.hours", {
+      defaultValue: "{{ count }} hours",
+      count: hours,
+    });
+  }
+
   return i18next.t("formattedDuration.hoursAndMinutes", {
     defaultValue:
       '{{ count }} hours, $t(formattedDuration.minutes, {"count": {{ minutes }}})',
