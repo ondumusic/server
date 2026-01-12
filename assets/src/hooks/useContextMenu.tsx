@@ -130,7 +130,7 @@ export function ContextMenu({
     <div
       ref={menuRef}
       className={classNames([
-        "fixed bg-white text-selected rounded-lg shadow-xl border border-accent-200 py-1 min-w-48 z-50",
+        "fixed bg-accent-50 text-selected transition-colors rounded-lg shadow-xl border border-accent-200 py-1 min-w-48 z-50",
         "transition-opacity duration-75",
         isVisible ? "opacity-100" : "opacity-0",
       ])}
@@ -147,7 +147,7 @@ export function ContextMenu({
             item.onClick();
             onClose();
           }}
-          className="w-full px-4 py-2 text-left flex text-sm items-center gap-3 hover:bg-accent-50 transition-colors"
+          className="w-full px-4 py-2 text-left flex text-sm items-center gap-3 hover:bg-accent-200 text-selected transition-colors cursor-pointer"
         >
           <span>{item.label}</span>
         </button>
