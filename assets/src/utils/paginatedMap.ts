@@ -5,7 +5,7 @@ interface Data<T> {
   pages: Page<T>[];
 }
 
-type CallbackFn<T, R> = (page: T) => R;
+type CallbackFn<T, R> = (page: T, entryIndex: number) => R | R[];
 
 export function paginatedMap<T, R = ReactNode>(
   data: Data<T> | undefined,
