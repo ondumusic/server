@@ -5,12 +5,12 @@ interface Data<T> {
   pages: Page<T>[];
 }
 
-type CallbackFn<T> = (page: T) => ReactNode;
+type CallbackFn<T, R> = (page: T) => R;
 
-export function paginatedMap<T>(
+export function paginatedMap<T, R = ReactNode>(
   data: Data<T> | undefined,
-  callback: CallbackFn<T>,
-): ReactNode {
+  callback: CallbackFn<T, R>,
+): R[] {
   if (!data) return [];
-  return data.pages.map((page) => page.entries.map(callback));
+  return data.pages.flatMap((page) => page.entries.flatMap(callback));
 }
