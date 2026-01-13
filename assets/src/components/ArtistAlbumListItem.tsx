@@ -1,175 +1,132 @@
-import { useEffect, useMemo, useRef } from "react";
-import { Trans, useTranslation } from "react-i18next";
-import { PlayIcon } from "../components/icons/PlayIcon";
-import { useContextMenu } from "../hooks/useContextMenu";
-import { usePlayer } from "../hooks/usePlayer";
-import { useQueue } from "../hooks/useQueue";
-import type { Album, Artist, Track } from "../types";
+import type { ListItem as DefaultListItem } from "../components/SelectableList";
+import type { Album, Disc, Track } from "../types";
 import { classNames } from "../utils/classNames";
 import { formatDuration } from "../utils/formatDuration";
 import { formatTotalDuration } from "../utils/formatTotalDuration";
-import { splitTracksByDisc } from "../utils/splitTracksByDisc";
+
+type AlbumItem = DefaultListItem & {
+  type: "album";
+  album: Album;
+  firstAlbumInList: boolean;
+};
+
+type DiscItem = DefaultListItem & {
+  type: "disc";
+  disc: Disc;
+};
+
+type TrackItem = DefaultListItem & {
+  type: "track";
+  track: Track;
+  albumTrackCount: number;
+  showTrackArtist: boolean;
+  firstTrackOnDisc: boolean;
+  lastTrackOnDisc: boolean;
+};
+
+export type ListItem = AlbumItem | DiscItem | TrackItem;
 
 interface Props {
-  album: Album;
-  artist: Artist;
-  scrollIntoView: boolean;
+  item: ListItem;
+  isSelected: boolean;
 }
 
-export function ArtistAlbumListItem({ album, scrollIntoView = false }: Props) {
-  const { createContextMenu } = useContextMenu();
-  const { enqueueAndPlay, enqueueNext, enqueueAfter } = usePlayer();
-  const { currentTrack } = useQueue();
-  const { t } = useTranslation();
-  const refContainer = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (scrollIntoView) {
-      refContainer.current?.scrollIntoView({
-        behavior: "instant",
-        block: "center",
-      });
-    }
-  }, [scrollIntoView]);
-
-  // For UX we want to split multi-disc albums into separate arrays so we
-  // can display them a bit nicer.
-  const tracksPerDisc = useMemo(
-    () => splitTracksByDisc(album.tracks),
-    [album.tracks],
-  );
-
-  // Only show track artists if there is more than 1 unique artist
-  const shouldShowTrackArtist =
-    new Set(album.tracks.map((track) => track.artist.id)).size > 1;
-
-  const totalFormattedDuration = formatTotalDuration(album.tracks);
-
-  return (
-    <div ref={refContainer} className="flex w-full">
-      <div className="hidden lg:block flex-shrink-0 pr-12 text-sm w-64">
-        <button
-          type="button"
-          className="relative aspect-square w-full bg-stone-200 mb-4 shadow-xl cursor-pointer rounded-sm overflow-hidden group/cover"
-          onClick={() => enqueueAndPlay(album.tracks)}
-          onKeyDown={() => enqueueAndPlay(album.tracks)}
+export function ArtistAlbumListItem({ item, isSelected }: Props) {
+  switch (item.type) {
+    case "album":
+      return (
+        <div
+          className={classNames([
+            "relative flex gap-4 mb-4",
+            !item.firstAlbumInList && "mt-12",
+          ])}
         >
-          {album.artworkUrl && (
-            <img
-              src={album.artworkUrl}
-              alt=""
-              className="w-full h-full object-cover object-center"
-            />
-          )}
-
-          <div className="absolute w-full h-full top-0 left-0 content-center bg-black opacity-0 transition-opacity group-hover/cover:opacity-30">
-            <PlayIcon
-              className="absolute size-20 text-white top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2"
-              title={t("button.playSelectedAlbum", {
-                defaultValue: "Play {{ albumName }}",
-                albumName: album.name,
-              })}
-            />
+          <div className="absolute top-0 left-0 w-48 shadow-lg aspect-square rounded-sm overflow-hidden bg-stone-200">
+            {item.album.artworkUrl && (
+              <img
+                src={item.album.artworkUrl}
+                alt=""
+                className="w-full object-cover object-center"
+              />
+            )}
           </div>
-        </button>
 
-        <span className="font-light text-stone-400">
-          <Trans
-            i18nKey="album.trackCount"
-            count={album.tracks.length}
-            duration={totalFormattedDuration}
-          >
-            {{ count: album.tracks.length }} tracks,{" "}
-            {{ duration: totalFormattedDuration }}
-          </Trans>
-        </span>
-      </div>
-      <div className="w-full">
-        <div className="text-sm border-b border-stone-300 pb-2 mb-6">
-          <h2 className="font-semibold text-lg">{album.name}</h2>
-          <span className="text-stone-400 font-normal">
-            {album.releaseYear}
-          </span>
-        </div>
-        <div>
-          {tracksPerDisc.map((disc) => (
-            <div key={`${album.id}-disc-${disc.number}`}>
-              {tracksPerDisc.length > 1 ? (
-                <h3
-                  key={`${album.id}-disc-label-${disc.number}`}
-                  className="text-xs text-stone-500 font-semibold mb-2"
-                >
-                  <Trans i18nKey="album.discNumber" disc={disc.number}>
-                    Disc {{ disc: disc.number }}
-                  </Trans>
-                </h3>
-              ) : null}
-              <ul className="text-sm">
-                {disc.tracks.map((track: Track) => (
-                  <li
-                    key={track.id}
-                    className="relative py-1.5 flex justify-between cursor-pointer select-none group/song"
-                    onClick={() => enqueueAndPlay(album.tracks, track)}
-                    onKeyDown={() => enqueueAndPlay(album.tracks, track)}
-                    onContextMenu={createContextMenu<HTMLLIElement>([
-                      {
-                        key: "play_next",
-                        label: "Play Next",
-                        onClick() {
-                          enqueueNext([track]);
-                        },
-                      },
-                      {
-                        key: "play_after",
-                        label: "Play After",
-                        onClick() {
-                          enqueueAfter([track]);
-                        },
-                      },
-                    ])}
-                  >
-                    {track.number ? (
-                      <div className="absolute right-full text-right mr-2">
-                        <span className="text-stone-400 font-light group-hover/song:hidden">
-                          {track.number}.
-                        </span>
-                        <div className="hidden group-hover/song:block py-1 text-accent-600">
-                          <PlayIcon
-                            className="size-4"
-                            title={t("button.playSelectedTrack", {
-                              defaultValue: "Play {{ trackName }}",
-                              trackName: track.name,
-                            })}
-                          />
-                        </div>
-                      </div>
-                    ) : null}
-                    <div className="mr-2">
-                      <span
-                        className={classNames([
-                          currentTrack &&
-                            currentTrack.id === track.id &&
-                            "font-semibold",
-                        ])}
-                      >
-                        {track.name}
-                      </span>
-                      {shouldShowTrackArtist ? (
-                        <span className="block text-stone-400">
-                          {track.artist.name}
-                        </span>
-                      ) : null}
-                    </div>
-                    <span className="tabular-nums text-stone-400 font-light">
-                      {formatDuration(track.duration)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+          <div className="pt-1 pl-62 w-full">
+            <div className="pb-2 mb-2 border-b border-stone-200">
+              <strong className="text-lg font-semibold mb-0.5">
+                {item.album.name}
+              </strong>
+              <div className="flex gap-2">
+                <span className="text-stone-400 text-sm">
+                  {item.album.releaseYear}
+                </span>
+                <span className="text-stone-400 text-sm">
+                  {formatTotalDuration(item.album.tracks)}
+                </span>
+                <span className="text-stone-400 text-sm">
+                  {item.album.tracks.length} tracks
+                </span>
+              </div>
             </div>
-          ))}
+          </div>
         </div>
-      </div>
-    </div>
-  );
+      );
+
+    case "disc":
+      return (
+        <div className="font-semibold text-xs text-gray-500 pl-62">
+          Disc {item.disc.number}
+        </div>
+      );
+
+    case "track":
+      return (
+        <div className="pl-52">
+          <div
+            className={classNames([
+              "flex w-full gap-2 text-sm py-1.5 px-2",
+              isSelected && "bg-blue-500 text-white",
+              isSelected && "rounded-t-md rounded-b-md",
+              isSelected &&
+                "[[aria-selected=true]+[aria-selected=true]_&]:rounded-t-none",
+              isSelected &&
+                "[[aria-selected=true]:has(+[aria-selected=true])_&]:rounded-b-none",
+              item.lastTrackOnDisc && item.albumTrackCount > 3 && "mb-6",
+              item.lastTrackOnDisc && item.albumTrackCount <= 3 && "mb-19",
+            ])}
+          >
+            <span
+              className={classNames([
+                "w-6 flex-shrink-0 font-light text-right",
+                !isSelected && "text-stone-400",
+              ])}
+            >
+              {item.track.number}.
+            </span>
+            <div>
+              {item.track.name}
+
+              {item.showTrackArtist && (
+                <span
+                  className={classNames([
+                    "block",
+                    !isSelected && "text-stone-400",
+                  ])}
+                >
+                  {item.track.artist.name}
+                </span>
+              )}
+            </div>
+            <span
+              className={classNames([
+                "ml-auto font-light",
+                !isSelected && "text-stone-400",
+              ])}
+            >
+              {formatDuration(item.track.duration)}
+            </span>
+          </div>
+        </div>
+      );
+  }
 }

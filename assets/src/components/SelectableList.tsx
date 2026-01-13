@@ -14,7 +14,7 @@ interface ItemState {
   isFocused: boolean;
 }
 
-export interface Item {
+export interface ListItem {
   id: string;
   selectable?: boolean;
 }
@@ -27,9 +27,9 @@ export function SelectableList<T>({
   onDoubleClick,
   onContextMenu,
   renderItem,
-  multiple: allowMultiple = true,
+  multiple: allowMultiple,
 }: PropsWithChildren<{
-  items: Item[];
+  items: ListItem[];
   selectedIds: Set<string>;
   multiple: boolean;
   onChange: (selectedIds: Set<string>) => void;
