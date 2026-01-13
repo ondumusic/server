@@ -21,12 +21,14 @@ export interface Item {
 export function SelectableList<T>({
   items,
   selectedIds,
-  onSelectionChange,
+  onChange,
+  onSubmit,
   renderItem,
 }: PropsWithChildren<{
   items: Item[];
   selectedIds: Set<string>;
-  onSelectionChange: (selectedIds: Set<string>) => void;
+  onChange: (selectedIds: Set<string>) => void;
+  onSubmit: (selectedIds: Set<string>) => void;
   renderItem: (item: T, state: ItemState) => ReactNode;
 }>) {
   const listRef = useRef<HTMLDivElement>(null);
@@ -63,7 +65,7 @@ export function SelectableList<T>({
         }
       }
 
-      onSelectionChange(newSelected);
+      onChange(newSelected);
       setFocusedIndex(index);
     } else if (isMultiSelect) {
       const newSelected = new Set(selectedIds);
@@ -74,11 +76,11 @@ export function SelectableList<T>({
         newSelected.add(item.id);
       }
 
-      onSelectionChange(newSelected);
+      onChange(newSelected);
       setFocusedIndex(index);
       lastSelectedIndexRef.current = index;
     } else {
-      onSelectionChange(new Set([item.id]));
+      onChange(new Set([item.id]));
       setFocusedIndex(index);
       lastSelectedIndexRef.current = index;
     }
@@ -91,14 +93,21 @@ export function SelectableList<T>({
     // Select all
     if (e.key === "a" && isMultiSelect) {
       e.preventDefault();
-      onSelectionChange(new Set(items.map((item) => item.id)));
+      onChange(new Set(items.map((item) => item.id)));
       return;
     }
 
     // Deselect all
     if (e.key === "Escape") {
       e.preventDefault();
-      onSelectionChange(new Set());
+      onChange(new Set());
+      return;
+    }
+
+    // Submit selection
+    if (e.key === "Enter") {
+      e.preventDefault();
+      onSubmit(selectedIds);
       return;
     }
 
@@ -126,9 +135,9 @@ export function SelectableList<T>({
             }
           }
 
-          onSelectionChange(newSelected);
+          onChange(newSelected);
         } else if (!isMultiSelect) {
-          onSelectionChange(new Set([items[newIndex].id]));
+          onChange(new Set([items[newIndex].id]));
           lastSelectedIndexRef.current = newIndex;
         }
       }
@@ -158,9 +167,9 @@ export function SelectableList<T>({
             }
           }
 
-          onSelectionChange(newSelected);
+          onChange(newSelected);
         } else if (!isMultiSelect) {
-          onSelectionChange(new Set([items[newIndex].id]));
+          onChange(new Set([items[newIndex].id]));
           lastSelectedIndexRef.current = newIndex;
         }
       }

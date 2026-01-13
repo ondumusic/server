@@ -176,7 +176,15 @@ export function ArtistAlbumListView() {
       <SelectableList<CustomListItem>
         items={listItems}
         selectedIds={selectedTrackIds}
-        onSelectionChange={setSelectedTrackIds}
+        onChange={setSelectedTrackIds}
+        onSubmit={(selectedIds) => {
+          const albumTracks: Track[] = listItems
+            .filter((item) => item.type === "track")
+            .filter((item) => selectedIds.has(item.id))
+            .map((item) => item.track);
+
+          enqueueAndPlay(albumTracks);
+        }}
         renderItem={(item, state) => {
           switch (item.type) {
             case "album":
