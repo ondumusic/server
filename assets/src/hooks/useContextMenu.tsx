@@ -21,13 +21,16 @@ interface ContextMenuItem {
   onClick(): void;
 }
 
+type ContextMenuFunction = () => ContextMenuItem[];
+type ContextMenuInput = ContextMenuItem[] | ContextMenuFunction;
+
 interface ContextMenuContextValue {
-  createContextMenu<T>(items: ContextMenuItem[]): MouseEventHandler<T>;
+  createContextMenu<T>(itemsOrFunction: ContextMenuInput): MouseEventHandler<T>;
   closeContextMenu(): void;
 }
 
 const ContextMenuContext = createContext<ContextMenuContextValue>({
-  createContextMenu: (_items) => (e) => e,
+  createContextMenu: (_itemsOrFunction) => (e) => e,
   closeContextMenu() {},
 });
 
@@ -161,12 +164,17 @@ export function ContextMenuProvider({ children }: PropsWithChildren) {
   const [position, setPosition] = useState<ContextMenuPosition | null>(null);
 
   function createContextMenu<T>(
-    items: ContextMenuItem[],
+    itemsOrFunction: ContextMenuInput,
   ): MouseEventHandler<T> {
     return (e: ReactMouseEvent<T>) => {
       e.preventDefault();
 
-      setItems(items);
+      if (typeof itemsOrFunction === "function") {
+        setItems(itemsOrFunction());
+      } else {
+        setItems(itemsOrFunction);
+      }
+
       setPosition({
         x: e.clientX,
         y: e.clientY,
