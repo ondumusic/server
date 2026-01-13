@@ -255,11 +255,14 @@ export function ArtistAlbumListView() {
                         "mb-19",
                     ])}
                     onDoubleClick={() => {
-                      const albumTracks =
-                        data?.pages
-                          .flatMap((page) => page.entries)
-                          .filter((album) => album.id === item.track.albumId)[0]
-                          ?.tracks ?? [];
+                      const albumTracks = paginatedMap<Album, Track>(
+                        data,
+                        (album) => {
+                          if (album.id !== item.track.albumId) return [];
+                          return album.tracks;
+                        },
+                      );
+
                       enqueueAndPlay(albumTracks, item.track);
                     }}
                     onContextMenu={createContextMenu<HTMLDivElement>([
