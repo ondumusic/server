@@ -27,11 +27,15 @@ export function SelectableList<T>({
   onDoubleClick,
   onContextMenu,
   renderItem,
+  defaultFocusId,
+  defaultFocusType = "nearest",
   multiple: allowMultiple,
 }: PropsWithChildren<{
   items: ListItem[];
   selectedIds: Set<string>;
   multiple: boolean;
+  defaultFocusId?: string;
+  defaultFocusType?: ScrollLogicalPosition;
   onChange: (selectedIds: Set<string>) => void;
   onSubmit?: (selectedIds: Set<string>) => void;
   onDoubleClick?: (item: T) => void;
@@ -39,24 +43,39 @@ export function SelectableList<T>({
   renderItem: (item: T, state: ItemState) => ReactNode;
 }>) {
   const listRef = useRef<HTMLDivElement>(null);
+  const [scrollBlockType, setScrollBlockType] = useState<
+    ScrollLogicalPosition | undefined
+  >(defaultFocusType);
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
   const lastSelectedIndexRef = useRef<number>(0);
   const { createContextMenu } = useContextMenu();
+
+  // Reset when items change
+  useEffect(() => {
+    const defaultIndex = Math.max(
+      0,
+      items.findIndex((item) => defaultFocusId === item.id),
+    );
+
+    setFocusedIndex(defaultIndex);
+    lastSelectedIndexRef.current = defaultIndex;
+  }, [items, defaultFocusId]);
 
   // Scroll focussed item into view, which is to make the experience feel
   // better when using keyboard arrow navigation.
   useEffect(() => {
     const listElement = listRef.current;
     if (!listElement) return;
+    if (focusedIndex === 0) return;
 
     const focusedElement = listElement.children[focusedIndex] as HTMLElement;
     if (focusedElement) {
       focusedElement.scrollIntoView({
-        block: "nearest",
-        behavior: "smooth",
+        block: scrollBlockType,
+        behavior: "instant",
       });
     }
-  }, [focusedIndex]);
+  }, [focusedIndex, scrollBlockType]);
 
   const handleItemClick = (index: number, e: ReactMouseEvent) => {
     const item = items[index];
@@ -78,6 +97,7 @@ export function SelectableList<T>({
 
       onChange(newSelection);
       setFocusedIndex(index);
+      setScrollBlockType("nearest");
     } else if (isMultiSelect) {
       const newSelection = new Set(selectedIds);
 
@@ -89,10 +109,12 @@ export function SelectableList<T>({
 
       onChange(newSelection);
       setFocusedIndex(index);
+      setScrollBlockType("nearest");
       lastSelectedIndexRef.current = index;
     } else {
       onChange(new Set([item.id]));
       setFocusedIndex(index);
+      setScrollBlockType("nearest");
       lastSelectedIndexRef.current = index;
     }
   };
@@ -134,6 +156,7 @@ export function SelectableList<T>({
 
       if (newIndex < items.length) {
         setFocusedIndex(newIndex);
+        setScrollBlockType("nearest");
 
         if (isRangeSelect) {
           const start = Math.min(lastSelectedIndexRef.current, newIndex);
@@ -166,6 +189,7 @@ export function SelectableList<T>({
 
       if (newIndex >= 0) {
         setFocusedIndex(newIndex);
+        setScrollBlockType("nearest");
 
         if (isRangeSelect) {
           const start = Math.min(lastSelectedIndexRef.current, newIndex);

@@ -42,6 +42,13 @@ export function ArtistAlbumListView() {
     if (useSuspense) setUseSuspense(false);
   });
 
+  // Reset selection on artist/album change
+  // biome-ignore lint/correctness/useExhaustiveDependencies(artistId): dont need it
+  // biome-ignore lint/correctness/useExhaustiveDependencies(albumId): dont need it
+  useEffect(() => {
+    setSelectedTrackIds(new Set());
+  }, [artistId, albumId]);
+
   const suspendUntil = albumId
     ? (entry: Album) => isAlbum(entry, albumId)
     : undefined;
@@ -143,6 +150,10 @@ export function ArtistAlbumListView() {
   if (error) throw error;
   if (!dataArtist) return;
 
+  const currentAlbum = listItems
+    .filter((item) => item.type === "album")
+    .find((item) => isAlbum(item.album, albumId));
+
   return (
     <div className="space-y-8 mx-4 lg:mx-8 my-4 lg:my-8">
       <ArtistAlbumListHeader artist={dataArtist} />
@@ -150,6 +161,8 @@ export function ArtistAlbumListView() {
       <SelectableList<ListItem>
         multiple
         items={listItems}
+        defaultFocusId={currentAlbum?.id}
+        defaultFocusType="start"
         selectedIds={selectedTrackIds}
         onChange={setSelectedTrackIds}
         onSubmit={(selectedIds) => {
