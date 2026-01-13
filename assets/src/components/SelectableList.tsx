@@ -27,9 +27,11 @@ export function SelectableList<T>({
   onDoubleClick,
   onContextMenu,
   renderItem,
+  multiple: allowMultiple = true,
 }: PropsWithChildren<{
   items: Item[];
   selectedIds: Set<string>;
+  multiple: boolean;
   onChange: (selectedIds: Set<string>) => void;
   onSubmit?: (selectedIds: Set<string>) => void;
   onDoubleClick?: (item: T) => void;
@@ -60,8 +62,8 @@ export function SelectableList<T>({
     const item = items[index];
     if (item.selectable === false) return;
 
-    const isMultiSelect = isMacOS ? e.metaKey : e.ctrlKey;
-    const isRangeSelect = e.shiftKey;
+    const isMultiSelect = allowMultiple && (isMacOS ? e.metaKey : e.ctrlKey);
+    const isRangeSelect = allowMultiple && e.shiftKey;
 
     if (isRangeSelect && selectedIds.size > 0) {
       const start = Math.min(lastSelectedIndexRef.current, index);
@@ -96,8 +98,8 @@ export function SelectableList<T>({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    const isMultiSelect = isMacOS ? e.metaKey : e.ctrlKey;
-    const isRangeSelect = e.shiftKey;
+    const isMultiSelect = allowMultiple && (isMacOS ? e.metaKey : e.ctrlKey);
+    const isRangeSelect = allowMultiple && e.shiftKey;
 
     // Select all
     if (e.key === "a" && isMultiSelect) {
@@ -193,7 +195,7 @@ export function SelectableList<T>({
       tabIndex={0}
       onKeyDown={handleKeyDown}
       role="listbox"
-      aria-multiselectable="true"
+      aria-multiselectable={allowMultiple}
     >
       {items.map((item, index) => {
         const isSelected = selectedIds.has(item.id);
