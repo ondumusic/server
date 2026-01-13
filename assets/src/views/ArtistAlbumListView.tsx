@@ -185,6 +185,16 @@ export function ArtistAlbumListView() {
 
           enqueueAndPlay(albumTracks);
         }}
+        onItemDoubleClick={(item) => {
+          if (item.type !== "track") return;
+
+          const albumTracks = paginatedMap<Album, Track>(data, (album) => {
+            if (album.id !== item.track.albumId) return [];
+            return album.tracks;
+          });
+
+          enqueueAndPlay(albumTracks, item.track);
+        }}
         renderItem={(item, state) => {
           switch (item.type) {
             case "album":
@@ -254,17 +264,6 @@ export function ArtistAlbumListView() {
                         item.albumTrackCount <= 3 &&
                         "mb-19",
                     ])}
-                    onDoubleClick={() => {
-                      const albumTracks = paginatedMap<Album, Track>(
-                        data,
-                        (album) => {
-                          if (album.id !== item.track.albumId) return [];
-                          return album.tracks;
-                        },
-                      );
-
-                      enqueueAndPlay(albumTracks, item.track);
-                    }}
                     onContextMenu={createContextMenu<HTMLDivElement>([
                       {
                         key: "play_next",

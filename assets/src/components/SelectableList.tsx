@@ -23,12 +23,14 @@ export function SelectableList<T>({
   selectedIds,
   onChange,
   onSubmit,
+  onItemDoubleClick,
   renderItem,
 }: PropsWithChildren<{
   items: Item[];
   selectedIds: Set<string>;
   onChange: (selectedIds: Set<string>) => void;
   onSubmit: (selectedIds: Set<string>) => void;
+  onItemDoubleClick: (item: T) => void;
   renderItem: (item: T, state: ItemState) => ReactNode;
 }>) {
   const listRef = useRef<HTMLDivElement>(null);
@@ -197,6 +199,7 @@ export function SelectableList<T>({
           <div
             key={item.id}
             onClick={(e) => handleItemClick(index, e)}
+            onDoubleClick={() => onItemDoubleClick(item as T)}
             role="option"
             aria-selected={selectable ? isSelected : undefined}
             aria-disabled={!selectable}
