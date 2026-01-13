@@ -35,6 +35,12 @@
   "emptyView": {
     "noResults": "No Results"
   },
+  "contextMenu": {
+    "playNext_one": "Play Next",
+    "playNext_other": "Play Next",
+    "playAfter_one": "Play After",
+    "playAfter_other": "Play After"
+  },
   "onboarding": {
     "firstLoadWait": "Finding your music..."
   },

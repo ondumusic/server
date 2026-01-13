@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { isMacOS } from "../constants/isMacOS";
+import { type ContextMenuItem, useContextMenu } from "../hooks/useContextMenu";
 
 interface ItemState {
   isSelected: boolean;
@@ -23,19 +24,22 @@ export function SelectableList<T>({
   selectedIds,
   onChange,
   onSubmit,
-  onItemDoubleClick,
+  onDoubleClick,
+  onContextMenu,
   renderItem,
 }: PropsWithChildren<{
   items: Item[];
   selectedIds: Set<string>;
   onChange: (selectedIds: Set<string>) => void;
-  onSubmit: (selectedIds: Set<string>) => void;
-  onItemDoubleClick: (item: T) => void;
+  onSubmit?: (selectedIds: Set<string>) => void;
+  onDoubleClick?: (item: T) => void;
+  onContextMenu?: (selectedIds: Set<string>) => ContextMenuItem[];
   renderItem: (item: T, state: ItemState) => ReactNode;
 }>) {
   const listRef = useRef<HTMLDivElement>(null);
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
   const lastSelectedIndexRef = useRef<number>(0);
+  const { createContextMenu } = useContextMenu();
 
   // Scroll focussed item into view, which is to make the experience feel
   // better when using keyboard arrow navigation.
@@ -45,7 +49,10 @@ export function SelectableList<T>({
 
     const focusedElement = listElement.children[focusedIndex] as HTMLElement;
     if (focusedElement) {
-      focusedElement.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      focusedElement.scrollIntoView({
+        block: "nearest",
+        behavior: "smooth",
+      });
     }
   }, [focusedIndex]);
 
@@ -59,26 +66,26 @@ export function SelectableList<T>({
     if (isRangeSelect && selectedIds.size > 0) {
       const start = Math.min(lastSelectedIndexRef.current, index);
       const end = Math.max(lastSelectedIndexRef.current, index);
-      const newSelected = new Set(selectedIds);
+      const newSelection = new Set(selectedIds);
 
       for (let i = start; i <= end; i++) {
         if (items[i].selectable !== false) {
-          newSelected.add(items[i].id);
+          newSelection.add(items[i].id);
         }
       }
 
-      onChange(newSelected);
+      onChange(newSelection);
       setFocusedIndex(index);
     } else if (isMultiSelect) {
-      const newSelected = new Set(selectedIds);
+      const newSelection = new Set(selectedIds);
 
-      if (newSelected.has(item.id)) {
-        newSelected.delete(item.id);
+      if (newSelection.has(item.id)) {
+        newSelection.delete(item.id);
       } else {
-        newSelected.add(item.id);
+        newSelection.add(item.id);
       }
 
-      onChange(newSelected);
+      onChange(newSelection);
       setFocusedIndex(index);
       lastSelectedIndexRef.current = index;
     } else {
@@ -107,7 +114,7 @@ export function SelectableList<T>({
     }
 
     // Submit selection
-    if (e.key === "Enter") {
+    if (onSubmit && e.key === "Enter") {
       e.preventDefault();
       onSubmit(selectedIds);
       return;
@@ -129,15 +136,15 @@ export function SelectableList<T>({
         if (isRangeSelect) {
           const start = Math.min(lastSelectedIndexRef.current, newIndex);
           const end = Math.max(lastSelectedIndexRef.current, newIndex);
-          const newSelected = new Set<string>();
+          const newSelection = new Set<string>();
 
           for (let i = start; i <= end; i++) {
             if (items[i].selectable !== false) {
-              newSelected.add(items[i].id);
+              newSelection.add(items[i].id);
             }
           }
 
-          onChange(newSelected);
+          onChange(newSelection);
         } else if (!isMultiSelect) {
           onChange(new Set([items[newIndex].id]));
           lastSelectedIndexRef.current = newIndex;
@@ -161,15 +168,15 @@ export function SelectableList<T>({
         if (isRangeSelect) {
           const start = Math.min(lastSelectedIndexRef.current, newIndex);
           const end = Math.max(lastSelectedIndexRef.current, newIndex);
-          const newSelected = new Set<string>();
+          const newSelection = new Set<string>();
 
           for (let i = start; i <= end; i++) {
             if (items[i].selectable !== false) {
-              newSelected.add(items[i].id);
+              newSelection.add(items[i].id);
             }
           }
 
-          onChange(newSelected);
+          onChange(newSelection);
         } else if (!isMultiSelect) {
           onChange(new Set([items[newIndex].id]));
           lastSelectedIndexRef.current = newIndex;
@@ -199,7 +206,30 @@ export function SelectableList<T>({
           <div
             key={item.id}
             onClick={(e) => handleItemClick(index, e)}
-            onDoubleClick={() => onItemDoubleClick(item as T)}
+            onDoubleClick={(e: ReactMouseEvent) => {
+              if (!onDoubleClick) return;
+              e.preventDefault();
+              return onDoubleClick(item as T);
+            }}
+            onContextMenu={
+              onContextMenu
+                ? createContextMenu<HTMLDivElement>(() => {
+                    // If the item that gets the context menu is not in the
+                    // selection, we discard the entire selection and only
+                    // select this item.
+                    if (!isSelected) {
+                      const newSelection = new Set([item.id]);
+                      onChange(newSelection);
+                      setFocusedIndex(index);
+                      lastSelectedIndexRef.current = index;
+                      return onContextMenu(newSelection);
+                    }
+
+                    // Otherwise just return the list of selectedIds
+                    return onContextMenu(selectedIds);
+                  })
+                : undefined
+            }
             role="option"
             aria-selected={selectable ? isSelected : undefined}
             aria-disabled={!selectable}

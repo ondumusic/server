@@ -15,7 +15,7 @@ interface ContextMenuPosition {
   y: number;
 }
 
-interface ContextMenuItem {
+export interface ContextMenuItem {
   key: string;
   label: string;
   onClick(): void;
@@ -105,6 +105,7 @@ export function ContextMenu({
     // TODO: Maybe need more generic Keyboard handler in the near future.
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        e.stopPropagation();
         onClose();
       }
     };
@@ -117,13 +118,13 @@ export function ContextMenu({
     };
 
     document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleEscape);
+    document.addEventListener("keydown", handleEscape, true);
     document.addEventListener("wheel", handleScroll, { passive: true });
     document.addEventListener("scroll", handleScroll, true);
 
     return () => {
       document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("keydown", handleEscape, true);
       document.removeEventListener("scroll", handleScroll, true);
       document.removeEventListener("wheel", handleScroll);
     };

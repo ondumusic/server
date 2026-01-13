@@ -7,7 +7,6 @@ import {
   SelectableList,
 } from "../components/SelectableList";
 import { useArtistQuery } from "../hooks/useArtistQuery";
-import { useContextMenu } from "../hooks/useContextMenu";
 import { useInfiniteArtistAlbumsQuery } from "../hooks/useInfiniteArtistAlbumsQuery";
 import { usePlayer } from "../hooks/usePlayer";
 import i18next from "../i18next";
@@ -54,7 +53,6 @@ function isAlbum(album: Album, albumId?: string): boolean {
 export function ArtistAlbumListView() {
   const navigationType = useNavigationType();
   const { artistId, albumId } = useParams() as Params;
-  const { createContextMenu } = useContextMenu();
   const { enqueueAndPlay, enqueueNext, enqueueAfter } = usePlayer();
   const hasArtistId = !!artistId;
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
@@ -185,7 +183,7 @@ export function ArtistAlbumListView() {
 
           enqueueAndPlay(albumTracks);
         }}
-        onItemDoubleClick={(item) => {
+        onDoubleClick={(item) => {
           if (item.type !== "track") return;
 
           const albumTracks = paginatedMap<Album, Track>(data, (album) => {
@@ -194,6 +192,35 @@ export function ArtistAlbumListView() {
           });
 
           enqueueAndPlay(albumTracks, item.track);
+        }}
+        onContextMenu={(selectedIds) => {
+          const albumTracks: Track[] = listItems
+            .filter((item) => item.type === "track")
+            .filter((item) => selectedIds.has(item.id))
+            .map((item) => item.track);
+
+          return [
+            {
+              key: "play_next",
+              label: i18next.t("contextMenu.playNext", {
+                defaultValue: "Play Next",
+                count: albumTracks.length,
+              }),
+              onClick() {
+                enqueueNext(albumTracks);
+              },
+            },
+            {
+              key: "play_after",
+              label: i18next.t("contextMenu.playAfter", {
+                defaultValue: "Play After",
+                count: albumTracks.length,
+              }),
+              onClick() {
+                enqueueAfter(albumTracks);
+              },
+            },
+          ];
         }}
         renderItem={(item, state) => {
           switch (item.type) {
@@ -245,8 +272,6 @@ export function ArtistAlbumListView() {
 
             case "track":
               return (
-                // biome-ignore-start lint/a11y/noStaticElementInteractions: not sure what role makes sense here
-                // biome-ignore-start lint/a11y/useFocusableInteractive: navigation happens on outer element
                 <div className="pl-52">
                   <div
                     className={classNames([
@@ -263,22 +288,6 @@ export function ArtistAlbumListView() {
                       item.lastTrackOnDisc &&
                         item.albumTrackCount <= 3 &&
                         "mb-19",
-                    ])}
-                    onContextMenu={createContextMenu<HTMLDivElement>([
-                      {
-                        key: "play_next",
-                        label: "Play Next",
-                        onClick() {
-                          enqueueNext([item.track]);
-                        },
-                      },
-                      {
-                        key: "play_after",
-                        label: "Play After",
-                        onClick() {
-                          enqueueAfter([item.track]);
-                        },
-                      },
                     ])}
                   >
                     <span
@@ -313,8 +322,6 @@ export function ArtistAlbumListView() {
                     </span>
                   </div>
                 </div>
-                // biome-ignore-end lint/a11y/useFocusableInteractive: navigation happens on outer element
-                // biome-ignore-end lint/a11y/noStaticElementInteractions: not sure what role makes sense here
               );
           }
         }}
