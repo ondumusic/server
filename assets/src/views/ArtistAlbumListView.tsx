@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigationType, useParams } from "react-router";
 import { ArtistAlbumListHeader } from "../components/ArtistAlbumListHeader";
 import { Loading } from "../components/Loading";
-import { SelectableList } from "../components/SelectableList";
+import {
+  type Item as ListItem,
+  SelectableList,
+} from "../components/SelectableList";
 import { useArtistQuery } from "../hooks/useArtistQuery";
 import { useContextMenu } from "../hooks/useContextMenu";
 import { useInfiniteArtistAlbumsQuery } from "../hooks/useInfiniteArtistAlbumsQuery";
@@ -21,22 +24,18 @@ type Params = {
   albumId?: UUID;
 };
 
-interface CommonListItem {
-  id: string;
-}
-
-type AlbumItem = CommonListItem & {
+type AlbumItem = ListItem & {
   type: "album";
   album: Album;
   firstAlbumInList: boolean;
 };
 
-type DiscItem = CommonListItem & {
+type DiscItem = ListItem & {
   type: "disc";
   disc: Disc;
 };
 
-type TrackItem = CommonListItem & {
+type TrackItem = ListItem & {
   type: "track";
   track: Track;
   albumTrackCount: number;
@@ -45,7 +44,7 @@ type TrackItem = CommonListItem & {
   lastTrackOnDisc: boolean;
 };
 
-type ListItem = AlbumItem | DiscItem | TrackItem;
+type CustomListItem = AlbumItem | DiscItem | TrackItem;
 
 function isAlbum(album: Album, albumId?: string): boolean {
   if (!albumId) return false;
@@ -98,7 +97,7 @@ export function ArtistAlbumListView() {
     );
 
   const listItems = useMemo(() => {
-    return paginatedMap<Album, ListItem>(data, (album, albumIndex) => {
+    return paginatedMap<Album, CustomListItem>(data, (album, albumIndex) => {
       const tracksPerDisc = splitTracksByDisc(album.tracks);
 
       // Only show disc number headers if there is more than one.
@@ -113,15 +112,16 @@ export function ArtistAlbumListView() {
         {
           id: album.id,
           type: "album",
+          selectable: false,
           album,
           firstAlbumInList: albumIndex === 0,
         },
-        ...tracksPerDisc.flatMap((disc): ListItem[] => {
+        ...tracksPerDisc.flatMap((disc): CustomListItem[] => {
           const trackCount = disc.tracks.length;
 
           // Convert track to TrackItem
           const tracks = disc.tracks.flatMap(
-            (track, trackIndex): ListItem[] => {
+            (track, trackIndex): CustomListItem[] => {
               return [
                 {
                   id: track.id,
@@ -142,6 +142,7 @@ export function ArtistAlbumListView() {
               {
                 id: `${album.id}-disc-${disc.number}`,
                 type: "disc",
+                selectable: false,
                 disc,
               },
               ...tracks,
@@ -172,12 +173,10 @@ export function ArtistAlbumListView() {
     <div className="space-y-8 mx-4 lg:mx-8 my-4 lg:my-8">
       <ArtistAlbumListHeader artist={dataArtist} />
 
-      <SelectableList<ListItem>
+      <SelectableList<CustomListItem>
         items={listItems}
         selectedIds={selectedTrackIds}
         onSelectionChange={setSelectedTrackIds}
-        getItemId={(item) => item.id}
-        isItemSelectable={(item) => item.type === "track"}
         renderItem={(item, state) => {
           switch (item.type) {
             case "album":

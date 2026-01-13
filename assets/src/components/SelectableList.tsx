@@ -13,19 +13,20 @@ interface ItemState {
   isFocused: boolean;
 }
 
+export interface Item {
+  id: string;
+  selectable?: boolean;
+}
+
 export function SelectableList<T>({
   items,
   selectedIds,
   onSelectionChange,
-  isItemSelectable,
-  getItemId,
   renderItem,
 }: PropsWithChildren<{
-  items: T[];
+  items: Item[];
   selectedIds: Set<string>;
-  isItemSelectable: (item: T) => boolean;
   onSelectionChange: (selectedIds: Set<string>) => void;
-  getItemId: (item: T) => string;
   renderItem: (item: T, state: ItemState) => ReactNode;
 }>) {
   const listRef = useRef<HTMLDivElement>(null);
@@ -45,9 +46,9 @@ export function SelectableList<T>({
   }, [focusedIndex]);
 
   const handleItemClick = (index: number, e: ReactMouseEvent) => {
-    if (!isItemSelectable(items[index])) return;
+    const item = items[index];
+    if (item.selectable === false) return;
 
-    const itemId = getItemId(items[index]);
     const isMultiSelect = isMacOS ? e.metaKey : e.ctrlKey;
     const isRangeSelect = e.shiftKey;
 
@@ -57,8 +58,8 @@ export function SelectableList<T>({
       const newSelected = new Set(selectedIds);
 
       for (let i = start; i <= end; i++) {
-        if (isItemSelectable(items[i])) {
-          newSelected.add(getItemId(items[i]));
+        if (items[i].selectable !== false) {
+          newSelected.add(items[i].id);
         }
       }
 
@@ -67,17 +68,17 @@ export function SelectableList<T>({
     } else if (isMultiSelect) {
       const newSelected = new Set(selectedIds);
 
-      if (newSelected.has(itemId)) {
-        newSelected.delete(itemId);
+      if (newSelected.has(item.id)) {
+        newSelected.delete(item.id);
       } else {
-        newSelected.add(itemId);
+        newSelected.add(item.id);
       }
 
       onSelectionChange(newSelected);
       setFocusedIndex(index);
       lastSelectedIndexRef.current = index;
     } else {
-      onSelectionChange(new Set([itemId]));
+      onSelectionChange(new Set([item.id]));
       setFocusedIndex(index);
       lastSelectedIndexRef.current = index;
     }
@@ -90,7 +91,7 @@ export function SelectableList<T>({
     // Select all
     if (e.key === "a" && isMultiSelect) {
       e.preventDefault();
-      onSelectionChange(new Set(items.map((item) => getItemId(item))));
+      onSelectionChange(new Set(items.map((item) => item.id)));
       return;
     }
 
@@ -107,7 +108,7 @@ export function SelectableList<T>({
       let newIndex = focusedIndex + 1;
 
       // Skip non-selectable items
-      while (newIndex < items.length && !isItemSelectable(items[newIndex])) {
+      while (newIndex < items.length && items[newIndex].selectable === false) {
         newIndex++;
       }
 
@@ -120,14 +121,14 @@ export function SelectableList<T>({
           const newSelected = new Set<string>();
 
           for (let i = start; i <= end; i++) {
-            if (isItemSelectable(items[i])) {
-              newSelected.add(getItemId(items[i]));
+            if (items[i].selectable !== false) {
+              newSelected.add(items[i].id);
             }
           }
 
           onSelectionChange(newSelected);
         } else if (!isMultiSelect) {
-          onSelectionChange(new Set([getItemId(items[newIndex])]));
+          onSelectionChange(new Set([items[newIndex].id]));
           lastSelectedIndexRef.current = newIndex;
         }
       }
@@ -139,7 +140,7 @@ export function SelectableList<T>({
       let newIndex = focusedIndex - 1;
 
       // Skip non-selectable items
-      while (newIndex >= 0 && !isItemSelectable(items[newIndex])) {
+      while (newIndex >= 0 && items[newIndex].selectable === false) {
         newIndex--;
       }
 
@@ -152,14 +153,14 @@ export function SelectableList<T>({
           const newSelected = new Set<string>();
 
           for (let i = start; i <= end; i++) {
-            if (isItemSelectable(items[i])) {
-              newSelected.add(getItemId(items[i]));
+            if (items[i].selectable !== false) {
+              newSelected.add(items[i].id);
             }
           }
 
           onSelectionChange(newSelected);
         } else if (!isMultiSelect) {
-          onSelectionChange(new Set([getItemId(items[newIndex])]));
+          onSelectionChange(new Set([items[newIndex].id]));
           lastSelectedIndexRef.current = newIndex;
         }
       }
@@ -177,22 +178,21 @@ export function SelectableList<T>({
       aria-multiselectable="true"
     >
       {items.map((item, index) => {
-        const itemId = getItemId(item);
-        const isSelected = selectedIds.has(itemId);
+        const isSelected = selectedIds.has(item.id);
         const isFocused = index === focusedIndex;
-        const selectable = isItemSelectable(item);
+        const selectable = item.selectable !== false;
 
         return (
           // biome-ignore lint/a11y/useFocusableInteractive: arrow keys used for navigation
           // biome-ignore lint/a11y/useKeyWithClickEvents: events handled elsewhere
           <div
-            key={getItemId(item)}
+            key={item.id}
             onClick={(e) => handleItemClick(index, e)}
             role="option"
             aria-selected={selectable ? isSelected : undefined}
             aria-disabled={!selectable}
           >
-            {renderItem(item, { isSelected, isFocused })}
+            {renderItem(item as T, { isSelected, isFocused })}
           </div>
         );
       })}
