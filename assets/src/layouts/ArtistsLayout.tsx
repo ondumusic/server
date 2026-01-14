@@ -25,7 +25,7 @@ export function ArtistsLayout() {
           <ArtistListView />
         </div>
       </Panel>
-      <Separator className="w-[1px] bg-accent-200 [&[data-separator='hover']]:bg-accent-300 [&[data-separator='active']]:bg-accent-300" />
+      <Separator className="w-[1px] bg-accent-200 [&[data-separator='hover']]:bg-accent-300 [&[data-separator='active']]:bg-accent-300 focus:outline-none focus:bg-accent-400" />
       <Panel id="right" minSize="60%">
         <div className="h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Outlet />
