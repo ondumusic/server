@@ -1,8 +1,14 @@
+import { Trans } from "react-i18next";
 import type { ListItem as DefaultListItem } from "../components/SelectableList";
-import type { Album, Disc, Track } from "../types";
+import type { Album, Artist, Disc, Track } from "../types";
 import { classNames } from "../utils/classNames";
 import { formatDuration } from "../utils/formatDuration";
 import { formatTotalDuration } from "../utils/formatTotalDuration";
+
+type ArtistItem = DefaultListItem & {
+  type: "artist";
+  artist: Artist;
+};
 
 type AlbumItem = DefaultListItem & {
   type: "album";
@@ -24,7 +30,7 @@ type TrackItem = DefaultListItem & {
   lastTrackOnDisc: boolean;
 };
 
-export type ListItem = AlbumItem | DiscItem | TrackItem;
+export type ListItem = ArtistItem | AlbumItem | DiscItem | TrackItem;
 
 interface Props {
   item: ListItem;
@@ -33,6 +39,20 @@ interface Props {
 
 export function ArtistAlbumListItem({ item, isSelected }: Props) {
   switch (item.type) {
+    case "artist":
+      return (
+        <header className="mt-4 lg:mt-8 pb-4 mb-8 border-b border-stone-300">
+          <h1 className="font-semibold text-4xl lg:text-2xl">
+            {item.artist.name}
+          </h1>
+          <span className="text-sm text-stone-400">
+            <Trans i18nKey="artist.albumCount" count={item.artist.albumCount}>
+              {{ count: item.artist.albumCount }} albums
+            </Trans>
+          </span>
+        </header>
+      );
+
     case "album":
       return (
         <div

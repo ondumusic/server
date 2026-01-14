@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigationType, useParams } from "react-router";
-import { ArtistAlbumListHeader } from "../components/ArtistAlbumListHeader";
 import {
   ArtistAlbumListItem,
   type ListItem,
@@ -90,64 +89,74 @@ export function ArtistAlbumListView() {
       },
     );
 
-  const listItems = useMemo(() => {
-    return paginatedMap<Album, ListItem>(data, (album, albumIndex) => {
-      const tracksPerDisc = splitTracksByDisc(album.tracks);
+  const listItems: ListItem[] = useMemo(() => {
+    if (!dataArtist || !data) return [];
 
-      // Only show disc number headers if there is more than one.
-      const showDiscNumbers = tracksPerDisc.length > 1;
+    return [
+      {
+        id: "artistHeader",
+        type: "artist",
+        selectable: false,
+        artist: dataArtist,
+      },
+      ...paginatedMap<Album, ListItem>(data, (album, albumIndex) => {
+        const tracksPerDisc = splitTracksByDisc(album.tracks);
 
-      // Only show track artists if there is more than one.
-      const showTrackArtist =
-        new Set(album.tracks.map((track) => track.artist.id)).size > 1;
+        // Only show disc number headers if there is more than one.
+        const showDiscNumbers = tracksPerDisc.length > 1;
 
-      // Return album item and iterate over tracks
-      return [
-        {
-          id: album.id,
-          type: "album",
-          selectable: false,
-          album,
-          firstAlbumInList: albumIndex === 0,
-        },
-        ...tracksPerDisc.flatMap((disc): ListItem[] => {
-          const trackCount = disc.tracks.length;
+        // Only show track artists if there is more than one.
+        const showTrackArtist =
+          new Set(album.tracks.map((track) => track.artist.id)).size > 1;
 
-          // Convert track to TrackItem
-          const tracks = disc.tracks.flatMap(
-            (track, trackIndex): ListItem[] => {
+        // Return album item and iterate over tracks
+        return [
+          {
+            id: album.id,
+            type: "album",
+            selectable: false,
+            album,
+            firstAlbumInList: albumIndex === 0,
+          },
+          ...tracksPerDisc.flatMap((disc): ListItem[] => {
+            const trackCount = disc.tracks.length;
+
+            // Convert track to TrackItem
+            const tracks = disc.tracks.flatMap(
+              (track, trackIndex): ListItem[] => {
+                return [
+                  {
+                    id: track.id,
+                    type: "track",
+                    track,
+                    showTrackArtist,
+                    albumTrackCount: album.tracks.length,
+                    firstTrackOnDisc: trackIndex === 0,
+                    lastTrackOnDisc: trackIndex === trackCount - 1,
+                  },
+                ];
+              },
+            );
+
+            // Conditionally include disc headers
+            if (showDiscNumbers) {
               return [
                 {
-                  id: track.id,
-                  type: "track",
-                  track,
-                  showTrackArtist,
-                  albumTrackCount: album.tracks.length,
-                  firstTrackOnDisc: trackIndex === 0,
-                  lastTrackOnDisc: trackIndex === trackCount - 1,
+                  id: `${album.id}-disc-${disc.number}`,
+                  type: "disc",
+                  selectable: false,
+                  disc,
                 },
+                ...tracks,
               ];
-            },
-          );
-
-          // Conditionally include disc headers
-          if (showDiscNumbers) {
-            return [
-              {
-                id: `${album.id}-disc-${disc.number}`,
-                type: "disc",
-                selectable: false,
-                disc,
-              },
-              ...tracks,
-            ];
-          } else {
-            return tracks;
-          }
-        }),
-      ];
-    });
-  }, [data]);
+            } else {
+              return tracks;
+            }
+          }),
+        ];
+      }),
+    ];
+  }, [data, dataArtist]);
 
   if (!artistId)
     return (
@@ -163,14 +172,12 @@ export function ArtistAlbumListView() {
   if (error) throw error;
   if (!dataArtist) return;
 
-  const currentAlbum = listItems
-    .filter((item) => item.type === "album")
-    .find((item) => isAlbum(item.album, albumId));
+  const currentAlbum = listItems.find(
+    (item) => item.type === "album" && isAlbum(item.album, albumId),
+  );
 
   return (
-    <div className="space-y-8 mx-4 lg:mx-8 my-4 lg:my-8">
-      <ArtistAlbumListHeader artist={dataArtist} />
-
+    <div className="mx-4 lg:mx-8">
       <SelectableList<ListItem>
         multiple
         items={listItems}
