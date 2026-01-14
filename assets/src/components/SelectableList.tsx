@@ -126,7 +126,13 @@ export function SelectableList<T>({
     // Select all
     if (e.key === "a" && isMultiSelect) {
       e.preventDefault();
-      onChange(new Set(items.map((item) => item.id)));
+      onChange(
+        new Set(
+          items
+            .filter((item) => item.selectable !== false)
+            .map((item) => item.id),
+        ),
+      );
       return;
     }
 
