@@ -1,4 +1,5 @@
-import { Trans } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
+import { PlayIcon } from "../components/icons/PlayIcon";
 import type { ListItem as DefaultListItem } from "../components/SelectableList";
 import type { Album, Artist, Disc, Track } from "../types";
 import { classNames } from "../utils/classNames";
@@ -38,6 +39,8 @@ interface Props {
 }
 
 export function ArtistAlbumListItem({ item, isSelected }: Props) {
+  const { t } = useTranslation();
+
   switch (item.type) {
     case "artist":
       return (
@@ -101,7 +104,7 @@ export function ArtistAlbumListItem({ item, isSelected }: Props) {
 
     case "track":
       return (
-        <div className="pl-52">
+        <div className="pl-52 group/track">
           <div
             className={classNames([
               "flex w-full gap-2 text-sm py-1.5 px-2",
@@ -118,11 +121,26 @@ export function ArtistAlbumListItem({ item, isSelected }: Props) {
             <span
               className={classNames([
                 "w-6 flex-shrink-0 font-light text-right",
+                "group-hover/track:hidden",
                 !isSelected && "text-stone-400",
               ])}
             >
-              {item.track.number}.
+              {item.track.number && `${item.track.number}.`}
             </span>
+
+            <div className="w-6 hidden group-hover/track:flex justify-end pt-1">
+              <PlayIcon
+                className={classNames([
+                  "size-3 text-accent-500",
+                  isSelected && "text-white",
+                ])}
+                title={t("button.playSelectedTrack", {
+                  defaultValue: "Play {{ trackName }}",
+                  trackName: item.track.name,
+                })}
+              />
+            </div>
+
             <div>
               {item.track.name}
 
