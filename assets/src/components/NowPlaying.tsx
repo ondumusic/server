@@ -76,7 +76,7 @@ export function NowPlaying() {
 
       <div className="text-center overflow-hidden mb-4">
         <Marquee
-          className="transition-colors text-accent-600 text-lg font-medium"
+          className="transition-colors duration-400 text-accent-600 text-lg font-medium"
           text={
             trackName ||
             i18next.t("player.noTrack.trackName", {
@@ -90,7 +90,7 @@ export function NowPlaying() {
       </div>
 
       <div className="group/timeline">
-        <div className="flex justify-between items-end tabular-nums transition-colors text-accent-400 text-xs mb-2">
+        <div className="flex justify-between items-end tabular-nums transition-colors duration-400 text-accent-400 text-xs mb-2">
           <span>{formatDuration(currentTime)}</span>
           <span>{formatDuration(duration)}</span>
         </div>
@@ -105,7 +105,7 @@ export function NowPlaying() {
           <input
             type="range"
             className="
-                appearance-none bg-transparent z-[20] transition-colors
+                appearance-none bg-transparent z-[20] transition-colors duration-400
                 absolute left-0 right-0 top-0 lg:top-auto lg:bottom-0
                 [&::-webkit-slider-runnable-track]:bg-transparent
                 [&::-webkit-slider-thumb]:appearance-none

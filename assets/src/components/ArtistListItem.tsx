@@ -12,7 +12,7 @@ export function ArtistListItem({ artist, isSelected = false }: Props) {
     <li
       className={classNames([
         "px-4 whitespace-nowrap items-center flex gap-2",
-        "transition-colors",
+        "transition-colors duration-400",
         isSelected && "bg-accent-200 text-selected",
       ])}
     >
