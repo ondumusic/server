@@ -26,6 +26,19 @@ function isAlbum(album: Album, albumId?: string): boolean {
   return album.id === albumId || album.slug === albumId;
 }
 
+function getTracksById(items: ListItem[], ids: Set<string>): Track[] {
+  const selectedTracks: { [key: string]: Track } = items
+    .filter((item) => item.type === "track")
+    .filter((item) => ids.has(item.id))
+    .reduce((acc: { [key: string]: Track }, item) => {
+      acc[item.id] = item.track;
+      return acc;
+    }, {});
+
+  // Return the tracks in the same order as the ids are in the Set
+  return [...ids].map((trackId) => selectedTracks[trackId]);
+}
+
 export function ArtistAlbumListView() {
   const navigationType = useNavigationType();
   const { artistId, albumId } = useParams() as Params;
@@ -166,16 +179,14 @@ export function ArtistAlbumListView() {
         selectedIds={selectedTrackIds}
         onChange={setSelectedTrackIds}
         onSubmit={(selectedIds) => {
-          const albumTracks: Track[] = listItems
-            .filter((item) => item.type === "track")
-            .filter((item) => selectedIds.has(item.id))
-            .map((item) => item.track);
-
-          enqueueAndPlay(albumTracks);
+          const selectedTracks = getTracksById(listItems, selectedIds);
+          enqueueAndPlay(selectedTracks);
         }}
         onDoubleClick={(item) => {
           if (item.type !== "track") return;
 
+          // The default behaviour we want is to add all tracks from the same
+          // album to the queue and start playback at the selected track.
           const albumTracks = paginatedMap<Album, Track>(data, (album) => {
             if (album.id !== item.track.albumId) return [];
             return album.tracks;
@@ -184,30 +195,27 @@ export function ArtistAlbumListView() {
           enqueueAndPlay(albumTracks, item.track);
         }}
         onContextMenu={(selectedIds) => {
-          const albumTracks: Track[] = listItems
-            .filter((item) => item.type === "track")
-            .filter((item) => selectedIds.has(item.id))
-            .map((item) => item.track);
+          const selectedTracks = getTracksById(listItems, selectedIds);
 
           return [
             {
               key: "play_next",
               label: i18next.t("contextMenu.playNext", {
                 defaultValue: "Play Next",
-                count: albumTracks.length,
+                count: selectedTracks.length,
               }),
               onClick() {
-                enqueueNext(albumTracks);
+                enqueueNext(selectedTracks);
               },
             },
             {
               key: "play_after",
               label: i18next.t("contextMenu.playAfter", {
                 defaultValue: "Play After",
-                count: albumTracks.length,
+                count: selectedTracks.length,
               }),
               onClick() {
-                enqueueAfter(albumTracks);
+                enqueueAfter(selectedTracks);
               },
             },
           ];
