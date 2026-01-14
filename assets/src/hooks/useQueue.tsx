@@ -15,9 +15,12 @@ export interface QueueContext {
   prevTrack(): void;
   nextTrack(): void;
   getNextTrack(): Track | undefined;
+  skipToTrackIndex(trackIndex: number): void;
   addQueueNext(tracks: Track[]): void;
   addQueueAfter(tracks: Track[]): void;
   replaceQueue(tracks: Track[], startWithTrack?: Track): void;
+  clearNextTracks(): void;
+  clearQueue(): void;
 }
 
 const QueueContext = createContext<QueueContext>({
@@ -29,9 +32,12 @@ const QueueContext = createContext<QueueContext>({
   prevTrack: () => {},
   nextTrack: () => {},
   getNextTrack: () => undefined,
+  skipToTrackIndex: (_trackIndex) => {},
   addQueueNext: (_tracks) => {},
   addQueueAfter: (_tracks) => {},
   replaceQueue: (_tracks, _startWithTrack?) => {},
+  clearNextTracks: () => {},
+  clearQueue: () => {},
 });
 
 export function useQueue() {
@@ -71,6 +77,9 @@ export const QueueProvider = ({ children }: PropsWithChildren) => {
 
       setQueueIndex(nextTrackIndex);
     },
+    skipToTrackIndex(trackIndex: number) {
+      setQueueIndex(trackIndex);
+    },
     addQueueNext(tracks: Track[]) {
       const updatedQueue = [...queue];
       updatedQueue.splice(queueIndex + 1, 0, ...tracks);
@@ -98,6 +107,13 @@ export const QueueProvider = ({ children }: PropsWithChildren) => {
       setQueue(tracks);
       setQueueIndex(startIndex);
     },
+    clearNextTracks() {
+      setQueue(queue.filter((_track, trackIndex) => trackIndex <= queueIndex));
+    },
+    clearQueue() {
+      setQueue([]);
+      setQueueIndex(-1);
+    }
   };
 
   return (
