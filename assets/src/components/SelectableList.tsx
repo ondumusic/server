@@ -23,6 +23,7 @@ export function SelectableList<T>({
   items,
   selectedIds,
   onChange,
+  onDelete,
   onSubmit,
   onDoubleClick,
   onContextMenu,
@@ -37,6 +38,7 @@ export function SelectableList<T>({
   defaultFocusId?: string;
   defaultFocusType?: ScrollLogicalPosition;
   onChange: (selectedIds: Set<string>) => void;
+  onDelete?: (selectedIds: Set<string>) => void;
   onSubmit?: (selectedIds: Set<string>) => void;
   onDoubleClick?: (item: T) => void;
   onContextMenu?: (selectedIds: Set<string>) => ContextMenuItem[];
@@ -144,6 +146,12 @@ export function SelectableList<T>({
     if (onSubmit && e.key === "Enter") {
       e.preventDefault();
       onSubmit(selectedIds);
+      return;
+    }
+
+    if (onDelete && (e.key === "Backspace" || e.key === "Delete")) {
+      e.preventDefault();
+      onDelete(selectedIds);
       return;
     }
 
