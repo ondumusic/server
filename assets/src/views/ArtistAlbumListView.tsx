@@ -187,7 +187,20 @@ export function ArtistAlbumListView() {
         onChange={setSelectedTrackIds}
         onSubmit={(selectedIds) => {
           const selectedTracks = getTracksById(listItems, selectedIds);
-          enqueueAndPlay(selectedTracks);
+          if (selectedTracks.length === 1) {
+            const selectedTrack = selectedTracks[0];
+
+            // The default behaviour we want is to add all tracks from the same
+            // album to the queue and start playback at the selected track.
+            const albumTracks = paginatedMap<Album, Track>(data, (album) => {
+              if (album.id !== selectedTrack.albumId) return [];
+              return album.tracks;
+            });
+
+            enqueueAndPlay(albumTracks, selectedTrack);
+          } else {
+            enqueueAndPlay(selectedTracks);
+          }
         }}
         onDoubleClick={(item) => {
           if (item.type !== "track") return;
