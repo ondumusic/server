@@ -46,16 +46,13 @@ export function SelectableList<T>({
   const [scrollBlockType, setScrollBlockType] = useState<
     ScrollLogicalPosition | undefined
   >(defaultFocusType);
-  const [focusedIndex, setFocusedIndex] = useState<number>(0);
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const lastSelectedIndexRef = useRef<number>(0);
   const { createContextMenu } = useContextMenu();
 
   // Reset when items change
   useEffect(() => {
-    const defaultIndex = Math.max(
-      0,
-      items.findIndex((item) => defaultFocusId === item.id),
-    );
+    const defaultIndex = items.findIndex((item) => defaultFocusId === item.id);
 
     setFocusedIndex(defaultIndex);
     lastSelectedIndexRef.current = defaultIndex;
@@ -66,7 +63,7 @@ export function SelectableList<T>({
   useEffect(() => {
     const listElement = listRef.current;
     if (!listElement) return;
-    if (focusedIndex === 0) return;
+    if (focusedIndex === -1) return;
 
     const focusedElement = listElement.children[focusedIndex] as HTMLElement;
     if (focusedElement) {

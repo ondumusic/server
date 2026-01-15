@@ -14,14 +14,13 @@ export function Player() {
   const { isPlaying, setIsPlaying, currentTime, scrubAndPlay } =
     useAudioManager();
   const { hasNextTrack, hasPrevTrack, prevTrack, nextTrack } = useQueue();
-
-  const [showUpNext, setShowUpNext] = useState(false);
+  const [showUpNext, setShowUpNext] = useState(true);
 
   return (
     <div className="flex flex-col h-full w-full justify-center text-center select-none">
       <NowPlaying />
 
-      <div className="flex justify-center items-center w-full pt-2 flex-shrink-0">
+      <div className="flex justify-center items-center w-full pt-2 px-2 flex-shrink-0">
         <div className="flex flex-shrink-0 text-accent-500">
           <button
             type="button"

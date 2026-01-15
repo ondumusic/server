@@ -69,7 +69,7 @@ export function RootLayout({ children }: PropsWithChildren) {
     <div className="relative h-full">
       <div
         className={
-          "absolute lg:w-1/3 xl:w-1/4 h-full left-0 overflow-hidden lg:p-6 xl:p-8 " +
+          "absolute lg:w-1/3 xl:w-1/4 h-full left-0 overflow-hidden lg:py-6 xl:py-8 lg:px-4 xl:py-6" +
           "flex justify-center items-center flex-col " +
           "transition-all duration-400 ease-in-out " +
           (isPanelOpen
