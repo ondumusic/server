@@ -241,7 +241,20 @@ export function ArtistAlbumListView() {
           ];
         }}
         renderItem={(item, state) => (
-          <ArtistAlbumListItem item={item} isSelected={state.isSelected} />
+          <ArtistAlbumListItem
+            item={item}
+            isSelected={state.isSelected}
+            onPlayAlbum={(item) => {
+              if (item.type !== "album") return;
+
+              const albumTracks = paginatedMap<Album, Track>(data, (album) => {
+                if (album.id !== item.album.id) return [];
+                return album.tracks;
+              });
+
+              enqueueAndPlay(albumTracks);
+            }}
+          />
         )}
       />
     </div>

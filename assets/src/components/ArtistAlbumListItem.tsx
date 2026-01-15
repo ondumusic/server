@@ -36,9 +36,10 @@ export type ListItem = ArtistItem | AlbumItem | DiscItem | TrackItem;
 interface Props {
   item: ListItem;
   isSelected: boolean;
+  onPlayAlbum?: (item: ListItem) => void;
 }
 
-export function ArtistAlbumListItem({ item, isSelected }: Props) {
+export function ArtistAlbumListItem({ item, isSelected, onPlayAlbum }: Props) {
   const { t } = useTranslation();
 
   switch (item.type) {
@@ -64,7 +65,7 @@ export function ArtistAlbumListItem({ item, isSelected }: Props) {
             !item.firstAlbumInList && "mt-12",
           ])}
         >
-          <div className="absolute top-0 left-0 w-48 shadow-lg aspect-square rounded-sm overflow-hidden bg-stone-200">
+          <div className="absolute top-0 left-0 w-48 shadow-lg aspect-square rounded-sm overflow-hidden bg-stone-200 group/artwork">
             {item.album.artworkUrl && (
               <img
                 src={item.album.artworkUrl}
@@ -72,6 +73,22 @@ export function ArtistAlbumListItem({ item, isSelected }: Props) {
                 className="w-full object-cover object-center"
               />
             )}
+
+            <button
+              type="button"
+              onDoubleClick={onPlayAlbum && (() => onPlayAlbum(item))}
+              className="absolute left-0 top-0 w-full h-full opacity-0 group-hover/artwork:opacity-100 transition-opacity"
+            >
+              <div className="m-auto flex justify-center align-center w-16 h-16 bg-accent-500 rounded-full shadow-lg transition-colors">
+                <PlayIcon
+                  className="size-8 m-auto text-white"
+                  title={t("button.playSelectedAlbum", {
+                    defaultValue: "Play {{ albumName }}",
+                    albumName: item.album.name,
+                  })}
+                />
+              </div>
+            </button>
           </div>
 
           <div className="pt-1 pl-62 w-full">
@@ -84,10 +101,14 @@ export function ArtistAlbumListItem({ item, isSelected }: Props) {
                   {item.album.releaseYear}
                 </span>
                 <span className="text-stone-400 text-sm">
-                  {formatTotalDuration(item.album.tracks)}
-                </span>
-                <span className="text-stone-400 text-sm">
-                  {item.album.tracks.length} tracks
+                  <Trans
+                    i18nKey="album.trackCount"
+                    count={item.album.tracks.length}
+                    duration={formatTotalDuration(item.album.tracks)}
+                  >
+                    {{ count: item.album.tracks.length }} tracks,{" "}
+                    {{ duration: formatTotalDuration(item.album.tracks) }}
+                  </Trans>
                 </span>
               </div>
             </div>
@@ -98,7 +119,9 @@ export function ArtistAlbumListItem({ item, isSelected }: Props) {
     case "disc":
       return (
         <div className="font-semibold text-xs text-gray-500 pl-62">
-          Disc {item.disc.number}
+          <Trans i18nKey="album.discNumber" disc={item.disc.number}>
+            Disc {{ disc: item.disc.number }}
+          </Trans>
         </div>
       );
 

@@ -9,7 +9,11 @@
     "previousTrack": "Previous Track",
     "pauseCurrentTrack": "Pause Current Track",
     "playCurrentTrack": "Play Current Track",
-    "nextTrack": "Next Track"
+    "nextTrack": "Next Track",
+    "showUpNext": "Up Next",
+    "closePanel": "Close Music Browser",
+    "openPanel": "Open Music Browser",
+    "clearUpNext": "Clear"
   },
   "album": {
     "trackCount_one": "{{count}} track, {{duration}}",
@@ -23,6 +27,10 @@
     "noTrack": {
       "trackName": "No Track"
     }
+  },
+  "upNext": {
+    "emptyView": "No upcoming tracks.",
+    "title": "Up Next"
   },
   "formattedDuration": {
     "minutes_one": "{{ count }} minute",
