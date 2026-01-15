@@ -19,6 +19,7 @@ export interface QueueContext {
   addQueueNext(tracks: Track[]): void;
   addQueueAfter(tracks: Track[]): void;
   replaceQueue(tracks: Track[], startWithTrack?: Track): void;
+  removeFromQueue(trackIndexes: number[]): void;
   clearNextTracks(): void;
   clearQueue(): void;
 }
@@ -36,6 +37,7 @@ const QueueContext = createContext<QueueContext>({
   addQueueNext: (_tracks) => {},
   addQueueAfter: (_tracks) => {},
   replaceQueue: (_tracks, _startWithTrack?) => {},
+  removeFromQueue: (_trackIndex) => {},
   clearNextTracks: () => {},
   clearQueue: () => {},
 });
@@ -106,6 +108,12 @@ export const QueueProvider = ({ children }: PropsWithChildren) => {
       startIndex = Math.max(Math.min(tracks.length - 1, startIndex), 0);
       setQueue(tracks);
       setQueueIndex(startIndex);
+    },
+    removeFromQueue(trackIndexes: number[]) {
+      const removeIndexes = new Set(trackIndexes);
+      setQueue(
+        queue.filter((_track, trackIndex) => !removeIndexes.has(trackIndex)),
+      );
     },
     clearNextTracks() {
       setQueue(queue.filter((_track, trackIndex) => trackIndex <= queueIndex));
