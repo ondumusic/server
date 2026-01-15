@@ -170,11 +170,15 @@ export function ContextMenuProvider({ children }: PropsWithChildren) {
     return (e: ReactMouseEvent<T>) => {
       e.preventDefault();
 
+      let newItems;
       if (typeof itemsOrFunction === "function") {
-        setItems(itemsOrFunction());
+        newItems = itemsOrFunction();
       } else {
-        setItems(itemsOrFunction);
+        newItems = itemsOrFunction;
       }
+
+      setItems(newItems);
+      if (newItems.length === 0) return;
 
       setPosition({
         x: e.clientX,

@@ -35,7 +35,9 @@ function getTracksById(items: ListItem[], ids: Set<string>): Track[] {
     }, {});
 
   // Return the tracks in the same order as the ids are in the Set
-  return [...ids].map((trackId) => selectedTracks[trackId]);
+  return [...ids]
+    .map((trackId) => selectedTracks[trackId])
+    .filter((track) => track);
 }
 
 export function ArtistAlbumListView() {
@@ -216,6 +218,7 @@ export function ArtistAlbumListView() {
         }}
         onContextMenu={(selectedIds) => {
           const selectedTracks = getTracksById(listItems, selectedIds);
+          if (selectedTracks.length === 0) return [];
 
           return [
             {
