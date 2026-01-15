@@ -1,15 +1,25 @@
-import { useState } from "react";
+import { type PropsWithChildren, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NextIcon } from "../components/icons/NextIcon";
+import { PanelCloseIcon } from "../components/icons/PanelCloseIcon";
+import { PanelOpenIcon } from "../components/icons/PanelOpenIcon";
 import { PauseIcon } from "../components/icons/PauseIcon";
 import { PlayIcon } from "../components/icons/PlayIcon";
 import { PrevIcon } from "../components/icons/PrevIcon";
+import { UpNextIcon } from "../components/icons/UpNextIcon";
 import { NowPlaying } from "../components/NowPlaying";
 import { UpNext } from "../components/UpNext";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
+import { classNames } from "../utils/classNames";
 
-export function Player() {
+export function Player({
+  isPanelOpen,
+  setIsPanelOpen,
+}: PropsWithChildren<{
+  isPanelOpen: boolean;
+  setIsPanelOpen: (_isPanelOpen: boolean) => void;
+}>) {
   const { t } = useTranslation();
   const { isPlaying, setIsPlaying, currentTime, scrubAndPlay } =
     useAudioManager();
@@ -73,10 +83,33 @@ export function Player() {
 
         <button
           type="button"
-          className="absolute right-8 font-bold text-xl"
+          className="absolute cursor-pointer left-6 text-accent-500"
           onClick={() => setShowUpNext(!showUpNext)}
         >
-          Q
+          <UpNextIcon
+            className="size-6"
+            title={t("button.showUpNext", { defaultValue: "Up Next" })}
+          />
+        </button>
+
+        <button
+          type="button"
+          className="absolute cursor-pointer right-6 text-accent-500"
+          onClick={() => setIsPanelOpen(!isPanelOpen)}
+        >
+          <PanelCloseIcon
+            className={classNames(["size-6", !isPanelOpen && "hidden"])}
+            title={t("button.closePanel", {
+              defaultValue: "Close Music Browser",
+            })}
+          />
+
+          <PanelOpenIcon
+            className={classNames(["size-6", isPanelOpen && "hidden"])}
+            title={t("button.openPanel", {
+              defaultValue: "Open Music Browser",
+            })}
+          />
         </button>
       </div>
 

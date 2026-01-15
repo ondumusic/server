@@ -258,6 +258,7 @@ export function SelectableList<T>({
                       const newSelection = new Set([item.id]);
                       onChange(newSelection);
                       setFocusedIndex(index);
+                      setScrollBlockType("nearest");
                       lastSelectedIndexRef.current = index;
                       return onContextMenu(newSelection);
                     }

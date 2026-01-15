@@ -77,14 +77,9 @@ export function RootLayout({ children }: PropsWithChildren) {
             : " lg:translate-x-full xl:translate-x-[150%]")
         }
       >
-        {!isOnboarding && <Player />}
-        <button
-          type="button"
-          className="mt-4 absolute top-2 right-2"
-          onClick={() => setIsPanelOpen(!isPanelOpen)}
-        >
-          Toggle Panel
-        </button>
+        {!isOnboarding && (
+          <Player isPanelOpen={isPanelOpen} setIsPanelOpen={setIsPanelOpen} />
+        )}
       </div>
 
       <div
