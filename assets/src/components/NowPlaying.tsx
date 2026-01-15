@@ -64,7 +64,7 @@ export function NowPlaying() {
   );
 
   return (
-    <div className="w-full cursor-default">
+    <div className="w-full cursor-default flex-shrink-0">
       {currentAlbum?.artworkUrl && (
         <img
           src={currentAlbum?.artworkUrl}

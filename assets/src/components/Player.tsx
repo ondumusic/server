@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NextIcon } from "../components/icons/NextIcon";
 import { PauseIcon } from "../components/icons/PauseIcon";
 import { PlayIcon } from "../components/icons/PlayIcon";
 import { PrevIcon } from "../components/icons/PrevIcon";
 import { NowPlaying } from "../components/NowPlaying";
+import { UpNext } from "../components/UpNext";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
 
@@ -13,11 +15,13 @@ export function Player() {
     useAudioManager();
   const { hasNextTrack, hasPrevTrack, prevTrack, nextTrack } = useQueue();
 
+  const [showUpNext, setShowUpNext] = useState(false);
+
   return (
-    <div className="w-full text-center select-none">
+    <div className="flex flex-col h-full w-full justify-center text-center select-none">
       <NowPlaying />
 
-      <div className="flex justify-center items-center w-full pt-2">
+      <div className="flex justify-center items-center w-full pt-2 flex-shrink-0">
         <div className="flex flex-shrink-0 text-accent-500">
           <button
             type="button"
@@ -67,7 +71,17 @@ export function Player() {
             />
           </button>
         </div>
+
+        <button
+          type="button"
+          className="absolute right-8 font-bold text-xl"
+          onClick={() => setShowUpNext(!showUpNext)}
+        >
+          Q
+        </button>
       </div>
+
+      <UpNext isVisible={showUpNext} />
     </div>
   );
 }

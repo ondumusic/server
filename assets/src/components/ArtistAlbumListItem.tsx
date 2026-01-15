@@ -128,7 +128,7 @@ export function ArtistAlbumListItem({ item, isSelected }: Props) {
               {item.track.number && `${item.track.number}.`}
             </span>
 
-            <div className="w-6 hidden group-hover/track:flex justify-end pt-1">
+            <div className="w-6 hidden group-hover/track:flex justify-end pt-1 flex-shrink-0">
               <PlayIcon
                 className={classNames([
                   "size-3 text-accent-500",

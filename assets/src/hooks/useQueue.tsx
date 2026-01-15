@@ -113,7 +113,7 @@ export const QueueProvider = ({ children }: PropsWithChildren) => {
     clearQueue() {
       setQueue([]);
       setQueueIndex(-1);
-    }
+    },
   };
 
   return (

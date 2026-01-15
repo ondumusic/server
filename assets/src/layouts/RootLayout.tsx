@@ -73,14 +73,14 @@ export function RootLayout({ children }: PropsWithChildren) {
           "flex justify-center items-center flex-col " +
           "transition-all duration-400 ease-in-out " +
           (isPanelOpen
-            ? " translate-x-0"
+            ? " translate-x-0 scale-95"
             : " lg:translate-x-full xl:translate-x-[150%]")
         }
       >
         {!isOnboarding && <Player />}
         <button
           type="button"
-          className="mt-4"
+          className="mt-4 absolute top-2 right-2"
           onClick={() => setIsPanelOpen(!isPanelOpen)}
         >
           Toggle Panel
