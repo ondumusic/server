@@ -14,7 +14,7 @@ export function Player() {
   const { isPlaying, setIsPlaying, currentTime, scrubAndPlay } =
     useAudioManager();
   const { hasNextTrack, hasPrevTrack, prevTrack, nextTrack } = useQueue();
-  const [showUpNext, setShowUpNext] = useState(true);
+  const [showUpNext, setShowUpNext] = useState(false);
 
   return (
     <div className="flex flex-col h-full w-full justify-center text-center select-none">

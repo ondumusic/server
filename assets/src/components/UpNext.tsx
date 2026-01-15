@@ -16,8 +16,13 @@ export function UpNext({
   isVisible: boolean;
 }>) {
   const [selectedTrackIds, setSelectedTrackIds] = useState<string[]>([]);
-  const { queue, currentTrackIndex, skipToTrackIndex, clearNextTracks } =
-    useQueue();
+  const {
+    queue,
+    currentTrackIndex,
+    removeFromQueue,
+    skipToTrackIndex,
+    clearNextTracks,
+  } = useQueue();
 
   const listItems: QueueItem[] = useMemo(() => {
     return (
@@ -63,6 +68,15 @@ export function UpNext({
             items={listItems}
             selectedIds={new Set<string>(selectedTrackIds)}
             onChange={(itemIds) => setSelectedTrackIds(Array.from(itemIds))}
+            onDelete={(itemIds) => {
+              const selectedItems = listItems.filter((item) =>
+                itemIds.has(item.id),
+              );
+              const trackIndexes = selectedItems.map((item) => item.trackIndex);
+              if (trackIndexes.length !== 0) {
+                removeFromQueue(trackIndexes);
+              }
+            }}
             onSubmit={(itemIds) => {
               const lastItemId = [...itemIds].pop();
               if (!lastItemId) return;
