@@ -271,10 +271,12 @@ export function SelectableList<T>({
 
     // Configure the dragging dataTransfer
     e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", `${listId}`);
     e.dataTransfer.setData(
       "application/json",
-      JSON.stringify(currentSelection),
+      JSON.stringify({
+        sourceListId: listId,
+        itemIds: currentSelection,
+      }),
     );
 
     // Create custom drag image showing selection count
@@ -314,8 +316,6 @@ export function SelectableList<T>({
 
     e.preventDefault();
     e.stopPropagation();
-
-    e.dataTransfer.dropEffect = "move";
 
     // Find nearest index where items are dragged to.
     const children = Array.from(listElement.children);
@@ -358,16 +358,14 @@ export function SelectableList<T>({
 
     setDropAtIndex(null);
 
+    if (!onDrop) return;
+
     try {
-      const sourceListId = e.dataTransfer.getData("text/plain");
-      const itemIds = JSON.parse(e.dataTransfer.getData("application/json"));
-
-      // Only allow drop from allowed list ids.
+      const { sourceListId, itemIds } = JSON.parse(
+        e.dataTransfer.getData("application/json"),
+      );
       if (allowDropFrom.indexOf(sourceListId) === -1) return;
-
-      if (onDrop) {
-        onDrop(itemIds, insertAtIndex, sourceListId);
-      }
+      onDrop(new Set(itemIds), insertAtIndex, sourceListId);
     } catch (_error) {
       /* invalid json */
     }
@@ -434,12 +432,17 @@ export function SelectableList<T>({
             className="relative"
           >
             {showDropTargetLine && (
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-accent-500 rounded-md z-10"></div>
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-accent-500 z-10"></div>
             )}
             {renderItem(item as T, { isSelected, isDragging, isFocused })}
           </div>
         );
       })}
+      {dropAtIndex === items.length && (
+        <div className="relative h-0 overflow-visible">
+          <div className="absolute bottom-0.5 left-0 right-0 h-0.5 bg-accent-500 z-10"></div>
+        </div>
+      )}
     </div>
   );
 }
