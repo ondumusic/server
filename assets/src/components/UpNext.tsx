@@ -73,7 +73,9 @@ export function UpNext({
             </div>
             <div className="h-full w-full space-y-2 text-left overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <SelectableList<QueueItem>
+                id="upNext"
                 multiple
+                allowDrag
                 items={listItems}
                 selectedIds={new Set<string>(selectedTrackIds)}
                 onChange={(itemIds) => setSelectedTrackIds(Array.from(itemIds))}
@@ -104,6 +106,7 @@ export function UpNext({
                   <div
                     className={classNames([
                       "flex px-2 py-1 justify-between gap-4 text-sm",
+                      state.isDragging && "opacity-50",
                       !state.isSelected && "text-accent-600 w-full",
                       state.isSelected && "text-white bg-accent-500",
                       state.isSelected && "rounded-t-md rounded-b-md",

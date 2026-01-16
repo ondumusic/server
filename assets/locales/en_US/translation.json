@@ -33,6 +33,10 @@
       "cancel": "Cancel"
     }
   },
+  "selection": {
+    "dragItems_one": "{{ count }} item",
+    "dragItems_other": "{{ count }} items"
+  },
   "upNext": {
     "emptyView": "No upcoming tracks.",
     "title": "Up Next"

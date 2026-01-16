@@ -183,6 +183,8 @@ export function ArtistAlbumListView() {
     <div className="mx-4 lg:mx-8">
       <SelectableList<ListItem>
         multiple
+        allowDrag
+        id="albumTracks"
         items={listItems}
         defaultFocusId={currentAlbum?.id}
         defaultFocusType="start"
@@ -247,6 +249,7 @@ export function ArtistAlbumListView() {
         renderItem={(item, state) => (
           <ArtistAlbumListItem
             item={item}
+            isDragging={state.isDragging}
             isSelected={state.isSelected}
             onPlayAlbum={async (item) => {
               if (item.type !== "album") return;

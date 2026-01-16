@@ -36,10 +36,16 @@ export type ListItem = ArtistItem | AlbumItem | DiscItem | TrackItem;
 interface Props {
   item: ListItem;
   isSelected: boolean;
+  isDragging?: boolean;
   onPlayAlbum?: (item: ListItem) => void;
 }
 
-export function ArtistAlbumListItem({ item, isSelected, onPlayAlbum }: Props) {
+export function ArtistAlbumListItem({
+  item,
+  isSelected,
+  isDragging,
+  onPlayAlbum,
+}: Props) {
   const { t } = useTranslation();
 
   switch (item.type) {
@@ -131,6 +137,7 @@ export function ArtistAlbumListItem({ item, isSelected, onPlayAlbum }: Props) {
           <div
             className={classNames([
               "flex w-full gap-2 text-sm py-1.5 px-2",
+              isDragging && "opacity-50",
               isSelected && "bg-blue-500 text-white",
               isSelected && "rounded-t-md rounded-b-md",
               isSelected &&

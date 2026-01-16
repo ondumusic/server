@@ -8,9 +8,11 @@ import {
 } from "react";
 import { isMacOS } from "../constants/isMacOS";
 import { type ContextMenuItem, useContextMenu } from "../hooks/useContextMenu";
+import i18next from "../i18next";
 
 interface ItemState {
   isSelected: boolean;
+  isDragging: boolean;
   isFocused: boolean;
 }
 
@@ -19,19 +21,7 @@ export interface ListItem {
   selectable?: boolean;
 }
 
-export function SelectableList<T>({
-  items,
-  selectedIds,
-  onChange,
-  onDelete,
-  onSubmit,
-  onDoubleClick,
-  onContextMenu,
-  renderItem,
-  defaultFocusId,
-  defaultFocusType = "nearest",
-  multiple: allowMultiple,
-}: PropsWithChildren<{
+type BaseProps<T> = {
   items: ListItem[];
   selectedIds: Set<string>;
   multiple: boolean;
@@ -43,7 +33,27 @@ export function SelectableList<T>({
   onDoubleClick?: (item: T) => void;
   onContextMenu?: (selectedIds: Set<string>) => ContextMenuItem[];
   renderItem: (item: T, state: ItemState) => ReactNode;
-}>) {
+};
+
+type DragProps =
+  | { allowDrag?: false; id?: never }
+  | { allowDrag: true; id: string };
+
+export function SelectableList<T>({
+  id: listId,
+  items,
+  selectedIds,
+  onChange,
+  onDelete,
+  onSubmit,
+  onDoubleClick,
+  onContextMenu,
+  renderItem,
+  defaultFocusId,
+  defaultFocusType = "nearest",
+  multiple: allowMultiple,
+  allowDrag = false,
+}: PropsWithChildren<BaseProps<T> & DragProps>) {
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollBlockType, setScrollBlockType] = useState<
     ScrollLogicalPosition | undefined
@@ -51,6 +61,7 @@ export function SelectableList<T>({
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const lastSelectedIndexRef = useRef<number>(0);
   const { createContextMenu } = useContextMenu();
+  const [draggingIds, setDraggingIds] = useState<Set<string>>(new Set());
 
   // Reset when items change
   useEffect(() => {
@@ -223,6 +234,70 @@ export function SelectableList<T>({
     }
   };
 
+  const handleDragStart = (index: number, e: React.DragEvent) => {
+    const item = items[index];
+    if (item.selectable === false) {
+      e.preventDefault();
+      return;
+    }
+
+    // Determine current selection, if dragging starts on an element
+    // that is not selected we overwrite the selection to just that item.
+    let currentSelection: string[];
+    if (!selectedIds.has(item.id)) {
+      currentSelection = [item.id];
+      const newSelection = new Set([item.id]);
+      onChange(newSelection);
+      setFocusedIndex(index);
+      setScrollBlockType("nearest");
+      lastSelectedIndexRef.current = index;
+    } else {
+      currentSelection = Array.from(selectedIds);
+    }
+
+    // Store this so we can update item states
+    setDraggingIds(new Set(currentSelection));
+
+    // Configure the dragging dataTransfer
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData(
+      "application/json",
+      JSON.stringify({
+        itemIds: currentSelection,
+        listId,
+      }),
+    );
+
+    // Create custom drag image showing selection count
+    const dragImage = document.createElement("div");
+    dragImage.classList.add(
+      "absolute",
+      "py-1.5",
+      "px-3",
+      "rounded-md",
+      "font-light",
+      "text-white",
+      "bg-accent-500",
+      "shadow-lg",
+      "text-sm",
+    );
+
+    dragImage.textContent = i18next.t("selection.dragItems", {
+      defaultValue: "{{ count }} items",
+      count: currentSelection.length,
+    });
+
+    document.body.appendChild(dragImage);
+    e.dataTransfer.setDragImage(dragImage, 0, 30);
+
+    // If we delete it immediately it fails to become a drag image.
+    requestAnimationFrame(() => document.body.removeChild(dragImage));
+  };
+
+  const handleDragEnd = () => {
+    setDraggingIds(new Set());
+  };
+
   return (
     <div
       ref={listRef}
@@ -234,6 +309,7 @@ export function SelectableList<T>({
     >
       {items.map((item, index) => {
         const isSelected = selectedIds.has(item.id);
+        const isDragging = draggingIds.has(item.id);
         const isFocused = index === focusedIndex;
         const selectable = item.selectable !== false;
 
@@ -248,6 +324,11 @@ export function SelectableList<T>({
               e.preventDefault();
               return onDoubleClick(item as T);
             }}
+            draggable={allowDrag ? selectable : undefined}
+            onDragStart={
+              allowDrag ? (e) => handleDragStart(index, e) : undefined
+            }
+            onDragEnd={allowDrag ? handleDragEnd : undefined}
             onContextMenu={
               onContextMenu
                 ? createContextMenu<HTMLDivElement>(() => {
@@ -272,7 +353,7 @@ export function SelectableList<T>({
             aria-selected={selectable ? isSelected : undefined}
             aria-disabled={!selectable}
           >
-            {renderItem(item as T, { isSelected, isFocused })}
+            {renderItem(item as T, { isSelected, isDragging, isFocused })}
           </div>
         );
       })}
