@@ -76,6 +76,7 @@ export function UpNext({
                 id="upNext"
                 multiple
                 allowDrag
+                allowDropFrom={["upNext", "albumTracks"]}
                 items={listItems}
                 selectedIds={new Set<string>(selectedTrackIds)}
                 onChange={(itemIds) => setSelectedTrackIds(Array.from(itemIds))}
@@ -89,6 +90,9 @@ export function UpNext({
                   if (trackIndexes.length !== 0) {
                     removeFromQueue(trackIndexes);
                   }
+                }}
+                onDrop={(itemIds, insertAtIndex, sourceListId) => {
+                  console.log(sourceListId, insertAtIndex, itemIds);
                 }}
                 onSubmit={(itemIds) => {
                   const lastItemId = [...itemIds].pop();

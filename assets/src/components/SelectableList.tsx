@@ -1,4 +1,5 @@
 import {
+  type DragEvent,
   type PropsWithChildren,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
@@ -31,13 +32,19 @@ type BaseProps<T> = {
   onDelete?: (selectedIds: Set<string>) => void;
   onSubmit?: (selectedIds: Set<string>) => void;
   onDoubleClick?: (item: T) => void;
+  onDrop?: (
+    droppedIds: Set<string>,
+    droppedAtIndex: number,
+    sourceListId: string,
+  ) => void;
   onContextMenu?: (selectedIds: Set<string>) => ContextMenuItem[];
   renderItem: (item: T, state: ItemState) => ReactNode;
 };
 
 type DragProps =
-  | { allowDrag?: false; id?: never }
-  | { allowDrag: true; id: string };
+  | { allowDrag?: false; allowDropFrom?: string[]; id?: never }
+  | { allowDrag: true; allowDropFrom?: string[]; id: string }
+  | { allowDrag?: boolean; allowDropFrom: string[]; id: string };
 
 export function SelectableList<T>({
   id: listId,
@@ -45,6 +52,7 @@ export function SelectableList<T>({
   selectedIds,
   onChange,
   onDelete,
+  onDrop,
   onSubmit,
   onDoubleClick,
   onContextMenu,
@@ -53,6 +61,7 @@ export function SelectableList<T>({
   defaultFocusType = "nearest",
   multiple: allowMultiple,
   allowDrag = false,
+  allowDropFrom = [],
 }: PropsWithChildren<BaseProps<T> & DragProps>) {
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollBlockType, setScrollBlockType] = useState<
@@ -62,6 +71,8 @@ export function SelectableList<T>({
   const lastSelectedIndexRef = useRef<number>(0);
   const { createContextMenu } = useContextMenu();
   const [draggingIds, setDraggingIds] = useState<Set<string>>(new Set());
+  const [dropAtIndex, setDropAtIndex] = useState<number | null>(null);
+  const allowDrop = allowDropFrom.length !== 0;
 
   // Reset when items change
   useEffect(() => {
@@ -234,7 +245,7 @@ export function SelectableList<T>({
     }
   };
 
-  const handleDragStart = (index: number, e: React.DragEvent) => {
+  const handleDragStart = (index: number, e: DragEvent) => {
     const item = items[index];
     if (item.selectable === false) {
       e.preventDefault();
@@ -260,12 +271,10 @@ export function SelectableList<T>({
 
     // Configure the dragging dataTransfer
     e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", `${listId}`);
     e.dataTransfer.setData(
       "application/json",
-      JSON.stringify({
-        itemIds: currentSelection,
-        listId,
-      }),
+      JSON.stringify(currentSelection),
     );
 
     // Create custom drag image showing selection count
@@ -296,6 +305,72 @@ export function SelectableList<T>({
 
   const handleDragEnd = () => {
     setDraggingIds(new Set());
+    setDropAtIndex(null);
+  };
+
+  const handleDragOver = (e: DragEvent) => {
+    const listElement = listRef.current;
+    if (!listElement) return null;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    e.dataTransfer.dropEffect = "move";
+
+    // Find nearest index where items are dragged to.
+    const children = Array.from(listElement.children);
+
+    // Default dropIndex is at end of list.
+    let dropIndex = items.length;
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i] as HTMLElement;
+      const rect = child.getBoundingClientRect();
+      const midpoint = rect.top + rect.height / 2;
+
+      if (e.clientY < midpoint) {
+        dropIndex = i;
+        break;
+      }
+    }
+
+    setDropAtIndex(dropIndex);
+  };
+
+  const handleDragLeave = (e: DragEvent) => {
+    // We have to make sure it is actually leaving the list element.
+    const rect = listRef.current?.getBoundingClientRect();
+    if (
+      rect &&
+      (e.clientX < rect.left ||
+        e.clientX > rect.right ||
+        e.clientY < rect.top ||
+        e.clientY > rect.bottom)
+    ) {
+      setDropAtIndex(null);
+    }
+  };
+
+  const handleDrop = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const insertAtIndex = dropAtIndex !== null ? dropAtIndex : items.length;
+
+    setDropAtIndex(null);
+
+    try {
+      const sourceListId = e.dataTransfer.getData("text/plain");
+      const itemIds = JSON.parse(e.dataTransfer.getData("application/json"));
+
+      // Only allow drop from allowed list ids.
+      if (allowDropFrom.indexOf(sourceListId) === -1) return;
+
+      if (onDrop) {
+        onDrop(itemIds, insertAtIndex, sourceListId);
+      }
+    } catch (_error) {
+      /* invalid json */
+    }
   };
 
   return (
@@ -312,6 +387,7 @@ export function SelectableList<T>({
         const isDragging = draggingIds.has(item.id);
         const isFocused = index === focusedIndex;
         const selectable = item.selectable !== false;
+        const showDropTargetLine = dropAtIndex === index;
 
         return (
           // biome-ignore lint/a11y/useFocusableInteractive: arrow keys used for navigation
@@ -329,6 +405,9 @@ export function SelectableList<T>({
               allowDrag ? (e) => handleDragStart(index, e) : undefined
             }
             onDragEnd={allowDrag ? handleDragEnd : undefined}
+            onDragOver={allowDrop ? handleDragOver : undefined}
+            onDragLeave={allowDrop ? handleDragLeave : undefined}
+            onDrop={allowDrop ? handleDrop : undefined}
             onContextMenu={
               onContextMenu
                 ? createContextMenu<HTMLDivElement>(() => {
@@ -352,7 +431,11 @@ export function SelectableList<T>({
             role="option"
             aria-selected={selectable ? isSelected : undefined}
             aria-disabled={!selectable}
+            className="relative"
           >
+            {showDropTargetLine && (
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-accent-500 rounded-md z-10"></div>
+            )}
             {renderItem(item as T, { isSelected, isDragging, isFocused })}
           </div>
         );
