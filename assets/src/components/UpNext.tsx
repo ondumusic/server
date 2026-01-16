@@ -1,4 +1,9 @@
-import { type PropsWithChildren, useMemo, useState } from "react";
+import {
+  type DragEvent,
+  type PropsWithChildren,
+  useMemo,
+  useState,
+} from "react";
 import { Trans } from "react-i18next";
 import { type ListItem, SelectableList } from "../components/SelectableList";
 import { useQueue } from "../hooks/useQueue";
@@ -25,6 +30,7 @@ export function UpNext({
     skipToTrackIndex,
     clearNextTracks,
     addQueueAtIndex,
+    addQueueAfter,
   } = useQueue();
 
   const listItems: QueueItem[] = useMemo(() => {
@@ -56,7 +62,40 @@ export function UpNext({
     >
       <div className="flex flex-col h-full overflow-y-hidden">
         {listItems.length === 0 ? (
-          <div className="block text-center py-8 text-sm text-accent-400">
+          <div
+            role="none"
+            className="block text-center py-8 text-sm text-accent-400"
+            onDragOver={(e: DragEvent) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onDrop={(e: DragEvent) => {
+              e.preventDefault();
+              e.stopPropagation();
+
+              try {
+                const { itemIds } = JSON.parse(
+                  e.dataTransfer.getData("application/json"),
+                );
+
+                const newTracks: Track[] = Array.from(itemIds).flatMap(
+                  (itemId) => {
+                    const track = queryClient.getQueryData<Track>([
+                      "track",
+                      itemId,
+                    ]);
+
+                    if (track) return [track];
+                    return [];
+                  },
+                );
+
+                addQueueAfter(newTracks);
+              } catch (_error) {
+                return;
+              }
+            }}
+          >
             <Trans i18nKey="upNext.emptyView">No upcoming tracks.</Trans>
           </div>
         ) : (
