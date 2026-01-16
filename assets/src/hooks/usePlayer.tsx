@@ -1,6 +1,8 @@
 import { createContext, type PropsWithChildren, useContext } from "react";
 import { useAudioManager } from "../hooks/useAudioManager";
+import { useDialog } from "../hooks/useDialog";
 import { useQueue } from "../hooks/useQueue";
+import i18next from "../i18next";
 import type { Track } from "../types";
 
 export interface PlayerContext {
@@ -8,12 +10,14 @@ export interface PlayerContext {
   enqueueAndPlay(tracks: Track[], startWithTrack?: Track): void;
   enqueueNext(tracks: Track[]): void;
   enqueueAfter(tracks: Track[]): void;
+  userConfirmQueueReplace(): Promise<boolean>;
 }
 
 const PlayerContext = createContext<PlayerContext>({
   enqueueAndPlay: (_tracks, _startWithTrack?) => {},
   enqueueNext: (_tracks) => {},
   enqueueAfter: (_tracks) => {},
+  userConfirmQueueReplace: () => new Promise((resolve) => resolve(true)),
 });
 
 export function usePlayer() {
@@ -21,9 +25,15 @@ export function usePlayer() {
 }
 
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
-  const { currentTrack, replaceQueue, addQueueNext, addQueueAfter } =
-    useQueue();
+  const {
+    currentTrack,
+    hasNextTrack,
+    replaceQueue,
+    addQueueNext,
+    addQueueAfter,
+  } = useQueue();
   const { isPlaying, setIsPlaying, scrubAndPlay } = useAudioManager();
+  const { promptConfirm } = useDialog();
 
   const value = {
     enqueueAndPlay(tracks: Track[], startWithTrack?: Track) {
@@ -49,6 +59,22 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
 
       addQueueAfter(tracks);
       if (!isPlaying && !currentTrack) setIsPlaying(true);
+    },
+    async userConfirmQueueReplace() {
+      return (
+        (await promptConfirm({
+          when: () => currentTrack !== undefined || hasNextTrack,
+          message: i18next.t("player.confirmQueue.replaceText", {
+            defaultValue: "This will replace the current track and queue.",
+          }),
+          confirmMessage: i18next.t("player.confirmQueue.ok", {
+            defaultValue: "OK",
+          }),
+          cancelMessage: i18next.t("player.confirmQueue.cancel", {
+            defaultValue: "Cancel",
+          }),
+        })) === true
+      );
     },
   };
 

@@ -31,11 +31,13 @@ export function Button({
   link,
   style,
   type,
+  onClick,
 }: PropsWithChildren<{
   disabled?: boolean;
   style?: ButtonStyle;
   link?: boolean;
   type: "submit" | "button";
+  onClick?: () => void;
 }>) {
   const colors: Colors = styleColors(style);
 
@@ -48,6 +50,7 @@ export function Button({
         !link && colors.button,
       ])}
       type={type}
+      onClick={onClick}
     >
       {children}
     </button>

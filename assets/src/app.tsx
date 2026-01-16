@@ -8,6 +8,7 @@ import { Loading } from "./components/Loading";
 import { AudioManagerProvider } from "./hooks/useAudioManager";
 import { AuthProvider } from "./hooks/useAuth";
 import { ContextMenuProvider } from "./hooks/useContextMenu";
+import { DialogProvider } from "./hooks/useDialog";
 import { MediaSessionProvider } from "./hooks/useMediaSession";
 import { PhoenixSocketProvider } from "./hooks/usePhoenixSocket";
 import { PlayerProvider } from "./hooks/usePlayer";
@@ -26,17 +27,19 @@ if (appRoot) {
         <AuthProvider>
           <QueryClientProvider client={queryClient}>
             <PhoenixSocketProvider>
-              <QueueProvider>
-                <AudioManagerProvider>
-                  <PlayerProvider>
-                    <MediaSessionProvider>
-                      <ContextMenuProvider>
-                        <RouterProvider router={router} />
-                      </ContextMenuProvider>
-                    </MediaSessionProvider>
-                  </PlayerProvider>
-                </AudioManagerProvider>
-              </QueueProvider>
+              <DialogProvider>
+                <QueueProvider>
+                  <AudioManagerProvider>
+                    <PlayerProvider>
+                      <MediaSessionProvider>
+                        <ContextMenuProvider>
+                          <RouterProvider router={router} />
+                        </ContextMenuProvider>
+                      </MediaSessionProvider>
+                    </PlayerProvider>
+                  </AudioManagerProvider>
+                </QueueProvider>
+              </DialogProvider>
             </PhoenixSocketProvider>
           </QueryClientProvider>
         </AuthProvider>

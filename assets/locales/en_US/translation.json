@@ -26,6 +26,11 @@
   "player": {
     "noTrack": {
       "trackName": "No Track"
+    },
+    "confirmQueue": {
+      "replaceText": "This will replace the current track and queue.",
+      "ok": "OK",
+      "cancel": "Cancel"
     }
   },
   "upNext": {

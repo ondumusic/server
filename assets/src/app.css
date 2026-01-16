@@ -49,3 +49,46 @@
   --color-error: var(--error-fg);
   --color-muted: var(--muted-fg);
 }
+
+dialog {
+  padding: 0;
+  border: none;
+  border-radius: 0.5rem;
+  max-width: 28rem;
+  width: calc(100% - 2rem);
+  opacity: 0;
+  transform: scale(0.95);
+  transition:
+    opacity 200ms,
+    transform 200ms,
+    display 200ms allow-discrete,
+    overlay 200ms allow-discrete;
+}
+
+dialog[open] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0);
+  transition:
+    background-color 200ms,
+    display 200ms allow-discrete,
+    overlay 200ms allow-discrete;
+}
+
+dialog[open]::backdrop {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+@starting-style {
+  dialog[open] {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  dialog[open]::backdrop {
+    background-color: rgba(0, 0, 0, 0);
+  }
+}

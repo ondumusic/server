@@ -37,6 +37,7 @@ export function ArtistListView() {
       defaultFocusId={currentArtist?.id}
       defaultFocusType="center"
       selectedIds={currentArtist ? new Set([currentArtist.id]) : new Set([])}
+      onContextMenu={() => []}
       onChange={(selectedIds) => {
         const artist = listItems.find((artist) => selectedIds.has(artist.id));
         if (artist) navigate(`/artists/${artist.slug}`);

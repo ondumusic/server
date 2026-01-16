@@ -43,7 +43,8 @@ function getTracksById(items: ListItem[], ids: Set<string>): Track[] {
 export function ArtistAlbumListView() {
   const navigationType = useNavigationType();
   const { artistId, albumId } = useParams() as Params;
-  const { enqueueAndPlay, enqueueNext, enqueueAfter } = usePlayer();
+  const { enqueueAndPlay, enqueueNext, enqueueAfter, userConfirmQueueReplace } =
+    usePlayer();
   const hasArtistId = !!artistId;
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
     new Set(),
@@ -247,8 +248,9 @@ export function ArtistAlbumListView() {
           <ArtistAlbumListItem
             item={item}
             isSelected={state.isSelected}
-            onPlayAlbum={(item) => {
+            onPlayAlbum={async (item) => {
               if (item.type !== "album") return;
+              if (!(await userConfirmQueueReplace())) return;
 
               const albumTracks = paginatedMap<Album, Track>(data, (album) => {
                 if (album.id !== item.album.id) return [];

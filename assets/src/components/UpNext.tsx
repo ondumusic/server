@@ -95,6 +95,7 @@ export function UpNext({
                   skipToTrackIndex(parseInt(trackIndex, 10));
                   setSelectedTrackIds([]);
                 }}
+                onContextMenu={() => []}
                 onDoubleClick={(item) => {
                   skipToTrackIndex(item.trackIndex);
                   setSelectedTrackIds([]);
