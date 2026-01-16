@@ -67,7 +67,7 @@ export function ArtistAlbumListItem({
       return (
         <div
           className={classNames([
-            "relative flex gap-4 mb-4",
+            "relative flex gap-4 mb-4 z-20",
             !item.firstAlbumInList && "mt-12",
           ])}
         >

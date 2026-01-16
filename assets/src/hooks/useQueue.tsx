@@ -18,6 +18,7 @@ export interface QueueContext {
   skipToTrackIndex(trackIndex: number): void;
   addQueueNext(tracks: Track[]): void;
   addQueueAfter(tracks: Track[]): void;
+  addQueueAtIndex(tracks: Track[], index: number): void;
   replaceQueue(tracks: Track[], startWithTrack?: Track): void;
   removeFromQueue(trackIndexes: number[]): void;
   clearNextTracks(): void;
@@ -36,6 +37,7 @@ const QueueContext = createContext<QueueContext>({
   skipToTrackIndex: (_trackIndex) => {},
   addQueueNext: (_tracks) => {},
   addQueueAfter: (_tracks) => {},
+  addQueueAtIndex: (_tracks, _index) => {},
   replaceQueue: (_tracks, _startWithTrack?) => {},
   removeFromQueue: (_trackIndex) => {},
   clearNextTracks: () => {},
@@ -95,6 +97,17 @@ export const QueueProvider = ({ children }: PropsWithChildren) => {
     },
     addQueueAfter(tracks: Track[]) {
       const updatedQueue = queue.concat(tracks);
+      setQueue(updatedQueue);
+
+      // Set queue index to 0 if the queue was empty previously,
+      // indicating that the current track is the 1st track of the new queue.
+      if (queue.length === 0) {
+        setQueueIndex(0);
+      }
+    },
+    addQueueAtIndex(tracks: Track[], index: number) {
+      const updatedQueue = [...queue];
+      updatedQueue.splice(index, 0, ...tracks);
       setQueue(updatedQueue);
 
       // Set queue index to 0 if the queue was empty previously,

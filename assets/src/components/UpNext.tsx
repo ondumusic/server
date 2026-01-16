@@ -5,6 +5,7 @@ import { useQueue } from "../hooks/useQueue";
 import type { Track } from "../types";
 import { classNames } from "../utils/classNames";
 import { formatDuration } from "../utils/formatDuration";
+import { queryClient } from "../utils/queryClient";
 
 type QueueItem = ListItem & {
   track: Track;
@@ -23,6 +24,7 @@ export function UpNext({
     removeFromQueue,
     skipToTrackIndex,
     clearNextTracks,
+    addQueueAtIndex,
   } = useQueue();
 
   const listItems: QueueItem[] = useMemo(() => {
@@ -92,7 +94,29 @@ export function UpNext({
                   }
                 }}
                 onDrop={(itemIds, insertAtIndex, sourceListId) => {
-                  console.log(sourceListId, insertAtIndex, itemIds);
+                  if (sourceListId !== "upNext") {
+                    const newTracks: Track[] = Array.from(itemIds).flatMap(
+                      (itemId) => {
+                        const track = queryClient.getQueryData<Track>([
+                          "track",
+                          itemId,
+                        ]);
+
+                        if (track) return [track];
+                        return [];
+                      },
+                    );
+
+                    // The visible Up Next is not the full queue so the indexes
+                    // don't match, luckily we can fix that problem using the
+                    // currentTrackIndex + 1 and voila.
+                    addQueueAtIndex(
+                      newTracks,
+                      currentTrackIndex + 1 + insertAtIndex,
+                    );
+                  } else {
+                    console.log("TODO: Re-arrange track indexes");
+                  }
                 }}
                 onSubmit={(itemIds) => {
                   const lastItemId = [...itemIds].pop();
