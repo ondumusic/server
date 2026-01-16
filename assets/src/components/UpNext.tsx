@@ -31,6 +31,7 @@ export function UpNext({
     clearNextTracks,
     addQueueAtIndex,
     addQueueAfter,
+    rearrangeQueue,
   } = useQueue();
 
   const listItems: QueueItem[] = useMemo(() => {
@@ -133,7 +134,16 @@ export function UpNext({
                   }
                 }}
                 onDrop={(itemIds, insertAtIndex, sourceListId) => {
-                  if (sourceListId !== "upNext") {
+                  if (sourceListId === "upNext") {
+                    const currentIndexes: number[] = Array.from(itemIds).map(
+                      (itemId) => parseInt(itemId.split("/")[1], 10),
+                    );
+
+                    rearrangeQueue(
+                      new Set(currentIndexes),
+                      currentTrackIndex + 1 + insertAtIndex,
+                    );
+                  } else {
                     const newTracks: Track[] = Array.from(itemIds).flatMap(
                       (itemId) => {
                         const track = queryClient.getQueryData<Track>([
@@ -153,8 +163,6 @@ export function UpNext({
                       newTracks,
                       currentTrackIndex + 1 + insertAtIndex,
                     );
-                  } else {
-                    console.log("TODO: Re-arrange track indexes");
                   }
                 }}
                 onSubmit={(itemIds) => {

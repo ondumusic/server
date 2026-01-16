@@ -19,6 +19,7 @@ export interface QueueContext {
   addQueueNext(tracks: Track[]): void;
   addQueueAfter(tracks: Track[]): void;
   addQueueAtIndex(tracks: Track[], index: number): void;
+  rearrangeQueue(indexes: Set<number>, index: number): void;
   replaceQueue(tracks: Track[], startWithTrack?: Track): void;
   removeFromQueue(trackIndexes: number[]): void;
   clearNextTracks(): void;
@@ -39,6 +40,7 @@ const QueueContext = createContext<QueueContext>({
   addQueueAfter: (_tracks) => {},
   addQueueAtIndex: (_tracks, _index) => {},
   replaceQueue: (_tracks, _startWithTrack?) => {},
+  rearrangeQueue: (_indexes, _index) => {},
   removeFromQueue: (_trackIndex) => {},
   clearNextTracks: () => {},
   clearQueue: () => {},
@@ -121,6 +123,28 @@ export const QueueProvider = ({ children }: PropsWithChildren) => {
       startIndex = Math.max(Math.min(tracks.length - 1, startIndex), 0);
       setQueue(tracks);
       setQueueIndex(startIndex);
+    },
+    rearrangeQueue(indexes: Set<number>, index: number) {
+      const selected: Track[] = [],
+        remaining: Track[] = [];
+
+      queue.forEach((item, i) => {
+        if (indexes.has(i)) {
+          selected.push(item);
+        } else {
+          remaining.push(item);
+        }
+      });
+
+      // Adjust target index: count how many selected items were before the target
+      const itemsBeforeIndex = Array.from(indexes).filter(
+        (i) => i < index,
+      ).length;
+      const adjustedIndex = index - itemsBeforeIndex;
+
+      // Insert selected items at adjusted target index
+      remaining.splice(adjustedIndex, 0, ...selected);
+      setQueue(remaining);
     },
     removeFromQueue(trackIndexes: number[]) {
       const removeIndexes = new Set(trackIndexes);
