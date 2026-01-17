@@ -23,7 +23,8 @@ export function Player({
   const { t } = useTranslation();
   const { isPlaying, setIsPlaying, currentTime, scrubAndPlay } =
     useAudioManager();
-  const { hasNextTrack, hasPrevTrack, prevTrack, nextTrack } = useQueue();
+  const { currentTrack, hasNextTrack, hasPrevTrack, prevTrack, nextTrack } =
+    useQueue();
   const [showUpNext, setShowUpNext] = useState(false);
 
   return (
@@ -50,7 +51,13 @@ export function Player({
           <button
             type="button"
             className="absolute lg:static right-0 top-3 z-[200] disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md cursor-pointer"
-            onClick={() => setIsPlaying(!isPlaying)}
+            onClick={() => {
+              if (currentTrack) {
+                setIsPlaying(!isPlaying);
+              } else {
+                nextTrack();
+              }
+            }}
           >
             {isPlaying ? (
               <PauseIcon

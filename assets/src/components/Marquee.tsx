@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { classNames } from "../utils/classNames";
 
 interface Props {
@@ -68,8 +68,8 @@ export function Marquee({ text, delay, className }: Props) {
   return (
     <div
       role="tooltip"
-      onMouseEnter={() => setIsAnimating(true)}
-      onMouseLeave={() => setIsAnimating(false)}
+      onMouseEnter={useCallback(() => setIsAnimating(true))}
+      onMouseLeave={useCallback(() => setIsAnimating(false))}
       className={classNames([
         "relative block w-full whitespace-nowrap overflow-hidden",
         className,

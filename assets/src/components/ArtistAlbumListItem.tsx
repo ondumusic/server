@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { PlayIcon } from "../components/icons/PlayIcon";
 import type { ListItem as DefaultListItem } from "../components/SelectableList";
@@ -82,7 +83,7 @@ export function ArtistAlbumListItem({
 
             <button
               type="button"
-              onDoubleClick={onPlayAlbum && (() => onPlayAlbum(item))}
+              onDoubleClick={onPlayAlbum && useCallback(() => onPlayAlbum(item), [item])}
               className="absolute left-0 top-0 w-full h-full opacity-0 group-hover/artwork:opacity-100 transition-opacity"
             >
               <div className="m-auto flex justify-center align-center w-16 h-16 bg-accent-500 rounded-full shadow-lg transition-colors">
@@ -145,7 +146,9 @@ export function ArtistAlbumListItem({
               isSelected &&
                 "[[aria-selected=true]:has(+[aria-selected=true])_&]:rounded-b-none",
               item.lastTrackOnDisc && item.albumTrackCount > 3 && "mb-6",
-              item.lastTrackOnDisc && item.albumTrackCount <= 3 && "mb-19",
+              item.lastTrackOnDisc && item.albumTrackCount === 1 && "mb-35",
+              item.lastTrackOnDisc && item.albumTrackCount === 2 && "mb-27",
+              item.lastTrackOnDisc && item.albumTrackCount === 3 && "mb-19",
             ])}
           >
             <span

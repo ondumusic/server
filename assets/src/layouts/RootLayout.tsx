@@ -42,14 +42,6 @@ export function RootLayout({ children }: PropsWithChildren) {
     });
   };
 
-  if (!isLoggedIn) {
-    return <>{children ? children : <Outlet />}</>;
-  }
-
-  if (isWaitingForData) {
-    return <FirstLoadView />;
-  }
-
   const showOnboarding =
     isOnboarding &&
     (initialOnboardingStep === "user" ||
@@ -63,6 +55,14 @@ export function RootLayout({ children }: PropsWithChildren) {
         completeOnboarding={completeOnboarding}
       />
     );
+  }
+
+  if (!isLoggedIn) {
+    return <>{children ? children : <Outlet />}</>;
+  }
+
+  if (isWaitingForData) {
+    return <FirstLoadView />;
   }
 
   return (
