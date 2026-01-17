@@ -1,8 +1,8 @@
 {
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:watch": "vite build --mode dev --watch",
+    "dev": "NODE_ENV=development vite",
+    "dev:watch": "NODE_ENV=development vite build --mode dev --watch",
     "build": "tsc -b && vite build --mode production",
     "lint": "biome check",
     "test": "vitest run",
