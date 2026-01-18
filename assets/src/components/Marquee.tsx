@@ -68,8 +68,8 @@ export function Marquee({ text, delay, className }: Props) {
   return (
     <div
       role="tooltip"
-      onMouseEnter={useCallback(() => setIsAnimating(true))}
-      onMouseLeave={useCallback(() => setIsAnimating(false))}
+      onMouseEnter={useCallback(() => setIsAnimating(true), [])}
+      onMouseLeave={useCallback(() => setIsAnimating(false), [])}
       className={classNames([
         "relative block w-full whitespace-nowrap overflow-hidden",
         className,

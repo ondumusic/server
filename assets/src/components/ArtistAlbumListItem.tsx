@@ -49,6 +49,11 @@ export function ArtistAlbumListItem({
 }: Props) {
   const { t } = useTranslation();
 
+  const handlePlayAlbum = useCallback(
+    () => onPlayAlbum?.(item),
+    [item, onPlayAlbum],
+  );
+
   switch (item.type) {
     case "artist":
       return (
@@ -83,7 +88,7 @@ export function ArtistAlbumListItem({
 
             <button
               type="button"
-              onDoubleClick={onPlayAlbum && useCallback(() => onPlayAlbum(item), [item])}
+              onDoubleClick={handlePlayAlbum}
               className="absolute left-0 top-0 w-full h-full opacity-0 group-hover/artwork:opacity-100 transition-opacity"
             >
               <div className="m-auto flex justify-center align-center w-16 h-16 bg-accent-500 rounded-full shadow-lg transition-colors">
