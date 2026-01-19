@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef } from "react";
 import { classNames } from "../utils/classNames";
 
 interface Props {
@@ -7,83 +7,109 @@ interface Props {
   className?: string;
 }
 
-export function Marquee({ text, delay, className }: Props) {
+export const Marquee = memo(({ text, delay, className }: Props) => {
   const textRef = useRef<HTMLDivElement>(null);
+  const parentRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<number>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
-    frameRef.current && cancelAnimationFrame(frameRef.current);
-    timerRef.current && clearTimeout(timerRef.current);
     if (!textRef.current) return;
+    if (!parentRef.current) return;
 
-    // Reset if not animating
-    if (!isAnimating) {
-      textRef.current.style.transform = "";
-      return;
-    }
-
-    // Get the maximum amount we can scroll
-    const maxScrollLeft =
-      textRef.current.scrollWidth - textRef.current.clientWidth;
-    if (maxScrollLeft === 0) {
-      return;
-    }
-
-    // Calculate the duration based on the amount of scrollable content
-    const duration = maxScrollLeft * 25;
-    let startTime: number;
-
-    // Animation function
-    function animate() {
+    const handleMouseEnter = () => {
       if (!textRef.current) return;
-      if (!startTime) startTime = performance.now();
+      if (!parentRef.current) return;
 
-      const progress = (performance.now() - startTime) / duration;
-      const newLeft = maxScrollLeft * progress;
+      if (timerRef.current) clearTimeout(timerRef.current);
 
-      if (progress < 1) {
-        textRef.current.style.transform = `translateX(-${newLeft}px)`;
-        frameRef.current = requestAnimationFrame(animate);
-      } else {
-        textRef.current.style.transform = `translateX(-${maxScrollLeft}px)`;
+      // Get the maximum amount we can scroll
+      const maxScrollLeft =
+        textRef.current.scrollWidth - textRef.current.clientWidth;
+      if (maxScrollLeft === 0) {
+        return;
       }
-    }
 
-    // Should it start immediately or with a delay?
-    if (typeof delay === "number" && delay > 0) {
-      timerRef.current = setTimeout(animate, delay);
-    } else {
-      frameRef.current = requestAnimationFrame(animate);
-    }
+      // Calculate the duration based on the amount of scrollable content
+      const duration = maxScrollLeft * 25;
+      let startTime: number;
 
-    // Cleanup
-    return () => {
-      frameRef.current && cancelAnimationFrame(frameRef.current);
-      timerRef.current && clearTimeout(timerRef.current);
+      // Animation function
+      function animate() {
+        if (!textRef.current) return;
+        if (!parentRef.current) return;
+        if (!startTime) startTime = performance.now();
+
+        const progress = (performance.now() - startTime) / duration;
+        const newLeft = maxScrollLeft * progress;
+
+        parentRef.current.classList.remove(
+          "w-full",
+          "overflow-hidden",
+          "text-ellipsis",
+        );
+
+        if (progress < 1) {
+          textRef.current.style.transform = `translateX(-${newLeft}px)`;
+          frameRef.current = requestAnimationFrame(animate);
+        } else {
+          textRef.current.style.transform = `translateX(-${maxScrollLeft}px)`;
+        }
+      }
+
+      // Should it start immediately or with a delay?
+      if (typeof delay === "number" && delay > 0) {
+        timerRef.current = setTimeout(animate, delay);
+      } else {
+        frameRef.current = requestAnimationFrame(animate);
+      }
     };
-  }, [isAnimating, delay]);
+
+    const handleMouseLeave = () => {
+      if (textRef.current) {
+        textRef.current.style.transform = "";
+      }
+
+      if (parentRef.current) {
+        parentRef.current.classList.add(
+          "w-full",
+          "overflow-hidden",
+          "text-ellipsis",
+        );
+      }
+
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+
+    parentRef.current.addEventListener("mouseenter", handleMouseEnter);
+    parentRef.current.addEventListener("mouseleave", handleMouseLeave);
+
+    return () => {
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (timerRef.current) clearTimeout(timerRef.current);
+
+      if (!parentRef.current) return;
+      parentRef.current.classList.add(
+        "w-full",
+        "overflow-hidden",
+        "text-ellipsis",
+      );
+      parentRef.current.removeEventListener("mouseenter", handleMouseEnter);
+      parentRef.current.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, [delay]);
 
   return (
     <div
-      role="tooltip"
-      onMouseEnter={useCallback(() => setIsAnimating(true), [])}
-      onMouseLeave={useCallback(() => setIsAnimating(false), [])}
+      ref={parentRef}
       className={classNames([
         "relative block w-full whitespace-nowrap overflow-hidden",
         className,
       ])}
     >
-      <div
-        ref={textRef}
-        className={classNames([
-          "transform-gpu",
-          !isAnimating && "w-full overflow-hidden text-ellipsis",
-        ])}
-      >
+      <div ref={textRef} className="w-full overflow-hidden text-ellipsis">
         {text}
       </div>
     </div>
   );
-}
+});

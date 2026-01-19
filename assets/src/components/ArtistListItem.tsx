@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Marquee } from "../components/Marquee";
 import type { Artist } from "../types";
 import { classNames } from "../utils/classNames";
@@ -7,7 +8,7 @@ interface Props {
   isSelected: boolean;
 }
 
-export function ArtistListItem({ artist, isSelected = false }: Props) {
+export const ArtistListItem = memo(({ artist, isSelected = false }: Props) => {
   return (
     <li
       className={classNames([
@@ -19,4 +20,4 @@ export function ArtistListItem({ artist, isSelected = false }: Props) {
       <Marquee className="py-3" delay={500} text={artist.name} />
     </li>
   );
-}
+});
