@@ -1,4 +1,10 @@
-import { type ChangeEvent, useEffect, useMemo, useRef } from "react";
+import {
+  type ChangeEvent,
+  type PropsWithChildren,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import { Marquee } from "../components/Marquee";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
@@ -11,15 +17,14 @@ import {
   updateAccentColor,
 } from "../utils/updateAccentColor";
 
-export function NowPlaying() {
-  const {
-    setIsPlaying,
-    currentTime,
-    duration,
-    progressPercentage,
-    scrubTo,
-    scrubAndPlay,
-  } = useAudioManager();
+export function NowPlaying({
+  currentTime,
+  progressPercentage,
+}: PropsWithChildren<{
+  currentTime: number;
+  progressPercentage: number;
+}>) {
+  const { setIsPlaying, duration, scrubTo, scrubAndPlay } = useAudioManager();
   const { currentTrack } = useQueue();
   const scrubTime = useRef<number>(0);
   const isScrubbing = useRef<boolean>(false);

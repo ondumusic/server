@@ -1,4 +1,4 @@
-import { type PropsWithChildren, useState } from "react";
+import { type PropsWithChildren, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NextIcon } from "../components/icons/NextIcon";
 import { PanelCloseIcon } from "../components/icons/PanelCloseIcon";
@@ -21,15 +21,31 @@ export function Player({
   setIsPanelOpen: (_isPanelOpen: boolean) => void;
 }>) {
   const { t } = useTranslation();
-  const { isPlaying, setIsPlaying, currentTime, scrubAndPlay } =
+  const { isPlaying, setIsPlaying, scrubAndPlay, addTimeObserver } =
     useAudioManager();
   const { currentTrack, hasNextTrack, hasPrevTrack, prevTrack, nextTrack } =
     useQueue();
   const [showUpNext, setShowUpNext] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [progressPercentage, setProgressPercentage] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = addTimeObserver(
+      ({ currentTime, progressPercentage }) => {
+        setCurrentTime(currentTime);
+        setProgressPercentage(progressPercentage);
+      },
+    );
+
+    return unsubscribe;
+  }, [addTimeObserver]);
 
   return (
     <div className="flex flex-col h-full w-full justify-center text-center select-none">
-      <NowPlaying />
+      <NowPlaying
+        currentTime={currentTime}
+        progressPercentage={progressPercentage}
+      />
 
       <div className="flex justify-center items-center w-full pt-2 px-2 flex-shrink-0">
         <div className="flex flex-shrink-0 text-accent-500">

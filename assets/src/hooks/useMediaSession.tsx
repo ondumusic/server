@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useState,
 } from "react";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
@@ -18,8 +19,16 @@ export function useMediaSession() {
 
 const NavigatorMediaSessionProvider = ({ children }: PropsWithChildren) => {
   const { currentTrack, prevTrack, nextTrack } = useQueue();
-  const { isPlaying, setIsPlaying, currentTime, duration, scrubAndPlay } =
+  const { addTimeObserver, isPlaying, setIsPlaying, duration, scrubAndPlay } =
     useAudioManager();
+  const [currentTime, setCurrentTime] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = addTimeObserver(({ currentTime }) =>
+      setCurrentTime(currentTime),
+    );
+    return unsubscribe;
+  }, [addTimeObserver]);
 
   // Find the currentAlbum from cache so we can display it in the mediaSession
   const currentAlbum: Album | undefined = useMemo(() => {

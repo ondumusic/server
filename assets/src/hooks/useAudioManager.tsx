@@ -8,19 +8,24 @@ import {
   useState,
 } from "react";
 import { useAuth } from "../hooks/useAuth";
+import { type Observer, useObserver } from "../hooks/useObserver";
 import { usePlayTokenQuery } from "../hooks/usePlayTokenQuery";
 import { useQueue } from "../hooks/useQueue";
+
+interface TimeUpdateEvent {
+  currentTime: number;
+  progressPercentage: number;
+}
 
 export interface AudioManagerContext {
   isPlaying: boolean;
   duration: number;
-  currentTime: number;
-  progressPercentage: number;
 
   // State management
-  setCurrentTime(currentTime: number): void;
-  setDuration(duration: number): void;
   setIsPlaying(isPlaying: boolean): void;
+
+  // Observers
+  addTimeObserver(callback: Observer<TimeUpdateEvent>): void;
 
   // Scrubbing functionality
   scrubTo(updatedTime: number): void;
@@ -29,12 +34,9 @@ export interface AudioManagerContext {
 
 const AudioManagerContext = createContext<AudioManagerContext>({
   isPlaying: false,
-  currentTime: 0,
   duration: 0,
-  progressPercentage: 0,
-  setCurrentTime: (_currentTime) => {},
-  setDuration: (_duration) => {},
   setIsPlaying: (_isPlaying) => {},
+  addTimeObserver: (_callback) => {},
   scrubTo: (_updatedTime) => {},
   scrubAndPlay: (_updatedTime) => {},
 });
@@ -49,7 +51,7 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
   const { isLoggedIn } = useAuth();
   const [isPlaying, realSetIsPlaying] = useState(false);
   const [hasPreloadedNext, setHasPreloadedNext] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [emitTimeUpdate, addTimeObserver] = useObserver<TimeUpdateEvent>();
   const [duration, setDuration] = useState(0);
   const [source, setSource] = useState<string | undefined>(undefined);
   const {
@@ -74,24 +76,35 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
     }
   };
 
-  // Calculate the current playback percentage
-  let progressPercentage = (currentTime / duration) * 100;
-  if (Number.isNaN(progressPercentage)) progressPercentage = 0;
+  // Emit time updates
+  const emitTimeUpdates = (currentTime: number) => {
+    if (!isPlaying) return;
+
+    // Calculate the current playback percentage
+    let progressPercentage = (currentTime / duration) * 100;
+    if (Number.isNaN(progressPercentage)) progressPercentage = 0;
+    emitTimeUpdate({ currentTime, progressPercentage });
+  };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies(getNextTrack): suppress dependency getNextTrack
   useEffect(() => {
     if (hasPreloadedNext) return;
     if (!hasNextTrack) return;
-    if (progressPercentage < 70) return;
 
-    setHasPreloadedNext(true);
-    const nextTrack = getNextTrack();
-    if (!nextTrack) return;
+    const unsubscribe = addTimeObserver(({ progressPercentage }) => {
+      if (progressPercentage < 70) return;
 
-    // We don't really care about the response for this, it returns a static
-    // ok response because the transcoder starts as a background process.
-    // api.post(`/transcode/${nextTrack.id}`, null);
-  }, [hasNextTrack, hasPreloadedNext, progressPercentage]);
+      setHasPreloadedNext(true);
+      const nextTrack = getNextTrack();
+      if (!nextTrack) return;
+
+      // We don't really care about the response for this, it returns a static
+      // ok response because the transcoder starts as a background process.
+      // api.post(`/transcode/${nextTrack.id}`, null);
+    });
+
+    return unsubscribe;
+  }, [hasNextTrack, hasPreloadedNext, addTimeObserver]);
 
   // Reset when track changes
   // We don't want to track when playToken changes because that would interrupt playback
@@ -99,6 +112,7 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
   // biome-ignore lint/correctness/useExhaustiveDependencies(playToken): suppress dependency playToken
   // biome-ignore lint/correctness/useExhaustiveDependencies(setIsPlaying): suppress dependency setIsPlaying
   // biome-ignore lint/correctness/useExhaustiveDependencies(currentTrackIndex): suppress dependency currentTrackIndex.
+  // biome-ignore lint/correctness/useExhaustiveDependencies(emitTimeUpdates): suppress dependency emitTimeUpdates.
   useEffect(() => {
     if (endedTimer.current) clearTimeout(endedTimer.current);
 
@@ -129,12 +143,12 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
 
     if (audioRef.current && isSameTrack) {
       // The same track again? We can just rewind!
-      setCurrentTime(0);
+      emitTimeUpdates(0);
       audioRef.current.currentTime = 0;
     } else {
       // Otherwise we'll reset everything and onLoadedMetadata will set it
       // to the correct values again.
-      setCurrentTime(0);
+      emitTimeUpdates(0);
       setDuration(0);
     }
   }, [currentTrack, currentTrackIndex]);
@@ -147,7 +161,7 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
     updatedTime = Math.max(0, Math.min(duration, updatedTime));
 
     // Set the currentTime
-    setCurrentTime(updatedTime);
+    emitTimeUpdates(updatedTime);
     audioRef.current.currentTime = updatedTime;
   };
 
@@ -168,7 +182,7 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
       endedTimer.current = setTimeout(nextTrack, 200);
     }
 
-    setCurrentTime(event.target.currentTime);
+    emitTimeUpdates(event.target.currentTime);
   };
 
   const onEnded = (_event: ChangeEvent<HTMLAudioElement>) => {
@@ -191,10 +205,7 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
   const value = {
     isPlaying,
     duration,
-    currentTime,
-    progressPercentage,
-    setCurrentTime,
-    setDuration,
+    addTimeObserver,
     setIsPlaying,
     scrubTo,
     scrubAndPlay(updatedTime: number) {
@@ -216,7 +227,7 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
           onTimeUpdate={onTimeUpdate}
           onCanPlay={onCanPlay}
           onPause={onPause}
-          onPlay={() => setIsPlaying(true)}
+          onPlay={() => realSetIsPlaying(true)}
           onEnded={onEnded}
         />
       )}
