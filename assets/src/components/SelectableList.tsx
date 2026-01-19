@@ -11,7 +11,7 @@ import { isMacOS } from "../constants/isMacOS";
 import { type ContextMenuItem, useContextMenu } from "../hooks/useContextMenu";
 import i18next from "../i18next";
 
-interface ItemState {
+export interface ListItemState {
   isSelected: boolean;
   isDragging: boolean;
   isFocused: boolean;
@@ -38,7 +38,7 @@ type BaseProps<T> = {
     sourceListId: string,
   ) => void;
   onContextMenu?: (selectedIds: Set<string>) => ContextMenuItem[];
-  renderItem: (item: T, state: ItemState) => ReactNode;
+  renderItem: (item: T, state: ListItemState) => ReactNode;
 };
 
 type DragProps =

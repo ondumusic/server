@@ -78,8 +78,6 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
 
   // Emit time updates
   const emitTimeUpdates = (currentTime: number) => {
-    if (!isPlaying) return;
-
     // Calculate the current playback percentage
     let progressPercentage = (currentTime / duration) * 100;
     if (Number.isNaN(progressPercentage)) progressPercentage = 0;

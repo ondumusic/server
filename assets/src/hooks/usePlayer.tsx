@@ -1,4 +1,9 @@
-import { createContext, type PropsWithChildren, useContext } from "react";
+import {
+  createContext,
+  type PropsWithChildren,
+  useCallback,
+  useContext,
+} from "react";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useDialog } from "../hooks/useDialog";
 import { useQueue } from "../hooks/useQueue";
@@ -36,31 +41,40 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const { promptConfirm } = useDialog();
 
   const value = {
-    enqueueAndPlay(tracks: Track[], startWithTrack?: Track) {
-      if (tracks.length === 0) return;
+    enqueueAndPlay: useCallback(
+      (tracks: Track[], startWithTrack?: Track) => {
+        if (tracks.length === 0) return;
 
-      replaceQueue(tracks, startWithTrack);
-      if (!isPlaying) setIsPlaying(true);
+        replaceQueue(tracks, startWithTrack);
+        if (!isPlaying) setIsPlaying(true);
 
-      // If the user wants to play the current track from the beginning again
-      // it technically doesn't change the state.. but we can seek to 0.
-      if (isPlaying && startWithTrack === currentTrack) {
-        scrubAndPlay(0);
-      }
-    },
-    enqueueNext(tracks: Track[]) {
-      if (tracks.length === 0) return;
+        // If the user wants to play the current track from the beginning again
+        // it technically doesn't change the state.. but we can seek to 0.
+        if (isPlaying && startWithTrack === currentTrack) {
+          scrubAndPlay(0);
+        }
+      },
+      [setIsPlaying, isPlaying, currentTrack, replaceQueue, scrubAndPlay],
+    ),
+    enqueueNext: useCallback(
+      (tracks: Track[]) => {
+        if (tracks.length === 0) return;
 
-      addQueueNext(tracks);
-      if (!isPlaying && !currentTrack) setIsPlaying(true);
-    },
-    enqueueAfter(tracks: Track[]) {
-      if (tracks.length === 0) return;
+        addQueueNext(tracks);
+        if (!isPlaying && !currentTrack) setIsPlaying(true);
+      },
+      [setIsPlaying, isPlaying, currentTrack, addQueueNext],
+    ),
+    enqueueAfter: useCallback(
+      (tracks: Track[]) => {
+        if (tracks.length === 0) return;
 
-      addQueueAfter(tracks);
-      if (!isPlaying && !currentTrack) setIsPlaying(true);
-    },
-    async userConfirmQueueReplace() {
+        addQueueAfter(tracks);
+        if (!isPlaying && !currentTrack) setIsPlaying(true);
+      },
+      [setIsPlaying, isPlaying, currentTrack, addQueueAfter],
+    ),
+    userConfirmQueueReplace: useCallback(async () => {
       return (
         (await promptConfirm({
           when: () => currentTrack !== undefined || hasNextTrack,
@@ -75,7 +89,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
           }),
         })) === true
       );
-    },
+    }, [currentTrack, hasNextTrack, promptConfirm]),
   };
 
   return (

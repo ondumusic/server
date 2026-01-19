@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { memo, useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { PlayIcon } from "../components/icons/PlayIcon";
 import type { ListItem as DefaultListItem } from "../components/SelectableList";
@@ -41,168 +41,165 @@ interface Props {
   onPlayAlbum?: (item: ListItem) => void;
 }
 
-export function ArtistAlbumListItem({
-  item,
-  isSelected,
-  isDragging,
-  onPlayAlbum,
-}: Props) {
-  const { t } = useTranslation();
+export const ArtistAlbumListItem = memo(
+  ({ item, isSelected, isDragging, onPlayAlbum }: Props) => {
+    const { t } = useTranslation();
 
-  const handlePlayAlbum = useCallback(
-    () => onPlayAlbum?.(item),
-    [item, onPlayAlbum],
-  );
+    const handlePlayAlbum = useCallback(
+      () => onPlayAlbum?.(item),
+      [item, onPlayAlbum],
+    );
 
-  switch (item.type) {
-    case "artist":
-      return (
-        <header className="mt-4 lg:mt-8 pb-4 mb-8 border-b border-stone-300">
-          <h1 className="font-semibold text-4xl lg:text-2xl">
-            {item.artist.name}
-          </h1>
-          <span className="text-sm text-stone-400">
-            <Trans i18nKey="artist.albumCount" count={item.artist.albumCount}>
-              {{ count: item.artist.albumCount }} albums
+    switch (item.type) {
+      case "artist":
+        return (
+          <header className="mt-4 lg:mt-8 pb-4 mb-8 border-b border-stone-300">
+            <h1 className="font-semibold text-4xl lg:text-2xl">
+              {item.artist.name}
+            </h1>
+            <span className="text-sm text-stone-400">
+              <Trans i18nKey="artist.albumCount" count={item.artist.albumCount}>
+                {{ count: item.artist.albumCount }} albums
+              </Trans>
+            </span>
+          </header>
+        );
+
+      case "album":
+        return (
+          <div
+            className={classNames([
+              "relative flex gap-4 mb-4 z-20",
+              !item.firstAlbumInList && "mt-12",
+            ])}
+          >
+            <div className="absolute top-0 left-0 w-48 shadow-lg aspect-square rounded-sm overflow-hidden bg-stone-200 group/artwork">
+              {item.album.artworkUrl && (
+                <img
+                  src={item.album.artworkUrl}
+                  alt=""
+                  className="w-full object-cover object-center"
+                />
+              )}
+
+              <button
+                type="button"
+                onDoubleClick={handlePlayAlbum}
+                className="absolute left-0 top-0 w-full h-full opacity-0 group-hover/artwork:opacity-100 transition-opacity"
+              >
+                <div className="m-auto flex justify-center align-center w-16 h-16 bg-accent-500 rounded-full shadow-lg transition-colors">
+                  <PlayIcon
+                    className="size-8 m-auto text-white"
+                    title={t("button.playSelectedAlbum", {
+                      defaultValue: "Play {{ albumName }}",
+                      albumName: item.album.name,
+                    })}
+                  />
+                </div>
+              </button>
+            </div>
+
+            <div className="pt-1 pl-62 w-full">
+              <div className="pb-2 mb-2 border-b border-stone-200">
+                <strong className="text-lg font-semibold mb-0.5">
+                  {item.album.name}
+                </strong>
+                <div className="flex gap-2">
+                  <span className="text-stone-400 text-sm">
+                    {item.album.releaseYear}
+                  </span>
+                  <span className="text-stone-400 text-sm">
+                    <Trans
+                      i18nKey="album.trackCount"
+                      count={item.album.tracks.length}
+                      duration={formatTotalDuration(item.album.tracks)}
+                    >
+                      {{ count: item.album.tracks.length }} tracks,{" "}
+                      {{ duration: formatTotalDuration(item.album.tracks) }}
+                    </Trans>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "disc":
+        return (
+          <div className="font-semibold text-xs text-gray-500 pl-62">
+            <Trans i18nKey="album.discNumber" disc={item.disc.number}>
+              Disc {{ disc: item.disc.number }}
             </Trans>
-          </span>
-        </header>
-      );
+          </div>
+        );
 
-    case "album":
-      return (
-        <div
-          className={classNames([
-            "relative flex gap-4 mb-4 z-20",
-            !item.firstAlbumInList && "mt-12",
-          ])}
-        >
-          <div className="absolute top-0 left-0 w-48 shadow-lg aspect-square rounded-sm overflow-hidden bg-stone-200 group/artwork">
-            {item.album.artworkUrl && (
-              <img
-                src={item.album.artworkUrl}
-                alt=""
-                className="w-full object-cover object-center"
-              />
-            )}
-
-            <button
-              type="button"
-              onDoubleClick={handlePlayAlbum}
-              className="absolute left-0 top-0 w-full h-full opacity-0 group-hover/artwork:opacity-100 transition-opacity"
+      case "track":
+        return (
+          <div className="pl-52 group/track">
+            <div
+              className={classNames([
+                "flex w-full gap-2 text-sm py-1.5 px-2",
+                isDragging && "opacity-50",
+                isSelected && "bg-blue-500 text-white",
+                isSelected && "rounded-t-md rounded-b-md",
+                isSelected &&
+                  "[[aria-selected=true]+[aria-selected=true]_&]:rounded-t-none",
+                isSelected &&
+                  "[[aria-selected=true]:has(+[aria-selected=true])_&]:rounded-b-none",
+                item.lastTrackOnDisc && item.albumTrackCount > 3 && "mb-6",
+                item.lastTrackOnDisc && item.albumTrackCount === 1 && "mb-35",
+                item.lastTrackOnDisc && item.albumTrackCount === 2 && "mb-27",
+                item.lastTrackOnDisc && item.albumTrackCount === 3 && "mb-19",
+              ])}
             >
-              <div className="m-auto flex justify-center align-center w-16 h-16 bg-accent-500 rounded-full shadow-lg transition-colors">
+              <span
+                className={classNames([
+                  "w-6 flex-shrink-0 font-light text-right",
+                  "group-hover/track:hidden",
+                  !isSelected && "text-stone-400",
+                ])}
+              >
+                {item.track.number && `${item.track.number}.`}
+              </span>
+
+              <div className="w-6 hidden group-hover/track:flex justify-end pt-1 flex-shrink-0">
                 <PlayIcon
-                  className="size-8 m-auto text-white"
-                  title={t("button.playSelectedAlbum", {
-                    defaultValue: "Play {{ albumName }}",
-                    albumName: item.album.name,
+                  className={classNames([
+                    "size-3 text-accent-500",
+                    isSelected && "text-white",
+                  ])}
+                  title={t("button.playSelectedTrack", {
+                    defaultValue: "Play {{ trackName }}",
+                    trackName: item.track.name,
                   })}
                 />
               </div>
-            </button>
-          </div>
 
-          <div className="pt-1 pl-62 w-full">
-            <div className="pb-2 mb-2 border-b border-stone-200">
-              <strong className="text-lg font-semibold mb-0.5">
-                {item.album.name}
-              </strong>
-              <div className="flex gap-2">
-                <span className="text-stone-400 text-sm">
-                  {item.album.releaseYear}
-                </span>
-                <span className="text-stone-400 text-sm">
-                  <Trans
-                    i18nKey="album.trackCount"
-                    count={item.album.tracks.length}
-                    duration={formatTotalDuration(item.album.tracks)}
+              <div>
+                {item.track.name}
+
+                {item.showTrackArtist && (
+                  <span
+                    className={classNames([
+                      "block",
+                      !isSelected && "text-stone-400",
+                    ])}
                   >
-                    {{ count: item.album.tracks.length }} tracks,{" "}
-                    {{ duration: formatTotalDuration(item.album.tracks) }}
-                  </Trans>
-                </span>
+                    {item.track.artist.name}
+                  </span>
+                )}
               </div>
-            </div>
-          </div>
-        </div>
-      );
-
-    case "disc":
-      return (
-        <div className="font-semibold text-xs text-gray-500 pl-62">
-          <Trans i18nKey="album.discNumber" disc={item.disc.number}>
-            Disc {{ disc: item.disc.number }}
-          </Trans>
-        </div>
-      );
-
-    case "track":
-      return (
-        <div className="pl-52 group/track">
-          <div
-            className={classNames([
-              "flex w-full gap-2 text-sm py-1.5 px-2",
-              isDragging && "opacity-50",
-              isSelected && "bg-blue-500 text-white",
-              isSelected && "rounded-t-md rounded-b-md",
-              isSelected &&
-                "[[aria-selected=true]+[aria-selected=true]_&]:rounded-t-none",
-              isSelected &&
-                "[[aria-selected=true]:has(+[aria-selected=true])_&]:rounded-b-none",
-              item.lastTrackOnDisc && item.albumTrackCount > 3 && "mb-6",
-              item.lastTrackOnDisc && item.albumTrackCount === 1 && "mb-35",
-              item.lastTrackOnDisc && item.albumTrackCount === 2 && "mb-27",
-              item.lastTrackOnDisc && item.albumTrackCount === 3 && "mb-19",
-            ])}
-          >
-            <span
-              className={classNames([
-                "w-6 flex-shrink-0 font-light text-right",
-                "group-hover/track:hidden",
-                !isSelected && "text-stone-400",
-              ])}
-            >
-              {item.track.number && `${item.track.number}.`}
-            </span>
-
-            <div className="w-6 hidden group-hover/track:flex justify-end pt-1 flex-shrink-0">
-              <PlayIcon
+              <span
                 className={classNames([
-                  "size-3 text-accent-500",
-                  isSelected && "text-white",
+                  "ml-auto font-light",
+                  !isSelected && "text-stone-400",
                 ])}
-                title={t("button.playSelectedTrack", {
-                  defaultValue: "Play {{ trackName }}",
-                  trackName: item.track.name,
-                })}
-              />
+              >
+                {formatDuration(item.track.duration)}
+              </span>
             </div>
-
-            <div>
-              {item.track.name}
-
-              {item.showTrackArtist && (
-                <span
-                  className={classNames([
-                    "block",
-                    !isSelected && "text-stone-400",
-                  ])}
-                >
-                  {item.track.artist.name}
-                </span>
-              )}
-            </div>
-            <span
-              className={classNames([
-                "ml-auto font-light",
-                !isSelected && "text-stone-400",
-              ])}
-            >
-              {formatDuration(item.track.duration)}
-            </span>
           </div>
-        </div>
-      );
-  }
-}
+        );
+    }
+  },
+);

@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigationType, useParams } from "react-router";
 import {
   ArtistAlbumListItem,
   type ListItem,
 } from "../components/ArtistAlbumListItem";
 import { Loading } from "../components/Loading";
-import { SelectableList } from "../components/SelectableList";
+import {
+  type ListItemState,
+  SelectableList,
+} from "../components/SelectableList";
 import { useArtistQuery } from "../hooks/useArtistQuery";
 import { useInfiniteArtistAlbumsQuery } from "../hooks/useInfiniteArtistAlbumsQuery";
 import { usePlayer } from "../hooks/usePlayer";
@@ -161,6 +164,101 @@ export function ArtistAlbumListView() {
     ];
   }, [data, dataArtist]);
 
+  const handlePlayAlbum = useCallback(
+    async (item: ListItem) => {
+      if (item.type !== "album") return;
+      if (!(await userConfirmQueueReplace())) return;
+
+      const albumTracks = paginatedMap<Album, Track>(data, (album) => {
+        if (album.id !== item.album.id) return [];
+        return album.tracks;
+      });
+
+      enqueueAndPlay(albumTracks);
+    },
+    [data, enqueueAndPlay, userConfirmQueueReplace],
+  );
+
+  const onSubmit = useCallback(
+    (selectedIds: Set<string>) => {
+      const selectedTracks = getTracksById(listItems, selectedIds);
+      if (selectedTracks.length === 1) {
+        const selectedTrack = selectedTracks[0];
+
+        // The default behaviour we want is to add all tracks from the same
+        // album to the queue and start playback at the selected track.
+        const albumTracks = paginatedMap<Album, Track>(data, (album) => {
+          if (album.id !== selectedTrack.albumId) return [];
+          return album.tracks;
+        });
+
+        enqueueAndPlay(albumTracks, selectedTrack);
+      } else {
+        enqueueAndPlay(selectedTracks);
+      }
+    },
+    [listItems, data, enqueueAndPlay],
+  );
+
+  const onDoubleClick = useCallback(
+    (item: ListItem) => {
+      if (item.type !== "track") return;
+
+      // The default behaviour we want is to add all tracks from the same
+      // album to the queue and start playback at the selected track.
+      const albumTracks = paginatedMap<Album, Track>(data, (album) => {
+        if (album.id !== item.track.albumId) return [];
+        return album.tracks;
+      });
+
+      enqueueAndPlay(albumTracks, item.track);
+    },
+    [data, enqueueAndPlay],
+  );
+
+  const onContextMenu = useCallback(
+    (selectedIds: Set<string>) => {
+      const selectedTracks = getTracksById(listItems, selectedIds);
+      if (selectedTracks.length === 0) return [];
+
+      return [
+        {
+          key: "play_next",
+          label: i18next.t("contextMenu.playNext", {
+            defaultValue: "Play Next",
+            count: selectedTracks.length,
+          }),
+          onClick() {
+            enqueueNext(selectedTracks);
+          },
+        },
+        {
+          key: "play_after",
+          label: i18next.t("contextMenu.playAfter", {
+            defaultValue: "Play After",
+            count: selectedTracks.length,
+          }),
+          onClick() {
+            enqueueAfter(selectedTracks);
+          },
+        },
+      ];
+    },
+    [listItems, enqueueNext, enqueueAfter],
+  );
+
+  const renderItem = useCallback(
+    (item: ListItem, state: ListItemState) => (
+      <ArtistAlbumListItem
+        item={item}
+        isDragging={state.isDragging}
+        isSelected={state.isSelected}
+        onPlayAlbum={handlePlayAlbum}
+      />
+    ),
+    [handlePlayAlbum],
+  );
+
   if (!artistId)
     return (
       <EmptyView
@@ -190,80 +288,10 @@ export function ArtistAlbumListView() {
         defaultFocusType="start"
         selectedIds={selectedTrackIds}
         onChange={setSelectedTrackIds}
-        onSubmit={(selectedIds) => {
-          const selectedTracks = getTracksById(listItems, selectedIds);
-          if (selectedTracks.length === 1) {
-            const selectedTrack = selectedTracks[0];
-
-            // The default behaviour we want is to add all tracks from the same
-            // album to the queue and start playback at the selected track.
-            const albumTracks = paginatedMap<Album, Track>(data, (album) => {
-              if (album.id !== selectedTrack.albumId) return [];
-              return album.tracks;
-            });
-
-            enqueueAndPlay(albumTracks, selectedTrack);
-          } else {
-            enqueueAndPlay(selectedTracks);
-          }
-        }}
-        onDoubleClick={(item) => {
-          if (item.type !== "track") return;
-
-          // The default behaviour we want is to add all tracks from the same
-          // album to the queue and start playback at the selected track.
-          const albumTracks = paginatedMap<Album, Track>(data, (album) => {
-            if (album.id !== item.track.albumId) return [];
-            return album.tracks;
-          });
-
-          enqueueAndPlay(albumTracks, item.track);
-        }}
-        onContextMenu={(selectedIds) => {
-          const selectedTracks = getTracksById(listItems, selectedIds);
-          if (selectedTracks.length === 0) return [];
-
-          return [
-            {
-              key: "play_next",
-              label: i18next.t("contextMenu.playNext", {
-                defaultValue: "Play Next",
-                count: selectedTracks.length,
-              }),
-              onClick() {
-                enqueueNext(selectedTracks);
-              },
-            },
-            {
-              key: "play_after",
-              label: i18next.t("contextMenu.playAfter", {
-                defaultValue: "Play After",
-                count: selectedTracks.length,
-              }),
-              onClick() {
-                enqueueAfter(selectedTracks);
-              },
-            },
-          ];
-        }}
-        renderItem={(item, state) => (
-          <ArtistAlbumListItem
-            item={item}
-            isDragging={state.isDragging}
-            isSelected={state.isSelected}
-            onPlayAlbum={async (item) => {
-              if (item.type !== "album") return;
-              if (!(await userConfirmQueueReplace())) return;
-
-              const albumTracks = paginatedMap<Album, Track>(data, (album) => {
-                if (album.id !== item.album.id) return [];
-                return album.tracks;
-              });
-
-              enqueueAndPlay(albumTracks);
-            }}
-          />
-        )}
+        onSubmit={onSubmit}
+        onDoubleClick={onDoubleClick}
+        onContextMenu={onContextMenu}
+        renderItem={renderItem}
       />
     </div>
   );
