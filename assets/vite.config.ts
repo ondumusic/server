@@ -29,7 +29,9 @@ export default defineConfig(({ mode }) => {
           chunkFileNames: "[name].js",
           entryFileNames: "assets/[name].js",
         },
-        maxParallelFileOps: "CI" in process.env ? 1 : 8,
+        // 1000 is default, CI was being difficult and wanted 1. I don't
+        // remember exactly where the issue was but I believe with docker buildx
+        maxParallelFileOps: "CI" in process.env ? 1 : 1000,
       },
     },
     define: {
