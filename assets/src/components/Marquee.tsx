@@ -21,6 +21,7 @@ export const Marquee = memo(({ text, delay, className }: Props) => {
       if (!textRef.current) return;
       if (!parentRef.current) return;
 
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
       if (timerRef.current) clearTimeout(timerRef.current);
 
       // Get the maximum amount we can scroll
@@ -43,7 +44,7 @@ export const Marquee = memo(({ text, delay, className }: Props) => {
         const progress = (performance.now() - startTime) / duration;
         const newLeft = maxScrollLeft * progress;
 
-        parentRef.current.classList.remove(
+        textRef.current.classList.remove(
           "w-full",
           "overflow-hidden",
           "text-ellipsis",
@@ -70,14 +71,15 @@ export const Marquee = memo(({ text, delay, className }: Props) => {
         textRef.current.style.transform = "";
       }
 
-      if (parentRef.current) {
-        parentRef.current.classList.add(
+      if (textRef.current) {
+        textRef.current.classList.add(
           "w-full",
           "overflow-hidden",
           "text-ellipsis",
         );
       }
 
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
 
@@ -88,14 +90,18 @@ export const Marquee = memo(({ text, delay, className }: Props) => {
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
       if (timerRef.current) clearTimeout(timerRef.current);
 
-      if (!parentRef.current) return;
-      parentRef.current.classList.add(
-        "w-full",
-        "overflow-hidden",
-        "text-ellipsis",
-      );
-      parentRef.current.removeEventListener("mouseenter", handleMouseEnter);
-      parentRef.current.removeEventListener("mouseleave", handleMouseLeave);
+      if (textRef.current) {
+        textRef.current.classList.add(
+          "w-full",
+          "overflow-hidden",
+          "text-ellipsis",
+        );
+      }
+
+      if (parentRef.current) {
+        parentRef.current.removeEventListener("mouseenter", handleMouseEnter);
+        parentRef.current.removeEventListener("mouseleave", handleMouseLeave);
+      }
     };
   }, [delay]);
 
