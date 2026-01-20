@@ -374,7 +374,7 @@ export function SelectableList<T>({
   return (
     <div
       ref={listRef}
-      className="focus:outline-none select-none"
+      className="focus:outline-none select-none selectable-list"
       tabIndex={0}
       onKeyDown={handleKeyDown}
       role="listbox"

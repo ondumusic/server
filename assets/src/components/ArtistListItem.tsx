@@ -14,7 +14,8 @@ export const ArtistListItem = memo(({ artist, isSelected = false }: Props) => {
       className={classNames([
         "px-4 whitespace-nowrap items-center flex gap-2",
         "transition-colors duration-400",
-        isSelected && "bg-accent-200 text-selected",
+        isSelected &&
+          "bg-accent-400 [.selectable-list:focus_&]:bg-accent-500 text-white",
       ])}
     >
       <Marquee className="py-3" delay={500} text={artist.name} />

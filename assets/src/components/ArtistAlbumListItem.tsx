@@ -140,7 +140,8 @@ export const ArtistAlbumListItem = memo(
               className={classNames([
                 "flex w-full gap-2 text-sm py-1.5 px-2",
                 isDragging && "opacity-50",
-                isSelected && "bg-blue-500 text-white",
+                isSelected &&
+                  "bg-blue-400 [.selectable-list:focus_&]:bg-blue-500 text-white",
                 isSelected && "rounded-t-md rounded-b-md",
                 isSelected &&
                   "[[aria-selected=true]+[aria-selected=true]_&]:rounded-t-none",

@@ -160,7 +160,8 @@ export function UpNext({
           "flex px-2 py-1 justify-between gap-4 text-sm",
           state.isDragging && "opacity-50",
           !state.isSelected && "text-accent-600 w-full",
-          state.isSelected && "text-white bg-accent-500",
+          state.isSelected &&
+            "text-white bg-accent-400 [.selectable-list:focus_&]:bg-accent-500",
           state.isSelected && "rounded-t-md rounded-b-md",
           state.isSelected &&
             "[[aria-selected=true]+[aria-selected=true]_&]:rounded-t-none",
