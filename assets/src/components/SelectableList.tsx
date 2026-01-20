@@ -319,17 +319,30 @@ export function SelectableList<T>({
 
     // Find nearest index where items are dragged to.
     const children = Array.from(listElement.children);
+    const mouseY = e.clientY;
+
+    // Quick checks
+    if (children.length === 0) return items.length;
+    if (mouseY < children[0].getBoundingClientRect().top) return 0;
+    if (mouseY > children[children.length - 1].getBoundingClientRect().bottom)
+      return items.length;
 
     // Default dropIndex is at end of list.
     let dropIndex = items.length;
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i] as HTMLElement;
-      const rect = child.getBoundingClientRect();
+
+    // Binary search
+    let low = 0,
+      high = children.length - 1;
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      const rect = children[mid].getBoundingClientRect();
       const midpoint = rect.top + rect.height / 2;
 
-      if (e.clientY < midpoint) {
-        dropIndex = i;
-        break;
+      if (mouseY < midpoint) {
+        dropIndex = mid;
+        high = mid - 1;
+      } else {
+        low = mid + 1;
       }
     }
 
