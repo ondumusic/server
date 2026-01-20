@@ -180,7 +180,8 @@ export function ArtistAlbumListView() {
   );
 
   const onSubmit = useCallback(
-    (selectedIds: Set<string>) => {
+    async (selectedIds: Set<string>) => {
+      if (!(await userConfirmQueueReplace())) return;
       const selectedTracks = getTracksById(listItems, selectedIds);
       if (selectedTracks.length === 1) {
         const selectedTrack = selectedTracks[0];
@@ -197,11 +198,12 @@ export function ArtistAlbumListView() {
         enqueueAndPlay(selectedTracks);
       }
     },
-    [listItems, data, enqueueAndPlay],
+    [listItems, data, enqueueAndPlay, userConfirmQueueReplace],
   );
 
   const onDoubleClick = useCallback(
-    (item: ListItem) => {
+    async (item: ListItem) => {
+      if (!(await userConfirmQueueReplace())) return;
       if (item.type !== "track") return;
 
       // The default behaviour we want is to add all tracks from the same
@@ -213,7 +215,7 @@ export function ArtistAlbumListView() {
 
       enqueueAndPlay(albumTracks, item.track);
     },
-    [data, enqueueAndPlay],
+    [data, enqueueAndPlay, userConfirmQueueReplace],
   );
 
   const onContextMenu = useCallback(
