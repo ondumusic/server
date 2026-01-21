@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigationType, useParams } from "react-router";
+import { Link, useNavigationType, useParams } from "react-router";
 import {
   ArtistAlbumListItem,
   type ListItem,
@@ -284,6 +284,12 @@ export function ArtistAlbumListView() {
 
   return (
     <div className="mx-4 lg:mx-8">
+      <div className="absolute top-[1px] left-[1px] right-[1px] bg-panel-bg border-b border-accent-500 md:hidden p-4 z-50 font-semibold">
+        <Link to="/">
+          &larr; All Artists
+          {/*TODO: i18n*/}
+        </Link>
+      </div>
       <SelectableList<ListItem>
         multiple
         allowDrag

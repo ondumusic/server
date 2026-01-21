@@ -69,17 +69,19 @@ export function NowPlaying({
   );
 
   return (
-    <div className="w-full cursor-default flex-shrink-0 px-2">
-      {currentAlbum?.artworkUrl && (
+    <div className="flex flex-wrap pr-10 lg:pr-0 gap-2 lg:block w-full cursor-default flex-shrink-0 lg:px-2">
+      {currentAlbum?.artworkUrl ? (
         <img
           src={currentAlbum?.artworkUrl}
           alt=""
-          className="w-full aspect-square object-cover object-center rounded-md overflow-hidden shadow-md mb-4"
+          className="w-20 lg:w-full aspect-square object-cover object-center lg:rounded-md overflow-hidden lg:shadow-md lg:mb-4"
           onLoad={(e) => updateAccentColor(e.target as HTMLImageElement)}
         />
+      ) : (
+        <div className="w-20 aspect-square bg-gray-100 lg:w-full"></div>
       )}
 
-      <div className="text-center overflow-hidden mb-4">
+      <div className="text-left w-[calc(100%-120px)] lg:w-full lg:text-center overflow-hidden mb-4">
         <Marquee
           className="transition-colors duration-400 text-accent-600 text-lg font-medium"
           text={
@@ -94,8 +96,8 @@ export function NowPlaying({
         </div>
       </div>
 
-      <div className="group/timeline">
-        <div className="flex justify-between items-end tabular-nums transition-colors duration-400 text-accent-400 text-xs mb-2">
+      <div className="absolute bottom-4 left-22 right-2 lg:static group/timeline">
+        <div className="flex justify-between items-end tabular-nums transition-colors duration-400 text-accent-400 text-xs mb-0.5 lg:mb-2">
           <span>{formatDuration(currentTime)}</span>
           <span>{formatDuration(duration)}</span>
         </div>

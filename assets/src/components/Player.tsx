@@ -41,13 +41,13 @@ export function Player({
   }, [addTimeObserver]);
 
   return (
-    <div className="flex flex-col h-full w-full justify-center text-center select-none">
+    <div className="flex flex-row lg:flex-col h-full w-full justify-center text-center select-none">
       <NowPlaying
         currentTime={currentTime}
         progressPercentage={progressPercentage}
       />
 
-      <div className="flex justify-center items-center w-full pt-2 px-2 flex-shrink-0">
+      <div className="flex justify-center items-center lg:w-full lg:pt-2 lg:px-2 flex-shrink-0">
         <div className="flex flex-shrink-0 text-accent-500">
           <button
             type="button"
@@ -66,7 +66,7 @@ export function Player({
           </button>
           <button
             type="button"
-            className="absolute lg:static right-0 top-3 z-[200] disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md cursor-pointer"
+            className="absolute lg:static right-0 top-0 lg:top-3 z-[200] disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md cursor-pointer"
             onClick={() => {
               if (currentTrack) {
                 setIsPlaying(!isPlaying);
@@ -106,7 +106,7 @@ export function Player({
 
         <button
           type="button"
-          className="absolute cursor-pointer left-6 text-accent-500"
+          className="hidden lg:block absolute cursor-pointer left-6 text-accent-500"
           onClick={() => setShowUpNext(!showUpNext)}
         >
           <UpNextIcon
@@ -117,7 +117,7 @@ export function Player({
 
         <button
           type="button"
-          className="absolute cursor-pointer right-6 text-accent-500"
+          className="hidden lg:block absolute cursor-pointer right-6 text-accent-500"
           onClick={() => setIsPanelOpen(!isPanelOpen)}
         >
           <PanelCloseIcon

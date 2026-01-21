@@ -54,7 +54,7 @@ export const ArtistAlbumListItem = memo(
     switch (item.type) {
       case "artist":
         return (
-          <header className="mt-4 lg:mt-8 pb-4 mb-8 @md:border-b border-stone-300">
+          <header className="mt-18 md:mt-4 lg:mt-8 pb-4 mb-8 @md:border-b border-stone-300">
             <h1 className="font-semibold text-4xl lg:text-2xl">
               {item.artist.name}
             </h1>
@@ -150,10 +150,16 @@ export const ArtistAlbumListItem = memo(
                   "[[aria-selected=true]+[aria-selected=true]_&]:rounded-t-none",
                 isSelected &&
                   "[[aria-selected=true]:has(+[aria-selected=true])_&]:rounded-b-none",
-                item.lastTrackOnDisc && item.albumTrackCount > 3 && "mb-6",
-                item.lastTrackOnDisc && item.albumTrackCount === 1 && "mb-35",
-                item.lastTrackOnDisc && item.albumTrackCount === 2 && "mb-27",
-                item.lastTrackOnDisc && item.albumTrackCount === 3 && "mb-19",
+                item.lastTrackOnDisc && item.albumTrackCount > 3 && "@xl:mb-6",
+                item.lastTrackOnDisc &&
+                  item.albumTrackCount === 1 &&
+                  "@sm:mb-20 @xl:mb-35",
+                item.lastTrackOnDisc &&
+                  item.albumTrackCount === 2 &&
+                  "@sm:mb-12 @xl:mb-27",
+                item.lastTrackOnDisc &&
+                  item.albumTrackCount === 3 &&
+                  "@sm:mb-4 @xl:mb-19",
               ])}
             >
               <span
