@@ -205,8 +205,8 @@ export function ArtistAlbumListView() {
 
   const onDoubleClick = useCallback(
     async (item: ListItem) => {
-      if (!(await userConfirmQueueReplace())) return;
       if (item.type !== "track") return;
+      if (!(await userConfirmQueueReplace())) return;
 
       // The default behaviour we want is to add all tracks from the same
       // album to the queue and start playback at the selected track.
