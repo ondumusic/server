@@ -12,6 +12,7 @@ import {
 import { useArtistQuery } from "../hooks/useArtistQuery";
 import { useInfiniteArtistAlbumsQuery } from "../hooks/useInfiniteArtistAlbumsQuery";
 import { usePlayer } from "../hooks/usePlayer";
+import { useQueue } from "../hooks/useQueue";
 import i18next from "../i18next";
 import type { Album, Track, UUID } from "../types";
 import { paginatedMap } from "../utils/paginatedMap";
@@ -48,6 +49,7 @@ export function ArtistAlbumListView() {
   const { artistId, albumId } = useParams() as Params;
   const { enqueueAndPlay, enqueueNext, enqueueAfter, userConfirmQueueReplace } =
     usePlayer();
+  const { currentTrack } = useQueue();
   const hasArtistId = !!artistId;
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
     new Set(),
@@ -255,10 +257,11 @@ export function ArtistAlbumListView() {
         item={item}
         isDragging={state.isDragging}
         isSelected={state.isSelected}
+        isPlaying={item.id === currentTrack?.id}
         onPlayAlbum={handlePlayAlbum}
       />
     ),
-    [handlePlayAlbum],
+    [handlePlayAlbum, currentTrack],
   );
 
   if (!artistId)

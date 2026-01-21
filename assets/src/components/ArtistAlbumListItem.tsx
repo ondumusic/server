@@ -37,12 +37,13 @@ export type ListItem = ArtistItem | AlbumItem | DiscItem | TrackItem;
 interface Props {
   item: ListItem;
   isSelected: boolean;
+  isPlaying?: boolean;
   isDragging?: boolean;
   onPlayAlbum?: (item: ListItem) => void;
 }
 
 export const ArtistAlbumListItem = memo(
-  ({ item, isSelected, isDragging, onPlayAlbum }: Props) => {
+  ({ item, isSelected, isPlaying, isDragging, onPlayAlbum }: Props) => {
     const { t } = useTranslation();
 
     const handlePlayAlbum = useCallback(
@@ -158,12 +159,18 @@ export const ArtistAlbumListItem = memo(
                   "w-6 flex-shrink-0 font-light text-right",
                   "group-hover/track:hidden",
                   !isSelected && "text-stone-400",
+                  isPlaying && "hidden",
                 ])}
               >
                 {item.track.number && `${item.track.number}.`}
               </span>
 
-              <div className="w-6 hidden group-hover/track:flex justify-end pt-1 flex-shrink-0">
+              <div
+                className={classNames([
+                  "w-6 group-hover/track:flex justify-end pt-1 flex-shrink-0",
+                  !isPlaying ? "hidden" : "flex",
+                ])}
+              >
                 <PlayIcon
                   className={classNames([
                     "size-3 text-accent-500",
