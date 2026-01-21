@@ -427,10 +427,17 @@ export function SelectableList<T>({
                     // select this item.
                     if (!isSelected) {
                       const newSelection = new Set([item.id]);
-                      onChange(newSelection);
-                      setFocusedIndex(index);
-                      setScrollBlockType("nearest");
-                      lastSelectedIndexRef.current = index;
+
+                      // Only update selection if the item is selectable
+                      // this way we can allow context menus on non-selectable
+                      // items too.
+                      if (item.selectable !== false) {
+                        onChange(newSelection);
+                        setFocusedIndex(index);
+                        setScrollBlockType("nearest");
+                        lastSelectedIndexRef.current = index;
+                      }
+
                       return onContextMenu(newSelection);
                     }
 
