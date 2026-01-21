@@ -222,6 +222,37 @@ export function ArtistAlbumListView() {
 
   const onContextMenu = useCallback(
     (selectedIds: Set<string>) => {
+      const [firstId] = selectedIds;
+
+      // The context menu for an album works differently.
+      const maybeAlbumItem = listItems.find((item) => item.id === firstId);
+      if (maybeAlbumItem && maybeAlbumItem.type === "album") {
+        const album = maybeAlbumItem.album;
+
+        return [
+          {
+            key: "play_next",
+            label: i18next.t("contextMenu.playNext", {
+              defaultValue: "Play Next",
+              count: album.tracks.length,
+            }),
+            onClick() {
+              enqueueNext(album.tracks);
+            },
+          },
+          {
+            key: "play_after",
+            label: i18next.t("contextMenu.playAfter", {
+              defaultValue: "Play After",
+              count: album.tracks.length,
+            }),
+            onClick() {
+              enqueueAfter(album.tracks);
+            },
+          },
+        ];
+      }
+
       const selectedTracks = getTracksById(listItems, selectedIds);
       if (selectedTracks.length === 0) return [];
 
