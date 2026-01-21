@@ -84,7 +84,7 @@ export function RootLayout({ children }: PropsWithChildren) {
 
       <div
         className={
-          "absolute lg:left-1/3 lg:w-2/3 xl:left-1/4 xl:w-3/4 h-full lg:p-4 xl:p-6 lg:pl-0 xl:pl-0 " +
+          "absolute w-full lg:left-1/3 lg:w-2/3 xl:left-1/4 xl:w-3/4 h-full lg:p-4 xl:p-6 lg:pl-0 xl:pl-0 " +
           "flex justify-center items-center flex-col " +
           "transition-all duration-400 ease-in-out " +
           (isPanelOpen

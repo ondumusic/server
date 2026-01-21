@@ -54,7 +54,7 @@ export const ArtistAlbumListItem = memo(
     switch (item.type) {
       case "artist":
         return (
-          <header className="mt-4 lg:mt-8 pb-4 mb-8 border-b border-stone-300">
+          <header className="mt-4 lg:mt-8 pb-4 mb-8 @md:border-b border-stone-300">
             <h1 className="font-semibold text-4xl lg:text-2xl">
               {item.artist.name}
             </h1>
@@ -74,23 +74,25 @@ export const ArtistAlbumListItem = memo(
               !item.firstAlbumInList && "mt-12",
             ])}
           >
-            <div className="absolute top-0 left-0 w-48 shadow-lg aspect-square rounded-sm overflow-hidden bg-stone-200 group/artwork">
-              {item.album.artworkUrl && (
-                <img
-                  src={item.album.artworkUrl}
-                  alt=""
-                  className="w-full object-cover object-center"
-                />
-              )}
+            <div className="relative @md:absolute top-0 left-0 w-20 flex-grow-0 flex-shrink-0 @md:w-32 @xl:w-48 group/artwork">
+              <div className="w-full shadow-lg aspect-square rounded-sm overflow-hidden bg-stone-200">
+                {item.album.artworkUrl && (
+                  <img
+                    src={item.album.artworkUrl}
+                    alt=""
+                    className="w-full object-cover object-center"
+                  />
+                )}
+              </div>
 
               <button
                 type="button"
                 onDoubleClick={handlePlayAlbum}
                 className="absolute left-0 top-0 w-full h-full opacity-0 group-hover/artwork:opacity-100 transition-opacity"
               >
-                <div className="m-auto flex justify-center align-center w-16 h-16 bg-accent-500 rounded-full shadow-lg transition-colors">
+                <div className="m-auto flex justify-center align-center w-8 h-8 md:w-16 md:h-16 bg-accent-500 rounded-full shadow-lg transition-colors">
                   <PlayIcon
-                    className="size-8 m-auto text-white"
+                    className="size-4 md:size-8 m-auto text-white"
                     title={t("button.playSelectedAlbum", {
                       defaultValue: "Play {{ albumName }}",
                       albumName: item.album.name,
@@ -100,12 +102,12 @@ export const ArtistAlbumListItem = memo(
               </button>
             </div>
 
-            <div className="pt-1 pl-62 w-full">
-              <div className="pb-2 mb-2 border-b border-stone-200">
+            <div className="pt-1 @md:pl-44 @xl:pl-60 w-full">
+              <div className="pb-2 mb-2 min-h-20 @md:min-h-auto @md:border-b border-stone-200">
                 <strong className="text-lg font-semibold mb-0.5">
                   {item.album.name}
                 </strong>
-                <div className="flex gap-2">
+                <div className="flex flex-col @md:flex-row @md:gap-2">
                   <span className="text-stone-400 text-sm">
                     {item.album.releaseYear}
                   </span>
@@ -127,7 +129,7 @@ export const ArtistAlbumListItem = memo(
 
       case "disc":
         return (
-          <div className="font-semibold text-xs text-gray-500 pl-62">
+          <div className="font-semibold text-xs text-gray-500 pl-6 @md:pl-44 @xl:pl-60">
             <Trans i18nKey="album.discNumber" disc={item.disc.number}>
               Disc {{ disc: item.disc.number }}
             </Trans>
@@ -136,10 +138,10 @@ export const ArtistAlbumListItem = memo(
 
       case "track":
         return (
-          <div className="pl-52 group/track">
+          <div className="@md:pl-34 @xl:pl-50 group/track">
             <div
               className={classNames([
-                "flex w-full gap-2 text-sm py-1.5 px-2",
+                "flex w-full gap-2 text-sm py-1.5 @md:px-2",
                 isDragging && "opacity-50",
                 isSelected &&
                   "bg-blue-400 [.selectable-list:focus_&]:bg-blue-500 text-white",
@@ -156,7 +158,7 @@ export const ArtistAlbumListItem = memo(
             >
               <span
                 className={classNames([
-                  "w-6 flex-shrink-0 font-light text-right",
+                  "w-4 @md:w-6 flex-shrink-0 font-light text-right",
                   "group-hover/track:hidden",
                   !isSelected && "text-stone-400",
                   isPlaying && "hidden",
@@ -167,7 +169,7 @@ export const ArtistAlbumListItem = memo(
 
               <div
                 className={classNames([
-                  "w-6 group-hover/track:flex justify-end pt-1 flex-shrink-0",
+                  "w-4 @md:w-6 group-hover/track:flex justify-end pt-1 flex-shrink-0",
                   !isPlaying ? "hidden" : "flex",
                 ])}
               >
