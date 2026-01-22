@@ -47,6 +47,12 @@ export const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: false,
+
+      // Setting cacheTime to Infinity so it keeps the cached items in memory
+      // indefinitely (well, until you close/reload - it's still cache not
+      // persisted). This prevents items from disappearing during playback.
+      // Might look into a better solution in the future though.
+      cacheTime: Infinity
     },
   },
   queryCache: new QueryCache({
