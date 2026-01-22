@@ -89,7 +89,7 @@ export function RootLayout({ children }: PropsWithChildren) {
           "transition-all duration-400 ease-in-out " +
           (isPanelOpen
             ? " translate-y-0 lg:translate-x-0 opacity-100 scale-100"
-            : " -translate-y-full lg:translate-x-full opacity-0 scale-90")
+            : " -translate-y-full lg:translate-y-0 lg:translate-x-full opacity-0 scale-90")
         }
       >
         <Panel main>{children ? children : <Outlet />}</Panel>
