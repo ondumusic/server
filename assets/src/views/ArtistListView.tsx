@@ -1,4 +1,5 @@
-import { useNavigate, useParams } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
+import type { PropsWithChildren } from "react";
 import { ArtistListItem } from "../components/ArtistListItem";
 import { Loading } from "../components/Loading";
 import { SelectableList } from "../components/SelectableList";
@@ -6,14 +7,15 @@ import { useInfiniteArtistsQuery } from "../hooks/useInfiniteArtistsQuery";
 import type { Artist, UUID } from "../types";
 import { paginatedMap } from "../utils/paginatedMap";
 
-type Params = { artistId: UUID };
-
 function isArtist(artist: Artist, artistId: string): boolean {
   return artist.id === artistId || artist.slug === artistId;
 }
 
-export function ArtistListView() {
-  const { artistId } = useParams() as Params;
+export function ArtistListView({
+  artistId,
+}: PropsWithChildren<{
+  artistId?: UUID;
+}>) {
   const navigate = useNavigate();
 
   const suspendUntil = artistId
@@ -28,7 +30,9 @@ export function ArtistListView() {
   if (!hasFirstPage) return <Loading />;
 
   const listItems = paginatedMap<Artist, Artist>(data, (artist) => artist);
-  const currentArtist = listItems.find((artist) => isArtist(artist, artistId));
+  const currentArtist = artistId
+    ? listItems.find((artist) => isArtist(artist, artistId))
+    : undefined;
 
   return (
     <SelectableList<Artist>
@@ -40,7 +44,11 @@ export function ArtistListView() {
       onContextMenu={() => []}
       onChange={(selectedIds) => {
         const artist = listItems.find((artist) => selectedIds.has(artist.id));
-        if (artist) navigate(`/artists/${artist.slug}`);
+        if (artist)
+          navigate({
+            to: `/artists/${artist.slug}`,
+            params: { artistId: artist.id },
+          });
       }}
       renderItem={(artist, state) => (
         <ArtistListItem isSelected={state.isSelected} artist={artist} />

@@ -1,23 +1,30 @@
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigationType, useParams } from "react-router";
+
 import {
   ArtistAlbumListItem,
   type ListItem,
-} from "../components/ArtistAlbumListItem";
-import { Loading } from "../components/Loading";
+} from "../../components/ArtistAlbumListItem";
+import { Loading } from "../../components/Loading";
 import {
   type ListItemState,
   SelectableList,
-} from "../components/SelectableList";
-import { useArtistQuery } from "../hooks/useArtistQuery";
-import { useInfiniteArtistAlbumsQuery } from "../hooks/useInfiniteArtistAlbumsQuery";
-import { usePlayer } from "../hooks/usePlayer";
-import { useQueue } from "../hooks/useQueue";
-import i18next from "../i18next";
-import type { Album, Track, UUID } from "../types";
-import { paginatedMap } from "../utils/paginatedMap";
-import { splitTracksByDisc } from "../utils/splitTracksByDisc";
-import { EmptyView } from "../views/EmptyView";
+} from "../../components/SelectableList";
+import { useArtistQuery } from "../../hooks/useArtistQuery";
+import { useInfiniteArtistAlbumsQuery } from "../../hooks/useInfiniteArtistAlbumsQuery";
+import { usePlayer } from "../../hooks/usePlayer";
+import { useQueue } from "../../hooks/useQueue";
+import i18next from "../../i18next";
+import type { Album, Track, UUID } from "../../types";
+import { paginatedMap } from "../../utils/paginatedMap";
+import { splitTracksByDisc } from "../../utils/splitTracksByDisc";
+import { EmptyView } from "../../views/EmptyView";
+
+export const Route = createFileRoute(
+  "/_authenticated/artists/{-$artistId}/{-$albumId}",
+)({
+  component: Artists,
+});
 
 type Params = {
   artistId: UUID;
@@ -44,9 +51,10 @@ function getTracksById(items: ListItem[], ids: Set<string>): Track[] {
     .filter((track) => track);
 }
 
-export function ArtistAlbumListView() {
-  const navigationType = useNavigationType();
-  const { artistId, albumId } = useParams() as Params;
+function Artists() {
+  const { artistId, albumId } = Route.useParams() as Params;
+  const router = useRouter();
+  const isPopNavigation = router.history.location.state?.isBackForward;
   const { enqueueAndPlay, enqueueNext, enqueueAfter, userConfirmQueueReplace } =
     usePlayer();
   const { currentTrack } = useQueue();
@@ -55,7 +63,7 @@ export function ArtistAlbumListView() {
     new Set(),
   );
   const [useSuspense, setUseSuspense] = useState(
-    hasArtistId && navigationType === "POP",
+    hasArtistId && isPopNavigation,
   );
 
   useEffect(() => {

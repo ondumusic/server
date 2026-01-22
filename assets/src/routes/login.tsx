@@ -1,6 +1,5 @@
-import { useEffect } from "react";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { Trans, useTranslation } from "react-i18next";
-import { type Location, useLocation, useNavigate } from "react-router";
 import { Button } from "../components/form/Button";
 import { FormActions } from "../components/form/FormActions";
 import { Input } from "../components/form/Input";
@@ -10,8 +9,8 @@ import { type FormErrors, type FormState, useForm } from "../hooks/useForm";
 import { api } from "../services/api";
 import type { User } from "../types";
 
-interface LocationState {
-  redirectTo: Location;
+interface LocationSearch {
+  redirect: string;
 }
 
 type LoginFields = {
@@ -37,25 +36,29 @@ interface SuccessResponse {
 
 type Response = ErrorResponse | SuccessResponse;
 
-export function LoginView() {
-  const { isLoggedIn, completeLogin } = useAuth();
+export const Route = createFileRoute("/login")({
+  beforeLoad: async ({ context }) => {
+    // If the user is already logged in there is no need to show the login view.
+    if (context.auth.isLoggedIn) {
+      throw redirect({ to: "/" });
+    }
+  },
+  component: Login,
+});
+
+function Login() {
+  const { completeLogin } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { state } = useLocation();
-
-  // If the user is already logged in there is no need to show the login view.
-  useEffect(() => {
-    if (isLoggedIn) navigate(`/`);
-  }, [isLoggedIn, navigate]);
+  const { redirect: redirectTo } = Route.useSearch() as LocationSearch;
 
   const onLoginSuccess = (response: SuccessResponse) => {
     completeLogin(response.currentUser, response.sessionToken);
 
-    if (state) {
-      const { redirectTo } = state as LocationState;
-      navigate(`${redirectTo.pathname}${redirectTo.search}`);
+    if (redirectTo) {
+      navigate({ to: redirectTo });
     } else {
-      navigate(`/`);
+      navigate({ to: `/` });
     }
   };
 

@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import tailwindcss from "@tailwindcss/vite";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react-swc";
 import { defineConfig, loadEnv } from "vite";
 
@@ -8,7 +9,16 @@ export default defineConfig(({ mode }) => {
 
   return {
     publicDir: "public/",
-    plugins: [tailwindcss(), react()],
+    plugins: [
+      tanstackRouter({
+        target: "react",
+        autoCodeSplitting: false,
+        routesDirectory: resolve(__dirname, "./src/routes"),
+        generatedRouteTree: resolve(__dirname, "./src/routeTree.gen.ts"),
+      }),
+      tailwindcss(),
+      react(),
+    ],
     resolve: {
       alias: {
         "@/": resolve(__dirname, "./src"),
@@ -26,7 +36,7 @@ export default defineConfig(({ mode }) => {
         input: "src/app.tsx",
         output: {
           assetFileNames: "assets/[name][extname]",
-          chunkFileNames: "[name].js",
+          chunkFileNames: "assets/[name].js",
           entryFileNames: "assets/[name].js",
         },
         // 1000 is default, CI was being difficult and wanted 1. I don't

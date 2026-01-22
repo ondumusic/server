@@ -1,18 +1,24 @@
-import { Navigate, useLocation, useRouteError } from "react-router";
+import { ErrorComponent, Navigate, useLocation } from "@tanstack/react-router";
+import type { PropsWithChildren } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { ApiError } from "../services/api";
 
-export function RootErrorBoundary() {
-  const error = useRouteError() as Error;
+export function RootErrorBoundary({
+  error,
+}: PropsWithChildren<{ error: Error }>) {
   const location = useLocation();
   const { logout } = useAuth();
 
   if (error instanceof ApiError && error.response.status === 401) {
     logout();
-    return <Navigate to="/login" replace state={{ redirectTo: location }} />;
+    return (
+      <Navigate to="/login" search={{ redirect: location.href }} replace />
+    );
   }
 
-  // TODO: Deal with other errors, maybe show a dialog or something?
+  if (import.meta.env.MODE === "dev") {
+    return <ErrorComponent error={error} />;
+  }
 
   return <div>Oops! Something went wrong.</div>;
 }

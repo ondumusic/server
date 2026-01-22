@@ -1,5 +1,12 @@
 export type UUID = string;
 
+export interface RouteContext {
+  auth: {
+    isLoggedIn: boolean;
+    currentUser?: User;
+  };
+}
+
 export interface Artist {
   __type: "artist";
   id: UUID;

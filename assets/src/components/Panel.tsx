@@ -11,7 +11,8 @@ export function Panel({
     <div
       className={classNames([
         "flex mx-auto overflow-hidden bg-panel-bg text-panel-fg",
-        main && "h-full w-full border-[1px] border-accent-200 lg:shadow-lg lg:rounded-md",
+        main &&
+          "h-full w-full border-[1px] border-accent-200 lg:shadow-lg lg:rounded-md",
         !main && "max-w-md p-6 flex-col shadow-lg rounded-md",
       ])}
     >

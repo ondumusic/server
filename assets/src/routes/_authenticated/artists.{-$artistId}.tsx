@@ -1,21 +1,26 @@
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+
 import {
   Group,
   Panel,
   Separator,
   useDefaultLayout,
 } from "react-resizable-panels";
-import { Outlet, useParams } from "react-router";
-import { useMediaQuery } from "../hooks/useMediaQuery";
-import type { UUID } from "../types";
-import { ArtistListView } from "../views/ArtistListView";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
+import type { UUID } from "../../types";
+import { ArtistListView } from "../../views/ArtistListView";
+
+export const Route = createFileRoute("/_authenticated/artists/{-$artistId}")({
+  component: Artists,
+});
 
 type Params = {
-  artistId?: UUID;
+  artistId: UUID;
 };
 
-export function ArtistsLayout() {
+function Artists() {
   const allowPanels = useMediaQuery("(width >= 48rem)");
-  const { artistId } = useParams() as Params;
+  const { artistId } = Route.useParams() as Params;
 
   const { defaultLayout, onLayoutChange } = useDefaultLayout({
     groupId: "artistPage",
@@ -31,7 +36,7 @@ export function ArtistsLayout() {
     >
       <Panel id="left" defaultSize="30%" minSize="17%" maxSize="40%">
         <div className="h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-accent-50/40">
-          <ArtistListView />
+          <ArtistListView artistId={artistId} />
         </div>
       </Panel>
       <Separator className="w-[1px] bg-accent-200 [&[data-separator='hover']]:bg-accent-300 [&[data-separator='active']]:bg-accent-300 focus:outline-none focus:bg-accent-400" />
