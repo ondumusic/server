@@ -30,6 +30,7 @@ music_box-*.tar
 *.db-*
 
 # Ignore assets that are produced by build tools.
+/assets/.tanstack/
 /assets/src/routeTree.gen.ts
 /assets/node_modules/
 /assets/coverage/

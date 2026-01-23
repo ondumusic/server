@@ -1,11 +1,12 @@
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Trans, useTranslation } from "react-i18next";
 import { Button } from "../../components/form/Button";
 import { FormActions } from "../../components/form/FormActions";
 import { Input } from "../../components/form/Input";
+import { useAuth } from "../../hooks/useAuth";
 import { type FormErrors, type FormState, useForm } from "../../hooks/useForm";
 import { api } from "../../services/api";
 import type { User } from "../../types";
-import type { OnboardingStep } from "../../views/OnboardingView";
 
 type SignupFields = {
   username: string | number | null;
@@ -31,17 +32,18 @@ interface SuccessResponse {
 
 type Response = ErrorResponse | SuccessResponse;
 
-interface Props {
-  setOnboardingStep(_nextStep: OnboardingStep): void;
-  completeLogin(_user: User, _sessionToken: string): void;
-}
+export const Route = createFileRoute("/onboarding/user")({
+  component: UserComponent,
+});
 
-export function SignupView({ setOnboardingStep, completeLogin }: Props) {
+export function UserComponent() {
   const { t } = useTranslation();
+  const { isLoggedIn, completeLogin } = useAuth();
+  const { onboarding } = Route.useRouteContext();
 
   const onSignupSuccess = (response: SuccessResponse) => {
     completeLogin(response.currentUser, response.sessionToken);
-    setOnboardingStep("settings");
+    onboarding.setStep("settings");
   };
 
   const onSubmit = async (
@@ -73,6 +75,10 @@ export function SignupView({ setOnboardingStep, completeLogin }: Props) {
   };
 
   const form = useForm<SignupFields>("signupForm", onSubmit);
+
+  if (isLoggedIn) {
+    return <Navigate to="/onboarding/settings" />;
+  }
 
   return (
     <div className="h-full content-center">

@@ -1,9 +1,15 @@
 export type UUID = string;
 
+export type OnboardingStep = "user" | "settings" | null;
+
 export interface RouteContext {
   auth: {
     isLoggedIn: boolean;
     currentUser?: User;
+  };
+  onboarding: {
+    step: OnboardingStep;
+    setStep(step: OnboardingStep): void;
   };
 }
 

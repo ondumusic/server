@@ -1,8 +1,13 @@
+import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Button } from "../../components/form/Button";
 import { FormActions } from "../../components/form/FormActions";
 import { Input } from "../../components/form/Input";
+import { Loading } from "../../components/Loading";
+import { useAuth } from "../../hooks/useAuth";
 import { type FormErrors, type FormState, useForm } from "../../hooks/useForm";
+import { usePhoenixSocket } from "../../hooks/usePhoenixSocket";
 import { api } from "../../services/api";
 
 type ScanType = "full" | "quick";
@@ -30,15 +35,25 @@ interface SuccessResponse {
 
 type Response = ErrorResponse | SuccessResponse;
 
-interface Props {
-  completeOnboarding(): void;
-}
+export const Route = createFileRoute("/onboarding/settings")({
+  component: Settings,
+});
 
-export function SettingsView({ completeOnboarding }: Props) {
+export function Settings() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { isLoggedIn } = useAuth();
+  const { waitForUpdate } = usePhoenixSocket();
+  const { onboarding } = Route.useRouteContext();
+  const [showLoader, setShowLoader] = useState<boolean>(false);
 
   const onSuccess = (_response: SuccessResponse) => {
-    completeOnboarding();
+    setShowLoader(true);
+    onboarding.setStep(null);
+
+    waitForUpdate(() => {
+      navigate({ to: "/" });
+    });
   };
 
   const onSubmit = async (
@@ -73,6 +88,26 @@ export function SettingsView({ completeOnboarding }: Props) {
   };
 
   const form = useForm<SettingFields>("settingsForm", onSubmit);
+
+  if (!isLoggedIn) {
+    return (
+      <Navigate to="/login" search={{ redirect: "/onboarding/settings" }} />
+    );
+  }
+
+  if (!onboarding.step) {
+    return <Navigate to="/" />;
+  }
+
+  if (showLoader) {
+    return (
+      <Loading>
+        <div className="text-stone-600 text-center text-sm mt-4">
+          <Trans i18nKey="onboarding.firstLoadWait">Finding your music...</Trans>
+        </div>
+      </Loading>
+    );
+  }
 
   return (
     <div className="h-full content-center">
