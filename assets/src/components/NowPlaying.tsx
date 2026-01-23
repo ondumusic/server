@@ -78,7 +78,7 @@ export function NowPlaying({
           onLoad={(e) => updateAccentColor(e.target as HTMLImageElement)}
         />
       ) : (
-        <div className="w-20 aspect-square bg-gray-100 lg:w-full"></div>
+        <div className="w-20 aspect-square bg-linear-to-br from-stone-50 to-stone-200 lg:rounded-md lg:w-full lg:shadow-md lg:mb-4"></div>
       )}
 
       <div className="text-left w-[calc(100%-120px)] lg:w-full lg:text-center overflow-hidden mb-4">

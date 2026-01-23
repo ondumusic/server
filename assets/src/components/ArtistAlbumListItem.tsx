@@ -75,7 +75,7 @@ export const ArtistAlbumListItem = memo(
             ])}
           >
             <div className="relative @md:absolute top-0 left-0 w-20 flex-grow-0 flex-shrink-0 @md:w-32 @xl:w-48 group/artwork">
-              <div className="w-full shadow-lg aspect-square rounded-sm overflow-hidden bg-stone-200">
+              <div className="w-full shadow-lg aspect-square rounded-sm overflow-hidden bg-linear-to-br from-stone-50 to-stone-200">
                 {item.album.artworkUrl && (
                   <img
                     src={item.album.artworkUrl}
