@@ -81,9 +81,9 @@ export function NowPlaying({
         <div className="w-20 aspect-square bg-linear-to-br from-stone-50 to-stone-200 lg:rounded-md lg:w-full lg:shadow-md lg:mb-4"></div>
       )}
 
-      <div className="text-left w-[calc(100%-120px)] lg:w-full lg:text-center overflow-hidden mb-4">
+      <div className="text-left w-[calc(100%-120px)] lg:w-full lg:text-center overflow-hidden pt-2 lg:pt-0 mb-4">
         <Marquee
-          className="transition-colors duration-400 text-accent-600 text-lg font-medium"
+          className="transition-colors duration-400 text-accent-600 text-sm lg:text-lg font-medium"
           text={
             trackName ||
             i18next.t("player.noTrack.trackName", {
@@ -91,7 +91,7 @@ export function NowPlaying({
             })
           }
         />
-        <div className="font-normal text-sm text-accent-400">
+        <div className="font-normal text-xs lg:text-sm text-accent-400">
           <Marquee text={artistAlbum.join(" - ")} />
         </div>
       </div>
