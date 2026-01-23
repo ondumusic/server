@@ -9,13 +9,17 @@ import { useState } from "react";
 import { Panel } from "../components/Panel";
 import { Player } from "../components/Player";
 import { useQueue } from "../hooks/useQueue";
+import { auth } from "../services/auth";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ context, location }) => {
     if (!context.auth.isLoggedIn) {
+      auth.logout();
+
       throw redirect({
         to: "/login",
         search: { redirect: location.href },
+        replace: true,
       });
     }
   },

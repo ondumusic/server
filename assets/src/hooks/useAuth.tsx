@@ -5,16 +5,20 @@ import {
   useEffect,
   useState,
 } from "react";
+import { Loading } from "../components/Loading";
 import { ApiError, api } from "../services/api";
 import { auth } from "../services/auth";
 import type { User } from "../types";
 
-export interface AuthContext {
+interface AuthState {
   isLoggedIn: boolean;
   currentUser?: User;
+}
+
+export type AuthContext = AuthState & {
   logout(): void;
   completeLogin(user: User, sessionToken: string): void;
-}
+};
 
 const AuthContext = createContext<AuthContext>({
   isLoggedIn: !!auth.sessionToken,
@@ -31,47 +35,64 @@ type MeRequest = undefined;
 type MeResponse = User;
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
-  const [currentUser, setCurrentUser] = useState<User>();
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!auth.sessionToken);
+  const [isFetching, setIsFetching] = useState<boolean>(true);
+  const [state, setState] = useState<AuthState>({
+    isLoggedIn: false,
+    currentUser: undefined,
+  });
 
-  const logout = () => {
-    auth.sessionToken = null;
-    setCurrentUser(undefined);
-    setIsLoggedIn(false);
+  const updateState = () => {
+    setIsFetching(false);
+    setState({
+      isLoggedIn: auth.isLoggedIn,
+      currentUser: auth.currentUser,
+    });
   };
 
-  const maybeLogout = (error: ApiError) => {
-    if (error instanceof ApiError && error.response.status === 401) {
-      logout();
-    }
+  const logout = () => {
+    auth.logout();
+    updateState();
   };
 
   const value = {
-    isLoggedIn,
-    currentUser,
+    ...state,
     logout,
     completeLogin: (user: User, sessionToken: string) => {
       auth.sessionToken = sessionToken;
-      setCurrentUser(user);
-      setIsLoggedIn(true);
+      auth.currentUser = user;
+      updateState();
     },
   };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies(maybeLogout): suppress dependency maybeLogout
-  // biome-ignore lint/correctness/useExhaustiveDependencies(currentUser): suppress dependency currentUser
-  // biome-ignore lint/correctness/useExhaustiveDependencies(isLoggedIn): suppress dependency isLoggedIn
+  // This useEffect should only render once on mount so we can ignore the dependencies.
+  // biome-ignore lint/correctness/useExhaustiveDependencies(updateState): suppress dependency updateState
+  // biome-ignore lint/correctness/useExhaustiveDependencies(logout): suppress dependency logout
   useEffect(() => {
-    if (!isLoggedIn) return;
+    // Without a session token we cannot do anything else here.
     if (!auth.sessionToken) {
-      setIsLoggedIn(false);
+      logout();
+      return;
     }
 
-    if (currentUser) return;
+    // Get user details from the API
     api
       .get<MeRequest, MeResponse>("/auth/me")
-      .then(setCurrentUser)
-      .catch(maybeLogout);
+      .then((user) => {
+        auth.currentUser = user;
+        updateState();
+      })
+      .catch((error: ApiError) => {
+        if (error instanceof ApiError && error.response.status === 401) {
+          logout();
+        } else {
+          setIsFetching(false);
+        }
+      });
   }, []);
+
+  if (isFetching) {
+    return <Loading />;
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

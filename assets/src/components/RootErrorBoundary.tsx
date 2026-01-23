@@ -1,16 +1,26 @@
 import { ErrorComponent, Navigate, useLocation } from "@tanstack/react-router";
-import type { PropsWithChildren } from "react";
+import { type PropsWithChildren, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { ApiError } from "../services/api";
 
 export function RootErrorBoundary({
   error,
-}: PropsWithChildren<{ error: Error }>) {
+  reset,
+}: PropsWithChildren<{ error: Error; reset: () => void }>) {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { isLoggedIn, logout } = useAuth();
+  const unauthorizedError =
+    error instanceof ApiError && error.response.status === 401;
 
-  if (error instanceof ApiError && error.response.status === 401) {
-    logout();
+  useEffect(() => {
+    if (unauthorizedError) {
+      logout();
+      reset();
+    }
+  }, [unauthorizedError, logout, reset]);
+
+  if (unauthorizedError && !isLoggedIn) {
+    reset();
     return (
       <Navigate to="/login" search={{ redirect: location.href }} replace />
     );

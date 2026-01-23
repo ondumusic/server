@@ -5,7 +5,7 @@ import { useAuth } from "./hooks/useAuth";
 // So do not edit it manually.
 import { routeTree } from "./routeTree.gen";
 
-const router = createRouter({
+export const router = createRouter({
   routeTree,
   context: {
     auth: {
@@ -14,7 +14,7 @@ const router = createRouter({
     },
   },
   defaultErrorComponent: RootErrorBoundary,
-  defaultPreload: "intent",
+  defaultPreload: false,
 });
 
 export function Router() {

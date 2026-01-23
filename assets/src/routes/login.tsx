@@ -1,4 +1,5 @@
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Button } from "../components/form/Button";
 import { FormActions } from "../components/form/FormActions";
@@ -37,29 +38,17 @@ interface SuccessResponse {
 type Response = ErrorResponse | SuccessResponse;
 
 export const Route = createFileRoute("/login")({
-  beforeLoad: async ({ context }) => {
-    // If the user is already logged in there is no need to show the login view.
-    if (context.auth.isLoggedIn) {
-      throw redirect({ to: "/" });
-    }
-  },
   component: Login,
 });
 
 function Login() {
-  const { completeLogin } = useAuth();
-  const navigate = useNavigate();
+  const { isLoggedIn, completeLogin } = useAuth();
   const { t } = useTranslation();
   const { redirect: redirectTo } = Route.useSearch() as LocationSearch;
+  const redirectRef = useRef<string>(redirectTo ?? "/");
 
   const onLoginSuccess = (response: SuccessResponse) => {
     completeLogin(response.currentUser, response.sessionToken);
-
-    if (redirectTo) {
-      navigate({ to: redirectTo });
-    } else {
-      navigate({ to: `/` });
-    }
   };
 
   const onSubmit = async (
@@ -89,6 +78,10 @@ function Login() {
   };
 
   const form = useForm<LoginFields>("loginForm", onSubmit);
+
+  if (isLoggedIn) {
+    return <Navigate to={redirectRef?.current ?? "/"} replace />;
+  }
 
   return (
     <div className="h-full content-center">

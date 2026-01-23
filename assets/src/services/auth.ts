@@ -1,5 +1,8 @@
+import type { User } from "../types";
+
 class AuthService {
   #tokenName = "sessionToken";
+  #currentUser?: User = undefined;
 
   get sessionToken(): string | null {
     return localStorage.getItem(this.#tokenName);
@@ -11,6 +14,23 @@ class AuthService {
     } else {
       localStorage.setItem(this.#tokenName, sessionToken);
     }
+  }
+
+  get isLoggedIn(): boolean {
+    return !!(this.sessionToken && this.currentUser);
+  }
+
+  get currentUser(): User | undefined {
+    return this.#currentUser;
+  }
+
+  set currentUser(currentUser: User | undefined) {
+    this.#currentUser = currentUser;
+  }
+
+  logout() {
+    this.#currentUser = undefined;
+    this.sessionToken = null;
   }
 }
 
