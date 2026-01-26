@@ -36,7 +36,7 @@ export function ArtistList({
   );
 
   const onTypeMatch = useCallback((item: Artist, query: string) => {
-    const matcher = new RegExp(`${query.replace(/\s+/g, "")}`, "iu");
+    const matcher = new RegExp(`^${query.replace(/\s+/g, "")}`, "iu");
     const name = item.name
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
