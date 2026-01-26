@@ -14,7 +14,7 @@ function isArtist(artist: Artist, artistId: string): boolean {
   return artist.id === artistId || artist.slug === artistId;
 }
 
-export function ArtistListView({
+export function ArtistList({
   artistId,
 }: PropsWithChildren<{
   artistId?: UUID;

@@ -6,9 +6,9 @@ import {
   Separator,
   useDefaultLayout,
 } from "react-resizable-panels";
+import { ArtistList } from "../../components/ArtistList";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import type { UUID } from "../../types";
-import { ArtistListView } from "../../views/ArtistListView";
 
 export const Route = createFileRoute("/_authenticated/artists/{-$artistId}")({
   component: Artists,
@@ -36,7 +36,7 @@ function Artists() {
     >
       <Panel id="left" defaultSize="30%" minSize="17%" maxSize="40%">
         <div className="h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-accent-50/40">
-          <ArtistListView artistId={artistId} />
+          <ArtistList artistId={artistId} />
         </div>
       </Panel>
       <Separator className="w-[1px] bg-accent-200 [&[data-separator='hover']]:bg-accent-300 [&[data-separator='active']]:bg-accent-300 focus:outline-none focus:bg-accent-400" />
@@ -48,7 +48,7 @@ function Artists() {
     </Group>
   ) : (
     <div className="@container w-full h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {artistId ? <Outlet /> : <ArtistListView />}
+      {artistId ? <Outlet /> : <ArtistList />}
     </div>
   );
 }

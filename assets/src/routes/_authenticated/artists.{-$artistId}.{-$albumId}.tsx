@@ -5,6 +5,7 @@ import {
   ArtistAlbumListItem,
   type ListItem,
 } from "../../components/ArtistAlbumListItem";
+import { EmptyView } from "../../components/EmptyView";
 import { Loading } from "../../components/Loading";
 import {
   type ListItemState,
@@ -18,7 +19,6 @@ import i18next from "../../i18next";
 import type { Album, Track, UUID } from "../../types";
 import { paginatedMap } from "../../utils/paginatedMap";
 import { splitTracksByDisc } from "../../utils/splitTracksByDisc";
-import { EmptyView } from "../../views/EmptyView";
 
 export const Route = createFileRoute(
   "/_authenticated/artists/{-$artistId}/{-$albumId}",
