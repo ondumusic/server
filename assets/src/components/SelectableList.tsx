@@ -38,6 +38,7 @@ type BaseProps<T> = {
     sourceListId: string,
   ) => void;
   onContextMenu?: (selectedIds: Set<string>) => ContextMenuItem[];
+  onTypeMatch?: (item: T, query: string) => boolean;
   renderItem: (item: T, state: ListItemState) => ReactNode;
 };
 
@@ -56,6 +57,7 @@ export function SelectableList<T>({
   onSubmit,
   onDoubleClick,
   onContextMenu,
+  onTypeMatch,
   renderItem,
   defaultFocusId,
   defaultFocusType = "nearest",
@@ -73,6 +75,8 @@ export function SelectableList<T>({
   const [draggingIds, setDraggingIds] = useState<Set<string>>(new Set());
   const [dropAtIndex, setDropAtIndex] = useState<number | null>(null);
   const allowDrop = allowDropFrom.length !== 0;
+  const [typeMatch, setTypeMatch] = useState<string | null>(null);
+  const typeMatchTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
   // Reset when items change
   useEffect(() => {
@@ -97,6 +101,26 @@ export function SelectableList<T>({
       });
     }
   }, [focusedIndex, scrollBlockType]);
+
+  // Scroll to type match
+  useEffect(() => {
+    if (!onTypeMatch) return;
+    if (!typeMatch) return;
+
+    // Find the first item index that matches the query.
+    const itemIndex = items.findIndex((item) =>
+      onTypeMatch(item as T, typeMatch),
+    );
+
+    if (itemIndex !== -1) {
+      // TODO: In my single use case I want it to select the item but it feels
+      // a bit weird to do so maybe should revisit how this works.
+      onChange(new Set([items[itemIndex].id]));
+      setFocusedIndex(itemIndex);
+      setScrollBlockType("nearest");
+      lastSelectedIndexRef.current = itemIndex;
+    }
+  }, [typeMatch, onTypeMatch, onChange, items]);
 
   const handleItemClick = (index: number, e: ReactMouseEvent) => {
     const item = items[index];
@@ -140,6 +164,25 @@ export function SelectableList<T>({
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (!onTypeMatch) return;
+    if (e.ctrlKey || e.shiftKey || e.metaKey) return;
+
+    const typeMatchTimerActive = typeMatchTimer.current !== null;
+    if (typeMatchTimer.current) clearTimeout(typeMatchTimer.current);
+    typeMatchTimer.current = setTimeout(() => {
+      typeMatchTimer.current = null;
+    }, 800);
+
+    e.preventDefault();
+
+    if (typeMatchTimerActive) {
+      setTypeMatch(`${typeMatch ?? ""}${e.key}`);
+    } else {
+      setTypeMatch(e.key);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const isMultiSelect = allowMultiple && (isMacOS ? e.metaKey : e.ctrlKey);
     const isRangeSelect = allowMultiple && e.shiftKey;
@@ -161,6 +204,12 @@ export function SelectableList<T>({
     if (e.key === "Escape") {
       e.preventDefault();
       onChange(new Set());
+
+      if (onTypeMatch) {
+        setTypeMatch(null);
+        if (typeMatchTimer.current) clearTimeout(typeMatchTimer.current);
+        typeMatchTimer.current = null;
+      }
       return;
     }
 
@@ -390,6 +439,7 @@ export function SelectableList<T>({
       className="focus:outline-none select-none selectable-list"
       tabIndex={0}
       onKeyDown={handleKeyDown}
+      onKeyPress={handleKeyPress}
       role="listbox"
       aria-multiselectable={allowMultiple}
     >

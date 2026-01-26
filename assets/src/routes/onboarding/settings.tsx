@@ -103,7 +103,9 @@ export function Settings() {
     return (
       <Loading>
         <div className="text-stone-600 text-center text-sm mt-4">
-          <Trans i18nKey="onboarding.firstLoadWait">Finding your music...</Trans>
+          <Trans i18nKey="onboarding.firstLoadWait">
+            Finding your music...
+          </Trans>
         </div>
       </Loading>
     );
