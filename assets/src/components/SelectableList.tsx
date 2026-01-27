@@ -112,7 +112,9 @@ export function SelectableList<T>({
   }, [items]);
 
   const getItemHeight = useCallback(
-    (item: ListItem) => {
+    (item?: ListItem) => {
+      if (!item) return 0;
+
       let height: number = 0;
       if (itemHeight === "auto") {
         height = measuredHeights.get(item.type ?? "default") ?? 0;
@@ -175,6 +177,7 @@ export function SelectableList<T>({
   }, []);
 
   // Automatically determine item height for every type
+  // biome-ignore lint/correctness/useExhaustiveDependencies(items): suppress dependency items as changing it might change size too
   useEffect(() => {
     if (itemHeight !== "auto") return;
 
@@ -204,7 +207,7 @@ export function SelectableList<T>({
     });
 
     return () => observer.disconnect();
-  }, [itemHeight, measuredHeights]);
+  }, [items, itemHeight, measuredHeights]);
 
   // Calculate total height and offsets
   const { totalHeight, offsets } = useMemo(() => {
@@ -586,14 +589,19 @@ export function SelectableList<T>({
     e.preventDefault();
     e.stopPropagation();
 
-    // Find nearest index where items are dragged to.
-    const children = Array.from(listElement.children);
-    const mouseY = e.clientY;
+    // Calculate relative mouseY so we can compare it with offsets/item heights.
+    const rect = listRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const mouseY = e.clientY - rect.top + scrollTop;
 
     // Quick checks
-    if (children.length === 0) return items.length;
-    if (mouseY < children[0].getBoundingClientRect().top) return 0;
-    if (mouseY > children[children.length - 1].getBoundingClientRect().bottom)
+
+    if (offsets.length === 0) return items.length;
+    if (mouseY < offsets[0]) return 0;
+    if (
+      mouseY >
+      offsets[offsets.length - 1] + getItemHeight(items[offsets.length - 1])
+    )
       return items.length;
 
     // Default dropIndex is at end of list.
@@ -601,10 +609,14 @@ export function SelectableList<T>({
 
     // Binary search
     let low = 0,
-      high = children.length - 1;
+      high = offsets.length - 1;
     while (low <= high) {
       const mid = Math.floor((low + high) / 2);
-      const rect = children[mid].getBoundingClientRect();
+      const rect = {
+        top: offsets[mid],
+        height: getItemHeight(items[mid]),
+      };
+
       const midpoint = rect.top + rect.height / 2;
 
       if (mouseY < midpoint) {

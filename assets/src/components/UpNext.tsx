@@ -261,7 +261,8 @@ export function UpNext({
             <Trans i18nKey="button.clearUpNext">Clear</Trans>
           </button>
         </div>
-        <div className="h-full w-full text-left">
+
+        <div className="min-h-0 w-full text-left">
           <SelectableList<QueueItem>
             id="upNext"
             multiple
