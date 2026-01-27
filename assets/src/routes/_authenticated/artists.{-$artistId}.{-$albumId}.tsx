@@ -146,13 +146,22 @@ function Artists() {
                     type: "track",
                     track,
                     showTrackArtist,
-                    albumTrackCount: album.tracks.length,
-                    firstTrackOnDisc: trackIndex === 0,
                     lastTrackOnDisc: trackIndex === trackCount - 1,
                   },
                 ];
               },
             );
+
+            // Add placeholders if there aren't enough tracks to fill up
+            // the visual space.
+            const placeholderCount = Math.max(0, 3 - album.tracks.length);
+            for (let i = 0; i < placeholderCount; i++) {
+              tracks.push({
+                id: `${disc.tracks[0].albumId}-placeholder-${i}`,
+                selectable: false,
+                type: "placeholder",
+              });
+            }
 
             // Conditionally include disc headers
             if (showDiscNumbers) {
@@ -303,22 +312,6 @@ function Artists() {
     [handlePlayAlbum, currentTrack],
   );
 
-  const calculateItemHeight = useCallback((item: ListItem) => {
-    // TODO: This isn't very accurate, plus not responsive.
-    switch (item.type) {
-      case "artist":
-        return 130;
-      case "album":
-        return 125;
-      case "disc":
-        return 18;
-      case "track":
-        return 32;
-    }
-
-    return 0;
-  }, []);
-
   if (!artistId)
     return (
       <EmptyView
@@ -358,7 +351,6 @@ function Artists() {
         onDoubleClick={onDoubleClick}
         onContextMenu={onContextMenu}
         renderItem={renderItem}
-        itemHeight={calculateItemHeight}
       />
     </div>
   );

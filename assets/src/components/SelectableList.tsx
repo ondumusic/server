@@ -3,6 +3,7 @@ import {
   type PropsWithChildren,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -20,6 +21,7 @@ export interface ListItemState {
 
 export interface ListItem {
   id: string;
+  type?: string;
   selectable?: boolean;
 }
 
@@ -67,7 +69,7 @@ export function SelectableList<T>({
   multiple: allowMultiple,
   allowDrag = false,
   allowDropFrom = [],
-  itemHeight: itemHeightSetting = "auto",
+  itemHeight = "auto",
   scrollOverscan = 10,
 }: PropsWithChildren<BaseProps<T> & DragProps>) {
   const listRef = useRef<HTMLDivElement>(null);
@@ -89,11 +91,40 @@ export function SelectableList<T>({
 
   // Virtual List
   const scrollThrottle = useRef<ReturnType<typeof requestAnimationFrame>>(null);
-  const dummyItemRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState<number>(0);
   const [scrollHeight, setScrollHeight] = useState<number>(0);
-  const [itemHeight, setItemHeight] = useState<number>(
-    typeof itemHeightSetting === "number" ? itemHeightSetting : 0,
+  const measureRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [measuredHeights, setMeasuredHeights] = useState<Map<string, number>>(
+    new Map(),
+  );
+
+  // Get a list of unique item types
+  const uniqueItemTypes = useMemo(() => {
+    const types = new Set<string>();
+
+    // We expect to see all different types inside the first 100 items.
+    const sampleSize = Math.min(100, items.length);
+    for (let i = 0; i < sampleSize; i++) {
+      types.add(items[i].type ?? "default");
+    }
+
+    return Array.from(types);
+  }, [items]);
+
+  const getItemHeight = useCallback(
+    (item: ListItem) => {
+      let height: number = 0;
+      if (itemHeight === "auto") {
+        height = measuredHeights.get(item.type ?? "default") ?? 0;
+      } else if (typeof itemHeight === "number") {
+        height = itemHeight;
+      } else if (typeof itemHeight === "function") {
+        height = itemHeight(item as T);
+      }
+
+      return height;
+    },
+    [itemHeight, measuredHeights],
   );
 
   // Reset when items change
@@ -143,24 +174,37 @@ export function SelectableList<T>({
     return () => observer.disconnect();
   }, []);
 
-  // Measure example item height
+  // Automatically determine item height for every type
   useEffect(() => {
-    if (itemHeightSetting !== "auto") return;
-    if (!dummyItemRef.current) return;
+    if (itemHeight !== "auto") return;
 
-    const observer = new ResizeObserver((elements) => {
-      const element = elements[0];
-      if (element) {
-        const measured = element.contentRect.height;
-        if (measured > 0) {
-          setItemHeight(measured);
+    const observer = new ResizeObserver((entries) => {
+      const updatedHeights = new Map(measuredHeights);
+      let hasChanges = false;
+
+      entries.forEach((entry) => {
+        const typeKey = entry.target.getAttribute("data-type");
+        if (typeKey) {
+          const measured = entry.contentRect.height;
+          const current = updatedHeights.get(typeKey);
+          if (measured > 0 && measured !== current) {
+            updatedHeights.set(typeKey, measured);
+            hasChanges = true;
+          }
         }
+      });
+
+      if (hasChanges) {
+        setMeasuredHeights(updatedHeights);
       }
     });
 
-    observer.observe(dummyItemRef.current);
+    measureRefs.current.forEach((element) => {
+      observer.observe(element);
+    });
+
     return () => observer.disconnect();
-  }, [itemHeightSetting]);
+  }, [itemHeight, measuredHeights]);
 
   // Calculate total height and offsets
   const { totalHeight, offsets } = useMemo(() => {
@@ -168,41 +212,26 @@ export function SelectableList<T>({
     let totalHeight = 0;
 
     for (let i = 0; i < items.length; i++) {
-      const height =
-        typeof itemHeightSetting === "function"
-          ? itemHeightSetting(items[i] as T)
-          : itemHeight;
-      totalHeight += height;
+      totalHeight += getItemHeight(items[i]);
       if (i < items.length - 1) {
         offsets.push(totalHeight);
       }
     }
 
     return { totalHeight, offsets };
-  }, [items, itemHeight, itemHeightSetting]);
+  }, [items, getItemHeight]);
 
   // Find the first visible item
   const startIndex = useMemo(() => {
     let index = 0;
     for (let i = 0; i < items.length; i++) {
-      const height =
-        typeof itemHeightSetting === "function"
-          ? itemHeightSetting(items[i] as T)
-          : itemHeight;
-      if (offsets[i] + height > scrollTop) {
+      if (offsets[i] + getItemHeight(items[i]) > scrollTop) {
         index = i;
         break;
       }
     }
     return Math.max(0, index - scrollOverscan);
-  }, [
-    scrollTop,
-    offsets,
-    items,
-    scrollOverscan,
-    itemHeight,
-    itemHeightSetting,
-  ]);
+  }, [scrollTop, offsets, items, getItemHeight, scrollOverscan]);
 
   // Find the last visible item
   const endIndex = useMemo(() => {
@@ -212,11 +241,7 @@ export function SelectableList<T>({
     for (let i = startIndex; i < items.length; i++) {
       index = i;
 
-      const height =
-        typeof itemHeightSetting === "function"
-          ? itemHeightSetting(items[i] as T)
-          : itemHeight;
-      if (offsets[i] + height > viewportBottom) {
+      if (offsets[i] + getItemHeight(items[i]) > viewportBottom) {
         break;
       }
     }
@@ -228,9 +253,8 @@ export function SelectableList<T>({
     startIndex,
     offsets,
     items,
+    getItemHeight,
     scrollOverscan,
-    itemHeight,
-    itemHeightSetting,
   ]);
 
   const scrollOffsetY = offsets[startIndex] || 0;
@@ -247,11 +271,7 @@ export function SelectableList<T>({
     if (!listElement) return;
     if (focusedIndex === -1) return;
 
-    const height =
-      typeof itemHeightSetting === "function"
-        ? itemHeightSetting(items[focusedIndex] as T)
-        : itemHeight;
-
+    const height = getItemHeight(items[focusedIndex]);
     const itemTop = offsets[focusedIndex] || 0;
     const itemBottom = itemTop + height;
     const viewportTop = scrollTop;
@@ -265,7 +285,7 @@ export function SelectableList<T>({
     // Scroll to make item visible
     let scrollTo: number = 0;
     if (scrollBlockType === "center") {
-      scrollTo = itemTop - scrollHeight / 2 + itemHeight / 2;
+      scrollTo = itemTop - scrollHeight / 2 + height / 2;
     } else if (scrollBlockType === "nearest") {
       if (itemTop < viewportTop) {
         // Item is above viewport - scroll up to show it at top
@@ -287,10 +307,9 @@ export function SelectableList<T>({
   }, [
     focusedIndex,
     items,
-    itemHeight,
-    itemHeightSetting,
     offsets,
     scrollBlockType,
+    getItemHeight,
     scrollHeight,
     scrollTop,
   ]);
@@ -644,18 +663,35 @@ export function SelectableList<T>({
       role="listbox"
       aria-multiselectable={allowMultiple}
     >
-      {itemHeightSetting === "auto" && items.length > 0 && (
-        <div
-          ref={dummyItemRef}
-          className="absolute pointer-events-none invisible -top-[999px]"
-        >
-          {renderItem(items[0] as T, {
-            isSelected: false,
-            isDragging: false,
-            isFocused: false,
-          })}
-        </div>
-      )}
+      {itemHeight === "auto" &&
+        items.length > 0 &&
+        uniqueItemTypes.map((type) => {
+          const sampleIndex =
+            type === "default"
+              ? 0
+              : items.findIndex((item) => item.type === type);
+
+          if (sampleIndex === -1) return null;
+
+          return (
+            <div
+              key={`measure-${type}`}
+              ref={(el) => {
+                el
+                  ? measureRefs.current.set(type, el)
+                  : measureRefs.current.delete(type);
+              }}
+              data-type={type}
+              className="flex absolute pointer-events-none invisible -top-[999px]"
+            >
+              {renderItem(items[sampleIndex] as T, {
+                isSelected: false,
+                isDragging: false,
+                isFocused: false,
+              })}
+            </div>
+          );
+        })}
 
       <div className="relative" style={{ height: totalHeight }}>
         <div

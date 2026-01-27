@@ -23,16 +23,23 @@ type DiscItem = DefaultListItem & {
   disc: Disc;
 };
 
+type PlaceholderItem = DefaultListItem & {
+  type: "placeholder";
+};
+
 type TrackItem = DefaultListItem & {
   type: "track";
   track: Track;
-  albumTrackCount: number;
   showTrackArtist: boolean;
-  firstTrackOnDisc: boolean;
   lastTrackOnDisc: boolean;
 };
 
-export type ListItem = ArtistItem | AlbumItem | DiscItem | TrackItem;
+export type ListItem =
+  | ArtistItem
+  | AlbumItem
+  | DiscItem
+  | TrackItem
+  | PlaceholderItem;
 
 interface Props {
   item: ListItem;
@@ -54,8 +61,11 @@ export const ArtistAlbumListItem = memo(
     switch (item.type) {
       case "artist":
         return (
-          <header className="mt-18 md:mt-4 lg:mt-8 pb-4 mb-8 @md:border-b border-stone-300">
-            <h1 className="font-semibold text-4xl lg:text-2xl">
+          <header className="mt-18 md:mt-4 lg:mt-8 @md:pb-4 @md:border-b border-stone-300">
+            <h1
+              className="font-semibold text-4xl lg:text-2xl line-clamp-1"
+              title={item.artist.name}
+            >
               {item.artist.name}
             </h1>
             <span className="text-sm text-stone-400">
@@ -68,12 +78,7 @@ export const ArtistAlbumListItem = memo(
 
       case "album":
         return (
-          <div
-            className={classNames([
-              "relative flex gap-4 mb-4 z-20",
-              !item.firstAlbumInList && "mt-12",
-            ])}
-          >
+          <div className="relative flex gap-4 mb-4 z-20 mt-12">
             <div className="relative @md:absolute top-0 left-0 w-20 flex-grow-0 flex-shrink-0 @md:w-32 @xl:w-48 group/artwork">
               <div className="w-full shadow-lg aspect-square rounded-sm overflow-hidden bg-linear-to-br from-stone-50 to-stone-200">
                 {item.album.artworkUrl && (
@@ -104,13 +109,18 @@ export const ArtistAlbumListItem = memo(
 
             <div className="pt-1 @md:pl-44 @xl:pl-60 w-full">
               <div className="pb-2 mb-2 min-h-20 @md:min-h-auto @md:border-b border-stone-200">
-                <strong className="text-lg font-semibold mb-0.5">
+                <strong
+                  className="text-lg font-semibold mb-0.5 line-clamp-1"
+                  title={item.album.name}
+                >
                   {item.album.name}
                 </strong>
                 <div className="flex flex-col @md:flex-row @md:gap-2">
-                  <span className="text-stone-400 text-sm">
-                    {item.album.releaseYear}
-                  </span>
+                  {item.album.releaseYear && (
+                    <span className="text-stone-400 text-sm">
+                      {item.album.releaseYear}
+                    </span>
+                  )}
                   <span className="text-stone-400 text-sm">
                     <Trans
                       i18nKey="album.trackCount"
@@ -136,12 +146,17 @@ export const ArtistAlbumListItem = memo(
           </div>
         );
 
+      case "placeholder":
+        // Placeholder fills up space so the overflowing/floating album artwork
+        // will still have enough space beneath it.
+        return <div className="h-12" />;
+
       case "track":
         return (
           <div className="@md:pl-34 @xl:pl-50 group/track">
             <div
               className={classNames([
-                "flex w-full gap-2 text-sm py-1.5 @md:px-2",
+                "flex w-full items-center h-12 gap-2 text-sm py-1.5 @md:px-2",
                 isDragging && "opacity-50",
                 isSelected &&
                   "bg-blue-400 [.selectable-list:focus_&]:bg-blue-500 text-white",
@@ -150,21 +165,13 @@ export const ArtistAlbumListItem = memo(
                   "[[aria-selected=true]+[aria-selected=true]_&]:rounded-t-none",
                 isSelected &&
                   "[[aria-selected=true]:has(+[aria-selected=true])_&]:rounded-b-none",
-                item.lastTrackOnDisc && item.albumTrackCount > 3 && "@xl:mb-6",
-                item.lastTrackOnDisc &&
-                  item.albumTrackCount === 1 &&
-                  "@sm:mb-20 @xl:mb-35",
-                item.lastTrackOnDisc &&
-                  item.albumTrackCount === 2 &&
-                  "@sm:mb-12 @xl:mb-27",
-                item.lastTrackOnDisc &&
-                  item.albumTrackCount === 3 &&
-                  "@sm:mb-4 @xl:mb-19",
+                "border-b",
+                item.lastTrackOnDisc ? "border-transparent" : "border-gray-200",
               ])}
             >
               <span
                 className={classNames([
-                  "w-4 @md:w-6 flex-shrink-0 font-light text-right",
+                  "w-4 @md:w-6 flex-shrink-0 font-light text-right tabular-nums",
                   "group-hover/track:hidden",
                   !isSelected && "text-stone-400",
                   isPlaying && "hidden",
@@ -192,22 +199,32 @@ export const ArtistAlbumListItem = memo(
               </div>
 
               <div>
-                {item.track.name}
+                <div
+                  className={classNames([
+                    "w-full",
+                    item.showTrackArtist ? "line-clamp-1" : "line-clamp-2",
+                  ])}
+                  title={item.track.name}
+                >
+                  {item.track.name}
+                </div>
 
                 {item.showTrackArtist && (
-                  <span
+                  <div
                     className={classNames([
-                      "block",
+                      "w-full line-clamp-1",
                       !isSelected && "text-stone-400",
                     ])}
+                    title={item.track.artist.name}
                   >
                     {item.track.artist.name}
-                  </span>
+                  </div>
                 )}
               </div>
+
               <span
                 className={classNames([
-                  "ml-auto font-light",
+                  "ml-auto font-light flex-shrink-0 tabular-nums",
                   !isSelected && "text-stone-400",
                 ])}
               >

@@ -175,7 +175,9 @@ export function UpNext({
             {item.track.artist.name}
           </span>
         </div>
-        <div>{formatDuration(item.track.duration)}</div>
+        <div className="tabular-nums">
+          {formatDuration(item.track.duration)}
+        </div>
       </div>
     ),
     [],
