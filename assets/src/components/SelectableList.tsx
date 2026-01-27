@@ -104,22 +104,6 @@ export function SelectableList<T>({
     lastSelectedIndexRef.current = defaultIndex;
   }, [items, defaultFocusId]);
 
-  // Scroll focussed item into view, which is to make the experience feel
-  // better when using keyboard arrow navigation.
-  useEffect(() => {
-    const listElement = listRef.current;
-    if (!listElement) return;
-    if (focusedIndex === -1) return;
-
-    const focusedElement = listElement.children[focusedIndex] as HTMLElement;
-    if (focusedElement) {
-      focusedElement.scrollIntoView({
-        block: scrollBlockType,
-        behavior: "instant",
-      });
-    }
-  }, [focusedIndex, scrollBlockType]);
-
   // Scroll to type match
   useEffect(() => {
     if (!onTypeMatch) return;
@@ -255,6 +239,61 @@ export function SelectableList<T>({
     () => items.slice(startIndex, endIndex + 1),
     [items, startIndex, endIndex],
   );
+
+  // Scroll focussed item into view, which is to make the experience feel
+  // better when using keyboard arrow navigation.
+  useEffect(() => {
+    const listElement = listRef.current;
+    if (!listElement) return;
+    if (focusedIndex === -1) return;
+
+    const height =
+      typeof itemHeightSetting === "function"
+        ? itemHeightSetting(items[focusedIndex] as T)
+        : itemHeight;
+
+    const itemTop = offsets[focusedIndex] || 0;
+    const itemBottom = itemTop + height;
+    const viewportTop = scrollTop;
+    const viewportBottom = scrollTop + scrollHeight;
+
+    // If it's already visible then we can do nothing here.
+    if (itemTop >= viewportTop && itemBottom <= viewportBottom) {
+      return;
+    }
+
+    // Scroll to make item visible
+    let scrollTo: number = 0;
+    if (scrollBlockType === "center") {
+      scrollTo = itemTop - scrollHeight / 2 + itemHeight / 2;
+    } else if (scrollBlockType === "nearest") {
+      if (itemTop < viewportTop) {
+        // Item is above viewport - scroll up to show it at top
+        scrollTo = itemTop;
+      } else {
+        // Item is below viewport - scroll down to show it at bottom
+        scrollTo = itemBottom - scrollHeight;
+      }
+    }
+
+    scrollTo = Math.max(0, scrollTo);
+
+    listElement.scrollTo({
+      top: scrollTo,
+      behavior: "instant",
+    });
+
+    setScrollTop(scrollTo);
+  }, [
+    focusedIndex,
+    items,
+    itemHeight,
+    itemHeightSetting,
+    offsets,
+    scrollBlockType,
+    scrollHeight,
+    scrollTop,
+  ]);
 
   // Handle scroll with throttling
   useEffect(() => {
