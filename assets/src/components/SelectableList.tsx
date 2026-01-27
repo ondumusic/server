@@ -4,6 +4,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -28,6 +29,8 @@ type BaseProps<T> = {
   multiple: boolean;
   defaultFocusId?: string;
   defaultFocusType?: ScrollLogicalPosition;
+  itemHeight?: "auto" | number | ((item: T) => number);
+  scrollOverscan?: number;
   onChange: (selectedIds: Set<string>) => void;
   onDelete?: (selectedIds: Set<string>) => void;
   onSubmit?: (selectedIds: Set<string>) => void;
@@ -64,6 +67,8 @@ export function SelectableList<T>({
   multiple: allowMultiple,
   allowDrag = false,
   allowDropFrom = [],
+  itemHeight: itemHeightSetting = "auto",
+  scrollOverscan = 10,
 }: PropsWithChildren<BaseProps<T> & DragProps>) {
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollBlockType, setScrollBlockType] = useState<
@@ -72,11 +77,24 @@ export function SelectableList<T>({
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const lastSelectedIndexRef = useRef<number>(0);
   const { createContextMenu } = useContextMenu();
+
+  // Drag and Drop
   const [draggingIds, setDraggingIds] = useState<Set<string>>(new Set());
   const [dropAtIndex, setDropAtIndex] = useState<number | null>(null);
   const allowDrop = allowDropFrom.length !== 0;
+
+  // Type matching
   const [typeMatch, setTypeMatch] = useState<string | null>(null);
   const typeMatchTimer = useRef<ReturnType<typeof setTimeout>>(null);
+
+  // Virtual List
+  const scrollThrottle = useRef<ReturnType<typeof requestAnimationFrame>>(null);
+  const dummyItemRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState<number>(0);
+  const [scrollHeight, setScrollHeight] = useState<number>(0);
+  const [itemHeight, setItemHeight] = useState<number>(
+    typeof itemHeightSetting === "number" ? itemHeightSetting : 0,
+  );
 
   // Reset when items change
   useEffect(() => {
@@ -121,6 +139,150 @@ export function SelectableList<T>({
       lastSelectedIndexRef.current = itemIndex;
     }
   }, [typeMatch, onTypeMatch, onChange, items]);
+
+  // Measure parent container (scroll area) height
+  useEffect(() => {
+    if (!listRef.current) return;
+
+    const observer = new ResizeObserver((elements) => {
+      const element = elements[0];
+
+      if (element) {
+        const measured = element.contentRect.height;
+        if (measured > 0) {
+          setScrollHeight(measured);
+        }
+      }
+    });
+
+    observer.observe(listRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Measure example item height
+  useEffect(() => {
+    if (itemHeightSetting !== "auto") return;
+    if (!dummyItemRef.current) return;
+
+    const observer = new ResizeObserver((elements) => {
+      const element = elements[0];
+      if (element) {
+        const measured = element.contentRect.height;
+        if (measured > 0) {
+          setItemHeight(measured);
+        }
+      }
+    });
+
+    observer.observe(dummyItemRef.current);
+    return () => observer.disconnect();
+  }, [itemHeightSetting]);
+
+  // Calculate total height and offsets
+  const { totalHeight, offsets } = useMemo(() => {
+    const offsets: number[] = [0];
+    let totalHeight = 0;
+
+    for (let i = 0; i < items.length; i++) {
+      const height =
+        typeof itemHeightSetting === "function"
+          ? itemHeightSetting(items[i] as T)
+          : itemHeight;
+      totalHeight += height;
+      if (i < items.length - 1) {
+        offsets.push(totalHeight);
+      }
+    }
+
+    return { totalHeight, offsets };
+  }, [items, itemHeight, itemHeightSetting]);
+
+  // Find the first visible item
+  const startIndex = useMemo(() => {
+    let index = 0;
+    for (let i = 0; i < items.length; i++) {
+      const height =
+        typeof itemHeightSetting === "function"
+          ? itemHeightSetting(items[i] as T)
+          : itemHeight;
+      if (offsets[i] + height > scrollTop) {
+        index = i;
+        break;
+      }
+    }
+    return Math.max(0, index - scrollOverscan);
+  }, [
+    scrollTop,
+    offsets,
+    items,
+    scrollOverscan,
+    itemHeight,
+    itemHeightSetting,
+  ]);
+
+  // Find the last visible item
+  const endIndex = useMemo(() => {
+    const viewportBottom = scrollTop + scrollHeight;
+    let index = startIndex;
+
+    for (let i = startIndex; i < items.length; i++) {
+      index = i;
+
+      const height =
+        typeof itemHeightSetting === "function"
+          ? itemHeightSetting(items[i] as T)
+          : itemHeight;
+      if (offsets[i] + height > viewportBottom) {
+        break;
+      }
+    }
+
+    return Math.min(items.length - 1, index + scrollOverscan);
+  }, [
+    scrollTop,
+    scrollHeight,
+    startIndex,
+    offsets,
+    items,
+    scrollOverscan,
+    itemHeight,
+    itemHeightSetting,
+  ]);
+
+  const scrollOffsetY = offsets[startIndex] || 0;
+
+  const visibleItems = useMemo(
+    () => items.slice(startIndex, endIndex + 1),
+    [items, startIndex, endIndex],
+  );
+
+  // Handle scroll with throttling
+  useEffect(() => {
+    if (!listRef.current) return;
+
+    const handleScroll = () => {
+      if (scrollThrottle.current) return;
+
+      scrollThrottle.current = requestAnimationFrame(() => {
+        if (listRef.current) {
+          setScrollTop(listRef.current.scrollTop);
+        }
+
+        scrollThrottle.current = null;
+      });
+    };
+
+    listRef.current.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      if (listRef.current) {
+        listRef.current.removeEventListener("scroll", handleScroll);
+      }
+      if (scrollThrottle.current) {
+        cancelAnimationFrame(scrollThrottle.current);
+      }
+    };
+  }, []);
 
   const handleItemClick = (index: number, e: ReactMouseEvent) => {
     const item = items[index];
@@ -436,83 +598,104 @@ export function SelectableList<T>({
   return (
     <div
       ref={listRef}
-      className="focus:outline-none select-none selectable-list"
+      className="focus:outline-none select-none selectable-list h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       tabIndex={0}
       onKeyDown={handleKeyDown}
       onKeyPress={handleKeyPress}
       role="listbox"
       aria-multiselectable={allowMultiple}
     >
-      {items.map((item, index) => {
-        const isSelected = selectedIds.has(item.id);
-        const isDragging = draggingIds.has(item.id);
-        const isFocused = index === focusedIndex;
-        const selectable = item.selectable !== false;
-        const showDropTargetLine = dropAtIndex === index;
-
-        return (
-          // biome-ignore lint/a11y/useFocusableInteractive: arrow keys used for navigation
-          // biome-ignore lint/a11y/useKeyWithClickEvents: events handled elsewhere
-          <div
-            key={item.id}
-            onClick={(e) => handleItemClick(index, e)}
-            onDoubleClick={(e: ReactMouseEvent) => {
-              if (!onDoubleClick) return;
-              e.preventDefault();
-              return onDoubleClick(item as T);
-            }}
-            draggable={allowDrag ? selectable : undefined}
-            onDragStart={
-              allowDrag ? (e) => handleDragStart(index, e) : undefined
-            }
-            onDragEnd={allowDrag ? handleDragEnd : undefined}
-            onDragOver={allowDrop ? handleDragOver : undefined}
-            onDragLeave={allowDrop ? handleDragLeave : undefined}
-            onDrop={allowDrop ? handleDrop : undefined}
-            onContextMenu={
-              onContextMenu
-                ? createContextMenu<HTMLDivElement>(() => {
-                    // If the item that gets the context menu is not in the
-                    // selection, we discard the entire selection and only
-                    // select this item.
-                    if (!isSelected) {
-                      const newSelection = new Set([item.id]);
-
-                      // Only update selection if the item is selectable
-                      // this way we can allow context menus on non-selectable
-                      // items too.
-                      if (item.selectable !== false) {
-                        onChange(newSelection);
-                        setFocusedIndex(index);
-                        setScrollBlockType("nearest");
-                        lastSelectedIndexRef.current = index;
-                      }
-
-                      return onContextMenu(newSelection);
-                    }
-
-                    // Otherwise just return the list of selectedIds
-                    return onContextMenu(selectedIds);
-                  })
-                : undefined
-            }
-            role="option"
-            aria-selected={selectable ? isSelected : undefined}
-            aria-disabled={!selectable}
-            className="relative"
-          >
-            {showDropTargetLine && (
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-accent-500 z-10"></div>
-            )}
-            {renderItem(item as T, { isSelected, isDragging, isFocused })}
-          </div>
-        );
-      })}
-      {dropAtIndex === items.length && (
-        <div className="relative h-0 overflow-visible">
-          <div className="absolute bottom-0.5 left-0 right-0 h-0.5 bg-accent-500 z-10"></div>
+      {itemHeightSetting === "auto" && items.length > 0 && (
+        <div
+          ref={dummyItemRef}
+          className="absolute pointer-events-none invisible -top-[999px]"
+        >
+          {renderItem(items[0] as T, {
+            isSelected: false,
+            isDragging: false,
+            isFocused: false,
+          })}
         </div>
       )}
+
+      <div className="relative" style={{ height: totalHeight }}>
+        <div
+          className="will-change-transform"
+          style={{ transform: `translateY(${scrollOffsetY}px)` }}
+        >
+          {visibleItems.map((item, visibleIndex) => {
+            const index = startIndex + visibleIndex;
+            const isSelected = selectedIds.has(item.id);
+            const isDragging = draggingIds.has(item.id);
+            const isFocused = index === focusedIndex;
+            const selectable = item.selectable !== false;
+            const showDropTargetLine = dropAtIndex === index;
+
+            return (
+              // biome-ignore lint/a11y/useFocusableInteractive: arrow keys used for navigation
+              // biome-ignore lint/a11y/useKeyWithClickEvents: events handled elsewhere
+              <div
+                key={item.id}
+                onClick={(e) => handleItemClick(index, e)}
+                onDoubleClick={(e: ReactMouseEvent) => {
+                  if (!onDoubleClick) return;
+                  e.preventDefault();
+                  return onDoubleClick(item as T);
+                }}
+                draggable={allowDrag ? selectable : undefined}
+                onDragStart={
+                  allowDrag ? (e) => handleDragStart(index, e) : undefined
+                }
+                onDragEnd={allowDrag ? handleDragEnd : undefined}
+                onDragOver={allowDrop ? handleDragOver : undefined}
+                onDragLeave={allowDrop ? handleDragLeave : undefined}
+                onDrop={allowDrop ? handleDrop : undefined}
+                onContextMenu={
+                  onContextMenu
+                    ? createContextMenu<HTMLDivElement>(() => {
+                        // If the item that gets the context menu is not in the
+                        // selection, we discard the entire selection and only
+                        // select this item.
+                        if (!isSelected) {
+                          const newSelection = new Set([item.id]);
+
+                          // Only update selection if the item is selectable
+                          // this way we can allow context menus on non-selectable
+                          // items too.
+                          if (item.selectable !== false) {
+                            onChange(newSelection);
+                            setFocusedIndex(index);
+                            setScrollBlockType("nearest");
+                            lastSelectedIndexRef.current = index;
+                          }
+
+                          return onContextMenu(newSelection);
+                        }
+
+                        // Otherwise just return the list of selectedIds
+                        return onContextMenu(selectedIds);
+                      })
+                    : undefined
+                }
+                role="option"
+                aria-selected={selectable ? isSelected : undefined}
+                aria-disabled={!selectable}
+                className="relative"
+              >
+                {showDropTargetLine && (
+                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-accent-500 z-10"></div>
+                )}
+                {renderItem(item as T, { isSelected, isDragging, isFocused })}
+              </div>
+            );
+          })}
+          {dropAtIndex === items.length && (
+            <div className="relative h-0 overflow-visible">
+              <div className="absolute bottom-0.5 left-0 right-0 h-0.5 bg-accent-500 z-10"></div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

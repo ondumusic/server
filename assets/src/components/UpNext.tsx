@@ -219,7 +219,7 @@ export function UpNext({
             <Trans i18nKey="button.clearUpNext">Clear</Trans>
           </button>
         </div>
-        <div className="h-full w-full space-y-2 text-left overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="h-full w-full text-left">
           <SelectableList<QueueItem>
             id="upNext"
             multiple

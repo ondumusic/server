@@ -303,6 +303,22 @@ function Artists() {
     [handlePlayAlbum, currentTrack],
   );
 
+  const calculateItemHeight = useCallback((item: ListItem) => {
+    // TODO: This isn't very accurate, plus not responsive.
+    switch (item.type) {
+      case "artist":
+        return 130;
+      case "album":
+        return 125;
+      case "disc":
+        return 18;
+      case "track":
+        return 32;
+    }
+
+    return 0;
+  }, []);
+
   if (!artistId)
     return (
       <EmptyView
@@ -342,6 +358,7 @@ function Artists() {
         onDoubleClick={onDoubleClick}
         onContextMenu={onContextMenu}
         renderItem={renderItem}
+        itemHeight={calculateItemHeight}
       />
     </div>
   );
