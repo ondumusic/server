@@ -2,7 +2,9 @@ import {
   type DragEvent,
   type PropsWithChildren,
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { Trans } from "react-i18next";
@@ -27,7 +29,9 @@ export function UpNext({
 }: PropsWithChildren<{
   isVisible: boolean;
 }>) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [selectedTrackIds, setSelectedTrackIds] = useState<string[]>([]);
+  const [height, setHeight] = useState<number>(0);
   const {
     queue,
     currentTrackIndex,
@@ -38,6 +42,33 @@ export function UpNext({
     addQueueAfter,
     rearrangeQueue,
   } = useQueue();
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    if (!containerRef.current.parentNode) return;
+
+    const observer = new ResizeObserver((elements) => {
+      if (!containerRef.current) return;
+      if (!containerRef.current.parentNode) return;
+      const parentNode = containerRef.current.parentNode as HTMLElement;
+
+      // Calculate how much space is available in the parentNode after removing
+      // the height of our siblings.
+      let availableHeight: number = parentNode.getBoundingClientRect().height;
+      for (const element of elements) {
+        if (element.target !== containerRef.current) {
+          availableHeight -= element.contentRect.height;
+        }
+      }
+
+      setHeight(Math.ceil(availableHeight));
+    });
+
+    for (const child of containerRef.current.parentNode.children) {
+      observer.observe(child);
+    }
+    return () => observer.disconnect();
+  }, []);
 
   const listItems: QueueItem[] = useMemo(() => {
     return (
@@ -170,8 +201,13 @@ export function UpNext({
         ])}
       >
         <div className="w-full text-left">
-          <div>{item.track.name}</div>
-          <span className={state.isSelected ? "text-white" : "text-accent-400"}>
+          <div className="line-clamp-1">{item.track.name}</div>
+          <span
+            className={classNames([
+              "line-clamp-1",
+              state.isSelected ? "text-white" : "text-accent-400",
+            ])}
+          >
             {item.track.artist.name}
           </span>
         </div>
@@ -185,13 +221,17 @@ export function UpNext({
 
   return (
     <div
+      ref={containerRef}
       className={classNames([
-        "w-full grid overflow-y-hidden flex-shrink-1",
-        "transition-[grid-template-rows] duration-400 ease-in-out",
-        (!isVisible && "grid-rows-[0fr]") || "grid-rows-[1fr]",
+        "w-full overflow-y-hidden flex-shrink-1",
+        "will-change-[height]",
       ])}
+      style={{
+        transition: "height 400ms cubic-bezier(0.4, 0, 0.2, 1)",
+        height: isVisible ? `${height}px` : "0px",
+      }}
     >
-      <div className="flex flex-col h-full overflow-y-hidden">
+      <div className="flex h-full flex-col overflow-y-hidden">
         <div
           role="none"
           className={classNames([
