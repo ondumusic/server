@@ -166,7 +166,9 @@ export const ArtistAlbumListItem = memo(
                 isSelected &&
                   "[[aria-selected=true]:has(+[aria-selected=true])_&]:rounded-b-none",
                 "border-b",
-                item.lastTrackOnDisc ? "border-transparent" : "border-gray-200",
+                item.lastTrackOnDisc || isSelected
+                  ? "border-transparent"
+                  : "border-gray-200",
               ])}
             >
               <span
