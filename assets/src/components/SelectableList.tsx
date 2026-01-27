@@ -266,6 +266,7 @@ export function SelectableList<T>({
 
   // Scroll focussed item into view, which is to make the experience feel
   // better when using keyboard arrow navigation.
+  // biome-ignore lint/correctness/useExhaustiveDependencies(scrollTop): suppress dependency scrollTop otherwise this will execute on every scroll behaviour
   useEffect(() => {
     const listElement = listRef.current;
     if (!listElement) return;
@@ -311,7 +312,6 @@ export function SelectableList<T>({
     scrollBlockType,
     getItemHeight,
     scrollHeight,
-    scrollTop,
   ]);
 
   // Handle scroll with throttling
