@@ -128,7 +128,7 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
         audioRef.current.src = "";
       }
     } else {
-      const streamUrl = `${currentTrack.streamUrl}?transcode=1&token=${playToken}`;
+      const streamUrl = `${currentTrack.streamUrl}?transcode=0&token=${playToken}`;
 
       if (audioRef.current) {
         isSameTrack = audioRef.current.src.indexOf(streamUrl) !== -1;
