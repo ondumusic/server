@@ -660,6 +660,8 @@ export function SelectableList<T>({
       );
       if (allowDropFrom.indexOf(sourceListId) === -1) return;
       onDrop(new Set(itemIds), insertAtIndex, sourceListId);
+      setFocusedIndex(insertAtIndex);
+      lastSelectedIndexRef.current = insertAtIndex;
     } catch (_error) {
       /* invalid json */
     }
