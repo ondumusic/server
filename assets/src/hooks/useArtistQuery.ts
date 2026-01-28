@@ -20,7 +20,7 @@ export function useArtistQuery({ artistId }: Params, opts: Options) {
     enabled && opts.suspense === true ? useSuspenseQuery : useQuery;
 
   return queryFn({
-    queryKey: ["artist", artistId],
+    queryKey: ["getArtist", artistId],
     queryFn: () => api.get<Request, Response>(`/artists/${artistId}`),
     enabled,
   });
