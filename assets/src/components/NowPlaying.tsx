@@ -1,10 +1,4 @@
-import {
-  type ChangeEvent,
-  type PropsWithChildren,
-  useEffect,
-  useMemo,
-  useRef,
-} from "react";
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Marquee } from "../components/Marquee";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
@@ -17,17 +11,25 @@ import {
   updateAccentColor,
 } from "../utils/updateAccentColor";
 
-export function NowPlaying({
-  currentTime,
-  progressPercentage,
-}: PropsWithChildren<{
-  currentTime: number;
-  progressPercentage: number;
-}>) {
-  const { setIsPlaying, duration, scrubTo, scrubAndPlay } = useAudioManager();
+export function NowPlaying() {
+  const { setIsPlaying, duration, scrubTo, scrubAndPlay, addTimeObserver } =
+    useAudioManager();
   const { currentTrack } = useQueue();
   const scrubTime = useRef<number>(0);
   const isScrubbing = useRef<boolean>(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [progressPercentage, setProgressPercentage] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = addTimeObserver(
+      ({ currentTime, progressPercentage }) => {
+        setCurrentTime(currentTime);
+        setProgressPercentage(progressPercentage);
+      },
+    );
+
+    return unsubscribe;
+  }, [addTimeObserver]);
 
   const currentAlbum = useMemo(() => {
     if (!currentTrack) return;

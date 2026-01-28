@@ -30,7 +30,9 @@ export function UpNext({
   isVisible: boolean;
 }>) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [selectedTrackIds, setSelectedTrackIds] = useState<string[]>([]);
+  const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
+    new Set([]),
+  );
   const [height, setHeight] = useState<number>(0);
   const {
     queue,
@@ -42,6 +44,8 @@ export function UpNext({
     addQueueAfter,
     rearrangeQueue,
   } = useQueue();
+
+  const allowDropFrom = useMemo(() => ["upNext", "albumTracks"], []);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -120,7 +124,7 @@ export function UpNext({
   );
 
   const onChange = useCallback(
-    (itemIds: Set<string>) => setSelectedTrackIds(Array.from(itemIds)),
+    (itemIds: Set<string>) => setSelectedTrackIds(itemIds),
     [],
   );
 
@@ -141,7 +145,7 @@ export function UpNext({
       if (!lastItemId) return;
       const [_trackId, trackIndex] = lastItemId.split("/");
       skipToTrackIndex(parseInt(trackIndex, 10));
-      setSelectedTrackIds([]);
+      setSelectedTrackIds(new Set([]));
     },
     [skipToTrackIndex],
   );
@@ -179,7 +183,7 @@ export function UpNext({
   const onDoubleClick = useCallback(
     (item: QueueItem) => {
       skipToTrackIndex(item.trackIndex);
-      setSelectedTrackIds([]);
+      setSelectedTrackIds(new Set([]));
     },
     [skipToTrackIndex],
   );
@@ -267,9 +271,9 @@ export function UpNext({
             id="upNext"
             multiple
             allowDrag
-            allowDropFrom={["upNext", "albumTracks"]}
+            allowDropFrom={allowDropFrom}
             items={listItems}
-            selectedIds={new Set<string>(selectedTrackIds)}
+            selectedIds={selectedTrackIds}
             onChange={onChange}
             onDelete={onDelete}
             onDrop={onDrop}
