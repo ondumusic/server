@@ -10,6 +10,7 @@ defmodule MusicBox.Application do
     children = [
       MusicBoxWeb.Telemetry,
       MusicBox.Repo,
+      MusicBox.FileScanner.Repo,
       {Ecto.Migrator,
        repos: Application.fetch_env!(:music_box, :ecto_repos), skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:music_box, :dns_cluster_query) || :ignore},

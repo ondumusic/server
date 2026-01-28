@@ -8,7 +8,7 @@
 import Config
 
 config :music_box,
-  ecto_repos: [MusicBox.Repo],
+  ecto_repos: [MusicBox.Repo, MusicBox.FileScanner.Repo],
   generators: [timestamp_type: :utc_datetime, binary_id: true]
 
 # Configures the endpoint

@@ -20,6 +20,16 @@ if System.get_env("PHX_SERVER") do
   config :music_box, MusicBoxWeb.Endpoint, server: true
 end
 
+config :music_box, MusicBox.Repo,
+  journal_mode: :wal,
+  temp_store: :memory,
+  cache_size: 64_000
+
+config :music_box, MusicBox.FileScanner.Repo,
+  journal_mode: :wal,
+  temp_store: :memory,
+  cache_size: 64_000
+
 if config_env() == :prod do
   music_box_uri =
     System.get_env("MB_URL") ||
@@ -52,6 +62,10 @@ if config_env() == :prod do
       """
 
   config :music_box, MusicBox.Repo,
+    database: database_path,
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5")
+
+  config :music_box, MusicBox.FileScanner.Repo,
     database: database_path,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5")
 
