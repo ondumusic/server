@@ -35,6 +35,7 @@ music_box-*.tar
 /assets/node_modules/
 /assets/coverage/
 /priv/static/
+.expert
 
 # Ignore digested assets cache.
 /priv/static/cache_manifest.json

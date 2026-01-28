@@ -103,8 +103,7 @@ export const QueueProvider = ({ children }: PropsWithChildren) => {
     ),
     addQueueAfter: useCallback(
       (tracks: Track[]) => {
-        const updatedQueue = queue.concat(tracks);
-        setQueue(updatedQueue);
+        setQueue((currentQueue) => currentQueue.concat(tracks));
 
         // Set queue index to 0 if the queue was empty previously,
         // indicating that the current track is the 1st track of the new queue.
@@ -172,8 +171,8 @@ export const QueueProvider = ({ children }: PropsWithChildren) => {
       setQueue(queue.filter((_track, trackIndex) => trackIndex <= queueIndex));
     }, [queue, queueIndex]),
     clearQueue: useCallback(() => {
-      setQueue([]);
-      setQueueIndex(-1);
+      setQueue((_oldQueue) => []);
+      setQueueIndex((_oldIndex) => -1);
     }, []),
   };
 
