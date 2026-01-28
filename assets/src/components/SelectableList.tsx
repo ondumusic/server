@@ -322,7 +322,9 @@ export function SelectableList<T>({
     if (!listRef.current) return;
 
     const handleScroll = () => {
-      if (scrollThrottle.current) return;
+      if (scrollThrottle.current) {
+        cancelAnimationFrame(scrollThrottle.current);
+      }
 
       scrollThrottle.current = requestAnimationFrame(() => {
         if (listRef.current) {
