@@ -36,6 +36,11 @@ interface Headers {
   [key: string]: string;
 }
 
+interface Paginated {
+  pageNumber: number;
+  totalPages: number;
+}
+
 class APIClient {
   #baseURL = "/api";
 
@@ -45,6 +50,30 @@ class APIClient {
 
   async get<T, R>(path: string, opts: RequestOptions = {}): Promise<R> {
     return this.#request<T, R>("GET", path, undefined, opts);
+  }
+
+  async *paginate<T, R extends Paginated>(
+    path: string,
+    opts: RequestOptions = {},
+  ): AsyncGenerator<R> {
+    let hasPages = true,
+      pageNumber = 1,
+      search = opts.search ?? {};
+
+    do {
+      const response = await this.get<T, R>(path, {
+        ...opts,
+        search: { ...search, page: pageNumber.toString() },
+      });
+
+      yield response;
+
+      if (response.pageNumber < response.totalPages) {
+        pageNumber++;
+      } else {
+        hasPages = false;
+      }
+    } while (hasPages);
   }
 
   async post<T, R>(
