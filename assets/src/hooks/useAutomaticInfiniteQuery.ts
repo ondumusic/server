@@ -46,7 +46,9 @@ export function useAutomaticInfiniteQuery<T>(
       return nextPage;
     },
     queryFn: ({ pageParam }) =>
-      api.get<Request, Response<T>>(path, { page: pageParam as string }),
+      api.get<Request, Response<T>>(path, {
+        search: { page: pageParam as string },
+      }),
     ...opts,
   });
 

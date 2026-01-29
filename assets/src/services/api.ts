@@ -2,16 +2,19 @@ import { auth } from "../services/auth";
 
 interface ApiErrorArguments {
   message: string;
-  response: Response;
+  response?: Response;
+  aborted?: boolean;
 }
 
 export class ApiError extends Error {
-  response: Response;
+  response?: Response;
+  aborted?: boolean;
 
   constructor(params: ApiErrorArguments) {
     super(params.message);
     this.name = "ApiError";
     this.response = params.response;
+    this.aborted = params.aborted;
     Object.setPrototypeOf(this, ApiError.prototype);
   }
 }
@@ -22,6 +25,11 @@ type SearchParams = Record<string, string>;
 
 interface Options {
   baseURL?: string;
+}
+
+interface RequestOptions {
+  signal?: AbortSignal;
+  search?: SearchParams;
 }
 
 interface Headers {
@@ -35,27 +43,27 @@ class APIClient {
     this.#baseURL = (opts.baseURL || this.#baseURL).replace(/\/$/, "");
   }
 
-  async get<T, R>(path: string, search: SearchParams = {}): Promise<R> {
-    return this.#request<T, R>("GET", path, undefined, search);
+  async get<T, R>(path: string, opts: RequestOptions = {}): Promise<R> {
+    return this.#request<T, R>("GET", path, undefined, opts);
   }
 
   async post<T, R>(
     path: string,
     body: PostBody<T>,
-    search: SearchParams = {},
+    opts: RequestOptions = {},
   ): Promise<R> {
-    return this.#request<T, R>("POST", path, body, search);
+    return this.#request<T, R>("POST", path, body, opts);
   }
 
   async #request<T, R>(
     method: RequestMethod,
     path: string,
     body: PostBody<T>,
-    search: SearchParams,
+    opts: RequestOptions,
   ): Promise<R> {
     const requestPath = this.#baseURL + path;
     const url = new URL(requestPath, window.location.href);
-    url.search = new URLSearchParams(search).toString();
+    url.search = new URLSearchParams(opts?.search ?? {}).toString();
 
     const headers: Headers = {
       "Content-Type": "application/json",
@@ -70,22 +78,31 @@ class APIClient {
       body = JSON.stringify(body);
     }
 
-    const response = await fetch(url.toString(), {
-      body: body as BodyInit,
-      method,
-      headers,
-      credentials: "omit",
-    });
+    try {
+      const response = await fetch(url.toString(), {
+        body: body as BodyInit,
+        method,
+        headers,
+        credentials: "omit",
+        signal: opts?.signal,
+      });
 
-    if (response.status === 401) {
-      throw new ApiError({ message: "Unauthorized", response });
+      if (response.status === 401) {
+        throw new ApiError({ message: "Unauthorized", response });
+      }
+
+      if (response.status === 403) {
+        throw new ApiError({ message: "Forbidden", response });
+      }
+
+      return (await response.json()) as R;
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        throw new ApiError({ message: "Aborted", aborted: true });
+      }
+
+      throw err;
     }
-
-    if (response.status === 403) {
-      throw new ApiError({ message: "Forbidden", response });
-    }
-
-    return (await response.json()) as R;
   }
 }
 

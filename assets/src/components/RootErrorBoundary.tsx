@@ -10,7 +10,7 @@ export function RootErrorBoundary({
   const location = useLocation();
   const { isLoggedIn, logout } = useAuth();
   const unauthorizedError =
-    error instanceof ApiError && error.response.status === 401;
+    error instanceof ApiError && error.response?.status === 401;
 
   useEffect(() => {
     if (unauthorizedError) {

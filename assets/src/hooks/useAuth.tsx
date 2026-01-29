@@ -82,7 +82,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         updateState();
       })
       .catch((error: ApiError) => {
-        if (error instanceof ApiError && error.response.status === 401) {
+        if (error instanceof ApiError && error.response?.status === 401) {
           logout();
         } else {
           setIsFetching(false);
