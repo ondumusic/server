@@ -44,29 +44,20 @@ export function ArtistList({
   );
 
   const populateUpNext = useCallback(
-    async (artist: Artist, page: number = 1) => {
-      const response = await api.get<Request, Response<Album>>(
+    async (artist: Artist) => {
+      for await (const page of api.paginate<Request, Response<Album>>(
         `/artists/${artist.id}/albums`,
-        {
-          page: page.toString(),
-        },
-      );
+      )) {
+        let firstAlbum = true;
+        for (const album of page.entries) {
+          if (firstAlbum && page.pageNumber === 1) {
+            replaceQueue(album.tracks);
+          } else {
+            enqueueAfter(album.tracks);
+          }
 
-      let firstAlbum = true;
-
-      for (const album of response.entries) {
-        if (firstAlbum && page === 1) {
-          replaceQueue(album.tracks);
-        } else {
-          enqueueAfter(album.tracks);
+          firstAlbum = false;
         }
-
-        firstAlbum = false;
-      }
-
-      // Get more.
-      if (response.pageNumber < response.totalPages) {
-        populateUpNext(artist, response.pageNumber + 1);
       }
     },
     [replaceQueue, enqueueAfter],
