@@ -44,6 +44,7 @@ jobs:
       working-directory: assets
     - name: Generate route tree
       run: pnpm run generate-routes
+      working-directory: assets
     - name: typescript
       run: pnpm tsc -b
       working-directory: assets
