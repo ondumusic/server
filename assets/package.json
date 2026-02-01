@@ -9,6 +9,7 @@
     "test:watch": "vitest run --watch",
     "cov": "vitest run --watch --coverage",
     "format": "biome check --write --unsafe",
+    "generate-routes": "tsr generate",
     "i18n:extract": "./node_modules/i18next-parser/bin/cli.js 'src/**/*.{ts,tsx}'",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
@@ -42,6 +43,7 @@
   "dependencies": {
     "@tanstack/react-query": "^5.90.16",
     "@tanstack/react-router": "1.154.4",
+    "@tanstack/router-cli": "^1.157.18",
     "@tanstack/router-plugin": "1.154.4",
     "culori": "^4.0.2",
     "i18next": "^25.7.3",

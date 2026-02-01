@@ -42,6 +42,8 @@ jobs:
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
       working-directory: assets
+    - name: Generate route tree
+      run: pnpm run generate-routes
     - name: typescript
       run: pnpm tsc -b
       working-directory: assets
