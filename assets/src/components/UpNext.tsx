@@ -239,7 +239,7 @@ export function UpNext({
         <div
           role="none"
           className={classNames([
-            "block text-center py-8 text-sm text-accent-400",
+            "block h-full text-center py-8 text-sm text-accent-400",
             listItems.length !== 0 && "hidden",
           ])}
           onDragOver={onDragOver}
