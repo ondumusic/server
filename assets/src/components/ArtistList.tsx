@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { type PropsWithChildren, useCallback, useMemo } from "react";
+import { client } from "../api";
 import { ArtistListItem } from "../components/ArtistListItem";
 import { Loading } from "../components/Loading";
 import {
@@ -9,12 +10,8 @@ import {
 import { useInfiniteArtistsQuery } from "../hooks/useInfiniteArtistsQuery";
 import { usePlayer } from "../hooks/usePlayer";
 import { useQueue } from "../hooks/useQueue";
-import { api } from "../services/api";
-import type { Album, Artist, Page, UUID } from "../types";
+import type { Album, Artist, UUID } from "../types";
 import { paginatedMap } from "../utils/paginatedMap";
-
-type Request = undefined;
-type Response<T> = Page<T>;
 
 function isArtist(artist: Artist, artistId: string): boolean {
   return artist.id === artistId || artist.slug === artistId;
@@ -45,18 +42,15 @@ export function ArtistList({
 
   const populateUpNext = useCallback(
     async (artist: Artist) => {
-      for await (const page of api.paginate<Request, Response<Album>>(
+      let firstAlbum = true;
+      for await (const album of client.paginate<undefined, Album>(
         `/artists/${artist.id}/albums`,
       )) {
-        let firstAlbum = true;
-        for (const album of page.entries) {
-          if (firstAlbum && page.pageNumber === 1) {
-            replaceQueue(album.tracks);
-          } else {
-            enqueueAfter(album.tracks);
-          }
-
+        if (firstAlbum) {
+          replaceQueue(album.tracks);
           firstAlbum = false;
+        } else {
+          enqueueAfter(album.tracks);
         }
       }
     },

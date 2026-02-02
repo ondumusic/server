@@ -1,6 +1,7 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { client } from "../../api";
 import { Button } from "../../components/form/Button";
 import { FormActions } from "../../components/form/FormActions";
 import { Input } from "../../components/form/Input";
@@ -8,7 +9,6 @@ import { Loading } from "../../components/Loading";
 import { useAuth } from "../../hooks/useAuth";
 import { type FormErrors, type FormState, useForm } from "../../hooks/useForm";
 import { usePhoenixSocket } from "../../hooks/usePhoenixSocket";
-import { api } from "../../services/api";
 
 type ScanType = "full" | "quick";
 
@@ -73,7 +73,7 @@ export function Settings() {
       errors: {},
     };
 
-    const response = await api.post<Request, Response>(
+    const response = await client.post<Request, Response>(
       "/settings",
       newState.fields as Request,
     );

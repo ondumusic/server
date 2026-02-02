@@ -1,5 +1,5 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { api } from "../services/api";
+import { client } from "../api";
 import { queryClient } from "../utils/queryClient";
 
 interface Params {
@@ -14,7 +14,7 @@ interface Response {
 
 const getPlayToken = async () => {
   try {
-    return await api.get<Request, Response>(`/auth/playtoken`);
+    return await client.get<Request, Response>(`/auth/playtoken`);
   } catch (_e) {
     return { ok: false };
   }

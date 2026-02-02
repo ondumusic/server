@@ -1,72 +1,48 @@
 import { auth } from "../services/auth";
-
-interface ApiErrorArguments {
-  message: string;
-  response?: Response;
-  aborted?: boolean;
-}
-
-export class ApiError extends Error {
-  response?: Response;
-  aborted?: boolean;
-
-  constructor(params: ApiErrorArguments) {
-    super(params.message);
-    this.name = "ApiError";
-    this.response = params.response;
-    this.aborted = params.aborted;
-    Object.setPrototypeOf(this, ApiError.prototype);
-  }
-}
+import type { Page } from "../types";
+import { ClientError } from "./errors";
 
 type RequestMethod = "GET" | "POST";
-type PostBody<T> = BodyInit | undefined | T;
-type SearchParams = Record<string, string>;
-
-interface Options {
-  baseURL?: string;
-}
+type RequestBody<T> = BodyInit | undefined | T;
+type RequestHeaders = { [key: string]: string };
 
 interface RequestOptions {
   signal?: AbortSignal;
-  search?: SearchParams;
+  search?: Record<string, string>;
 }
 
-interface Headers {
-  [key: string]: string;
-}
-
-interface Paginated {
-  pageNumber: number;
-  totalPages: number;
-}
-
-class APIClient {
+class Client {
   #baseURL = "/api";
 
-  constructor(opts: Options = {}) {
+  constructor(
+    opts: {
+      baseURL?: string;
+    } = {},
+  ) {
     this.#baseURL = (opts.baseURL || this.#baseURL).replace(/\/$/, "");
   }
 
-  async get<T, R>(path: string, opts: RequestOptions = {}): Promise<R> {
-    return this.#request<T, R>("GET", path, undefined, opts);
+  async get<Req, Res>(path: string, opts: RequestOptions = {}): Promise<Res> {
+    return this.#request<Req, Res>("GET", path, undefined, opts);
   }
 
-  async *paginate<T, R extends Paginated>(
+  async *paginate<Req, Res>(
     path: string,
     opts: RequestOptions = {},
-  ): AsyncGenerator<R> {
+  ): AsyncGenerator<Res> {
     let hasPages = true,
       pageNumber = 1,
       search = opts.search ?? {};
 
     do {
-      const response = await this.get<T, R>(path, {
+      const response = await this.get<Req, Page<Res>>(path, {
         ...opts,
         search: { ...search, page: pageNumber.toString() },
       });
 
-      yield response;
+      for (const entry of response.entries) {
+        yield entry;
+      }
 
       if (response.pageNumber < response.totalPages) {
         pageNumber++;
@@ -76,25 +52,25 @@ class APIClient {
     } while (hasPages);
   }
 
-  async post<T, R>(
+  async post<Req, Res>(
     path: string,
-    body: PostBody<T>,
+    body: RequestBody<Req>,
     opts: RequestOptions = {},
-  ): Promise<R> {
-    return this.#request<T, R>("POST", path, body, opts);
+  ): Promise<Res> {
+    return this.#request<Req, Res>("POST", path, body, opts);
   }
 
-  async #request<T, R>(
+  async #request<Req, Res>(
     method: RequestMethod,
     path: string,
-    body: PostBody<T>,
+    body: RequestBody<Req>,
     opts: RequestOptions,
-  ): Promise<R> {
+  ): Promise<Res> {
     const requestPath = this.#baseURL + path;
     const url = new URL(requestPath, window.location.href);
     url.search = new URLSearchParams(opts?.search ?? {}).toString();
 
-    const headers: Headers = {
+    const headers: RequestHeaders = {
       "Content-Type": "application/json",
       Accept: "application/json",
     };
@@ -117,17 +93,17 @@ class APIClient {
       });
 
       if (response.status === 401) {
-        throw new ApiError({ message: "Unauthorized", response });
+        throw new ClientError({ message: "Unauthorized", response });
       }
 
       if (response.status === 403) {
-        throw new ApiError({ message: "Forbidden", response });
+        throw new ClientError({ message: "Forbidden", response });
       }
 
-      return (await response.json()) as R;
+      return (await response.json()) as Res;
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
-        throw new ApiError({ message: "Aborted", aborted: true });
+        throw new ClientError({ message: "Aborted", aborted: true });
       }
 
       throw err;
@@ -135,6 +111,6 @@ class APIClient {
   }
 }
 
-export const api = new APIClient({
+export const client = new Client({
   baseURL: "/api",
 });

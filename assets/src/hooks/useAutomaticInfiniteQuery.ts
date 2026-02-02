@@ -3,7 +3,7 @@ import {
   useSuspenseInfiniteQuery,
 } from "@tanstack/react-query";
 import { useState } from "react";
-import { api } from "../services/api";
+import { client } from "../api";
 import type { Page } from "../types";
 
 interface Params {
@@ -46,7 +46,7 @@ export function useAutomaticInfiniteQuery<T>(
       return nextPage;
     },
     queryFn: ({ pageParam }) =>
-      api.get<Request, Response<T>>(path, {
+      client.get<Request, Response<T>>(path, {
         search: { page: pageParam as string },
       }),
     ...opts,

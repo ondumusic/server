@@ -1,7 +1,7 @@
 import { ErrorComponent, Navigate, useLocation } from "@tanstack/react-router";
 import { type PropsWithChildren, useEffect } from "react";
+import { ClientError } from "../api";
 import { useAuth } from "../hooks/useAuth";
-import { ApiError } from "../services/api";
 
 export function RootErrorBoundary({
   error,
@@ -10,7 +10,7 @@ export function RootErrorBoundary({
   const location = useLocation();
   const { isLoggedIn, logout } = useAuth();
   const unauthorizedError =
-    error instanceof ApiError && error.response?.status === 401;
+    error instanceof ClientError && error.response?.status === 401;
 
   useEffect(() => {
     if (unauthorizedError) {

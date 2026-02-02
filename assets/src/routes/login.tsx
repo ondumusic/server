@@ -1,13 +1,13 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { client } from "../api";
 import { Button } from "../components/form/Button";
 import { FormActions } from "../components/form/FormActions";
 import { Input } from "../components/form/Input";
 import { Panel } from "../components/Panel";
 import { useAuth } from "../hooks/useAuth";
 import { type FormErrors, type FormState, useForm } from "../hooks/useForm";
-import { api } from "../services/api";
 import type { User } from "../types";
 
 interface LocationSearch {
@@ -64,7 +64,7 @@ function Login() {
       errors: {},
     };
 
-    const response = await api.post<Request, Response>(
+    const response = await client.post<Request, Response>(
       "/auth/login",
       newState.fields as Request,
     );

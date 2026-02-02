@@ -1,11 +1,11 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Trans, useTranslation } from "react-i18next";
+import { client } from "../../api";
 import { Button } from "../../components/form/Button";
 import { FormActions } from "../../components/form/FormActions";
 import { Input } from "../../components/form/Input";
 import { useAuth } from "../../hooks/useAuth";
 import { type FormErrors, type FormState, useForm } from "../../hooks/useForm";
-import { api } from "../../services/api";
 import type { User } from "../../types";
 
 type SignupFields = {
@@ -60,7 +60,7 @@ export function UserComponent() {
       errors: {},
     };
 
-    const response = await api.post<Request, Response>(
+    const response = await client.post<Request, Response>(
       "/auth/signup",
       newState.fields as Request,
     );

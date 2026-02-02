@@ -1,5 +1,5 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { api } from "../services/api";
+import { client } from "../api";
 import type { Artist, UUID } from "../types";
 
 interface Params {
@@ -21,7 +21,7 @@ export function useArtistQuery({ artistId }: Params, opts: Options) {
 
   return queryFn({
     queryKey: ["getArtist", artistId],
-    queryFn: () => api.get<Request, Response>(`/artists/${artistId}`),
+    queryFn: () => client.get<Request, Response>(`/artists/${artistId}`),
     enabled,
   });
 }

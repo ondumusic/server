@@ -5,8 +5,8 @@ import {
   useEffect,
   useState,
 } from "react";
+import { ClientError, client } from "../api";
 import { Loading } from "../components/Loading";
-import { ApiError, api } from "../services/api";
 import { auth } from "../services/auth";
 import type { User } from "../types";
 
@@ -75,14 +75,14 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     }
 
     // Get user details from the API
-    api
+    client
       .get<MeRequest, MeResponse>("/auth/me")
       .then((user) => {
         auth.currentUser = user;
         updateState();
       })
-      .catch((error: ApiError) => {
-        if (error instanceof ApiError && error.response?.status === 401) {
+      .catch((error: ClientError) => {
+        if (error instanceof ClientError && error.response?.status === 401) {
           logout();
         } else {
           setIsFetching(false);
