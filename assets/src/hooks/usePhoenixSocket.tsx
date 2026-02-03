@@ -58,9 +58,9 @@ export const PhoenixSocketProvider = ({ children }: PropsWithChildren) => {
       // For artists we can look at all cached queries
       if (data.artists) {
         for (const artist of data.artists) {
-          updateCache({ queryKey: ["getArtist", artist.id] }, [artist]);
+          updateCache({ queryKey: ["artist", artist.id] }, [artist]);
 
-          updateCache({ queryKey: ["artistList"], exact: true }, [artist]);
+          updateCache({ queryKey: ["artists"], exact: true }, [artist]);
         }
       }
 
@@ -75,7 +75,7 @@ export const PhoenixSocketProvider = ({ children }: PropsWithChildren) => {
           if (!artistId) continue;
 
           updateCache(
-            { queryKey: ["albumList", artistId], exact: true },
+            { queryKey: ["albums", artistId], exact: true },
             groupedAlbums[artistId] as Album[],
           );
         }
