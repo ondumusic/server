@@ -1,5 +1,6 @@
 import type { User } from "../types";
 import { client, type RequestOptions } from "./client";
+import { queryClient } from "./queryClient";
 
 type LoginResult =
   | {
@@ -16,9 +17,28 @@ type LoginResult =
       sessionToken: string;
     };
 
+type PlayTokenResult =
+  | {
+      ok: false;
+    }
+  | {
+      ok: true;
+      playToken: string;
+    };
+
+export const authQueries = {
+  getPlayToken() {
+    return {
+      queryKey: ["playToken"],
+      queryFn: ({ signal }: { signal?: AbortSignal }) =>
+        client.get<undefined, PlayTokenResult>(`/auth/playtoken`, { signal }),
+    };
+  },
+};
+
 export const authApi = {
-  async login(username?: string, password?: string, opts?: RequestOptions) {
-    return await client.post<
+  login(username?: string, password?: string, opts?: RequestOptions) {
+    return client.post<
       {
         username?: string;
         password?: string;
@@ -31,6 +51,12 @@ export const authApi = {
         password,
       },
       opts,
+    );
+  },
+
+  getPlayToken() {
+    return queryClient.ensureQueryData<PlayTokenResult>(
+      authQueries.getPlayToken(),
     );
   },
 };
