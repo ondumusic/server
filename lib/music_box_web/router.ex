@@ -55,6 +55,8 @@ defmodule MusicBoxWeb.Router do
     get "/albums", LibraryController, :albums
     get "/albums/:album_id", LibraryController, :album
 
+    get "/tracks/:track_id", LibraryController, :track
+
     post "/transcode/:track_id", StreamController, :transcode
 
     get "/search", SearchController, :search

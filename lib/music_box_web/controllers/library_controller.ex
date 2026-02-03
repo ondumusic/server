@@ -3,6 +3,7 @@ defmodule MusicBoxWeb.LibraryController do
 
   alias MusicBox.Albums
   alias MusicBox.Artists
+  alias MusicBox.Tracks
 
   plug :assign_artist when action in [:artist, :artist_albums, :artist_album]
   plug :assign_album when action in [:album, :artist_album]
@@ -32,6 +33,10 @@ defmodule MusicBoxWeb.LibraryController do
     render(conn, :album, album: conn.assigns.album)
   end
 
+  def track(conn, _params) do
+    render(conn, :track, track: conn.assigns.track)
+  end
+
   defp assign_artist(conn, _opts) do
     artist_id = Map.get(conn.params, "artist_id", "")
     artist = Artists.get_artist!(artist_id)
@@ -50,5 +55,13 @@ defmodule MusicBoxWeb.LibraryController do
 
     conn
     |> assign(:album, album)
+  end
+
+  defp assign_track(conn, _opts) do
+    track_id = Map.get(conn.params, "track_id", "")
+    track = Tracks.get_track!(track_id)
+
+    conn
+    |> assign(:track, track)
   end
 end
