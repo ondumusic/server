@@ -2,9 +2,9 @@ import type {
   InfiniteData,
   UseInfiniteQueryOptions,
 } from "@tanstack/react-query";
+import { queryClient } from "../api/queryClient";
 import type { Album, Page, UUID } from "../types";
 import { ensureAutomaticInfiniteQueryData } from "../utils/ensureAutomaticInfiniteQueryData";
-import { queryClient } from "../utils/queryClient";
 import { client, type RequestOptions } from "./client";
 
 export const albumQueries = {

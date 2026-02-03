@@ -3,6 +3,7 @@ import "./app.css";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
+import { queryClient } from "./api/queryClient";
 import { Loading } from "./components/Loading";
 import { AudioManagerProvider } from "./hooks/useAudioManager";
 import { AuthProvider } from "./hooks/useAuth";
@@ -13,7 +14,6 @@ import { PhoenixSocketProvider } from "./hooks/usePhoenixSocket";
 import { PlayerProvider } from "./hooks/usePlayer";
 import { QueueProvider } from "./hooks/useQueue";
 import { Router } from "./router";
-import { queryClient } from "./utils/queryClient";
 import "./i18next";
 
 const appRoot = document.getElementById("App");

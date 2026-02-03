@@ -1,5 +1,5 @@
+import { queryClient } from "../api/queryClient";
 import type { Page, UUID } from "../types";
-import { queryClient } from "../utils/queryClient";
 
 type QueryKey = string[];
 

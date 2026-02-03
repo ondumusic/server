@@ -2,8 +2,8 @@ import type {
   InfiniteData,
   UseInfiniteQueryOptions,
 } from "@tanstack/react-query";
+import { queryClient } from "../api/queryClient";
 import type { Page } from "../types";
-import { queryClient } from "../utils/queryClient";
 
 type QueryFunction<T> = ({
   pageParam,

@@ -1,6 +1,6 @@
 import type { QueryFilters } from "@tanstack/react-query";
+import { queryClient } from "../api/queryClient";
 import type { Page } from "../types";
-import { queryClient } from "../utils/queryClient";
 
 interface Result<T> {
   pages: Page<T>[];

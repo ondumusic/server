@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { Trans } from "react-i18next";
+import { queryClient } from "../api/queryClient";
 import {
   type ListItem,
   type ListItemState,
@@ -17,7 +18,6 @@ import { useQueue } from "../hooks/useQueue";
 import type { Track } from "../types";
 import { classNames } from "../utils/classNames";
 import { formatDuration } from "../utils/formatDuration";
-import { queryClient } from "../utils/queryClient";
 
 type QueueItem = ListItem & {
   track: Track;
