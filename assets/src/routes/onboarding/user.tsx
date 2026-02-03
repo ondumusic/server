@@ -1,36 +1,17 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Trans, useTranslation } from "react-i18next";
-import { client } from "../../api";
+import { authApi } from "../../api";
 import { Button } from "../../components/form/Button";
 import { FormActions } from "../../components/form/FormActions";
 import { Input } from "../../components/form/Input";
 import { useAuth } from "../../hooks/useAuth";
-import { type FormErrors, type FormState, useForm } from "../../hooks/useForm";
-import type { User } from "../../types";
+import { type FormState, useForm } from "../../hooks/useForm";
 
 type SignupFields = {
-  username: string | number | null;
-  password: string | number | null;
-  password_confirmation: string | number | null;
+  username?: string;
+  password?: string;
+  password_confirmation?: string;
 };
-
-interface Request {
-  username: string;
-  password_confirmation: string;
-}
-
-interface ErrorResponse {
-  ok: false;
-  fields: FormErrors;
-}
-
-interface SuccessResponse {
-  ok: true;
-  currentUser: User;
-  sessionToken: string;
-}
-
-type Response = ErrorResponse | SuccessResponse;
 
 export const Route = createFileRoute("/onboarding/user")({
   component: UserComponent,
@@ -40,11 +21,6 @@ export function UserComponent() {
   const { t } = useTranslation();
   const { isLoggedIn, completeLogin } = useAuth();
   const { onboarding } = Route.useRouteContext();
-
-  const onSignupSuccess = (response: SuccessResponse) => {
-    completeLogin(response.currentUser, response.sessionToken);
-    onboarding.setStep("settings");
-  };
 
   const onSubmit = async (
     prevState: FormState<SignupFields>,
@@ -60,13 +36,15 @@ export function UserComponent() {
       errors: {},
     };
 
-    const response = await client.post<Request, Response>(
-      "/auth/signup",
-      newState.fields as Request,
+    const response = await authApi.signup(
+      newState.fields.username,
+      newState.fields.password,
+      newState.fields.password_confirmation,
     );
 
     if (response.ok) {
-      onSignupSuccess(response);
+      completeLogin(response.currentUser, response.sessionToken);
+      onboarding.setStep("settings");
     } else {
       newState.errors = response.fields;
     }

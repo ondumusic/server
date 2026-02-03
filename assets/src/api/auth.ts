@@ -17,6 +17,21 @@ type LoginResult =
       sessionToken: string;
     };
 
+type SignupResult =
+  | {
+      ok: false;
+      fields: {
+        [key: string]: {
+          message: string;
+        };
+      };
+    }
+  | {
+      ok: true;
+      currentUser: User;
+      sessionToken: string;
+    };
+
 type PlayTokenResult =
   | {
       ok: false;
@@ -57,6 +72,30 @@ export const authApi = {
       {
         username,
         password,
+      },
+      opts,
+    );
+  },
+
+  signup(
+    username?: string,
+    password?: string,
+    password_confirmation?: string,
+    opts?: RequestOptions,
+  ) {
+    return client.post<
+      {
+        username?: string;
+        password?: string;
+        password_confirmation?: string;
+      },
+      SignupResult
+    >(
+      "/auth/signup",
+      {
+        username,
+        password,
+        password_confirmation,
       },
       opts,
     );
