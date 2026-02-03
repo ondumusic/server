@@ -7,16 +7,15 @@ interface Params {
 }
 
 export interface Options {
-  enabled?: boolean;
   suspense?: boolean;
 }
 
-export function useAlbumQuery({ albumId }: Params, opts: Options) {
-  const enabled = !!opts?.enabled;
+export function useAlbumQuery({ albumId }: Params, opts?: Options) {
+  const query = albumQueries.getAlbum(albumId);
   const queryFn =
-    enabled && opts?.suspense === true ? useSuspenseQuery : useQuery;
-  return queryFn<Album>({
-    ...albumQueries.getAlbum(albumId),
-    enabled,
-  });
+    query.enabled !== false && opts?.suspense === true
+      ? useSuspenseQuery
+      : useQuery;
+
+  return queryFn<Album>(query);
 }

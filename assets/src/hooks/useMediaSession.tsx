@@ -3,13 +3,11 @@ import {
   type PropsWithChildren,
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from "react";
+import { useAlbumQuery } from "../hooks/useAlbumQuery";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
-import type { Album } from "../types";
-import { findCachedItem } from "../utils/findCachedItem";
 
 const MediaSessionContext = createContext({});
 
@@ -30,14 +28,10 @@ const NavigatorMediaSessionProvider = ({ children }: PropsWithChildren) => {
     return unsubscribe;
   }, [addTimeObserver]);
 
-  // Find the currentAlbum from cache so we can display it in the mediaSession
-  const currentAlbum: Album | undefined = useMemo(() => {
-    if (!currentTrack) return undefined;
-    return findCachedItem<Album>(
-      ["albumList", currentTrack?.albumArtistId],
-      currentTrack?.albumId,
-    );
-  }, [currentTrack]);
+  // Find the currentAlbum so we can display it in the mediaSession
+  const { data: currentAlbum } = useAlbumQuery({
+    albumId: currentTrack?.albumId,
+  });
 
   // Set the mediaSession Position State
   // biome-ignore lint/correctness/useExhaustiveDependencies(duration): suppress dependency duration

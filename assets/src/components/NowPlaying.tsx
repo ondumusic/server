@@ -30,14 +30,9 @@ export function NowPlaying() {
     return unsubscribe;
   }, [addTimeObserver]);
 
-  const { data: currentAlbum } = useAlbumQuery(
-    {
-      albumId: currentTrack?.albumId,
-    },
-    {
-      enabled: !!currentTrack?.albumId,
-    },
-  );
+  const { data: currentAlbum } = useAlbumQuery({
+    albumId: currentTrack?.albumId,
+  });
 
   useEffect(() => {
     if (!currentAlbum) return;
