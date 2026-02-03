@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { type PropsWithChildren, useCallback, useMemo } from "react";
-import { client } from "../api";
+import { albumApi } from "../api";
 import { ArtistListItem } from "../components/ArtistListItem";
 import { Loading } from "../components/Loading";
 import {
@@ -10,7 +10,7 @@ import {
 import { useInfiniteArtistsQuery } from "../hooks/useInfiniteArtistsQuery";
 import { usePlayer } from "../hooks/usePlayer";
 import { useQueue } from "../hooks/useQueue";
-import type { Album, Artist, UUID } from "../types";
+import type { Artist, UUID } from "../types";
 import { paginatedMap } from "../utils/paginatedMap";
 
 function isArtist(artist: Artist, artistId: string): boolean {
@@ -26,13 +26,14 @@ export function ArtistList({
   const { enqueueAfter, userConfirmQueueReplace } = usePlayer();
   const { replaceQueue } = useQueue();
 
-  const suspendUntil = artistId
-    ? (entry: Artist) => isArtist(entry, artistId)
-    : undefined;
-
-  const { hasFirstPage, data } = useInfiniteArtistsQuery({
-    suspense: true,
-    suspendUntil,
+  const {
+    hasItem: hasArtist,
+    hasFirstPage,
+    data,
+  } = useInfiniteArtistsQuery({
+    matchItem: artistId
+      ? (entry: Artist) => isArtist(entry, artistId)
+      : undefined,
   });
 
   const listItems = useMemo(
@@ -43,9 +44,7 @@ export function ArtistList({
   const populateUpNext = useCallback(
     async (artist: Artist) => {
       let firstAlbum = true;
-      for await (const album of client.paginate<undefined, Album>(
-        `/artists/${artist.id}/albums`,
-      )) {
+      for await (const album of albumApi.paginateAlbums(artist.id)) {
         if (firstAlbum) {
           replaceQueue(album.tracks);
           firstAlbum = false;
@@ -104,7 +103,7 @@ export function ArtistList({
     [],
   );
 
-  if (!hasFirstPage) return <Loading />;
+  if ((artistId && !hasArtist) || !hasFirstPage) return <Loading />;
 
   const currentArtist = artistId
     ? listItems.find((artist) => isArtist(artist, artistId))

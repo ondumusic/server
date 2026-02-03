@@ -1,34 +1,25 @@
 import {
+  type InfiniteData,
+  type UseInfiniteQueryOptions,
   useInfiniteQuery,
-  useSuspenseInfiniteQuery,
 } from "@tanstack/react-query";
-import { useState } from "react";
-import { client } from "../api";
 import type { Page } from "../types";
-
-interface Params {
-  path: string;
-  queryKey: string[];
-}
 
 export interface Options<T> {
   enabled?: boolean;
-  suspense?: boolean;
-  suspendUntil?(_hasItem: T): void;
+  matchItem?(_hasItem: T): void;
 }
 
-type Request = undefined;
-type Response<T> = Page<T>;
-
 export function useAutomaticInfiniteQuery<T>(
-  { path, queryKey }: Params,
+  query: UseInfiniteQueryOptions<
+    Page<T>,
+    Error,
+    InfiniteData<Page<T>>,
+    readonly unknown[],
+    unknown
+  >,
   opts: Options<T> = {},
 ) {
-  const [ignoreSuspense, setIgnoreSuspense] = useState(false);
-  const usingSuspense =
-    opts.enabled !== false && !!opts.suspense && !ignoreSuspense;
-  const queryFn = usingSuspense ? useSuspenseInfiniteQuery : useInfiniteQuery;
-
   const {
     error,
     data,
@@ -36,57 +27,30 @@ export function useAutomaticInfiniteQuery<T>(
     hasNextPage,
     isFetching,
     isFetchingNextPage,
-  } = queryFn<Page<T>>({
-    queryKey,
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
-      if (!lastPage) return null;
-      const nextPage = lastPage.pageNumber + 1;
-      if (nextPage > lastPage.totalPages) return null;
-      return nextPage;
-    },
-    queryFn: ({ pageParam }) =>
-      client.get<Request, Response<T>>(path, {
-        search: { page: pageParam as string },
-      }),
+  } = useInfiniteQuery<Page<T>>({
+    ...query,
     ...opts,
   });
 
   // This boolean stores whether or not there is a page matching the
-  // given suspendUntil function
+  // given matchItem function
   let hasItem = null;
-  const { suspendUntil } = opts;
-  if (data && suspendUntil) {
+  const { matchItem } = opts;
+  if (data && matchItem) {
     hasItem =
       data.pages.findIndex(
         ({ entries }) =>
-          entries.findIndex((entry: T) => suspendUntil(entry)) !== -1,
+          entries.findIndex((entry: T) => matchItem(entry)) !== -1,
       ) !== -1;
   }
 
-  // Automatically fetch next pages
-  if (hasNextPage) {
-    // Keep suspended until we have a matching item
-    if (data && usingSuspense && opts.suspendUntil) {
-      // Already busy, just return an empty promise
-      if (isFetchingNextPage)
-        throw new Promise((resolve) => setTimeout(resolve, 100));
-
-      // Suspend for next page
-      if (!hasItem) throw fetchNextPage();
-
-      // We should be satisfied now, so stop using suspend
-      setIgnoreSuspense(true);
-    }
-
-    // Keep loading next page until there is none
-    if (!isFetchingNextPage) {
-      fetchNextPage();
-    }
+  // Automatically fetch next pages until there is none
+  if (hasNextPage && !isFetchingNextPage) {
+    fetchNextPage();
   }
 
   return {
-    data,
+    data: data as InfiniteData<Page<T>>,
     error,
     isFetching,
     hasItem,

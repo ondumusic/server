@@ -6,7 +6,7 @@ type RequestMethod = "GET" | "POST";
 type RequestBody<T> = BodyInit | undefined | T;
 type RequestHeaders = { [key: string]: string };
 
-interface RequestOptions {
+export interface RequestOptions {
   signal?: AbortSignal;
   search?: Record<string, string>;
 }

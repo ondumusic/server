@@ -1,3 +1,4 @@
+import { artistQueries } from "../api";
 import type { Artist } from "../types";
 import {
   type Options,
@@ -6,10 +7,7 @@ import {
 
 export function useInfiniteArtistsQuery(opts: Options<Artist> = {}) {
   return useAutomaticInfiniteQuery<Artist>(
-    {
-      path: "/artists",
-      queryKey: ["artistList"],
-    },
+    artistQueries.paginateArtists(),
     opts,
   );
 }

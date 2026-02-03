@@ -1,10 +1,9 @@
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { Marquee } from "../components/Marquee";
+import { useAlbumQuery } from "../hooks/useAlbumQuery";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
 import i18next from "../i18next";
-import type { Album } from "../types";
-import { findCachedItem } from "../utils/findCachedItem";
 import { formatDuration } from "../utils/formatDuration";
 import {
   resetAccentColor,
@@ -31,14 +30,14 @@ export function NowPlaying() {
     return unsubscribe;
   }, [addTimeObserver]);
 
-  const currentAlbum = useMemo(() => {
-    if (!currentTrack) return;
-
-    return findCachedItem<Album>(
-      ["albumList", currentTrack.albumArtistId],
-      currentTrack.albumId,
-    );
-  }, [currentTrack]);
+  const { data: currentAlbum } = useAlbumQuery(
+    {
+      albumId: currentTrack?.albumId,
+    },
+    {
+      enabled: !!currentTrack?.albumId,
+    },
+  );
 
   useEffect(() => {
     if (!currentAlbum) return;

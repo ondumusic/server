@@ -77,10 +77,6 @@ function Artists() {
     setSelectedTrackIds(new Set());
   }, [artistId, albumId]);
 
-  const suspendUntil = albumId
-    ? (entry: Album) => isAlbum(entry, albumId)
-    : undefined;
-
   const {
     isFetching: isFetchingArtist,
     data: dataArtist,
@@ -89,21 +85,26 @@ function Artists() {
     { artistId },
     {
       enabled: hasArtistId,
-      suspense: useSuspense,
     },
   );
 
-  const { isFetching, hasFirstPage, data, error } =
-    useInfiniteArtistAlbumsQuery(
-      {
-        artistId: dataArtist?.id,
-      },
-      {
-        enabled: !!dataArtist?.id,
-        suspense: useSuspense,
-        suspendUntil,
-      },
-    );
+  const {
+    isFetching,
+    hasItem: hasAlbum,
+    hasFirstPage,
+    data,
+    error,
+  } = useInfiniteArtistAlbumsQuery(
+    {
+      artistId: dataArtist?.id,
+    },
+    {
+      enabled: !!dataArtist?.id,
+      matchItem: albumId
+        ? (entry: Album) => isAlbum(entry, albumId)
+        : undefined,
+    },
+  );
 
   const listItems: ListItem[] = useMemo(() => {
     if (!dataArtist || !data) return [];
@@ -321,7 +322,11 @@ function Artists() {
       />
     );
 
-  if ((isFetching || isFetchingArtist) && !hasFirstPage) return <Loading />;
+  if (
+    (isFetching || isFetchingArtist) &&
+    ((albumId && !hasAlbum) || !hasFirstPage)
+  )
+    return <Loading />;
   if (errorArtist) throw errorArtist;
   if (error) throw error;
   if (!dataArtist) return;

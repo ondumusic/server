@@ -8,18 +8,14 @@ interface Params {
   artistId?: UUID;
 }
 
+import { albumQueries } from "../api";
+
 export function useInfiniteArtistAlbumsQuery(
   { artistId }: Params,
   opts: Options<Album> = {},
 ) {
-  const queryKey = ["albumList"];
-  if (artistId) queryKey.push(artistId);
-
   return useAutomaticInfiniteQuery<Album>(
-    {
-      path: `/artists/${artistId}/albums`,
-      queryKey,
-    },
+    albumQueries.paginateAlbums(artistId),
     opts,
   );
 }
