@@ -1,41 +1,22 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { client } from "../api";
+import { authApi } from "../api";
 import { Button } from "../components/form/Button";
 import { FormActions } from "../components/form/FormActions";
 import { Input } from "../components/form/Input";
 import { Panel } from "../components/Panel";
 import { useAuth } from "../hooks/useAuth";
-import { type FormErrors, type FormState, useForm } from "../hooks/useForm";
-import type { User } from "../types";
+import { type FormState, useForm } from "../hooks/useForm";
 
 interface LocationSearch {
   redirect: string;
 }
 
 type LoginFields = {
-  username: string | number | null;
-  password: string | number | null;
+  username?: string;
+  password?: string;
 };
-
-interface Request {
-  username: string;
-  password: string;
-}
-
-interface ErrorResponse {
-  ok: false;
-  fields: FormErrors;
-}
-
-interface SuccessResponse {
-  ok: true;
-  currentUser: User;
-  sessionToken: string;
-}
-
-type Response = ErrorResponse | SuccessResponse;
 
 export const Route = createFileRoute("/login")({
   component: Login,
@@ -46,10 +27,6 @@ function Login() {
   const { t } = useTranslation();
   const { redirect: redirectTo } = Route.useSearch() as LocationSearch;
   const redirectRef = useRef<string>(redirectTo ?? "/");
-
-  const onLoginSuccess = (response: SuccessResponse) => {
-    completeLogin(response.currentUser, response.sessionToken);
-  };
 
   const onSubmit = async (
     prevState: FormState<LoginFields>,
@@ -64,12 +41,13 @@ function Login() {
       errors: {},
     };
 
-    const response = await client.post<Request, Response>(
-      "/auth/login",
-      newState.fields as Request,
+    const response = await authApi.login(
+      newState.fields.username,
+      newState.fields.password,
     );
+
     if (response.ok) {
-      onLoginSuccess(response);
+      completeLogin(response.currentUser, response.sessionToken);
     } else {
       newState.errors = response.fields;
     }
