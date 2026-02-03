@@ -1,39 +1,22 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { client } from "../../api";
+import { settingApi } from "../../api";
 import { Button } from "../../components/form/Button";
 import { FormActions } from "../../components/form/FormActions";
 import { Input } from "../../components/form/Input";
 import { Loading } from "../../components/Loading";
 import { useAuth } from "../../hooks/useAuth";
-import { type FormErrors, type FormState, useForm } from "../../hooks/useForm";
+import { type FormState, useForm } from "../../hooks/useForm";
 import { usePhoenixSocket } from "../../hooks/usePhoenixSocket";
 
 type ScanType = "full" | "quick";
 
 type SettingFields = {
-  music_path: string | null;
-  scan_type: ScanType;
-  poll_interval: number | null;
+  music_path?: string;
+  scan_type?: ScanType;
+  poll_interval?: number;
 };
-
-interface Request {
-  music_path: string;
-  scan_type: ScanType;
-  poll_interval: number;
-}
-
-interface ErrorResponse {
-  ok: false;
-  fields: FormErrors;
-}
-
-interface SuccessResponse {
-  ok: true;
-}
-
-type Response = ErrorResponse | SuccessResponse;
 
 export const Route = createFileRoute("/onboarding/settings")({
   component: Settings,
@@ -46,15 +29,6 @@ export function Settings() {
   const { waitForUpdate } = usePhoenixSocket();
   const { onboarding } = Route.useRouteContext();
   const [showLoader, setShowLoader] = useState<boolean>(false);
-
-  const onSuccess = (_response: SuccessResponse) => {
-    setShowLoader(true);
-    onboarding.setStep(null);
-
-    waitForUpdate(() => {
-      navigate({ to: "/" });
-    });
-  };
 
   const onSubmit = async (
     prevState: FormState<SettingFields>,
@@ -73,13 +47,20 @@ export function Settings() {
       errors: {},
     };
 
-    const response = await client.post<Request, Response>(
-      "/settings",
-      newState.fields as Request,
-    );
+    const response = await settingApi.updateSettings(newState.fields);
+
+    // const response = await client.post<Request, Response>(
+    //   "/settings",
+    //   newState.fields as Request,
+    // );
 
     if (response.ok) {
-      onSuccess(response);
+      setShowLoader(true);
+      onboarding.setStep(null);
+
+      waitForUpdate(() => {
+        navigate({ to: "/" });
+      });
     } else {
       newState.errors = response.fields;
     }
