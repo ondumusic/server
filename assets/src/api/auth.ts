@@ -27,6 +27,14 @@ type PlayTokenResult =
     };
 
 export const authQueries = {
+  getCurrentUser() {
+    return {
+      queryKey: ["currentUser"],
+      queryFn: ({ signal }: { signal?: AbortSignal }) =>
+        client.get<undefined, User>(`/auth/me`, { signal }),
+    };
+  },
+
   getPlayToken() {
     return {
       queryKey: ["playToken"],
@@ -52,6 +60,10 @@ export const authApi = {
       },
       opts,
     );
+  },
+
+  getCurrentUser() {
+    return queryClient.ensureQueryData<User>(authQueries.getCurrentUser());
   },
 
   getPlayToken() {

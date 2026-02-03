@@ -9,15 +9,16 @@ export function RootErrorBoundary({
 }: PropsWithChildren<{ error: Error; reset: () => void }>) {
   const location = useLocation();
   const { isLoggedIn, logout } = useAuth();
+  const abortedError = error instanceof ClientError && error.aborted;
   const unauthorizedError =
     error instanceof ClientError && error.response?.status === 401;
 
   useEffect(() => {
     if (unauthorizedError) {
-      logout();
+      if (!abortedError) logout();
       reset();
     }
-  }, [unauthorizedError, logout, reset]);
+  }, [abortedError, unauthorizedError, logout, reset]);
 
   if (unauthorizedError && !isLoggedIn) {
     reset();

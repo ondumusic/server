@@ -5,7 +5,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { ClientError, client } from "../api";
+import { authApi, ClientError } from "../api";
 import { Loading } from "../components/Loading";
 import { auth } from "../services/auth";
 import type { User } from "../types";
@@ -30,9 +30,6 @@ const AuthContext = createContext<AuthContext>({
 export function useAuth() {
   return useContext(AuthContext);
 }
-
-type MeRequest = undefined;
-type MeResponse = User;
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [isFetching, setIsFetching] = useState<boolean>(true);
@@ -75,14 +72,18 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     }
 
     // Get user details from the API
-    client
-      .get<MeRequest, MeResponse>("/auth/me")
+    authApi
+      .getCurrentUser()
       .then((user) => {
         auth.currentUser = user;
         updateState();
       })
       .catch((error: ClientError) => {
-        if (error instanceof ClientError && error.response?.status === 401) {
+        const abortedError = error instanceof ClientError && error.aborted;
+        const unauthorizedError =
+          error instanceof ClientError && error.response?.status === 401;
+
+        if (unauthorizedError && !abortedError) {
           logout();
         } else {
           setIsFetching(false);
