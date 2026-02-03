@@ -8,14 +8,14 @@ import {
   useState,
 } from "react";
 import { Trans } from "react-i18next";
-import { queryClient } from "../api/queryClient";
+import { trackApi } from "../api";
 import {
   type ListItem,
   type ListItemState,
   SelectableList,
 } from "../components/SelectableList";
 import { useQueue } from "../hooks/useQueue";
-import type { Track } from "../types";
+import type { Track, UUID } from "../types";
 import { classNames } from "../utils/classNames";
 import { formatDuration } from "../utils/formatDuration";
 
@@ -108,14 +108,11 @@ export function UpNext({
           e.dataTransfer.getData("application/json"),
         );
 
-        const newTracks: Track[] = Array.from(itemIds).flatMap((itemId) => {
-          const track = queryClient.getQueryData<Track>(["track", itemId]);
-
-          if (track) return [track];
-          return [];
-        });
-
-        addQueueAfter(newTracks);
+        Promise.all(
+          Array.from(itemIds).flatMap((itemId) =>
+            trackApi.getTrack(itemId as UUID),
+          ),
+        ).then(addQueueAfter);
       } catch (_error) {
         return;
       }
@@ -164,17 +161,16 @@ export function UpNext({
           currentTrackIndex + 1 + insertAtIndex,
         );
       } else {
-        const newTracks: Track[] = Array.from(itemIds).flatMap((itemId) => {
-          const track = queryClient.getQueryData<Track>(["track", itemId]);
-
-          if (track) return [track];
-          return [];
+        Promise.all(
+          Array.from(itemIds).flatMap((itemId) =>
+            trackApi.getTrack(itemId as UUID),
+          ),
+        ).then((newTracks) => {
+          // The visible Up Next is not the full queue so the indexes
+          // don't match, luckily we can fix that problem using the
+          // currentTrackIndex + 1 and voila.
+          addQueueAtIndex(newTracks, currentTrackIndex + 1 + insertAtIndex);
         });
-
-        // The visible Up Next is not the full queue so the indexes
-        // don't match, luckily we can fix that problem using the
-        // currentTrackIndex + 1 and voila.
-        addQueueAtIndex(newTracks, currentTrackIndex + 1 + insertAtIndex);
       }
     },
     [addQueueAtIndex, currentTrackIndex, rearrangeQueue],

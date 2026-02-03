@@ -1,6 +1,5 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { authQueries } from "../api";
-import { queryClient } from "../api/queryClient";
+import { authQueries, queryClient } from "../api";
 
 interface Params {
   enabled: boolean;

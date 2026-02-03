@@ -3,7 +3,7 @@ import "./app.css";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { queryClient } from "./api/queryClient";
+import { queryClient } from "./api";
 import { Loading } from "./components/Loading";
 import { AudioManagerProvider } from "./hooks/useAudioManager";
 import { AuthProvider } from "./hooks/useAuth";

@@ -2,7 +2,7 @@ import type {
   InfiniteData,
   UseInfiniteQueryOptions,
 } from "@tanstack/react-query";
-import { queryClient } from "../api/queryClient";
+import { queryClient } from "../api";
 import type { Artist, Page, UUID } from "../types";
 import { ensureAutomaticInfiniteQueryData } from "../utils/ensureAutomaticInfiniteQueryData";
 import { client, type RequestOptions } from "./client";
