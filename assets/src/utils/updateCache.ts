@@ -94,8 +94,8 @@ function updatePaginatedCache(oldData: Result<Item>, items: Item[]) {
         const entries = page.entries;
         entries.push(entry);
         entries.sort((a: Item, b: Item) => {
-          if (a.name < b.name) return -1;
-          if (a.name > b.name) return 1;
+          if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+          if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
           return 0;
         });
 

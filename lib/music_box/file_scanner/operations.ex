@@ -9,8 +9,8 @@ defmodule MusicBox.FileScanner.Operations do
   alias MusicBox.Artists.Artist
   alias MusicBox.Files.{File, FileMetadata}
   alias MusicBox.FileScanner.{Analyzer, Utils}
-  alias MusicBox.Tracks.Track
   alias MusicBox.Repo
+  alias MusicBox.Tracks.Track
 
   import Ecto.Query
 
