@@ -29,6 +29,8 @@ defmodule MusicBoxWeb.ConnCase do
       import Phoenix.ConnTest
       import MusicBoxWeb.ConnCase
 
+      alias MusicBox.Repo
+
       import Mox
     end
   end

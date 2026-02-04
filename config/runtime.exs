@@ -65,10 +65,6 @@ if config_env() == :prod do
     database: database_path,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5")
 
-  config :music_box, MusicBox.FileScanner.Repo,
-    database: database_path,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5")
-
   config :music_box, MusicBox.Transcoder,
     artwork_path: artwork_path,
     cache_path: transcode_cache_path

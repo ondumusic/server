@@ -7,6 +7,7 @@ defmodule MusicBoxWeb.LibraryController do
 
   plug :assign_artist when action in [:artist, :artist_albums, :artist_album]
   plug :assign_album when action in [:album, :artist_album]
+  plug :assign_track when action in [:track]
 
   def artists(conn, params) do
     render(conn, :artists, page: Artists.paginate_artists(params))
@@ -34,7 +35,7 @@ defmodule MusicBoxWeb.LibraryController do
   end
 
   def track(conn, _params) do
-    render(conn, :track, track: conn.assigns.track)
+    render(conn, :track, track: conn.assigns.track, album: conn.assigns.track.album)
   end
 
   defp assign_artist(conn, _opts) do

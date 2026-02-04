@@ -15,11 +15,6 @@ config :music_box, MusicBox.Repo,
   pool_size: 5,
   pool: Ecto.Adapters.SQL.Sandbox
 
-config :music_box, MusicBox.FileScanner.Repo,
-  database: Path.expand("../db/music_box_test.db", __DIR__),
-  pool_size: 5,
-  pool: Ecto.Adapters.SQL.Sandbox
-
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
 config :music_box, MusicBoxWeb.Endpoint,

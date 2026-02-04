@@ -1,6 +1,8 @@
 defmodule MusicBoxWeb.LibraryControllerTest do
   use MusicBoxWeb.ConnCase, async: true
 
+  alias MusicBox.Tracks.Track
+
   describe "artists" do
     setup :register_and_log_in_user
 
@@ -403,6 +405,29 @@ defmodule MusicBoxWeb.LibraryControllerTest do
              } =
                conn
                |> get(~p"/api/albums/#{album.id}")
+               |> json_response(200)
+    end
+  end
+
+  describe "tracks" do
+    setup :register_and_log_in_user
+
+    test "returns track details", %{conn: conn} do
+      track = Repo.get_by(Track, name: "Roll Over Beethoven")
+
+      assert %{
+               "name" => "Roll Over Beethoven",
+               "artist" => %{
+                 "name" => "The Beatles",
+                 "slug" => "the-beatles"
+               },
+               "disc" => 1,
+               "duration" => 168.0,
+               "mimetype" => "audio/mpeg",
+               "number" => 8
+             } =
+               conn
+               |> get(~p"/api/tracks/#{track.id}")
                |> json_response(200)
     end
   end
