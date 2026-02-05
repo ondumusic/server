@@ -16,7 +16,10 @@ export class AudioService {
   #eventListeners: Map<AudioEventName, Set<AudioEventHandler>> = new Map();
   #useTranscode: boolean = false;
   #currentTrack?: Track;
+  #preloadedTrack?: Track;
   #playToken?: string;
+  #endedTimer?: ReturnType<typeof setTimeout>;
+  #fadeTimer?: ReturnType<typeof setTimeout>;
 
   destroy() {
     this.stop();
@@ -71,6 +74,7 @@ export class AudioService {
     audioRef.src = streamUrl;
     audioRef.load();
     audioRef.volume = 1;
+    this.#preloadedTrack = track;
   }
 
   resume() {
@@ -144,7 +148,19 @@ export class AudioService {
     this.#emit("timeupdate", audioEvent);
 
     if (event.type === "ended") {
+      clearTimeout(this.#endedTimer);
       this.#emit("ended", { ...audioEvent, isPlaying: false });
+    }
+
+    if (event.type === "timeupdate" && !this.#fadeTimer) {
+      // Set the endedTimer because sometimes (mostly when transcoding) there
+      // are potential issues resulting in the ended event not being sent.
+      if (audioEvent.duration - audioEvent.currentTime < 0.2) {
+        clearTimeout(this.#endedTimer);
+        this.#endedTimer = setTimeout(() => {
+          this.#emit("ended", { ...audioEvent, isPlaying: false });
+        }, 200);
+      }
     }
   }
 
