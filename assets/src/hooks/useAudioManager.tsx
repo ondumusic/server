@@ -1,5 +1,4 @@
 import {
-  type ChangeEvent,
   createContext,
   type PropsWithChildren,
   useContext,
@@ -11,6 +10,7 @@ import { useAuth } from "../hooks/useAuth";
 import { type Observer, useObserver } from "../hooks/useObserver";
 import { usePlayTokenQuery } from "../hooks/usePlayTokenQuery";
 import { useQueue } from "../hooks/useQueue";
+import { AudioService } from "../services/audio";
 
 interface TimeUpdateEvent {
   currentTime: number;
@@ -28,8 +28,7 @@ export interface AudioManagerContext {
   addTimeObserver(callback: Observer<TimeUpdateEvent>): void;
 
   // Scrubbing functionality
-  scrubTo(updatedTime: number): void;
-  scrubAndPlay(updatedTime: number): void;
+  scrubTo(updatedTime: number, forcePlay?: boolean): void;
 }
 
 const AudioManagerContext = createContext<AudioManagerContext>({
@@ -37,8 +36,7 @@ const AudioManagerContext = createContext<AudioManagerContext>({
   duration: 0,
   setIsPlaying: (_isPlaying) => {},
   addTimeObserver: (_callback) => {},
-  scrubTo: (_updatedTime) => {},
-  scrubAndPlay: (_updatedTime) => {},
+  scrubTo: (_updatedTime, _forcePlay) => {},
 });
 
 export function useAudioManager() {
@@ -46,158 +44,113 @@ export function useAudioManager() {
 }
 
 export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const endedTimer = useRef<ReturnType<typeof setTimeout>>(null);
+  const audioService = useRef<AudioService>(null);
   const { isLoggedIn } = useAuth();
   const [isPlaying, realSetIsPlaying] = useState(false);
-  const [hasPreloadedNext, setHasPreloadedNext] = useState(false);
   const [emitTimeUpdate, addTimeObserver] = useObserver<TimeUpdateEvent>();
   const [duration, setDuration] = useState(0);
-  const [source, setSource] = useState<string | undefined>(undefined);
-  const {
-    currentTrack,
-    currentTrackIndex,
-    nextTrack,
-    hasNextTrack,
-    getNextTrack,
-  } = useQueue();
+  const { currentTrack, nextTrack, hasNextTrack, getNextTrack } = useQueue();
   const { playToken } = usePlayTokenQuery({ enabled: isLoggedIn });
 
-  // Control play/pause directly but also update state.
-  const setIsPlaying = (isPlaying: boolean) => {
-    if (endedTimer.current) clearTimeout(endedTimer.current);
-    if (!audioRef.current) return;
-    realSetIsPlaying(isPlaying);
+  // Manage the AudioService (only execute on first render/mount)
+  // biome-ignore lint/correctness/useExhaustiveDependencies(playToken): suppress dependency playToken
+  useEffect(() => {
+    audioService.current = new AudioService();
+    if (playToken) audioService.current.setPlayToken(playToken);
 
-    if (!isPlaying) {
-      audioRef.current.pause();
-    } else if (audioRef.current.src) {
-      audioRef.current.play();
+    return () => {
+      if (!audioService.current) return;
+      audioService.current.destroy();
+    };
+  }, []);
+
+  // Make sure the PlayToken is up to date
+  useEffect(() => {
+    if (!audioService.current) return;
+    if (!playToken) return;
+    audioService.current.setPlayToken(playToken);
+  }, [playToken]);
+
+  // Subscribe to Audio Service Events
+  useEffect(() => {
+    if (!audioService.current) return;
+
+    const unsubscribe = audioService.current.on("timeupdate", (e) => {
+      realSetIsPlaying(e.isPlaying);
+      setDuration(e.duration);
+      emitTimeUpdate({
+        currentTime: e.currentTime,
+        progressPercentage: e.progressPercentage,
+      });
+    });
+
+    const unsubscribe2 = audioService.current.on("ended", () => {
+      nextTrack();
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribe2();
+    };
+  }, [nextTrack, emitTimeUpdate]);
+
+  // Control play/pause directly (but also update state).
+  const setIsPlaying = (playing: boolean) => {
+    if (!audioService.current) return;
+
+    if (!playing) {
+      audioService.current.pause();
+      realSetIsPlaying(false);
+    } else {
+      audioService.current.resume();
+      realSetIsPlaying(true);
     }
   };
 
-  // Emit time updates
-  const emitTimeUpdates = (currentTime: number) => {
-    // Calculate the current playback percentage
-    let progressPercentage = (currentTime / duration) * 100;
-    if (Number.isNaN(progressPercentage)) progressPercentage = 0;
-    emitTimeUpdate({ currentTime, progressPercentage });
-  };
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies(getNextTrack): suppress dependency getNextTrack
+  // Preload next track to improve playback experience
   useEffect(() => {
-    if (hasPreloadedNext) return;
     if (!hasNextTrack) return;
 
-    const unsubscribe = addTimeObserver(({ progressPercentage }) => {
+    return addTimeObserver(({ progressPercentage }) => {
       if (progressPercentage < 70) return;
 
-      setHasPreloadedNext(true);
       const nextTrack = getNextTrack();
       if (!nextTrack) return;
 
-      // We don't really care about the response for this, it returns a static
-      // ok response because the transcoder starts as a background process.
-      // api.post(`/transcode/${nextTrack.id}`, null);
+      if (audioService.current) {
+        audioService.current.preload(nextTrack);
+      }
     });
-
-    return unsubscribe;
-  }, [hasNextTrack, hasPreloadedNext, addTimeObserver]);
+  }, [hasNextTrack, getNextTrack, addTimeObserver]);
 
   // Reset when track changes
   // We don't want to track when playToken changes because that would interrupt playback
-  // We do want to track when the currentTrackIndex changes; track could be identical
-  // biome-ignore lint/correctness/useExhaustiveDependencies(playToken): suppress dependency playToken
   // biome-ignore lint/correctness/useExhaustiveDependencies(setIsPlaying): suppress dependency setIsPlaying
-  // biome-ignore lint/correctness/useExhaustiveDependencies(currentTrackIndex): suppress dependency currentTrackIndex.
-  // biome-ignore lint/correctness/useExhaustiveDependencies(emitTimeUpdates): suppress dependency emitTimeUpdates.
+  // biome-ignore lint/correctness/useExhaustiveDependencies(emitTimeUpdate): suppress dependency emitTimeUpdate
   useEffect(() => {
-    if (endedTimer.current) clearTimeout(endedTimer.current);
+    if (!audioService.current) return;
 
-    // If the same track is in the queue multiple times in a row React will
-    // consider it as nothing changed. So we need to deal with it ourselves.
-    let isSameTrack = false;
+    setDuration(0);
+    emitTimeUpdate({
+      currentTime: 0,
+      progressPercentage: 0,
+    });
 
     if (!currentTrack) {
-      setSource(undefined);
+      audioService.current.stop();
       setIsPlaying(false);
-
-      // Make sure to also clear the <audio> tag to avoid the browser
-      // being able to interact with the last played track.
-      if (audioRef.current) {
-        audioRef.current.src = "";
-      }
     } else {
-      const streamUrl = `${currentTrack.streamUrl}?transcode=0&token=${playToken}`;
-
-      if (audioRef.current) {
-        isSameTrack = audioRef.current.src.indexOf(streamUrl) !== -1;
-      }
-
-      setSource(streamUrl);
+      audioService?.current.play(currentTrack);
     }
-
-    setHasPreloadedNext(false);
-
-    if (audioRef.current && isSameTrack) {
-      // The same track again? We can just rewind!
-      emitTimeUpdates(0);
-      audioRef.current.currentTime = 0;
-    } else {
-      // Otherwise we'll reset everything and onLoadedMetadata will set it
-      // to the correct values again.
-      emitTimeUpdates(0);
-      setDuration(0);
-    }
-  }, [currentTrack, currentTrackIndex]);
+  }, [currentTrack]);
 
   // Scrubbing functionality
-  const scrubTo = (updatedTime: number) => {
-    if (!audioRef.current) return;
+  const scrubTo = (updatedTime: number, forcePlay: boolean = false) => {
+    if (!audioService.current) return;
 
     // Keep the updatedTime within bounds
     updatedTime = Math.max(0, Math.min(duration, updatedTime));
-
-    // Set the currentTime
-    emitTimeUpdates(updatedTime);
-    audioRef.current.currentTime = updatedTime;
-  };
-
-  // Audio Event Listeners
-  const onLoadedMetadata = (event: ChangeEvent<HTMLAudioElement>) => {
-    let duration = event.target.duration;
-    if (!Number.isFinite(duration)) duration = currentTrack?.duration ?? 0;
-    setDuration(duration);
-  };
-
-  const onTimeUpdate = (event: ChangeEvent<HTMLAudioElement>) => {
-    if (endedTimer.current) clearTimeout(endedTimer.current);
-
-    if (
-      currentTrack &&
-      currentTrack.duration - event.target.currentTime < 0.2
-    ) {
-      endedTimer.current = setTimeout(nextTrack, 200);
-    }
-
-    emitTimeUpdates(event.target.currentTime);
-  };
-
-  const onEnded = (_event: ChangeEvent<HTMLAudioElement>) => {
-    if (endedTimer.current) clearTimeout(endedTimer.current);
-    nextTrack();
-  };
-
-  const onPause = (_event: ChangeEvent<HTMLAudioElement>) => {
-    if (endedTimer.current) clearTimeout(endedTimer.current);
-    if (!audioRef.current) return;
-    if (audioRef.current.ended) return;
-    setIsPlaying(false);
-  };
-
-  const onCanPlay = (_event: ChangeEvent<HTMLAudioElement>) => {
-    if (!audioRef.current) return;
-    audioRef.current.play();
+    audioService.current.scrubTo(updatedTime, forcePlay);
   };
 
   const value = {
@@ -206,29 +159,10 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
     addTimeObserver,
     setIsPlaying,
     scrubTo,
-    scrubAndPlay(updatedTime: number) {
-      setIsPlaying(true);
-      scrubTo(updatedTime);
-    },
   };
 
   return (
     <AudioManagerContext.Provider value={value}>
-      {source && (
-        <audio
-          ref={audioRef}
-          src={source}
-          preload="auto"
-          controls={true}
-          className="hidden absolute top-0 left-0 z-[1000]"
-          onLoadedMetadata={onLoadedMetadata}
-          onTimeUpdate={onTimeUpdate}
-          onCanPlay={onCanPlay}
-          onPause={onPause}
-          onPlay={() => realSetIsPlaying(true)}
-          onEnded={onEnded}
-        />
-      )}
       {children}
     </AudioManagerContext.Provider>
   );

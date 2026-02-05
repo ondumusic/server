@@ -25,7 +25,7 @@ const PlaybackControls = ({
   setShowUpNext: (_isPanelOpen: boolean) => void;
 }>) => {
   const { t } = useTranslation();
-  const { isPlaying, setIsPlaying, scrubAndPlay, addTimeObserver } =
+  const { isPlaying, setIsPlaying, scrubTo, addTimeObserver } =
     useAudioManager();
   const { currentTrack, hasNextTrack, hasPrevTrack, prevTrack, nextTrack } =
     useQueue();
@@ -47,7 +47,7 @@ const PlaybackControls = ({
           className="hidden lg:block disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md cursor-pointer"
           onClick={() => {
             if (hasPrevTrack && currentTime <= 2) prevTrack();
-            else scrubAndPlay(0);
+            else scrubTo(0, true);
           }}
         >
           <PrevIcon

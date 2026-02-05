@@ -17,7 +17,7 @@ export function useMediaSession() {
 
 const NavigatorMediaSessionProvider = ({ children }: PropsWithChildren) => {
   const { currentTrack, prevTrack, nextTrack } = useQueue();
-  const { addTimeObserver, isPlaying, setIsPlaying, duration, scrubAndPlay } =
+  const { addTimeObserver, isPlaying, setIsPlaying, duration, scrubTo } =
     useAudioManager();
   const [currentTime, setCurrentTime] = useState(0);
 
@@ -67,7 +67,7 @@ const NavigatorMediaSessionProvider = ({ children }: PropsWithChildren) => {
 
   // Setup the mediaSession Action Handlers
   // biome-ignore lint/correctness/useExhaustiveDependencies(setIsPlaying): suppress dependency setIsPlaying
-  // biome-ignore lint/correctness/useExhaustiveDependencies(scrubAndPlay): suppress dependency scrubAndPlay
+  // biome-ignore lint/correctness/useExhaustiveDependencies(scrubTo): suppress dependency scrubTo
   // biome-ignore lint/correctness/useExhaustiveDependencies(prevTrack): suppress dependency prevTrack
   // biome-ignore lint/correctness/useExhaustiveDependencies(nextTrack): suppress dependency nextTrack
   useEffect(() => {
@@ -88,7 +88,7 @@ const NavigatorMediaSessionProvider = ({ children }: PropsWithChildren) => {
 
     navigator.mediaSession.setActionHandler("previoustrack", () => {
       if (currentTime <= 2) prevTrack();
-      else scrubAndPlay(0);
+      else scrubTo(0, true);
     });
 
     navigator.mediaSession.setActionHandler("nexttrack", () => {

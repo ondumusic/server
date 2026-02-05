@@ -11,7 +11,7 @@ import {
 } from "../utils/updateAccentColor";
 
 export function NowPlaying() {
-  const { setIsPlaying, duration, scrubTo, scrubAndPlay, addTimeObserver } =
+  const { setIsPlaying, duration, scrubTo, addTimeObserver } =
     useAudioManager();
   const { currentTrack } = useQueue();
   const scrubTime = useRef<number>(0);
@@ -56,7 +56,7 @@ export function NowPlaying() {
   const onScrubEnd = () => {
     isScrubbing.current = false;
     if (!scrubTime.current) return;
-    scrubAndPlay(scrubTime.current);
+    scrubTo(scrubTime.current, true);
   };
 
   const trackName = currentTrack?.name || "";

@@ -37,7 +37,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     addQueueNext,
     addQueueAfter,
   } = useQueue();
-  const { isPlaying, setIsPlaying, scrubAndPlay } = useAudioManager();
+  const { isPlaying, setIsPlaying, scrubTo } = useAudioManager();
   const { promptConfirm } = useDialog();
 
   const value = {
@@ -51,10 +51,10 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
         // If the user wants to play the current track from the beginning again
         // it technically doesn't change the state.. but we can seek to 0.
         if (isPlaying && startWithTrack === currentTrack) {
-          scrubAndPlay(0);
+          scrubTo(0, true);
         }
       },
-      [setIsPlaying, isPlaying, currentTrack, replaceQueue, scrubAndPlay],
+      [setIsPlaying, isPlaying, currentTrack, replaceQueue, scrubTo],
     ),
     enqueueNext: useCallback(
       (tracks: Track[]) => {
