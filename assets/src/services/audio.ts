@@ -1,5 +1,8 @@
 import type { Track, UUID } from "../types";
 
+// TODO: Maybe make this configurable for user? Per album/track?
+const CROSSFADE_DURATION = 1000; // ms
+
 interface AudioEvent {
   duration: number;
   currentTime: number;
@@ -19,7 +22,8 @@ export class AudioService {
   #preloadedTrack?: Track;
   #playToken?: string;
   #endedTimer?: ReturnType<typeof setTimeout>;
-  #fadeTimer?: ReturnType<typeof setTimeout>;
+  #fadeTimer?: ReturnType<typeof requestAnimationFrame>;
+  #isFading?: boolean;
 
   destroy() {
     this.stop();
@@ -33,14 +37,33 @@ export class AudioService {
     });
   }
 
+  on(
+    name: AudioEventName,
+    callback: AudioEventHandler,
+  ): AudioEventUnsubscriber {
+    const currentHandlers = this.#eventListeners.get(name) || new Set();
+    currentHandlers.add(callback);
+    this.#eventListeners.set(name, currentHandlers);
+
+    return () => {
+      const currentHandlers = this.#eventListeners.get(name) || new Set();
+      currentHandlers.delete(callback);
+      this.#eventListeners.set(name, currentHandlers);
+    };
+  }
+
   setPlayToken(playToken: string) {
     this.#playToken = playToken;
   }
 
   play(track: Track) {
+    console.log("play", track.id);
+
     const currentRef = this.#getCurrentAudioRef();
     if (currentRef) {
-      currentRef.pause();
+      console.log("has current ref, do nothing");
+      // currentRef.pause();
+      return;
     }
 
     const audioRef = this.#getAudioRef(track);
@@ -69,11 +92,14 @@ export class AudioService {
   }
 
   preload(track: Track) {
+    if (this.#preloadedTrack && this.#preloadedTrack.id === track.id) return;
+    console.log("preload", track.id);
     const audioRef = this.#getAudioRef(track);
     const streamUrl = `${track.streamUrl}?transcode=0&token=${this.#playToken}`;
     audioRef.src = streamUrl;
     audioRef.load();
-    audioRef.volume = 1;
+    audioRef.volume = 0;
+
     this.#preloadedTrack = track;
   }
 
@@ -148,20 +174,50 @@ export class AudioService {
     this.#emit("timeupdate", audioEvent);
 
     if (event.type === "ended") {
+      if (this.#isFading) return;
+      console.log("event ended");
       clearTimeout(this.#endedTimer);
-      this.#emit("ended", { ...audioEvent, isPlaying: false });
+      this.#emitEnded();
     }
 
-    if (event.type === "timeupdate" && !this.#fadeTimer) {
+    if (event.type === "timeupdate") {
       // Set the endedTimer because sometimes (mostly when transcoding) there
       // are potential issues resulting in the ended event not being sent.
       if (audioEvent.duration - audioEvent.currentTime < 0.2) {
         clearTimeout(this.#endedTimer);
         this.#endedTimer = setTimeout(() => {
-          this.#emit("ended", { ...audioEvent, isPlaying: false });
+          if (this.#isFading) return;
+          console.log("timer ended");
+          this.#emitEnded();
         }, 200);
       }
+
+      if (
+        audioEvent.duration - audioEvent.currentTime <=
+        CROSSFADE_DURATION / 1000
+      ) {
+        console.log("should crossfade");
+        if (this.#preloadedTrack) {
+          console.log("starting crossfade for", this.#preloadedTrack.id);
+          this.#crossfade(this.#preloadedTrack);
+        }
+      }
     }
+  }
+
+  #emitEnded() {
+    const audioRef = this.#getCurrentAudioRef();
+    if (!audioRef) return;
+
+    let progressPercentage = (audioRef.currentTime / audioRef.duration) * 100;
+    if (Number.isNaN(progressPercentage)) progressPercentage = 0;
+
+    this.#emit("ended", {
+      duration: audioRef.duration,
+      currentTime: audioRef.currentTime,
+      progressPercentage,
+      isPlaying: !audioRef.paused && !audioRef.ended,
+    });
   }
 
   #emit(name: AudioEventName, event: AudioEvent) {
@@ -171,18 +227,55 @@ export class AudioService {
     });
   }
 
-  on(
-    name: AudioEventName,
-    callback: AudioEventHandler,
-  ): AudioEventUnsubscriber {
-    const currentHandlers = this.#eventListeners.get(name) || new Set();
-    currentHandlers.add(callback);
-    this.#eventListeners.set(name, currentHandlers);
+  #crossfade(to: Track) {
+    if (this.#isFading) return;
+    this.#isFading = true;
 
-    return () => {
-      const currentHandlers = this.#eventListeners.get(name) || new Set();
-      currentHandlers.delete(callback);
-      this.#eventListeners.set(name, currentHandlers);
+    if (this.#fadeTimer) cancelAnimationFrame(this.#fadeTimer);
+
+    const currentRef = this.#getCurrentAudioRef();
+    const nextRef = this.#getAudioRef(to);
+    if (!currentRef) return;
+
+    // Start next track at 0 volume to avoid pop
+    nextRef.volume = 0;
+    nextRef.play();
+
+    const startTime = performance.now();
+    let endedLastTrack = false;
+
+    const fade = () => {
+      const elapsed = performance.now() - startTime;
+      const progress = Math.min(elapsed / CROSSFADE_DURATION, 1);
+
+      // Use equal-power crossfade curve for smoother transition
+      const fadeOut = Math.cos(progress * Math.PI * 0.5);
+      const fadeIn = Math.sin(progress * Math.PI * 0.5);
+
+      currentRef.volume = fadeOut;
+      nextRef.volume = fadeIn;
+
+      if (progress >= 0.3 && progress <= 0.6) {
+        if (!endedLastTrack) {
+          endedLastTrack = true;
+          clearTimeout(this.#endedTimer);
+          this.#currentTrack = to;
+          this.#preloadedTrack = undefined;
+          this.#emitEnded();
+        }
+      }
+
+      if (progress < 1) {
+        this.#fadeTimer = requestAnimationFrame(fade);
+      } else {
+        this.#isFading = false;
+
+        currentRef.pause();
+        currentRef.currentTime = 0;
+        currentRef.volume = 1;
+      }
     };
+
+    this.#fadeTimer = requestAnimationFrame(fade);
   }
 }

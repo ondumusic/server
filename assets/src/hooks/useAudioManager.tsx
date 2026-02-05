@@ -130,15 +130,14 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     if (!audioService.current) return;
 
-    setDuration(0);
-    emitTimeUpdate({
-      currentTime: 0,
-      progressPercentage: 0,
-    });
-
     if (!currentTrack) {
       audioService.current.stop();
       setIsPlaying(false);
+      setDuration(0);
+      emitTimeUpdate({
+        currentTime: 0,
+        progressPercentage: 0,
+      });
     } else {
       audioService?.current.play(currentTrack);
     }
