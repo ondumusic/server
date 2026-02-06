@@ -290,6 +290,8 @@ export function SelectableList<T>({
     let scrollTo: number = 0;
     if (scrollBlockType === "center") {
       scrollTo = itemTop - scrollHeight / 2 + height / 2;
+    } else if (scrollBlockType === "start") {
+      scrollTo = itemTop;
     } else if (scrollBlockType === "nearest") {
       if (itemTop < viewportTop) {
         // Item is above viewport - scroll up to show it at top
