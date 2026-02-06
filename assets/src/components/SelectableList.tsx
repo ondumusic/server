@@ -33,6 +33,7 @@ type BaseProps<T> = {
   defaultFocusType?: ScrollLogicalPosition;
   itemHeight?: "auto" | number | ((item: T) => number);
   scrollOverscan?: number;
+  paddingBottom?: number;
   onChange: (selectedIds: Set<string>) => void;
   onDelete?: (selectedIds: Set<string>) => void;
   onSubmit?: (selectedIds: Set<string>) => void;
@@ -71,6 +72,7 @@ export function SelectableList<T>({
   allowDropFrom = [],
   itemHeight = "auto",
   scrollOverscan = 10,
+  paddingBottom = 0,
 }: PropsWithChildren<BaseProps<T> & DragProps>) {
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollBlockType, setScrollBlockType] = useState<
@@ -214,6 +216,9 @@ export function SelectableList<T>({
     const offsets: number[] = [0];
     let totalHeight = 0;
 
+    // Add padding bottom to height
+    totalHeight += paddingBottom;
+
     for (let i = 0; i < items.length; i++) {
       totalHeight += getItemHeight(items[i]);
       if (i < items.length - 1) {
@@ -222,7 +227,7 @@ export function SelectableList<T>({
     }
 
     return { totalHeight, offsets };
-  }, [items, getItemHeight]);
+  }, [items, getItemHeight, paddingBottom]);
 
   // Find the first visible item
   const startIndex = useMemo(() => {
@@ -714,7 +719,7 @@ export function SelectableList<T>({
       <div className="relative" style={{ height: totalHeight }}>
         <div
           className="will-change-transform"
-          style={{ transform: `translateY(${scrollOffsetY}px)` }}
+          style={{ paddingBottom, transform: `translateY(${scrollOffsetY}px)` }}
         >
           {visibleItems.map((item, visibleIndex) => {
             const index = startIndex + visibleIndex;

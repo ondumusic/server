@@ -139,7 +139,7 @@ export const ArtistAlbumListItem = memo(
 
       case "disc":
         return (
-          <div className="font-semibold text-xs text-gray-500 pl-6 @md:pl-44 @xl:pl-60">
+          <div className="font-semibold text-xs text-gray-500 pl-6 @md:pl-44 @xl:pl-60 pb-1">
             <Trans i18nKey="album.discNumber" disc={item.disc.number}>
               Disc {{ disc: item.disc.number }}
             </Trans>
@@ -184,7 +184,7 @@ export const ArtistAlbumListItem = memo(
 
               <div
                 className={classNames([
-                  "w-4 @md:w-6 group-hover/track:flex justify-end pt-1 flex-shrink-0",
+                  "w-4 @md:w-6 group-hover/track:flex justify-end flex-shrink-0",
                   !isPlaying ? "hidden" : "flex",
                 ])}
               >

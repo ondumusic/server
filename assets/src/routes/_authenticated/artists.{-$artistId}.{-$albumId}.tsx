@@ -135,7 +135,7 @@ function Artists() {
             album,
             firstAlbumInList: albumIndex === 0,
           },
-          ...tracksPerDisc.flatMap((disc): ListItem[] => {
+          ...tracksPerDisc.flatMap((disc, discIndex): ListItem[] => {
             const trackCount = disc.tracks.length;
 
             // Convert track to TrackItem
@@ -158,26 +158,31 @@ function Artists() {
             const placeholderCount = Math.max(0, 3 - album.tracks.length);
             for (let i = 0; i < placeholderCount; i++) {
               tracks.push({
-                id: `${disc.tracks[0].albumId}-placeholder-${i}`,
+                id: `${album.id}-placeholder-track-${i}`,
                 selectable: false,
                 type: "placeholder",
               });
             }
 
-            // Conditionally include disc headers
             if (showDiscNumbers) {
-              return [
-                {
-                  id: `${album.id}-disc-${disc.number}`,
-                  type: "disc",
+              tracks.unshift({
+                id: `${album.id}-disc-${disc.number}`,
+                type: "disc",
+                selectable: false,
+                disc,
+              });
+
+              // Add whitespace between previous disc and this disc
+              if (discIndex !== 0) {
+                tracks.unshift({
+                  id: `${album.id}-placeholder-disc-${disc.number}`,
                   selectable: false,
-                  disc,
-                },
-                ...tracks,
-              ];
-            } else {
-              return tracks;
+                  type: "placeholder",
+                });
+              }
             }
+
+            return tracks;
           }),
         ];
       }),
@@ -356,6 +361,7 @@ function Artists() {
         onDoubleClick={onDoubleClick}
         onContextMenu={onContextMenu}
         renderItem={renderItem}
+        paddingBottom={32}
       />
     </div>
   );
