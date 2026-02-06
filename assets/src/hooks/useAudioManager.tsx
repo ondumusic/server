@@ -49,7 +49,13 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
   const [isPlaying, realSetIsPlaying] = useState(false);
   const [emitTimeUpdate, addTimeObserver] = useObserver<TimeUpdateEvent>();
   const [duration, setDuration] = useState(0);
-  const { currentTrack, nextTrack, hasNextTrack, getNextTrack } = useQueue();
+  const {
+    currentTrack,
+    currentTrackIndex,
+    nextTrack,
+    hasNextTrack,
+    getNextTrack,
+  } = useQueue();
   const { playToken } = usePlayTokenQuery({ enabled: isLoggedIn });
 
   // Manage the AudioService (only execute on first render/mount)
@@ -111,17 +117,26 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     if (!hasNextTrack) return;
 
-    return addTimeObserver(({ progressPercentage }) => {
+    let preloadStarted = false;
+    const unsubscribe = addTimeObserver(({ progressPercentage }) => {
+      if (preloadStarted) return;
       if (progressPercentage < 70) return;
+      preloadStarted = true;
 
       const nextTrack = getNextTrack();
       if (!nextTrack) return;
 
       if (audioService.current) {
-        audioService.current.preload(nextTrack);
+        audioService.current.preload({
+          ...nextTrack,
+          queueIndex: currentTrackIndex + 1,
+        });
+        unsubscribe();
       }
     });
-  }, [hasNextTrack, getNextTrack, addTimeObserver]);
+
+    return unsubscribe;
+  }, [hasNextTrack, getNextTrack, currentTrackIndex, addTimeObserver]);
 
   // Reset when track changes
   // We don't want to track when playToken changes because that would interrupt playback
@@ -139,9 +154,12 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
         progressPercentage: 0,
       });
     } else {
-      audioService?.current.play(currentTrack);
+      audioService?.current.play({
+        ...currentTrack,
+        queueIndex: currentTrackIndex,
+      });
     }
-  }, [currentTrack]);
+  }, [currentTrack, currentTrackIndex]);
 
   // Scrubbing functionality
   const scrubTo = (updatedTime: number, forcePlay: boolean = false) => {
