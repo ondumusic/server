@@ -46,6 +46,9 @@ WORKDIR /app/assets
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
+# Generate router tree file
+RUN pnpm run generate-routes
+
 # Build the pnpm project
 RUN pnpm tsc -b
 RUN pnpm vite build --mode production
