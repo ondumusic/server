@@ -164,6 +164,7 @@ export class AudioService {
   pause() {
     const audioRef = this.#getCurrentAudioRef();
     if (!audioRef) return;
+
     audioRef.pause();
   }
 
@@ -202,8 +203,6 @@ export class AudioService {
       audioRef.addEventListener("ended", this.#emitStateChange);
       audioRef.addEventListener("play", this.#emitStateChange);
       audioRef.addEventListener("pause", this.#emitStateChange);
-      audioRef.addEventListener("loadedmetadata", this.#emitStateChange);
-      audioRef.addEventListener("durationchange", this.#emitStateChange);
       this.#audioRefs.set(audioTrack.id, audioRef);
     }
 
@@ -359,18 +358,17 @@ export class AudioService {
   #cleanupRefs() {
     const currentRef = this.#getCurrentAudioRef();
 
-    this.#log("todo cleanup refs");
+    this.#log("cleanup refs");
     this.#audioRefs.forEach((ref, trackId) => {
       if (ref === currentRef) return;
 
+      this.#log("cleanup ref", trackId);
       this.#audioRefs.delete(trackId);
 
       ref.removeEventListener("timeupdate", this.#emitStateChange);
       ref.removeEventListener("ended", this.#emitStateChange);
       ref.removeEventListener("play", this.#emitStateChange);
       ref.removeEventListener("pause", this.#emitStateChange);
-      ref.removeEventListener("loadedmetadata", this.#emitStateChange);
-      ref.removeEventListener("durationchange", this.#emitStateChange);
 
       ref.volume = 0;
       ref.src = "";
