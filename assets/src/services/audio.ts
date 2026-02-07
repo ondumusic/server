@@ -12,6 +12,7 @@ interface AudioEvent {
 
 interface AudioTrack extends Track {
   queueIndex: number;
+  transcode?: boolean;
 }
 
 type AudioEventName = "timeupdate" | "ended";
@@ -21,7 +22,6 @@ type AudioEventUnsubscriber = () => void;
 export class AudioService {
   #audioRefs: Map<UUID, HTMLAudioElement> = new Map();
   #eventListeners: Map<AudioEventName, Set<AudioEventHandler>> = new Map();
-  #useTranscode: boolean = false;
   #currentTrack?: AudioTrack;
   #preloadedTrack?: AudioTrack;
   #playToken?: string;
@@ -113,7 +113,8 @@ export class AudioService {
     this.#currentTrack = audioTrack;
 
     // Load the track
-    audioRef.src = this.#getStreamUrl(audioTrack);
+    this.#setSource(audioRef, audioTrack);
+
     audioRef.load();
     audioRef.volume = 1;
 
@@ -148,7 +149,7 @@ export class AudioService {
 
     this.#log("preload", audioTrack.id);
     const audioRef = this.#getAudioRef(audioTrack);
-    audioRef.src = this.#getStreamUrl(audioTrack);
+    this.#setSource(audioRef, audioTrack);
     audioRef.load();
     audioRef.volume = 0;
 
@@ -185,9 +186,34 @@ export class AudioService {
     return !audioRef.paused && !audioRef.ended;
   }
 
-  #getStreamUrl(audioTrack: AudioTrack) {
-    const transcode = this.#useTranscode ? "1" : "0";
-    return `${audioTrack.streamUrl}?transcode=${transcode}&token=${this.#playToken}`;
+  #setSource(audioRef: HTMLAudioElement, audioTrack: AudioTrack) {
+    const sources =
+      audioTrack.transcode === true
+        ? [`${audioTrack.streamUrl}?transcode=1&token=${this.#playToken}`]
+        : [
+            `${audioTrack.streamUrl}?transcode=0&token=${this.#playToken}`,
+            `${audioTrack.streamUrl}?transcode=1&token=${this.#playToken}`,
+          ];
+
+    audioRef.src = sources[0];
+
+    if (sources.length === 1) return;
+
+    let sourceIndex = 0;
+    const nextSource = () => {
+      this.#log("source failed, attempting next source");
+
+      if (sourceIndex >= sources.length) {
+        audioRef.removeEventListener("error", nextSource);
+        this.#log("no sources left");
+        return;
+      }
+
+      audioRef.src = sources[++sourceIndex];
+      audioRef.load();
+    };
+
+    audioRef.addEventListener("error", nextSource);
   }
 
   #getCurrentAudioRef() {
@@ -212,6 +238,7 @@ export class AudioService {
   #emitStateChange = (event: Event) => {
     const audioRef = this.#getCurrentAudioRef();
     if (audioRef !== event.target) return;
+    if (audioRef.readyState < 3) return;
 
     let duration = audioRef.duration || 0;
     if (Number.isNaN(duration)) duration = 0;
