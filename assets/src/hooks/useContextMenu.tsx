@@ -52,7 +52,6 @@ export function ContextMenu({
     x: number;
     y: number;
   } | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const menu = menuRef.current;
@@ -60,7 +59,7 @@ export function ContextMenu({
 
     // If there is no position we should hide the context menu.
     if (!position) {
-      setIsVisible(false);
+      menuRef.current?.close();
       return;
     }
 
@@ -90,7 +89,7 @@ export function ContextMenu({
     // In the next animation frame actually make it visible.
     // This is delayed to avoid it being visible in previous
     // coordinates and then popping to the correct ones.
-    requestAnimationFrame(() => setIsVisible(true));
+    requestAnimationFrame(() => menuRef.current?.showModal());
   }, [position]);
 
   useEffect(() => {
@@ -142,9 +141,8 @@ export function ContextMenu({
     <dialog
       ref={menuRef}
       className={classNames([
-        "fixed bg-accent-50 text-selected transition-colors rounded-lg shadow-xl border border-accent-200 py-1 min-w-48 z-50",
-        "transition-opacity duration-75 dialog-contextmenu",
-        isVisible ? "opacity-100" : "opacity-0",
+        "fixed bg-accent-50 text-selected transition-colors rounded-lg shadow-2xl border border-accent-200/50 py-1 min-w-48 z-50",
+        "transition-opacity duration-75 dialog-contextmenu p-1",
       ])}
       style={{
         left: adjustedPosition ? `${adjustedPosition.x}px` : "0px",
@@ -159,7 +157,10 @@ export function ContextMenu({
             item.onClick();
             onClose();
           }}
-          className="w-full px-4 py-2 text-left flex text-sm items-center gap-3 outline-none hover:bg-accent-200 text-selected transition-colors cursor-pointer"
+          className={classNames([
+            "w-full px-4 py-2 text-left flex text-sm items-center gap-3 rounded-md",
+            "outline-none hover:bg-accent-200 text-selected transition-colors cursor-pointer",
+          ])}
         >
           <span>{item.label}</span>
         </button>

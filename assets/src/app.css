@@ -51,9 +51,6 @@
 }
 
 dialog {
-  padding: 0;
-  border: none;
-  opacity: 0;
   transform: scale(0.95);
   transition:
     opacity 200ms,
