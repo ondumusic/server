@@ -48,6 +48,7 @@ export function ContextMenu({
   onClose(): void;
 }>) {
   const menuRef = useRef<HTMLDialogElement>(null);
+  const [focusedIndex, setFocusedIndex] = useState(0);
   const [adjustedPosition, setAdjustedPosition] = useState<{
     x: number;
     y: number;
@@ -115,25 +116,51 @@ export function ContextMenu({
       }
     };
 
-    // Close on Escape button pressed
-    // TODO: Maybe need more generic Keyboard handler in the near future.
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        onClose();
+    // Handle keyboard button presses
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case "Escape":
+          e.stopPropagation();
+          onClose();
+          break;
+
+        case "ArrowDown":
+          e.preventDefault();
+          setFocusedIndex((prev) => Math.min(items.length - 1, prev + 1));
+          break;
+
+        case "ArrowUp":
+          e.preventDefault();
+          setFocusedIndex((prev) => Math.max(0, prev - 1));
+          break;
+
+        case "Enter":
+        case " ": {
+          e.preventDefault();
+
+          const onClick = items[focusedIndex].onClick;
+          if (onClick) {
+            onClick();
+            onClose();
+          }
+
+          break;
+        }
       }
     };
 
     document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleEscape, true);
+    document.addEventListener("keydown", handleKeyDown, true);
 
     return () => {
       document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleEscape, true);
+      document.removeEventListener("keydown", handleKeyDown, true);
     };
-  }, [onClose]);
+  }, [onClose, focusedIndex, items]);
 
+  // On mount immediately show the modal
   useEffect(() => {
+    setFocusedIndex(0);
     menuRef.current?.showModal();
   }, []);
 
@@ -142,14 +169,14 @@ export function ContextMenu({
       ref={menuRef}
       className={classNames([
         "fixed bg-accent-50 text-selected transition-colors rounded-lg shadow-2xl border border-accent-200/50 py-1 min-w-48 z-50",
-        "transition-opacity duration-75 dialog-contextmenu p-1",
+        "transition-opacity duration-75 dialog-contextmenu p-1 space-y-0.5",
       ])}
       style={{
         left: adjustedPosition ? `${adjustedPosition.x}px` : "0px",
         top: adjustedPosition ? `${adjustedPosition.y}px` : "0px",
       }}
     >
-      {items.map((item) => (
+      {items.map((item, itemIndex) => (
         <button
           key={item.key}
           type="button"
@@ -157,9 +184,13 @@ export function ContextMenu({
             item.onClick();
             onClose();
           }}
+          onMouseMove={() => {
+            setFocusedIndex(itemIndex);
+          }}
           className={classNames([
             "w-full px-4 py-2 text-left flex text-sm items-center gap-3 rounded-md",
-            "outline-none hover:bg-accent-200 text-selected transition-colors cursor-pointer",
+            "outline-none text-selected transition-colors cursor-pointer",
+            focusedIndex === itemIndex && "bg-accent-200",
           ])}
         >
           <span>{item.label}</span>
