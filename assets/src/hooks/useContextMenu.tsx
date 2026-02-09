@@ -47,7 +47,7 @@ export function ContextMenu({
   position: ContextMenuPosition;
   onClose(): void;
 }>) {
-  const menuRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDialogElement>(null);
   const [adjustedPosition, setAdjustedPosition] = useState<{
     x: number;
     y: number;
@@ -96,7 +96,22 @@ export function ContextMenu({
   useEffect(() => {
     // Close on click outside of context menu
     const handleClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (!menuRef.current) return;
+
+      if (!menuRef.current.contains(e.target as Node)) {
+        onClose();
+        return;
+      }
+
+      // For <dialog> the click on modal backdrop counts as clicking within
+      // the modal so we can compare coordinates to see if it's inside or out.
+      const modalRect = menuRef.current.getBoundingClientRect();
+      if (
+        e.clientX < modalRect.left ||
+        e.clientX > modalRect.right ||
+        e.clientY < modalRect.top ||
+        e.clientY > modalRect.bottom
+      ) {
         onClose();
       }
     };
@@ -110,32 +125,25 @@ export function ContextMenu({
       }
     };
 
-    // Close on scroll to avoid it becoming more detached.
-    // Alternative would be disabling scroll in all scrollable panes,
-    // but I think we should try this first.
-    const handleScroll = () => {
-      onClose();
-    };
-
     document.addEventListener("mousedown", handleClick);
     document.addEventListener("keydown", handleEscape, true);
-    document.addEventListener("wheel", handleScroll, { passive: true });
-    document.addEventListener("scroll", handleScroll, true);
 
     return () => {
       document.removeEventListener("mousedown", handleClick);
       document.removeEventListener("keydown", handleEscape, true);
-      document.removeEventListener("scroll", handleScroll, true);
-      document.removeEventListener("wheel", handleScroll);
     };
   }, [onClose]);
 
+  useEffect(() => {
+    menuRef.current?.showModal();
+  }, []);
+
   return (
-    <div
+    <dialog
       ref={menuRef}
       className={classNames([
         "fixed bg-accent-50 text-selected transition-colors rounded-lg shadow-xl border border-accent-200 py-1 min-w-48 z-50",
-        "transition-opacity duration-75",
+        "transition-opacity duration-75 dialog-contextmenu",
         isVisible ? "opacity-100" : "opacity-0",
       ])}
       style={{
@@ -151,12 +159,12 @@ export function ContextMenu({
             item.onClick();
             onClose();
           }}
-          className="w-full px-4 py-2 text-left flex text-sm items-center gap-3 hover:bg-accent-200 text-selected transition-colors cursor-pointer"
+          className="w-full px-4 py-2 text-left flex text-sm items-center gap-3 outline-none hover:bg-accent-200 text-selected transition-colors cursor-pointer"
         >
           <span>{item.label}</span>
         </button>
       ))}
-    </div>
+    </dialog>
   );
 }
 

@@ -53,9 +53,6 @@
 dialog {
   padding: 0;
   border: none;
-  border-radius: 0.5rem;
-  max-width: 28rem;
-  width: calc(100% - 2rem);
   opacity: 0;
   transform: scale(0.95);
   transition:
@@ -65,12 +62,17 @@ dialog {
     overlay 200ms allow-discrete;
 }
 
+dialog.dialog-modal {
+  max-width: 28rem;
+  width: calc(100% - 2rem);
+}
+
 dialog[open] {
   opacity: 1;
   transform: scale(1);
 }
 
-dialog::backdrop {
+dialog.dialog-modal::backdrop {
   background-color: rgba(0, 0, 0, 0);
   transition:
     background-color 200ms,
@@ -78,8 +80,12 @@ dialog::backdrop {
     overlay 200ms allow-discrete;
 }
 
-dialog[open]::backdrop {
+dialog.dialog-modal[open]::backdrop {
   background-color: rgba(0, 0, 0, 0.3);
+}
+
+dialog.dialog-contextmenu::backdrop {
+  background-color: rgba(0, 0, 0, 0);
 }
 
 @starting-style {
@@ -88,7 +94,7 @@ dialog[open]::backdrop {
     transform: scale(0.95);
   }
 
-  dialog[open]::backdrop {
+  dialog.dialog-modal[open]::backdrop {
     background-color: rgba(0, 0, 0, 0);
   }
 }

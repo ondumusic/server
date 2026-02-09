@@ -88,7 +88,7 @@ function Dialog({
       className={classNames([
         "self-center justify-self-center outline-none",
         "rounded-md shadow-2xl bg-panel-bg text-panel-fg",
-        "max-w-md",
+        "max-w-md dialog-modal",
       ])}
     >
       <div className="p-6 space-y-8">
