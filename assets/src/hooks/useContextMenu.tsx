@@ -179,7 +179,7 @@ export function ContextMenu({
     <dialog
       ref={menuRef}
       className={classNames([
-        "fixed bg-accent-50 text-selected transition-colors rounded-lg shadow-2xl border border-accent-200/50 py-1 min-w-48 z-50",
+        "fixed bg-accent-50 text-selected transition-colors rounded-lg shadow-2xl border border-accent-200/50 py-1 min-w-48 max-w-64 z-50",
         "transition-opacity duration-75 dialog-contextmenu p-1 space-y-0.5",
       ])}
       style={{
@@ -218,7 +218,9 @@ export function ContextMenu({
                   focusedIndex === menuItemIndex && "bg-accent-200",
                 ])}
               >
-                <span>{item.label}</span>
+                <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
+                  {item.label}
+                </span>
               </button>
             );
 

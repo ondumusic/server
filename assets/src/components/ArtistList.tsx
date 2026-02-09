@@ -10,6 +10,7 @@ import {
 import { useInfiniteArtistsQuery } from "../hooks/useInfiniteArtistsQuery";
 import { usePlayer } from "../hooks/usePlayer";
 import { useQueue } from "../hooks/useQueue";
+import i18next from "../i18next";
 import type { Artist, Track, UUID } from "../types";
 import { batch } from "../utils/batch";
 import { paginatedMap } from "../utils/paginatedMap";
@@ -43,12 +44,12 @@ export function ArtistList({
   );
 
   const populateUpNext = useCallback(
-    async (artist: Artist) => {
+    async (artist: Artist, random: boolean = false) => {
       let firstTracks = true;
       for await (const tracks of batch<Track>(
         trackApi.paginateTracks({
           artistId: artist.id,
-          // sortBy: "random",
+          sortBy: random ? "random" : "default",
         }),
         10,
       )) {
@@ -83,6 +84,41 @@ export function ArtistList({
         });
     },
     [listItems, navigate],
+  );
+
+  const onContextMenu = useCallback(
+    (selectedIds: Set<string>) => {
+      const artist = listItems.find((artist) => selectedIds.has(artist.id));
+      if (!artist) return [];
+
+      return [
+        {
+          type: "item",
+          key: "play_next",
+          label: i18next.t("contextMenu.playArtist", {
+            defaultValue: 'Play "{{ artist }}"',
+            artist: artist.name,
+          }),
+          onClick: async () => {
+            if (!(await userConfirmQueueReplace())) return;
+            populateUpNext(artist);
+          },
+        },
+        {
+          type: "item",
+          key: "play_after",
+          label: i18next.t("contextMenu.shuffleArtist", {
+            defaultValue: 'Shuffle "{{ artist }}"',
+            artist: artist.name,
+          }),
+          onClick: async () => {
+            if (!(await userConfirmQueueReplace())) return;
+            populateUpNext(artist, true);
+          },
+        },
+      ];
+    },
+    [listItems, userConfirmQueueReplace, populateUpNext],
   );
 
   const onDoubleClick = useCallback(
@@ -124,7 +160,7 @@ export function ArtistList({
       onTypeMatch={onTypeMatch}
       defaultFocusType="center"
       selectedIds={currentArtist ? new Set([currentArtist.id]) : new Set([])}
-      onContextMenu={() => []}
+      onContextMenu={onContextMenu}
       onChange={onChange}
       onSubmit={onSubmit}
       onDoubleClick={onDoubleClick}

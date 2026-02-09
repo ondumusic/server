@@ -20,6 +20,14 @@
     "trackCount_other": "{{count}} tracks, {{duration}}",
     "discNumber": "Disc {{disc}}"
   },
+  "contextMenu": {
+    "playArtist": "Play \"{{ artist }}\"",
+    "shuffleArtist": "Shuffle \"{{ artist }}\"",
+    "playNext_one": "Play Next",
+    "playNext_other": "Play Next",
+    "playAfter_one": "Play After",
+    "playAfter_other": "Play After"
+  },
   "loading": {
     "text": "Loading"
   },
@@ -41,25 +49,8 @@
     "emptyView": "No upcoming tracks.",
     "title": "Up Next"
   },
-  "formattedDuration": {
-    "minutes_one": "{{ count }} minute",
-    "minutes_other": "{{ count }} minutes",
-    "hours_one": "{{ count }} hour",
-    "hours_other": "{{ count }} hours",
-    "hoursAndMinutes_one": "{{ count }} hour, $t(formattedDuration.minutes, {\"count\": {{ minutes }}})",
-    "hoursAndMinutes_other": "{{ count }} hours, $t(formattedDuration.minutes, {\"count\": {{ minutes }}})"
-  },
   "emptyView": {
     "noResults": "No Results"
-  },
-  "contextMenu": {
-    "playNext_one": "Play Next",
-    "playNext_other": "Play Next",
-    "playAfter_one": "Play After",
-    "playAfter_other": "Play After"
-  },
-  "onboarding": {
-    "firstLoadWait": "Finding your music..."
   },
   "loginForm": {
     "title": "Login",
@@ -70,6 +61,9 @@
     "button": {
       "login": "Login"
     }
+  },
+  "onboarding": {
+    "firstLoadWait": "Finding your music..."
   },
   "settingsForm": {
     "title": "Setup MusicBox",
@@ -110,5 +104,13 @@
     "button": {
       "login": "Signup"
     }
+  },
+  "formattedDuration": {
+    "minutes_one": "{{ count }} minute",
+    "minutes_other": "{{ count }} minutes",
+    "hours_one": "{{ count }} hour",
+    "hours_other": "{{ count }} hours",
+    "hoursAndMinutes_one": "{{ count }} hour, $t(formattedDuration.minutes, {\"count\": {{ minutes }}})",
+    "hoursAndMinutes_other": "{{ count }} hours, $t(formattedDuration.minutes, {\"count\": {{ minutes }}})"
   }
 }
