@@ -5,6 +5,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -15,11 +16,17 @@ interface ContextMenuPosition {
   y: number;
 }
 
-export interface ContextMenuItem {
-  key: string;
-  label: string;
-  onClick(): void;
-}
+export type ContextMenuItem =
+  | {
+      type: "divider";
+      key: string;
+    }
+  | {
+      type: string;
+      key: string;
+      label: string;
+      onClick(): void;
+    };
 
 type ContextMenuFunction = () => ContextMenuItem[];
 type ContextMenuInput = ContextMenuItem[] | ContextMenuFunction;
@@ -53,6 +60,10 @@ export function ContextMenu({
     x: number;
     y: number;
   } | null>(null);
+
+  const menuItems = useMemo(() => {
+    return items.filter((item) => item.type === "item");
+  }, [items]);
 
   useEffect(() => {
     const menu = menuRef.current;
@@ -126,7 +137,7 @@ export function ContextMenu({
 
         case "ArrowDown":
           e.preventDefault();
-          setFocusedIndex((prev) => Math.min(items.length - 1, prev + 1));
+          setFocusedIndex((prev) => Math.min(menuItems.length - 1, prev + 1));
           break;
 
         case "ArrowUp":
@@ -138,9 +149,9 @@ export function ContextMenu({
         case " ": {
           e.preventDefault();
 
-          const onClick = items[focusedIndex].onClick;
-          if (onClick) {
-            onClick();
+          const menuItem = menuItems[focusedIndex];
+          if (menuItem && menuItem.type === "item") {
+            menuItem.onClick();
             onClose();
           }
 
@@ -156,7 +167,7 @@ export function ContextMenu({
       document.removeEventListener("mousedown", handleClick);
       document.removeEventListener("keydown", handleKeyDown, true);
     };
-  }, [onClose, focusedIndex, items]);
+  }, [onClose, focusedIndex, menuItems]);
 
   // On mount immediately show the modal
   useEffect(() => {
@@ -176,26 +187,45 @@ export function ContextMenu({
         top: adjustedPosition ? `${adjustedPosition.y}px` : "0px",
       }}
     >
-      {items.map((item, itemIndex) => (
-        <button
-          key={item.key}
-          type="button"
-          onClick={() => {
-            item.onClick();
-            onClose();
-          }}
-          onMouseMove={() => {
-            setFocusedIndex(itemIndex);
-          }}
-          className={classNames([
-            "w-full px-4 py-2 text-left flex text-sm items-center gap-3 rounded-md",
-            "outline-none text-selected transition-colors cursor-pointer",
-            focusedIndex === itemIndex && "bg-accent-200",
-          ])}
-        >
-          <span>{item.label}</span>
-        </button>
-      ))}
+      {items.map((item) => {
+        // The items index and menuItems index can differ because of non-selectable elements
+        const menuItemIndex = menuItems.indexOf(item);
+
+        switch (item.type) {
+          case "divider":
+            return (
+              <div
+                key={item.key}
+                className="my-1 h-[1px] mx-6 overflow-hidden bg-accent-200"
+              ></div>
+            );
+
+          case "item":
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => {
+                  item.onClick();
+                  onClose();
+                }}
+                onMouseMove={() => {
+                  setFocusedIndex(menuItemIndex);
+                }}
+                className={classNames([
+                  "w-full px-4 py-2 text-left flex text-sm items-center gap-3 rounded-md",
+                  "outline-none text-selected transition-colors cursor-pointer",
+                  focusedIndex === menuItemIndex && "bg-accent-200",
+                ])}
+              >
+                <span>{item.label}</span>
+              </button>
+            );
+
+          default:
+            return null;
+        }
+      })}
     </dialog>
   );
 }

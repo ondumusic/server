@@ -254,6 +254,7 @@ function Artists() {
 
         return [
           {
+            type: "item",
             key: "play_next",
             label: i18next.t("contextMenu.playNext", {
               defaultValue: "Play Next",
@@ -264,6 +265,7 @@ function Artists() {
             },
           },
           {
+            type: "item",
             key: "play_after",
             label: i18next.t("contextMenu.playAfter", {
               defaultValue: "Play After",
@@ -281,6 +283,7 @@ function Artists() {
 
       return [
         {
+          type: "item",
           key: "play_next",
           label: i18next.t("contextMenu.playNext", {
             defaultValue: "Play Next",
@@ -291,6 +294,7 @@ function Artists() {
           },
         },
         {
+          type: "item",
           key: "play_after",
           label: i18next.t("contextMenu.playAfter", {
             defaultValue: "Play After",
