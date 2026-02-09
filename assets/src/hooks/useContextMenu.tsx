@@ -75,14 +75,14 @@ export function ContextMenu({
     let { x, y } = position;
 
     if (x + rect.width > viewport.width) {
-      x = viewport.width - rect.width - 8;
+      x = viewport.width - rect.width - 16;
     }
-    if (x < 0) x = 8;
+    if (x < 0) x = 16;
 
     if (y + rect.height > viewport.height) {
-      y = viewport.height - rect.height - 8;
+      y = viewport.height - rect.height - 16;
     }
-    if (y < 0) y = 8;
+    if (y < 0) y = 16;
 
     // Update the position of the context menu
     setAdjustedPosition({ x, y });
