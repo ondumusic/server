@@ -1,8 +1,9 @@
 defmodule MusicBox.Tracks.Query do
+  @moduledoc false
   import Ecto.Query
 
-  alias MusicBox.Tracks.Track
   alias MusicBox.Tracks.IndexForm, as: F
+  alias MusicBox.Tracks.Track
 
   def paginate_tracks(%F{} = form) do
     Track.preloaded()
@@ -32,10 +33,13 @@ defmodule MusicBox.Tracks.Query do
   end
 
   defp set_order_by(query, _form) do
-    order_by(query, [album: al, artist: a],
+    order_by(query, [track: t, album: al, artist: a],
       asc: a.name,
       desc_nulls_last: al.release_year,
-      asc: al.name
+      asc: al.name,
+      asc: t.disc,
+      asc_nulls_last: t.number,
+      asc: t.name
     )
   end
 end

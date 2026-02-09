@@ -1,4 +1,5 @@
 defmodule MusicBox.Tracks.IndexForm do
+  @moduledoc false
   use MusicBox.Schema
 
   @sort_options ~w(default random)a
