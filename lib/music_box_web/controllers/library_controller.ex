@@ -34,6 +34,10 @@ defmodule MusicBoxWeb.LibraryController do
     render(conn, :album, album: conn.assigns.album)
   end
 
+  def tracks(conn, params) do
+    render(conn, :tracks, page: Tracks.paginate_tracks(params))
+  end
+
   def track(conn, _params) do
     render(conn, :track, track: conn.assigns.track, album: conn.assigns.track.album)
   end

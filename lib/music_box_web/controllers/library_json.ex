@@ -35,6 +35,18 @@ defmodule MusicBoxWeb.LibraryJSON do
     }
   end
 
+  def tracks(%{page: page} = assigns) do
+    %{
+      __type: "page",
+      __subtype: "track",
+      pageNumber: page.page_number,
+      pageSize: page.page_size,
+      totalEntries: page.total_entries,
+      totalPages: page.total_pages,
+      entries: json_map(assigns, [:page, :entries], :track)
+    }
+  end
+
   def album(%{album: album} = assigns) do
     artwork_filename =
       case album do
@@ -77,4 +89,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       streamUrl: ~p"/stream/#{track}"
     }
   end
+
+  def track(%{track: %{album: album} = track}),
+    do: track(%{track: track, album: album})
 end
