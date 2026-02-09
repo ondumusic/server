@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { type PropsWithChildren, useCallback, useMemo } from "react";
-import { albumApi } from "../api";
+import { trackApi } from "../api";
 import { ArtistListItem } from "../components/ArtistListItem";
 import { Loading } from "../components/Loading";
 import {
@@ -10,7 +10,8 @@ import {
 import { useInfiniteArtistsQuery } from "../hooks/useInfiniteArtistsQuery";
 import { usePlayer } from "../hooks/usePlayer";
 import { useQueue } from "../hooks/useQueue";
-import type { Artist, UUID } from "../types";
+import type { Artist, Track, UUID } from "../types";
+import { batch } from "../utils/batch";
 import { paginatedMap } from "../utils/paginatedMap";
 
 function isArtist(artist: Artist, artistId: string): boolean {
@@ -43,13 +44,19 @@ export function ArtistList({
 
   const populateUpNext = useCallback(
     async (artist: Artist) => {
-      let firstAlbum = true;
-      for await (const album of albumApi.paginateAlbums(artist.id)) {
-        if (firstAlbum) {
-          replaceQueue(album.tracks);
-          firstAlbum = false;
+      let firstTracks = true;
+      for await (const tracks of batch<Track>(
+        trackApi.paginateTracks({
+          artistId: artist.id,
+          // sortBy: "random",
+        }),
+        10,
+      )) {
+        if (firstTracks) {
+          replaceQueue(tracks);
+          firstTracks = false;
         } else {
-          enqueueAfter(album.tracks);
+          enqueueAfter(tracks);
         }
       }
     },

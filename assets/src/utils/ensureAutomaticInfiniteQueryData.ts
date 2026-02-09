@@ -19,11 +19,16 @@ export async function* ensureAutomaticInfiniteQueryData<T>(
     readonly unknown[],
     unknown
   >,
+  forceFetch: boolean = false,
 ) {
   if (typeof query.queryFn !== "function") return;
   const queryFn = query.queryFn as QueryFunction<T>;
 
-  const result = await queryClient.ensureInfiniteQueryData(query);
+  // In some cases, mostly when shuffling, we want data to be fresh all the time
+  const result = forceFetch
+    ? await queryClient.fetchInfiniteQuery(query)
+    : await queryClient.ensureInfiniteQueryData(query);
+
   const totalPages = result.pages[0].totalPages ?? 0;
 
   let pageIndex = 0;

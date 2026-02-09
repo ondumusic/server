@@ -55,7 +55,7 @@ export interface Disc {
 
 export interface Page<T> {
   __type: "page";
-  __subtype: "artist" | "album";
+  __subtype: "artist" | "album" | "track";
   pageNumber: number;
   pageSize: number;
   totalPages: number;
