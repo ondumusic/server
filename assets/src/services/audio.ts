@@ -109,6 +109,11 @@ export class AudioService {
       return;
     }
 
+    // Make sure the previous audio element doesn't call onerror event.
+    if (currentRef) {
+      currentRef.onerror = null;
+    }
+
     // Set currenTrack to the new Track
     this.#currentTrack = audioTrack;
 
@@ -202,6 +207,13 @@ export class AudioService {
 
     let sourceIndex = 0;
     const nextSource = () => {
+      // MEDIA_ERR_ABORTED || MEDIA_ERR_NETWORK
+      if (audioRef.error?.code === 1 || audioRef.error?.code === 12) {
+        audioRef.onerror = null;
+        this.#log("audio aborted");
+        return;
+      }
+
       this.#log("source failed, attempting next source");
 
       if (sourceIndex >= sources.length) {
