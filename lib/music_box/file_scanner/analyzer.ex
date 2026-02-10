@@ -127,7 +127,16 @@ defmodule MusicBox.FileScanner.Analyzer do
   end
 
   defp parse(%Metadata{} = metadata, [:disc = key | keys], json) do
-    value = get_tag(json, to_string(key)) || ""
+    value =
+      [
+        get_tag(json, "disc"),
+        get_tag(json, "tpa"),
+        "1"
+      ]
+      |> Enum.reject(&is_nil/1)
+      |> Enum.map(&String.trim/1)
+      |> List.first()
+
     current_value = Map.get(metadata, key)
 
     disc =
