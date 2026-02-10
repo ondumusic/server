@@ -1,6 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
 import { type PropsWithChildren, useCallback, useMemo } from "react";
-import { trackApi } from "../api";
 import { ArtistListItem } from "../components/ArtistListItem";
 import { Loading } from "../components/Loading";
 import {
@@ -9,10 +8,8 @@ import {
 } from "../components/SelectableList";
 import { useInfiniteArtistsQuery } from "../hooks/useInfiniteArtistsQuery";
 import { usePlayer } from "../hooks/usePlayer";
-import { useQueue } from "../hooks/useQueue";
 import i18next from "../i18next";
-import type { Artist, Track, UUID } from "../types";
-import { batch } from "../utils/batch";
+import type { Artist, UUID } from "../types";
 import { paginatedMap } from "../utils/paginatedMap";
 
 function isArtist(artist: Artist, artistId: string): boolean {
@@ -25,8 +22,7 @@ export function ArtistList({
   artistId?: UUID;
 }>) {
   const navigate = useNavigate();
-  const { enqueueAfter, userConfirmQueueReplace } = usePlayer();
-  const { replaceQueue } = useQueue();
+  const { populateUpNext, userConfirmQueueReplace } = usePlayer();
 
   const {
     hasItem: hasArtist,
@@ -41,27 +37,6 @@ export function ArtistList({
   const listItems = useMemo(
     () => paginatedMap<Artist, Artist>(data, (artist) => artist),
     [data],
-  );
-
-  const populateUpNext = useCallback(
-    async (artist: Artist, random: boolean = false) => {
-      let firstTracks = true;
-      for await (const tracks of batch<Track>(
-        trackApi.paginateTracks({
-          artistId: artist.id,
-          sortBy: random ? "random" : "default",
-        }),
-        10,
-      )) {
-        if (firstTracks) {
-          replaceQueue(tracks);
-          firstTracks = false;
-        } else {
-          enqueueAfter(tracks);
-        }
-      }
-    },
-    [replaceQueue, enqueueAfter],
   );
 
   const onTypeMatch = useCallback((item: Artist, query: string) => {
@@ -101,7 +76,7 @@ export function ArtistList({
           }),
           onClick: async () => {
             if (!(await userConfirmQueueReplace())) return;
-            populateUpNext(artist);
+            populateUpNext({ artistId: artist.id });
           },
         },
         {
@@ -113,7 +88,7 @@ export function ArtistList({
           }),
           onClick: async () => {
             if (!(await userConfirmQueueReplace())) return;
-            populateUpNext(artist, true);
+            populateUpNext({ artistId: artist.id, random: true });
           },
         },
       ];
@@ -124,7 +99,7 @@ export function ArtistList({
   const onDoubleClick = useCallback(
     async (artist: Artist) => {
       if (!(await userConfirmQueueReplace())) return;
-      populateUpNext(artist);
+      populateUpNext({ artistId: artist.id });
     },
     [userConfirmQueueReplace, populateUpNext],
   );
@@ -134,7 +109,7 @@ export function ArtistList({
       if (!(await userConfirmQueueReplace())) return;
       const artist = listItems.find((artist) => selectedIds.has(artist.id));
       if (!artist) return;
-      populateUpNext(artist);
+      populateUpNext({ artistId: artist.id });
     },
     [listItems, userConfirmQueueReplace, populateUpNext],
   );

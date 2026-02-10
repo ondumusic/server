@@ -4,17 +4,26 @@ import {
   useCallback,
   useContext,
 } from "react";
+import { trackApi } from "../api";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useDialog } from "../hooks/useDialog";
 import { useQueue } from "../hooks/useQueue";
 import i18next from "../i18next";
-import type { Track } from "../types";
+import type { Track, UUID } from "../types";
+import { batch } from "../utils/batch";
+
+interface PopulateInput {
+  artistId?: UUID;
+  albumId?: UUID;
+  random?: boolean;
+}
 
 export interface PlayerContext {
   // Queue management
   enqueueAndPlay(tracks: Track[], startWithTrack?: Track): void;
   enqueueNext(tracks: Track[]): void;
   enqueueAfter(tracks: Track[]): void;
+  populateUpNext(input: PopulateInput): void;
   userConfirmQueueReplace(): Promise<boolean>;
 }
 
@@ -22,6 +31,7 @@ const PlayerContext = createContext<PlayerContext>({
   enqueueAndPlay: (_tracks, _startWithTrack?) => {},
   enqueueNext: (_tracks) => {},
   enqueueAfter: (_tracks) => {},
+  populateUpNext: (_input) => {},
   userConfirmQueueReplace: () => new Promise((resolve) => resolve(true)),
 });
 
@@ -39,6 +49,38 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   } = useQueue();
   const { isPlaying, setIsPlaying, scrubTo } = useAudioManager();
   const { promptConfirm } = useDialog();
+
+  const enqueueAfter = useCallback(
+    (tracks: Track[]) => {
+      if (tracks.length === 0) return;
+
+      addQueueAfter(tracks);
+      if (!isPlaying && !currentTrack) setIsPlaying(true);
+    },
+    [setIsPlaying, isPlaying, currentTrack, addQueueAfter],
+  );
+
+  const populateUpNext = useCallback(
+    async ({ artistId, albumId, random = false }: PopulateInput) => {
+      let firstTracks = true;
+      for await (const tracks of batch<Track>(
+        trackApi.paginateTracks({
+          artistId,
+          albumId,
+          sortBy: random === true ? "random" : "default",
+        }),
+        10,
+      )) {
+        if (firstTracks) {
+          replaceQueue(tracks);
+          firstTracks = false;
+        } else {
+          enqueueAfter(tracks);
+        }
+      }
+    },
+    [replaceQueue, enqueueAfter],
+  );
 
   const value = {
     enqueueAndPlay: useCallback(
@@ -65,15 +107,8 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
       },
       [setIsPlaying, isPlaying, currentTrack, addQueueNext],
     ),
-    enqueueAfter: useCallback(
-      (tracks: Track[]) => {
-        if (tracks.length === 0) return;
-
-        addQueueAfter(tracks);
-        if (!isPlaying && !currentTrack) setIsPlaying(true);
-      },
-      [setIsPlaying, isPlaying, currentTrack, addQueueAfter],
-    ),
+    enqueueAfter,
+    populateUpNext,
     userConfirmQueueReplace: useCallback(async () => {
       return (
         (await promptConfirm({
