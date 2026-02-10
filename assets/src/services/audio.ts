@@ -127,6 +127,7 @@ export class AudioService {
       const canPlay = () => {
         audioRef.play();
         audioRef.removeEventListener("canplay", canPlay);
+        audioRef.onerror = null;
       };
 
       audioRef.addEventListener("canplay", canPlay);
@@ -204,7 +205,7 @@ export class AudioService {
       this.#log("source failed, attempting next source");
 
       if (sourceIndex >= sources.length) {
-        audioRef.removeEventListener("error", nextSource);
+        audioRef.onerror = null;
         this.#log("no sources left");
         return;
       }
@@ -213,7 +214,7 @@ export class AudioService {
       audioRef.load();
     };
 
-    audioRef.addEventListener("error", nextSource);
+    audioRef.onerror = nextSource;
   }
 
   #getCurrentAudioRef() {
