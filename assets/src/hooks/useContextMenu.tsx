@@ -196,7 +196,7 @@ export function ContextMenu({
             return (
               <div
                 key={item.key}
-                className="my-1 h-[1px] mx-6 overflow-hidden bg-accent-200"
+                className="my-1 h-[1px] mx-4 overflow-hidden bg-accent-200"
               ></div>
             );
 

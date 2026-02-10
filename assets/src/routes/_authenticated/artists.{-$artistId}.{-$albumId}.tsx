@@ -55,8 +55,13 @@ function Artists() {
   const { artistId, albumId } = Route.useParams() as Params;
   const router = useRouter();
   const isPopNavigation = router.history.location.state?.isBackForward;
-  const { enqueueAndPlay, enqueueNext, enqueueAfter, userConfirmQueueReplace } =
-    usePlayer();
+  const {
+    enqueueAndPlay,
+    enqueueNext,
+    enqueueAfter,
+    populateUpNext,
+    userConfirmQueueReplace,
+  } = usePlayer();
   const { currentTrack } = useQueue();
   const hasArtistId = !!artistId;
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
@@ -275,6 +280,18 @@ function Artists() {
               enqueueAfter(album.tracks);
             },
           },
+          {
+            type: "item",
+            key: "shuffle_album",
+            label: i18next.t("contextMenu.shuffleAlbum", {
+              defaultValue: "Shuffle Album",
+              count: album.tracks.length,
+            }),
+            async onClick() {
+              if (!(await userConfirmQueueReplace())) return;
+              populateUpNext({ albumId: album.id, random: true });
+            },
+          },
         ];
       }
 
@@ -306,7 +323,13 @@ function Artists() {
         },
       ];
     },
-    [listItems, enqueueNext, enqueueAfter],
+    [
+      listItems,
+      enqueueNext,
+      enqueueAfter,
+      populateUpNext,
+      userConfirmQueueReplace,
+    ],
   );
 
   const renderItem = useCallback(

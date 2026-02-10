@@ -26,7 +26,9 @@
     "playNext_one": "Play Next",
     "playNext_other": "Play Next",
     "playAfter_one": "Play After",
-    "playAfter_other": "Play After"
+    "playAfter_other": "Play After",
+    "shuffleAlbum_one": "Shuffle Album",
+    "shuffleAlbum_other": "Shuffle Album"
   },
   "loading": {
     "text": "Loading"
