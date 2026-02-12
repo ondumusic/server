@@ -216,6 +216,53 @@ defmodule MusicBox.FileScannerTest do
     end
   end
 
+  describe "special test cases" do
+    setup do
+      Settings.set(%{music_path: @fixtures_path})
+      start_supervised!(FileScanner.Supervisor)
+
+      Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:updated")
+
+      on_exit(fn ->
+        Phoenix.PubSub.unsubscribe(MusicBox.PubSub, "library:updated")
+      end)
+
+      :ok
+    end
+
+    test "( ) album should not have duplicates" do
+      stub_probe(fn _path ->
+        {:ok,
+         %{
+           format: %{
+             duration: "704.1420",
+             tags: %{
+               artist: "Sigur Rós",
+               album: "( )",
+               title: "Untitled",
+               genre: "Post-rock",
+               date: "2002-10-28",
+               track: "8"
+             }
+           }
+         }}
+      end)
+
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+      file_count = Repo.aggregate(MusicBox.Files.File, :count)
+      album_count = Repo.aggregate(MusicBox.Albums.Album, :count)
+      assert album_count == 2
+
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+      assert file_count == Repo.aggregate(MusicBox.Files.File, :count)
+      assert album_count == Repo.aggregate(MusicBox.Albums.Album, :count)
+
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+      assert file_count == Repo.aggregate(MusicBox.Files.File, :count)
+      assert album_count == Repo.aggregate(MusicBox.Albums.Album, :count)
+    end
+  end
+
   defp expect_probe(fun) do
     expect(MusicBox.Tool.ProbeMock, :exec, fn path ->
       case fun.(path) do

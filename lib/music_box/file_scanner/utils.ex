@@ -5,7 +5,12 @@ defmodule MusicBox.FileScanner.Utils do
 
   @spec slugify(String.t()) :: String.t()
   def slugify(input) do
-    Slug.slugify(input, separator: "-", lowercase: true)
+    Slug.slugify(
+      input,
+      separator: "-",
+      lowercase: true,
+      ignore: ["(", ")"]
+    )
   end
 
   @spec calculate_checksum!(Path.t()) :: String.t()
