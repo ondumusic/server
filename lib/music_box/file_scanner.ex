@@ -50,7 +50,7 @@ defmodule MusicBox.FileScanner do
     walker
     |> Task.async_stream(
       &safe_apply({Analyzer, :analyze, [&1]}),
-      max_concurrency: 3,
+      max_concurrency: 5,
       ordered: false,
       timeout: 5_000,
       on_timeout: :kill_task

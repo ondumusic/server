@@ -3,17 +3,21 @@ defmodule MusicBox.Cleanup do
 
   alias MusicBox.Albums.Album
   alias MusicBox.Artists.Artist
+  alias MusicBox.FileScanner.Utils
   alias MusicBox.Repo
+  alias MusicBox.Settings
   alias MusicBox.Tracks.Track
 
   import Ecto.Query
 
   def work do
+    settings = Settings.get()
+
     cleanup_unused_albums()
     cleanup_unused_artists()
 
-    update_sort_names(Artist)
-    update_sort_names(Album)
+    update_sort_names(Artist, settings.strip_sort_prefixes)
+    update_sort_names(Album, settings.strip_sort_prefixes)
 
     :ok
   end
@@ -38,15 +42,13 @@ defmodule MusicBox.Cleanup do
     |> Repo.delete_all()
   end
 
-  @strip_prefixes ~w(the)
-  defp update_sort_names(schema) do
+  defp update_sort_names(schema, strip_prefixes) do
     Repo.transact(
       fn repo ->
         schema
         |> repo.stream()
         |> Stream.each(fn entry ->
-          sort_name =
-            MusicBox.FileScanner.Utils.sort_name(entry.name, strip_prefixes: @strip_prefixes)
+          sort_name = Utils.sort_name(entry.name, strip_prefixes: strip_prefixes)
 
           entry
           |> Ecto.Changeset.change()

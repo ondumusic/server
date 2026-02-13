@@ -8,6 +8,7 @@ defmodule MusicBox.Settings do
     field :music_path, :string
     field :is_current, :boolean
     field :scan_type, Ecto.Enum, values: ~w(full quick)a
+    field :strip_sort_prefixes, {:array, :string}, default: []
 
     # The poll interval is in minutes, defaults to 60 minutes (hourly)
     field :poll_interval, :integer, default: 60
@@ -31,7 +32,7 @@ defmodule MusicBox.Settings do
   @spec set(t(), map()) :: Repo.result(t())
   def set(%Settings{} = settings, attrs) do
     settings
-    |> cast(attrs, [:music_path, :scan_type, :poll_interval])
+    |> cast(attrs, [:music_path, :scan_type, :poll_interval, :strip_sort_prefixes])
     |> validate_number(:poll_interval, greater_than_or_equal_to: 5, less_than_or_equal_to: 1_440)
     |> validate_music_path()
     |> Repo.insert(

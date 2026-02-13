@@ -10,11 +10,10 @@ defmodule MusicBox.FileScanner.Operations do
   alias MusicBox.Files.{File, FileMetadata}
   alias MusicBox.FileScanner.{Analyzer, Utils}
   alias MusicBox.Repo
+  alias MusicBox.Settings
   alias MusicBox.Tracks.Track
 
   import Ecto.Query
-
-  @strip_prefixes ~w(the)
 
   @spec batch_insert([Analyzer.Result.t()]) ::
           :noop
@@ -30,6 +29,9 @@ defmodule MusicBox.FileScanner.Operations do
 
   def batch_insert([%Analyzer.Result{} | _] = files) do
     Multi.new()
+    |> Multi.run(:settings, fn _repo, _multi ->
+      {:ok, Settings.get()}
+    end)
     |> Multi.run(:files, &maybe_create_files(&1, files, &2))
     |> Multi.run(:artists, &maybe_create_artists/2)
     |> Multi.run(:albums, &maybe_create_albums/2)
@@ -83,7 +85,7 @@ defmodule MusicBox.FileScanner.Operations do
     {:ok, files}
   end
 
-  defp maybe_create_artists(repo, %{files: files}) do
+  defp maybe_create_artists(repo, %{files: files, settings: settings}) do
     artist_names =
       files
       |> Enum.flat_map(&[&1.metadata.album_artist, &1.metadata.artist])
@@ -95,7 +97,7 @@ defmodule MusicBox.FileScanner.Operations do
       |> Enum.map(fn artist_name ->
         %{
           name: artist_name,
-          sort_name: Utils.sort_name(artist_name, strip_prefixes: @strip_prefixes),
+          sort_name: Utils.sort_name(artist_name, strip_prefixes: settings.strip_sort_prefixes),
           slug: Utils.slugify(artist_name)
         }
       end)
@@ -111,7 +113,7 @@ defmodule MusicBox.FileScanner.Operations do
     {:ok, artists}
   end
 
-  defp maybe_create_albums(repo, %{files: files, artists: artists}) do
+  defp maybe_create_albums(repo, %{files: files, artists: artists, settings: settings}) do
     linked_file_artists =
       files
       |> Enum.reject(&is_nil(&1.metadata.album_artist))
@@ -150,7 +152,7 @@ defmodule MusicBox.FileScanner.Operations do
           artist_id: artist.id,
           name: album_name,
           slug: slug_name,
-          sort_name: Utils.sort_name(album_name, strip_prefixes: @strip_prefixes),
+          sort_name: Utils.sort_name(album_name, strip_prefixes: settings.strip_sort_prefixes),
           compilation: file.metadata.compilation,
           release_year: file.metadata.release_year,
           is_unknown: is_unknown
