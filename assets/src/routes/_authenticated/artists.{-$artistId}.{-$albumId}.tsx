@@ -1,4 +1,9 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  Navigate,
+  useRouter,
+} from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { artistApi } from "../../api";
 
@@ -28,17 +33,7 @@ export const Route = createFileRoute(
     return await artistApi.getArtist(artistId);
   },
   component: Artists,
-  notFoundComponent() {
-    return (
-      <div className="p-6">
-        <h2 className="font-semibold text-2xl">Artist Not Found</h2>
-        <p>
-          This artist does not appear to exist, try another one in the artist
-          list.
-        </p>
-      </div>
-    );
-  },
+  notFoundComponent: () => <Navigate to="/artists" />,
 });
 
 type Params = {
