@@ -8,9 +8,12 @@ defmodule MusicBox.Cleanup do
 
   import Ecto.Query
 
-  def cleanup_unused do
+  def work do
     cleanup_unused_albums()
     cleanup_unused_artists()
+
+    update_sort_names(Artist)
+    update_sort_names(Album)
 
     :ok
   end
@@ -33,5 +36,28 @@ defmodule MusicBox.Cleanup do
       where: a.id not in subquery(known_artists_query)
     )
     |> Repo.delete_all()
+  end
+
+  @strip_prefixes ~w(the)
+  defp update_sort_names(schema) do
+    Repo.transact(
+      fn repo ->
+        schema
+        |> repo.stream()
+        |> Stream.each(fn entry ->
+          sort_name =
+            MusicBox.FileScanner.Utils.sort_name(entry.name, strip_prefixes: @strip_prefixes)
+
+          entry
+          |> Ecto.Changeset.change()
+          |> Ecto.Changeset.put_change(:sort_name, sort_name)
+          |> repo.update!()
+        end)
+        |> Stream.run()
+
+        {:ok, nil}
+      end,
+      timeout: 30_000
+    )
   end
 end

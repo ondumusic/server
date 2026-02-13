@@ -32,7 +32,7 @@ defmodule MusicBox.Artists do
       [artist: a],
       exists(from(c in "combined", where: c.artist_id == parent_as(:artist).id, select: true))
     )
-    |> order_by([artist: a], asc: a.name)
+    |> order_by([artist: a], asc: a.sort_name)
     |> Repo.paginate(params, default_limit: 100)
   end
 

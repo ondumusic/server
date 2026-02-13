@@ -13,6 +13,30 @@ defmodule MusicBox.FileScanner.Utils do
     )
   end
 
+  @type sort_name_opts :: {:strip_prefixes, [String.t()]}
+  @spec sort_name(String.t(), [sort_name_opts()]) :: String.t()
+  def sort_name(input, opts \\ []) do
+    normalised =
+      Slug.slugify(
+        input,
+        lowercase: true,
+        separator: " ",
+        ignore: ["(", ")"]
+      )
+
+    Keyword.get(opts, :strip_prefixes, [])
+    |> Enum.map(&String.downcase/1)
+    |> Enum.reduce_while(normalised, fn prefix, result ->
+      if String.starts_with?(result, prefix) do
+        prefix_size = String.length(prefix)
+        result = String.slice(result, prefix_size..-1//1) |> String.trim()
+        {:halt, result}
+      else
+        {:cont, result}
+      end
+    end)
+  end
+
   @spec calculate_checksum!(Path.t()) :: String.t()
   def calculate_checksum!(path) do
     File.stream!(path, 2048, [])

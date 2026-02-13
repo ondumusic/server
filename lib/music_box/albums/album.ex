@@ -17,6 +17,7 @@ defmodule MusicBox.Albums.Album do
     field :compilation, :boolean
     field :release_year, :integer
     field :is_unknown, :boolean, default: false
+    field :sort_name, :string
 
     belongs_to :artist, Artist
     has_many :tracks, Track, preload_order: [asc: :disc, asc_nulls_last: :number, asc: :name]

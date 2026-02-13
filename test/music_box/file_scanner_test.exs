@@ -6,6 +6,7 @@ defmodule MusicBox.FileScannerTest do
 
   alias MusicBox.FileScanner
   alias MusicBox.FileScanner.Analyzer
+  alias MusicBox.FileScanner.Utils
   alias MusicBox.FileScanner.Walker
   alias MusicBox.Settings
 
@@ -260,6 +261,15 @@ defmodule MusicBox.FileScannerTest do
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
       assert file_count == Repo.aggregate(MusicBox.Files.File, :count)
       assert album_count == Repo.aggregate(MusicBox.Albums.Album, :count)
+    end
+  end
+
+  describe "utils" do
+    test "generates sort name" do
+      assert "the beatles" == Utils.sort_name("The Beatles")
+      assert "beatles" == Utils.sort_name("The Beatles", strip_prefixes: ~w(the))
+      assert "the beatles" == Utils.sort_name("The The Beatles", strip_prefixes: ~w(the))
+      assert "la beatles" == Utils.sort_name("The La Beatles", strip_prefixes: ~w(the la))
     end
   end
 

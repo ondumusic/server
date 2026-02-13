@@ -13,6 +13,7 @@ defmodule MusicBox.Artists.Artist do
   schema "artists" do
     field :name, :string
     field :slug, :string
+    field :sort_name, :string
 
     field :album_count, :integer, virtual: true
 

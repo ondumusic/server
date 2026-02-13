@@ -14,6 +14,8 @@ defmodule MusicBox.FileScanner.Operations do
 
   import Ecto.Query
 
+  @strip_prefixes ~w(the)
+
   @spec batch_insert([Analyzer.Result.t()]) ::
           :noop
           | {:ok,
@@ -93,6 +95,7 @@ defmodule MusicBox.FileScanner.Operations do
       |> Enum.map(fn artist_name ->
         %{
           name: artist_name,
+          sort_name: Utils.sort_name(artist_name, strip_prefixes: @strip_prefixes),
           slug: Utils.slugify(artist_name)
         }
       end)
@@ -147,6 +150,7 @@ defmodule MusicBox.FileScanner.Operations do
           artist_id: artist.id,
           name: album_name,
           slug: slug_name,
+          sort_name: Utils.sort_name(album_name, strip_prefixes: @strip_prefixes),
           compilation: file.metadata.compilation,
           release_year: file.metadata.release_year,
           is_unknown: is_unknown
