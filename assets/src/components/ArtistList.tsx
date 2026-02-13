@@ -26,6 +26,7 @@ export function ArtistList({
 
   const {
     hasItem: hasArtist,
+    isCompleted,
     hasFirstPage,
     data,
   } = useInfiniteArtistsQuery({
@@ -121,7 +122,8 @@ export function ArtistList({
     [],
   );
 
-  if ((artistId && !hasArtist) || !hasFirstPage) return <Loading />;
+  if ((artistId && !hasArtist && !isCompleted) || !hasFirstPage)
+    return <Loading />;
 
   const currentArtist = artistId
     ? listItems.find((artist) => isArtist(artist, artistId))
