@@ -28,12 +28,22 @@ export class AudioService {
   #endedTimer?: ReturnType<typeof setTimeout>;
   #fadeTimer?: ReturnType<typeof requestAnimationFrame>;
   #isFading: boolean = false;
+  #wakeLock?: WakeLockSentinel;
+
+  constructor() {
+    document.addEventListener("visibilitychange", () => {
+      if (this.isPlaying && !this.#wakeLock) {
+        this.#requestWakeLock();
+      }
+    });
+  }
 
   destroy() {
     this.stop();
   }
 
   stop() {
+    this.#releaseWakeLock();
     this.#currentTrack = undefined;
     this.#audioRefs.forEach((ref, trackId) => {
       this.#audioRefs.delete(trackId);
@@ -82,6 +92,8 @@ export class AudioService {
       isPreloadedTrack,
       stopPlayback,
     });
+
+    this.#requestWakeLock();
 
     // If we are fading the fade will already start playing the song.
     if (!stopPlayback && this.#isFading) {
@@ -165,6 +177,8 @@ export class AudioService {
   resume() {
     const audioRef = this.#getCurrentAudioRef();
     if (!audioRef) return;
+
+    this.#requestWakeLock();
     audioRef.play();
   }
 
@@ -172,6 +186,7 @@ export class AudioService {
     const audioRef = this.#getCurrentAudioRef();
     if (!audioRef) return;
 
+    this.#releaseWakeLock();
     audioRef.pause();
   }
 
@@ -213,8 +228,6 @@ export class AudioService {
         this.#log("audio aborted");
         return;
       }
-
-      this.#log("source failed, attempting next source");
 
       if (sourceIndex >= sources.length) {
         audioRef.onerror = null;
@@ -410,12 +423,31 @@ export class AudioService {
       ref.removeEventListener("play", this.#emitStateChange);
       ref.removeEventListener("pause", this.#emitStateChange);
 
+      ref.onerror = null;
       ref.volume = 0;
       ref.src = "";
       ref.load();
     });
 
     this.#log("refs remaining:", this.#audioRefs);
+  }
+
+  #releaseWakeLock() {
+    if (!this.#wakeLock) return;
+    this.#log("releasing wake lock");
+    this.#wakeLock.release();
+    this.#wakeLock = undefined;
+  }
+
+  async #requestWakeLock() {
+    if (this.#wakeLock) return;
+
+    try {
+      this.#log("requesting wake lock");
+      this.#wakeLock = await navigator.wakeLock.request("screen");
+    } catch (err) {
+      this.#log("failed to acquire wake lock", err);
+    }
   }
 
   #log(...args: unknown[]): void {
