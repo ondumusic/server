@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { artistApi } from "../../api";
 
 import {
   ArtistAlbumListItem,
@@ -11,7 +12,6 @@ import {
   type ListItemState,
   SelectableList,
 } from "../../components/SelectableList";
-import { useArtistQuery } from "../../hooks/useArtistQuery";
 import { useInfiniteArtistAlbumsQuery } from "../../hooks/useInfiniteArtistAlbumsQuery";
 import { usePlayer } from "../../hooks/usePlayer";
 import { useQueue } from "../../hooks/useQueue";
@@ -23,7 +23,21 @@ import { splitTracksByDisc } from "../../utils/splitTracksByDisc";
 export const Route = createFileRoute(
   "/_authenticated/artists/{-$artistId}/{-$albumId}",
 )({
+  async loader({ params: { artistId } }: { params: { artistId: UUID } }) {
+    return await artistApi.getArtist(artistId);
+  },
   component: Artists,
+  notFoundComponent() {
+    return (
+      <div className="p-6">
+        <h2 className="font-semibold text-2xl">Artist Not Found</h2>
+        <p>
+          This artist does not appear to exist, try another one in the artist
+          list.
+        </p>
+      </div>
+    );
+  },
 });
 
 type Params = {
@@ -62,6 +76,7 @@ function Artists() {
     populateUpNext,
     userConfirmQueueReplace,
   } = usePlayer();
+  const dataArtist = Route.useLoaderData();
   const { currentTrack } = useQueue();
   const hasArtistId = !!artistId;
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
@@ -81,17 +96,6 @@ function Artists() {
   useEffect(() => {
     setSelectedTrackIds(new Set());
   }, [artistId, albumId]);
-
-  const {
-    isFetching: isFetchingArtist,
-    data: dataArtist,
-    error: errorArtist,
-  } = useArtistQuery(
-    { artistId },
-    {
-      enabled: hasArtistId,
-    },
-  );
 
   const {
     isFetching,
@@ -354,12 +358,8 @@ function Artists() {
       />
     );
 
-  if (
-    (isFetching || isFetchingArtist) &&
-    ((albumId && !hasAlbum) || !hasFirstPage)
-  )
+  if (isFetching && ((albumId && !hasAlbum) || !hasFirstPage))
     return <Loading />;
-  if (errorArtist) throw errorArtist;
   if (error) throw error;
   if (!dataArtist) return;
 

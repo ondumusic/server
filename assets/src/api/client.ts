@@ -1,3 +1,4 @@
+import { notFound } from "@tanstack/react-router";
 import { auth } from "../services/auth";
 import type { Page } from "../types";
 import { ClientError } from "./errors";
@@ -98,6 +99,10 @@ class Client {
 
       if (response.status === 403) {
         throw new ClientError({ message: "Forbidden", response });
+      }
+
+      if (response.status === 404) {
+        throw notFound();
       }
 
       return (await response.json()) as Res;
