@@ -23,7 +23,8 @@ import { splitTracksByDisc } from "../../utils/splitTracksByDisc";
 export const Route = createFileRoute(
   "/_authenticated/artists/{-$artistId}/{-$albumId}",
 )({
-  async loader({ params: { artistId } }: { params: { artistId: UUID } }) {
+  async loader({ params: { artistId } }: { params: { artistId?: UUID } }) {
+    if (!artistId) return;
     return await artistApi.getArtist(artistId);
   },
   component: Artists,
