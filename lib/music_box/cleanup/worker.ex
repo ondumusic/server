@@ -3,6 +3,8 @@ defmodule MusicBox.Cleanup.Worker do
 
   use GenServer
 
+  alias MusicBox.Cleanup
+
   @spec start_link(Keyword.t()) :: {:ok, pid()}
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
@@ -17,7 +19,7 @@ defmodule MusicBox.Cleanup.Worker do
 
   @impl true
   def handle_info(%{topic: "library:updated", payload: _payload}, state) do
-    # IO.inspect(payload)
+    Cleanup.work([:unused])
     {:noreply, state}
   end
 end
