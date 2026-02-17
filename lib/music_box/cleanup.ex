@@ -10,16 +10,36 @@ defmodule MusicBox.Cleanup do
 
   import Ecto.Query
 
-  def work do
+  @steps ~w(sort_names unused)a
+
+  def work(steps \\ :all) do
     settings = Settings.get()
+    steps = List.wrap(steps)
 
-    cleanup_unused_albums()
-    cleanup_unused_artists()
+    state = %{
+      settings: settings
+    }
 
-    update_sort_names(Artist, settings.strip_sort_prefixes)
-    update_sort_names(Album, settings.strip_sort_prefixes)
+    _result =
+      @steps
+      |> Enum.filter(fn step ->
+        :all in steps or step in steps
+      end)
+      |> Enum.reduce(state, &exec_step/2)
 
     :ok
+  end
+
+  defp exec_step(:sort_names, %{settings: settings} = state) do
+    update_sort_names(Artist, settings.strip_sort_prefixes)
+    update_sort_names(Album, settings.strip_sort_prefixes)
+    state
+  end
+
+  defp exec_step(:unused, state) do
+    cleanup_unused_albums()
+    cleanup_unused_artists()
+    state
   end
 
   defp cleanup_unused_albums do

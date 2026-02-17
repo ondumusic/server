@@ -25,11 +25,6 @@ config :music_box, MusicBox.Repo,
   temp_store: :memory,
   cache_size: 64_000
 
-config :music_box, MusicBox.FileScanner.Repo,
-  journal_mode: :wal,
-  temp_store: :memory,
-  cache_size: 64_000
-
 if config_env() == :prod do
   music_box_uri =
     System.get_env("MB_URL") ||

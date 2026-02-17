@@ -26,7 +26,8 @@ defmodule MusicBox.Application do
             [
               MusicBox.FileScanner.Supervisor,
               MusicBox.Transcoder,
-              MusicBox.Artwork.Worker
+              MusicBox.Artwork.Worker,
+              MusicBox.Cleanup.Worker
             ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
