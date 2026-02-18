@@ -47,7 +47,7 @@ export const PhoenixSocketProvider = ({ children }: PropsWithChildren) => {
     socketRef.current.connect();
 
     // Join the channel to receive all library updates
-    const channel = socketRef.current.channel("library:updated", {});
+    const channel = socketRef.current.channel("library:sync", {});
     channel.join();
     channel.on("processed", (data) => {
       if (dataCallback.current) {

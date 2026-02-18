@@ -21,10 +21,10 @@ defmodule MusicBox.FileScannerTest do
       Settings.set(%{music_path: @fixtures_path})
       start_supervised!(FileScanner.Supervisor)
 
-      Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:updated")
+      Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:sync")
 
       on_exit(fn ->
-        Phoenix.PubSub.unsubscribe(MusicBox.PubSub, "library:updated")
+        Phoenix.PubSub.unsubscribe(MusicBox.PubSub, "library:sync")
       end)
 
       stub_probe(fn _path ->
@@ -55,34 +55,34 @@ defmodule MusicBox.FileScannerTest do
     test "skips existing files when doing a quick scan" do
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
       file_count = Repo.aggregate(MusicBox.Files.File, :count)
-      assert_receive %{topic: "library:updated", payload: payload}
+      assert_receive %{topic: "library:sync", payload: payload}
       assert [_album_id] = payload.albums
       assert [_artist_id] = payload.artists
 
       assert {:ok, :scan_completed} = FileScanner.scan(:quick)
       new_file_count = Repo.aggregate(MusicBox.Files.File, :count)
       assert file_count == new_file_count
-      refute_receive %{topic: "library:updated"}, 200
+      refute_receive %{topic: "library:sync"}, 200
     end
 
     test "rescans existing files when doing a full scan" do
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
       file_count = Repo.aggregate(MusicBox.Files.File, :count)
-      assert_receive %{topic: "library:updated", payload: payload}
+      assert_receive %{topic: "library:sync", payload: payload}
       assert [_album_id] = payload.albums
       assert [_artist_id] = payload.artists
 
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
       new_file_count = Repo.aggregate(MusicBox.Files.File, :count)
       assert file_count == new_file_count
-      assert_receive %{topic: "library:updated", payload: payload}
+      assert_receive %{topic: "library:sync", payload: payload}
       assert [_album_id] = payload.albums
       assert [_artist_id] = payload.artists
     end
 
     test "can start async" do
       {:ok, :scan_started} = FileScanner.scan_async(:full)
-      assert_receive %{topic: "library:updated", payload: payload}
+      assert_receive %{topic: "library:sync", payload: payload}
       assert [_album_id] = payload.albums
       assert [_artist_id] = payload.artists
     end
@@ -222,10 +222,10 @@ defmodule MusicBox.FileScannerTest do
       Settings.set(%{music_path: @fixtures_path})
       start_supervised!(FileScanner.Supervisor)
 
-      Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:updated")
+      Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:sync")
 
       on_exit(fn ->
-        Phoenix.PubSub.unsubscribe(MusicBox.PubSub, "library:updated")
+        Phoenix.PubSub.unsubscribe(MusicBox.PubSub, "library:sync")
       end)
 
       :ok

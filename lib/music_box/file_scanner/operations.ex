@@ -39,7 +39,7 @@ defmodule MusicBox.FileScanner.Operations do
     |> Repo.transact()
   end
 
-  def broadcast(results) do
+  def broadcast(:batch, results) do
     changes =
       results
       |> Map.take([:artists, :albums])
@@ -48,7 +48,11 @@ defmodule MusicBox.FileScanner.Operations do
       end)
       |> Map.new()
 
-    broadcast(MusicBox.PubSub, "library:updated", "processed", changes)
+    broadcast(MusicBox.PubSub, "library:sync", "processed", changes)
+  end
+
+  def broadcast(:completed) do
+    broadcast(MusicBox.PubSub, "library:sync", "completed", %{})
   end
 
   def find_existing_paths([]), do: []

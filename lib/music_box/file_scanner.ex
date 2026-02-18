@@ -59,10 +59,12 @@ defmodule MusicBox.FileScanner do
     |> Stream.chunk_every(20)
     |> Stream.map(&safe_apply({Operations, :batch_insert, [&1]}))
     |> Stream.flat_map(&discard_errors/1)
-    |> Stream.each(&safe_apply({Operations, :broadcast, [&1]}))
+    |> Stream.each(&safe_apply({Operations, :broadcast, [:batch, &1]}))
     |> Stream.run()
 
     Agent.stop()
+    Operations.broadcast(:completed)
+
     {:ok, :scan_completed}
   rescue
     error ->

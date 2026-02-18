@@ -18,12 +18,12 @@ defmodule MusicBox.Artwork.Worker do
   @impl true
   def init(_) do
     default_state = []
-    Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:updated")
+    Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:sync")
     {:ok, next_batch(default_state)}
   end
 
   @impl true
-  def handle_info(%{topic: "library:updated", payload: payload}, state) do
+  def handle_info(%{topic: "library:sync", event: "processed", payload: payload}, state) do
     state =
       if Map.get(payload, :albums, []) != [],
         do: next_batch(state),
@@ -45,6 +45,8 @@ defmodule MusicBox.Artwork.Worker do
     Process.demonitor(ref)
     {:noreply, state}
   end
+
+  def handle_info(_payload, state), do: {:noreply, state}
 
   defp next_batch(state) do
     batch_size = max(0, @max_concurrency - length(state))

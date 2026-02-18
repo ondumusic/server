@@ -13,13 +13,15 @@ defmodule MusicBox.Cleanup.Worker do
   @impl true
   def init(_) do
     default_state = []
-    Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:updated")
+    Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:sync")
     {:ok, default_state}
   end
 
   @impl true
-  def handle_info(%{topic: "library:updated", payload: _payload}, state) do
+  def handle_info(%{topic: "library:sync", event: "completed"}, state) do
     Cleanup.work([:unused])
     {:noreply, state}
   end
+
+  def handle_info(_payload, state), do: {:noreply, state}
 end

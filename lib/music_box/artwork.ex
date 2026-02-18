@@ -81,7 +81,7 @@ defmodule MusicBox.Artwork do
   end
 
   defp broadcast({:ok, %{path: path} = artwork}) when not is_nil(path) do
-    MusicBoxWeb.Endpoint.broadcast!("library:updated", "processed", %{albums: [artwork.album_id]})
+    MusicBoxWeb.Endpoint.broadcast!("library:sync", "processed", %{albums: [artwork.album_id]})
   end
 
   defp broadcast(_error_or_no_art), do: :noop

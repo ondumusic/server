@@ -12,7 +12,7 @@ defmodule MusicBoxWeb.LibraryChannel do
 
   intercept ["processed"]
 
-  def join("library:updated", _message, socket) do
+  def join("library:sync", _message, socket) do
     {:ok, socket}
   end
 
