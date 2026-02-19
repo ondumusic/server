@@ -1,8 +1,6 @@
 defmodule MusicBox.Search do
   @moduledoc false
 
-  use MusicBox.Schema
-
   alias MusicBox.Albums.Album
   alias MusicBox.Artists.Artist
   alias MusicBox.Repo
@@ -10,51 +8,113 @@ defmodule MusicBox.Search do
 
   import Ecto.Query
 
-  @primary_key false
-  schema "search" do
-    field :rank, :float
+  # @type t :: %__MODULE__{}
 
-    belongs_to :artist, Artist
-    belongs_to :album, Album
-    belongs_to :track, Track
-  end
-
-  @type t :: %__MODULE__{}
-
-  @spec search(String.t()) :: [t()]
+  # @spec search(String.t()) :: [t()]
   def search(query) do
     query = parse_query(query)
 
-    from(s in __MODULE__,
-      where: fragment("search match ?", ^query),
-      select: %__MODULE__{
-        rank:
-          fragment("""
-          bm25(search,
-            'track_name', 20.0,
-            'artist_name', 10.0
-          )
-          """),
-        track_id: type(s.track_id, :binary_id),
-        artist_id: type(s.artist_id, :binary_id),
-        album_id: type(s.album_id, :binary_id)
-      },
-      order_by: [
-        asc:
-          fragment("""
-          bm25(search,
-            'track_name', 20.0,
-            'artist_name', 10.0
-          )
-          """)
-      ]
-    )
-    |> Repo.all()
-    |> Repo.preload(
-      artist: Artist.preloaded(),
-      album: Album.preloaded(),
-      track: Track.preloaded()
-    )
+    search(query, [
+      :artist,
+      :album,
+      :track
+    ])
+  end
+
+  defp search(query, _sources, results \\ [])
+  defp search(_query, [], results), do: results
+
+  defp search(query, [:artist | sources], results) do
+    items =
+      from(s in "artists_fts",
+        join: a in Artist,
+        on: a.rowid == s.rowid,
+        select: %{
+          rank:
+            fragment("""
+            bm25(artists_fts,
+              'name', 20.0,
+              'slug', 10.0
+            )
+            """),
+          result: a
+        },
+        where: fragment("artists_fts match ?", ^query),
+        order_by: [
+          asc:
+            fragment("""
+            bm25(artists_fts,
+              'name', 20.0,
+              'slug', 10.0
+            )
+            """)
+        ]
+      )
+      |> Repo.all()
+
+    search(query, sources, results ++ items)
+  end
+
+  defp search(query, [:album | sources], results) do
+    items =
+      from(s in "albums_fts",
+        join: a in Album,
+        on: a.rowid == s.rowid,
+        select: %{
+          rank:
+            fragment("""
+            bm25(albums_fts,
+              'name', 20.0,
+              'slug', 10.0
+            )
+            """),
+          result: a
+        },
+        where: fragment("albums_fts match ?", ^query),
+        order_by: [
+          asc:
+            fragment("""
+            bm25(albums_fts,
+              'name', 20.0,
+              'slug', 10.0
+            )
+            """)
+        ]
+      )
+      |> Repo.all()
+
+    search(query, sources, results ++ items)
+  end
+
+  defp search(query, [:track | sources], results) do
+    items =
+      from(s in "tracks_fts",
+        join: a in Track,
+        on: a.rowid == s.rowid,
+        select: %{
+          rank:
+            fragment("""
+            bm25(tracks_fts,
+              'name', 20.0,
+              'slug', 10.0
+            )
+            """),
+          result: a
+        },
+        where: fragment("tracks_fts match ?", ^query),
+        order_by: [
+          asc:
+            fragment("""
+            bm25(tracks_fts,
+              'name', 20.0,
+              'slug', 10.0
+            )
+            """)
+        ]
+      )
+      |> Repo.all()
+
+    search(query, sources, results ++ items)
   end
 
   defp parse_query(query) do
