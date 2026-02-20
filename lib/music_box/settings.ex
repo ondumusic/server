@@ -39,6 +39,15 @@ defmodule MusicBox.Settings do
       on_conflict: :replace_all,
       conflict_target: {:unsafe_fragment, "(is_current) WHERE is_current"}
     )
+    |> tap(fn
+      {:ok, new_settings} ->
+        if new_settings.strip_sort_prefixes != settings.strip_sort_prefixes do
+          MusicBox.Cleanup.work_async(:sort_names)
+        end
+
+      {:error, _changeset} ->
+        nil
+    end)
   end
 
   defp validate_music_path(changeset) do
