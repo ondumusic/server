@@ -5,6 +5,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -65,7 +66,7 @@ export function ContextMenu({
     return items.filter((item) => item.type === "item");
   }, [items]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const menu = menuRef.current;
     if (!menu) return;
 
