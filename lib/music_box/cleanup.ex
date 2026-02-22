@@ -7,17 +7,17 @@ defmodule MusicBox.Cleanup do
 
   def work_async(steps \\ :all) do
     steps
-    |> foobar()
+    |> available_steps()
     |> Enum.each(&Worker.exec_async/1)
   end
 
   def work(steps \\ :all) do
     steps
-    |> foobar()
+    |> available_steps()
     |> Enum.each(&Worker.exec/1)
   end
 
-  defp foobar(steps) do
+  defp available_steps(steps) do
     steps = List.wrap(steps)
 
     @steps
