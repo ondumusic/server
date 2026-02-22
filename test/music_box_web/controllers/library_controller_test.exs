@@ -412,6 +412,114 @@ defmodule MusicBoxWeb.LibraryControllerTest do
   describe "tracks" do
     setup :register_and_log_in_user
 
+    test "paginate tracks", %{conn: conn} do
+      assert %{
+               "pageNumber" => 1,
+               "totalPages" => 1,
+               "totalEntries" => 14,
+               "pageSize" => 50,
+               "entries" => tracks
+             } =
+               conn
+               |> get(~p"/api/tracks")
+               |> json_response(200)
+
+      assert [
+               %{
+                 "duration" => 133.0,
+                 "name" => "It Won't Be Long",
+                 "number" => 1
+               },
+               %{
+                 "duration" => 125.0,
+                 "name" => "All I've Got To Do",
+                 "number" => 2
+               },
+               %{
+                 "duration" => 129.0,
+                 "name" => "All My Loving",
+                 "number" => 3
+               },
+               %{
+                 "duration" => 149.0,
+                 "name" => "Don't Bother Me",
+                 "number" => 4
+               },
+               %{
+                 "duration" => 108.0,
+                 "name" => "Little Child",
+                 "number" => 5
+               },
+               %{
+                 "duration" => 137.0,
+                 "name" => "Till There Was You",
+                 "number" => 6
+               },
+               %{
+                 "duration" => 155.0,
+                 "name" => "Please Mister Postman",
+                 "number" => 7
+               },
+               %{
+                 "duration" => 168.0,
+                 "name" => "Roll Over Beethoven",
+                 "number" => 8
+               },
+               %{
+                 "duration" => 153.0,
+                 "name" => "Hold Me Tight",
+                 "number" => 9
+               },
+               %{
+                 "duration" => 183.0,
+                 "name" => "You've Really Got a Hold on Me",
+                 "number" => 10
+               },
+               %{
+                 "duration" => 120.0,
+                 "name" => "I Wanna Be Your Man",
+                 "number" => 11
+               },
+               %{
+                 "duration" => 148.0,
+                 "name" => "Devil In Her Heart",
+                 "number" => 12
+               },
+               %{
+                 "duration" => 127.0,
+                 "name" => "Not a Second Time",
+                 "number" => 13
+               },
+               %{
+                 "duration" => 170.0,
+                 "name" => "Money (That's What I Want)",
+                 "number" => 14
+               }
+             ] = tracks
+    end
+
+    test "paginate tracks (sort random)", %{conn: conn} do
+      seed1 = :rand.uniform()
+      seed2 = :rand.uniform()
+
+      assert %{
+               "entries" => tracks
+             } =
+               conn
+               |> get(~p"/api/tracks?sort_by=random&random_seed=#{seed1}")
+               |> json_response(200)
+
+      assert %{
+               "entries" => tracks2
+             } =
+               conn
+               |> get(~p"/api/tracks?sort_by=random&random_seed=#{seed2}")
+               |> json_response(200)
+
+      assert tracks != tracks2
+      assert length(tracks) == length(tracks2)
+    end
+
     test "returns track details", %{conn: conn} do
       track = Repo.get_by(Track, name: "Roll Over Beethoven")
 
