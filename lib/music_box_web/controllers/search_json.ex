@@ -3,17 +3,23 @@ defmodule MusicBoxWeb.SearchJSON do
 
   alias MusicBoxWeb.LibraryJSON
 
-  def results(assigns) do
-    %{
-      results: json_map(assigns, [:results], :result)
-    }
-  end
-
   def result(%{result: result}) do
     %{
-      artist: LibraryJSON.artist(%{artist: result.artist}),
-      album: LibraryJSON.album(%{album: result.album}),
-      track: LibraryJSON.track(%{track: result.track, album: result.album})
+      artists:
+        Enum.map(
+          result.artists.entries,
+          &LibraryJSON.artist(%{artist: &1})
+        ),
+      albums:
+        Enum.map(
+          result.albums.entries,
+          &LibraryJSON.album(%{album: &1})
+        ),
+      tracks:
+        Enum.map(
+          result.tracks.entries,
+          &LibraryJSON.track(%{track: &1, album: &1.album})
+        )
     }
   end
 end

@@ -40,6 +40,10 @@ defmodule TestSeeds do
     ]
     |> Enum.each(&insert_artist/1)
 
+    Repo.query!("INSERT INTO artists_fts(artists_fts) VALUES('rebuild');")
+    Repo.query!("INSERT INTO albums_fts(albums_fts) VALUES('rebuild');")
+    Repo.query!("INSERT INTO tracks_fts(tracks_fts) VALUES('rebuild');")
+
     Accounts.register_user(%{
       username: "testuser",
       password: "testtest123!",
