@@ -55,34 +55,36 @@ defmodule MusicBox.FileScannerTest do
     test "skips existing files when doing a quick scan" do
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
       file_count = Repo.aggregate(MusicBox.Files.File, :count)
-      assert_receive %{topic: "library:sync", payload: payload}
+      assert_receive %{topic: "library:sync", event: "processed", payload: payload}
+      assert_receive %{topic: "library:sync", event: "completed"}
       assert [_album_id] = payload.albums
       assert [_artist_id] = payload.artists
 
       assert {:ok, :scan_completed} = FileScanner.scan(:quick)
       new_file_count = Repo.aggregate(MusicBox.Files.File, :count)
       assert file_count == new_file_count
+      assert_receive %{topic: "library:sync", event: "completed"}
       refute_receive %{topic: "library:sync"}, 200
     end
 
     test "rescans existing files when doing a full scan" do
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
       file_count = Repo.aggregate(MusicBox.Files.File, :count)
-      assert_receive %{topic: "library:sync", payload: payload}
+      assert_receive %{topic: "library:sync", event: "processed", payload: payload}
       assert [_album_id] = payload.albums
       assert [_artist_id] = payload.artists
 
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
       new_file_count = Repo.aggregate(MusicBox.Files.File, :count)
       assert file_count == new_file_count
-      assert_receive %{topic: "library:sync", payload: payload}
+      assert_receive %{topic: "library:sync", event: "processed", payload: payload}
       assert [_album_id] = payload.albums
       assert [_artist_id] = payload.artists
     end
 
     test "can start async" do
       {:ok, :scan_started} = FileScanner.scan_async(:full)
-      assert_receive %{topic: "library:sync", payload: payload}
+      assert_receive %{topic: "library:sync", event: "processed", payload: payload}
       assert [_album_id] = payload.albums
       assert [_artist_id] = payload.artists
     end
