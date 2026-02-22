@@ -8,37 +8,31 @@ defmodule MusicBox.Search do
 
   import Ecto.Query
 
-  # @type t :: %__MODULE__{}
+  defmodule Result do
+    @moduledoc false
+    defstruct [:artists, :albums, :tracks]
+    @type t :: %__MODULE__{}
+  end
 
-  # @spec search(String.t()) :: [t()]
-  def search(query) do
+  @spec search(String.t(), [Repo.paginate_opts()]) :: [Result.t()]
+  def search(query, params \\ %{}) do
     query = parse_query(query)
 
-    search(query, [
+    search(query, params, [
       :artist,
       :album,
       :track
     ])
   end
 
-  defp search(query, _sources, results \\ [])
-  defp search(_query, [], results), do: results
+  defp search(query, _params, _sources, results \\ %Result{})
+  defp search(_query, _params, [], results), do: results
 
-  defp search(query, [:artist | sources], results) do
+  defp search(query, params, [:artist | sources], results) do
     items =
-      from(s in "artists_fts",
-        join: a in Artist,
+      from(a in Artist.preloaded(),
+        join: s in "artists_fts",
         on: a.rowid == s.rowid,
-        select: %{
-          rank:
-            fragment("""
-            bm25(artists_fts,
-              'name', 20.0,
-              'slug', 10.0
-            )
-            """),
-          result: a
-        },
         where: fragment("artists_fts match ?", ^query),
         order_by: [
           asc:
@@ -50,26 +44,16 @@ defmodule MusicBox.Search do
             """)
         ]
       )
-      |> Repo.all()
+      |> Repo.paginate(params)
 
-    search(query, sources, results ++ items)
+    search(query, params, sources, Map.put(results, :artists, items))
   end
 
-  defp search(query, [:album | sources], results) do
+  defp search(query, params, [:album | sources], results) do
     items =
-      from(s in "albums_fts",
-        join: a in Album,
+      from(a in Album.preloaded(),
+        join: s in "albums_fts",
         on: a.rowid == s.rowid,
-        select: %{
-          rank:
-            fragment("""
-            bm25(albums_fts,
-              'name', 20.0,
-              'slug', 10.0
-            )
-            """),
-          result: a
-        },
         where: fragment("albums_fts match ?", ^query),
         order_by: [
           asc:
@@ -81,26 +65,16 @@ defmodule MusicBox.Search do
             """)
         ]
       )
-      |> Repo.all()
+      |> Repo.paginate(params)
 
-    search(query, sources, results ++ items)
+    search(query, params, sources, Map.put(results, :albums, items))
   end
 
-  defp search(query, [:track | sources], results) do
+  defp search(query, params, [:track | sources], results) do
     items =
-      from(s in "tracks_fts",
-        join: a in Track,
+      from(a in Track.preloaded(),
+        join: s in "tracks_fts",
         on: a.rowid == s.rowid,
-        select: %{
-          rank:
-            fragment("""
-            bm25(tracks_fts,
-              'name', 20.0,
-              'slug', 10.0
-            )
-            """),
-          result: a
-        },
         where: fragment("tracks_fts match ?", ^query),
         order_by: [
           asc:
@@ -112,9 +86,9 @@ defmodule MusicBox.Search do
             """)
         ]
       )
-      |> Repo.all()
+      |> Repo.paginate(params)
 
-    search(query, sources, results ++ items)
+    search(query, params, sources, Map.put(results, :tracks, items))
   end
 
   defp parse_query(query) do
