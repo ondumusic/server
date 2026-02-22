@@ -12,8 +12,9 @@ config :bcrypt_elixir, :log_rounds, 1
 # Run `mix help test` for more information.
 config :music_box, MusicBox.Repo,
   database: Path.expand("../db/music_box_test.db", __DIR__),
-  pool_size: 5,
-  pool: Ecto.Adapters.SQL.Sandbox
+  pool_size: 1,
+  pool: Ecto.Adapters.SQL.Sandbox,
+  busy_timeout: 1_000
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.

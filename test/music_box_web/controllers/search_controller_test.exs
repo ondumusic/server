@@ -1,5 +1,5 @@
 defmodule MusicBoxWeb.SearchControllerTest do
-  use MusicBoxWeb.ConnCase, async: true
+  use MusicBoxWeb.ConnCase, async: false
 
   describe "search" do
     setup :register_and_log_in_user

@@ -1,5 +1,5 @@
 defmodule MusicBoxWeb.LibraryControllerTest do
-  use MusicBoxWeb.ConnCase, async: true
+  use MusicBoxWeb.ConnCase, async: false
 
   alias MusicBox.Tracks.Track
 
@@ -499,8 +499,8 @@ defmodule MusicBoxWeb.LibraryControllerTest do
     end
 
     test "paginate tracks (sort random)", %{conn: conn} do
-      seed1 = :rand.uniform()
-      seed2 = :rand.uniform()
+      seed1 = 0.12_345
+      seed2 = 0.98_765_432
 
       assert %{
                "entries" => tracks

@@ -1,5 +1,5 @@
 defmodule MusicBoxWeb.AuthControllerTest do
-  use MusicBoxWeb.ConnCase, async: true
+  use MusicBoxWeb.ConnCase, async: false
 
   describe "login" do
     test "can login and use session token", %{conn: conn} do
