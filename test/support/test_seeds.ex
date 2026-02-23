@@ -51,7 +51,7 @@ defmodule TestSeeds do
     })
   end
 
-  defp insert_artist(seed) do
+  def insert_artist(seed) do
     artist =
       Repo.insert!(%Artist{
         name: seed.name,
@@ -67,7 +67,7 @@ defmodule TestSeeds do
     artist
   end
 
-  defp insert_album(artist, seed) do
+  def insert_album(artist, seed) do
     album =
       Repo.insert!(%Album{
         artist_id: artist.id,
@@ -83,7 +83,7 @@ defmodule TestSeeds do
     album
   end
 
-  defp insert_track(artist, album, seed) do
+  def insert_track(artist, album, seed) do
     duration = Map.get(seed, :duration, 21.0 + :rand.uniform() * 500.5)
 
     file =

@@ -1,6 +1,7 @@
 defmodule MusicBoxWeb.LibraryControllerTest do
   use MusicBoxWeb.ConnCase, async: false
 
+  alias MusicBox.Artists
   alias MusicBox.Tracks.Track
 
   describe "artists" do
@@ -518,6 +519,104 @@ defmodule MusicBoxWeb.LibraryControllerTest do
 
       assert tracks != tracks2
       assert length(tracks) == length(tracks2)
+    end
+
+    test "filter by artist id", %{conn: conn} do
+      artist =
+        TestSeeds.insert_artist(%{
+          name: "dodie",
+          albums: [
+            %{
+              name: "Build A Problem",
+              release_year: 2021,
+              tracks: [
+                %{
+                  disc: 1,
+                  track: 2,
+                  name: "Hate Myself"
+                }
+              ]
+            }
+          ]
+        })
+
+      assert %{
+               "entries" => tracks
+             } =
+               conn
+               |> get(~p"/api/tracks?artist_id=#{artist.id}")
+               |> json_response(200)
+
+      assert [
+               %{
+                 "disc" => 1,
+                 "number" => 2,
+                 "name" => "Hate Myself",
+                 "artist" => %{
+                   "name" => "dodie"
+                 },
+                 "album" => %{
+                   "name" => "Build A Problem",
+                   "releaseYear" => 2021
+                 }
+               }
+             ] = tracks
+    end
+
+    test "filter by album id", %{conn: conn} do
+      artist = Artists.get_artist!("the-beatles")
+
+      album =
+        TestSeeds.insert_album(artist, %{
+          name: "Revolver",
+          release_year: 1966,
+          tracks: [
+            %{
+              disc: 1,
+              track: 1,
+              name: "Taxman"
+            },
+            %{
+              disc: 1,
+              track: 2,
+              name: "Eleanor Rigby"
+            }
+          ]
+        })
+
+      assert %{
+               "entries" => tracks
+             } =
+               conn
+               |> get(~p"/api/tracks?album_id=#{album.id}")
+               |> json_response(200)
+
+      assert [
+               %{
+                 "disc" => 1,
+                 "number" => 1,
+                 "name" => "Taxman",
+                 "artist" => %{
+                   "name" => "The Beatles"
+                 },
+                 "album" => %{
+                   "name" => "Revolver",
+                   "releaseYear" => 1966
+                 }
+               },
+               %{
+                 "disc" => 1,
+                 "number" => 2,
+                 "name" => "Eleanor Rigby",
+                 "artist" => %{
+                   "name" => "The Beatles"
+                 },
+                 "album" => %{
+                   "name" => "Revolver",
+                   "releaseYear" => 1966
+                 }
+               }
+             ] = tracks
     end
 
     test "returns track details", %{conn: conn} do

@@ -58,7 +58,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       if artwork_filename,
         do: ~p"/artwork/#{artwork_filename}"
 
-    %{
+    item = %{
       __type: "album",
       id: album.id,
       slug: album.slug,
@@ -66,9 +66,14 @@ defmodule MusicBoxWeb.LibraryJSON do
       name: album.name,
       releaseYear: album.release_year,
       isUnknown: album.is_unknown,
-      artworkUrl: artwork_url,
-      tracks: json_map(assigns, [:album, :tracks], :track, include: [:album])
+      artworkUrl: artwork_url
     }
+
+    if assigns[:tracks] != false do
+      Map.put(item, :tracks, json_map(assigns, [:album, :tracks], :track, include: [:album]))
+    else
+      item
+    end
   end
 
   def track(%{track: track, album: album}) do
@@ -80,6 +85,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       artistId: track.artist_id,
       albumArtistId: album.artist_id,
       artist: artist(%{artist: track.artist}),
+      album: album(%{album: track.album, tracks: false}),
       albumId: album.id,
       name: track.name,
       disc: track.disc,
