@@ -1,6 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import en_US from "../locales/en_US/translation.json";
+import en_US from "../locales/en-US/translation.json";
 
 const resources = {
   en_US: {

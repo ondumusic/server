@@ -1,0 +1,118 @@
+{
+  "album": {
+    "discNumber": "Disc {{disc}}",
+    "trackCount_one": "{{count}} track, {{duration}}",
+    "trackCount_other": "{{count}} tracks, {{duration}}"
+  },
+  "artist": {
+    "albumCount_one": "{{count}} album",
+    "albumCount_other": "{{count}} albums"
+  },
+  "button": {
+    "clearUpNext": "Clear",
+    "closePanel": "Close Music Browser",
+    "nextTrack": "Next Track",
+    "openPanel": "Open Music Browser",
+    "pauseCurrentTrack": "Pause Current Track",
+    "playCurrentTrack": "Play Current Track",
+    "playSelectedAlbum": "Play {{ albumName }}",
+    "playSelectedTrack": "Play {{ trackName }}",
+    "previousTrack": "Previous Track",
+    "showUpNext": "Up Next"
+  },
+  "contextMenu": {
+    "playAfter_one": "Play After",
+    "playAfter_other": "Play After",
+    "playArtist": "Play \"{{ artist }}\"",
+    "playNext_one": "Play Next",
+    "playNext_other": "Play Next",
+    "shuffleAlbum_one": "Shuffle Album",
+    "shuffleAlbum_other": "Shuffle Album",
+    "shuffleArtist": "Shuffle \"{{ artist }}\""
+  },
+  "emptyView": {
+    "noResults": "No Results"
+  },
+  "formattedDuration": {
+    "hours_one": "{{ count }} hour",
+    "hours_other": "{{ count }} hours",
+    "hoursAndMinutes_one": "{{ count }} hour, $t(formattedDuration.minutes, {\"count\": {{ minutes }}})",
+    "hoursAndMinutes_other": "{{ count }} hours, $t(formattedDuration.minutes, {\"count\": {{ minutes }}})",
+    "minutes_one": "{{ count }} minute",
+    "minutes_other": "{{ count }} minutes"
+  },
+  "loading": {
+    "text": "Loading"
+  },
+  "loginForm": {
+    "button": {
+      "login": "Login"
+    },
+    "field": {
+      "password": "Password",
+      "username": "Username"
+    },
+    "title": "Login"
+  },
+  "onboarding": {
+    "firstLoadWait": "Finding your music..."
+  },
+  "player": {
+    "confirmQueue": {
+      "cancel": "Cancel",
+      "ok": "OK",
+      "replaceText": "This will replace the current track and queue."
+    },
+    "noTrack": {
+      "trackName": "No Track"
+    }
+  },
+  "pollInterval": {
+    "10min": "Every 10 minutes",
+    "120min": "Every 2 hour",
+    "1440min": "Every 24 hour",
+    "15min": "Every 15 minutes",
+    "180min": "Every 3 hour",
+    "30min": "Every half hour",
+    "360min": "Every 6 hour",
+    "5min": "Every 5 minutes",
+    "60min": "Every hour",
+    "720min": "Every 12 hour"
+  },
+  "selection": {
+    "dragItems_one": "{{ count }} item",
+    "dragItems_other": "{{ count }} items"
+  },
+  "settingsForm": {
+    "button": {
+      "save": "Continue"
+    },
+    "field": {
+      "music_path": "Music Directory",
+      "poll_interval": "Scan Interval",
+      "scan_type": "Scan Type"
+    },
+    "help": {
+      "music_path": "The absolute path to your music collection. When running in a container (like Docker) it will generally be a volume mapped at /music",
+      "poll_interval": "How often should we scan for new music?",
+      "scan_type": "In general a quick scan is recommended as it is much faster."
+    },
+    "subtitle": "Fill in the form below to get started.",
+    "title": "Setup MusicBox"
+  },
+  "signupForm": {
+    "button": {
+      "login": "Signup"
+    },
+    "field": {
+      "password": "Password",
+      "password_confirmation": "Confirm Password",
+      "username": "Username"
+    },
+    "title": "Setup your Account"
+  },
+  "upNext": {
+    "emptyView": "No upcoming tracks.",
+    "title": "Up Next"
+  }
+}

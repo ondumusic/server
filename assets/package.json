@@ -10,7 +10,7 @@
     "cov": "vitest run --watch --coverage",
     "format": "biome check --write --unsafe",
     "generate-routes": "tsr generate",
-    "i18n:extract": "./node_modules/i18next-parser/bin/cli.js 'src/**/*.{ts,tsx}'",
+    "i18n:extract": "i18next-cli extract",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
@@ -32,7 +32,7 @@
     "@vitest/browser": "^4.0.18",
     "@vitest/coverage-v8": "^4.0.18",
     "fishery": "^2.4.0",
-    "i18next-parser": "^9.4.0",
+    "i18next-cli": "^1.42.12",
     "playwright": "^1.58.2",
     "storybook": "^10.2.10",
     "tailwindcss": "^4.2.0",
