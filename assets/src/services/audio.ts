@@ -26,7 +26,7 @@ export class AudioService {
   #preloadedTrack?: AudioTrack;
   #playToken?: string;
   #endedTimer?: ReturnType<typeof setTimeout>;
-  #fadeTimer?: ReturnType<typeof requestAnimationFrame>;
+  #fadeHandler?: () => void;
   #isFading: boolean = false;
   #wakeLock?: WakeLockSentinel;
 
@@ -386,26 +386,31 @@ export class AudioService {
         }
       }
 
-      if (progress < 1) {
-        this.#fadeTimer = requestAnimationFrame(fade);
-      } else {
-        this.#isFading = false;
+      if (progress >= 1) {
+        this.#fadeHandler = undefined;
 
         currentRef.pause();
         currentRef.currentTime = 0;
         currentRef.volume = 1;
 
+        nextRef.removeEventListener("timeupdate", fade);
         this.#cleanupRefs();
       }
     };
 
-    this.#fadeTimer = requestAnimationFrame(fade);
+    this.#fadeHandler = fade;
+    nextRef.addEventListener("timeupdate", fade);
   }
 
   #stopCrossfade() {
     this.#log("stop crossfade");
     this.#isFading = false;
-    if (this.#fadeTimer) cancelAnimationFrame(this.#fadeTimer);
+    if (!this.#fadeHandler) return;
+    const fadeHandler = this.#fadeHandler;
+
+    this.#audioRefs.forEach((ref) => {
+      ref.removeEventListener("timeupdate", fadeHandler);
+    });
   }
 
   #cleanupRefs() {
