@@ -9,6 +9,7 @@ defmodule MusicBox.Tracks.IndexForm do
     field :sort_by, Ecto.Enum, values: @sort_options, default: :default
     field :artist_id, :binary_id
     field :album_id, :binary_id
+    field :query, :string
 
     field :random_seed, :integer
   end

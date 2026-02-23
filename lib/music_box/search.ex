@@ -91,7 +91,7 @@ defmodule MusicBox.Search do
     search(query, params, sources, Map.put(results, :tracks, items))
   end
 
-  defp parse_query(query) do
+  def parse_query(query) do
     query
     |> String.split(~r/\s+/)
     |> Enum.map_join(" AND ", &"(#{&1} OR #{&1}*)")

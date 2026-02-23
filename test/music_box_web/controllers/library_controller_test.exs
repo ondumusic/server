@@ -619,6 +619,30 @@ defmodule MusicBoxWeb.LibraryControllerTest do
              ] = tracks
     end
 
+    test "filter by search query", %{conn: conn} do
+      assert %{
+               "entries" => tracks
+             } =
+               conn
+               |> get(~p"/api/tracks?query=post")
+               |> json_response(200)
+
+      assert [
+               %{
+                 "disc" => 1,
+                 "number" => 7,
+                 "name" => "Please Mister Postman",
+                 "artist" => %{
+                   "name" => "The Beatles"
+                 },
+                 "album" => %{
+                   "name" => "With the Beatles",
+                   "releaseYear" => 1963
+                 }
+               }
+             ] = tracks
+    end
+
     test "returns track details", %{conn: conn} do
       track = Repo.get_by(Track, name: "Roll Over Beethoven")
 
