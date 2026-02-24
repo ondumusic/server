@@ -387,19 +387,18 @@ export class AudioService {
       }
 
       if (progress >= 1) {
-        this.#fadeHandler = undefined;
-
         currentRef.pause();
         currentRef.currentTime = 0;
         currentRef.volume = 1;
 
-        nextRef.removeEventListener("timeupdate", fade);
+        this.#stopCrossfade();
         this.#cleanupRefs();
       }
     };
 
     this.#fadeHandler = fade;
     nextRef.addEventListener("timeupdate", fade);
+    nextRef.addEventListener("ended", fade);
   }
 
   #stopCrossfade() {
@@ -410,7 +409,10 @@ export class AudioService {
 
     this.#audioRefs.forEach((ref) => {
       ref.removeEventListener("timeupdate", fadeHandler);
+      ref.removeEventListener("ended", fadeHandler);
     });
+
+    this.#fadeHandler = undefined;
   }
 
   #cleanupRefs() {
