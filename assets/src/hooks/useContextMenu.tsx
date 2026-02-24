@@ -67,42 +67,43 @@ export function ContextMenu({
   }, [items]);
 
   useLayoutEffect(() => {
-    const menu = menuRef.current;
-    if (!menu) return;
+    const raf = requestAnimationFrame(() => {
+      const menu = menuRef.current;
+      if (!menu) return;
 
-    // If there is no position we should hide the context menu.
-    if (!position) {
-      menuRef.current?.close();
-      return;
-    }
+      // If there is no position we should hide the context menu.
+      if (!position) {
+        menuRef.current?.close();
+        return;
+      }
 
-    // Calculate the position for the context menu that ideally
-    // fits within the viewport bounds.
-    const rect = menu.getBoundingClientRect();
-    const viewport = {
-      width: window.innerWidth,
-      height: window.innerHeight,
-    };
+      // Calculate the position for the context menu that ideally
+      // fits within the viewport bounds.
+      const rect = menu.getBoundingClientRect();
+      const viewport = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
 
-    let { x, y } = position;
+      let { x, y } = position;
 
-    if (x + rect.width > viewport.width) {
-      x = viewport.width - rect.width - 16;
-    }
-    if (x < 0) x = 16;
+      if (x + rect.width > viewport.width) {
+        x = viewport.width - rect.width - 16;
+      }
+      if (x < 0) x = 16;
 
-    if (y + rect.height > viewport.height) {
-      y = viewport.height - rect.height - 16;
-    }
-    if (y < 0) y = 16;
+      if (y + rect.height > viewport.height) {
+        y = viewport.height - rect.height - 16;
+      }
+      if (y < 0) y = 16;
 
-    // Update the position of the context menu
-    setAdjustedPosition({ x, y });
+      // Update the position of the context menu
+      setAdjustedPosition({ x, y });
 
-    // In the next animation frame actually make it visible.
-    // This is delayed to avoid it being visible in previous
-    // coordinates and then popping to the correct ones.
-    requestAnimationFrame(() => menuRef.current?.showModal());
+      // Make the modal visible
+      menuRef.current?.showModal();
+    });
+    return () => cancelAnimationFrame(raf);
   }, [position]);
 
   useEffect(() => {
