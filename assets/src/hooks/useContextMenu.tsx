@@ -57,6 +57,7 @@ export function ContextMenu({
 }>) {
   const menuRef = useRef<HTMLDialogElement>(null);
   const [focusedIndex, setFocusedIndex] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
   const [adjustedPosition, setAdjustedPosition] = useState<{
     x: number;
     y: number;
@@ -74,6 +75,7 @@ export function ContextMenu({
       // If there is no position we should hide the context menu.
       if (!position) {
         menuRef.current?.close();
+        setIsVisible(false);
         return;
       }
 
@@ -101,6 +103,7 @@ export function ContextMenu({
       setAdjustedPosition({ x, y });
 
       // Make the modal visible
+      setIsVisible(true);
       menuRef.current?.showModal();
     });
     return () => cancelAnimationFrame(raf);
@@ -112,6 +115,7 @@ export function ContextMenu({
       if (!menuRef.current) return;
 
       if (!menuRef.current.contains(e.target as Node)) {
+        setIsVisible(false);
         onClose();
         return;
       }
@@ -125,6 +129,7 @@ export function ContextMenu({
         e.clientY < modalRect.top ||
         e.clientY > modalRect.bottom
       ) {
+        setIsVisible(false);
         onClose();
       }
     };
@@ -134,6 +139,7 @@ export function ContextMenu({
       switch (e.key) {
         case "Escape":
           e.stopPropagation();
+          setIsVisible(false);
           onClose();
           break;
 
@@ -154,6 +160,7 @@ export function ContextMenu({
           const menuItem = menuItems[focusedIndex];
           if (menuItem && menuItem.type === "item") {
             menuItem.onClick();
+            setIsVisible(false);
             onClose();
           }
 
@@ -183,6 +190,7 @@ export function ContextMenu({
       className={classNames([
         "fixed bg-accent-50 text-selected transition-colors rounded-lg shadow-2xl border border-accent-200/50 py-1 min-w-48 max-w-64 z-50",
         "transition-opacity duration-75 dialog-contextmenu p-1 space-y-0.5",
+        !isVisible && "invisible",
       ])}
       style={{
         left: adjustedPosition ? `${adjustedPosition.x}px` : "0px",
