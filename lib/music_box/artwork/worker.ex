@@ -64,12 +64,16 @@ defmodule MusicBox.Artwork.Worker do
     last_fetcher = List.last(available_fetchers)
 
     from(
-      a in Album,
-      left_join: art in assoc(a, :artwork),
-      left_join: artist in assoc(a, :artist),
+      al in Album,
+      left_join: art in assoc(al, :artwork),
+      left_join: artist in assoc(al, :artist),
       where: is_nil(art.path) and (is_nil(art.fetcher) or art.fetcher != ^last_fetcher),
       preload: [artwork: art],
-      order_by: [asc_nulls_first: art.last_fetch_attempt, asc: artist.name, asc: a.name],
+      order_by: [
+        asc_nulls_first: art.last_fetch_attempt,
+        asc: artist.sort_name,
+        asc: al.sort_name
+      ],
       limit: ^len
     )
     |> Repo.all()

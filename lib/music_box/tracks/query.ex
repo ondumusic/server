@@ -35,7 +35,7 @@ defmodule MusicBox.Tracks.Query do
     |> join(:inner, [track: t], fts in "tracks_fts", on: fts.rowid == t.rowid, as: :fts)
     |> where(fragment("tracks_fts match ?", ^parsed_query))
     |> exclude(:order_by)
-    |> order_by([track: t, album: al, artist: a],
+    |> order_by([track: t, album: al, album_artist: ala],
       asc:
         fragment("""
         bm25(tracks_fts,
@@ -43,9 +43,9 @@ defmodule MusicBox.Tracks.Query do
           'slug', 10.0
         )
         """),
-      asc: a.name,
+      asc: ala.sort_name,
       desc_nulls_last: al.release_year,
-      asc: al.name,
+      asc: al.sort_name,
       asc: t.disc,
       asc_nulls_last: t.number,
       asc: t.name
@@ -61,10 +61,10 @@ defmodule MusicBox.Tracks.Query do
   end
 
   defp set_order_by(query, _form) do
-    order_by(query, [track: t, album: al, artist: a],
-      asc: a.name,
+    order_by(query, [track: t, album: al, album_artist: ala],
+      asc: ala.sort_name,
       desc_nulls_last: al.release_year,
-      asc: al.name,
+      asc: al.sort_name,
       asc: t.disc,
       asc_nulls_last: t.number,
       asc: t.name
