@@ -56,7 +56,7 @@ defmodule MusicBoxWeb.LibraryJSON do
 
     artwork_url =
       if artwork_filename,
-        do: ~p"/artwork/#{artwork_filename}"
+        do: url(~p"/artwork/#{artwork_filename}")
 
     item = %{
       __type: "album",
@@ -92,7 +92,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       number: track.number,
       duration: track.duration,
       mimetype: mimetype,
-      streamUrl: ~p"/stream/#{track}"
+      streamUrl: url(~p"/stream/#{track}")
     }
   end
 
