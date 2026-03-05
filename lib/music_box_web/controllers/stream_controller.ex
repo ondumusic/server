@@ -88,16 +88,35 @@ defmodule MusicBoxWeb.StreamController do
   end
 
   def stream(conn, _params) do
-    content_type = MusicBox.Files.File.mimetype(conn.assigns.track.file)
+    file = conn.assigns.track.file
+    content_type = MusicBox.Files.File.mimetype(file)
 
     conn
-    |> send_download({:file, conn.assigns.track.file.path},
-      disposition: :inline,
-      charset: nil,
-      encode: false,
-      filename: Path.basename(conn.assigns.track.file.path),
-      content_type: content_type
-    )
+    |> get_req_header("range")
+    |> Utils.parse_range_header()
+    |> case do
+      {:ok, start_byte, end_byte} ->
+        end_byte =
+          if end_byte == :infinity,
+            do: file.size,
+            else: end_byte
+
+        length = end_byte - start_byte + 1
+
+        conn
+        |> put_resp_header("content-type", content_type)
+        |> put_resp_header("accept-ranges", "bytes")
+        |> put_resp_header("content-range", "bytes #{start_byte}-#{end_byte}/#{file.size}")
+        |> put_resp_header("content-length", "#{length}")
+        |> send_file(206, file.path, start_byte, length)
+
+      _ ->
+        conn
+        |> put_resp_header("content-type", content_type)
+        |> put_resp_header("accept-ranges", "bytes")
+        |> put_resp_header("content-length", "#{file.size}")
+        |> send_file(200, file.path)
+    end
   end
 
   defp put_stream_headers(conn) do
