@@ -15,7 +15,7 @@ defmodule MusicBox.Artists.Artist do
     field :slug, :string
     field :sort_name, :string
 
-    field :album_count, :integer, virtual: true
+    field :album_count, :integer
 
     has_many :albums, Album
     has_many :tracks, Track
@@ -30,15 +30,6 @@ defmodule MusicBox.Artists.Artist do
         do: query,
         else: from(a in __MODULE__, as: :artist)
 
-    album_count_query =
-      from(al in Album,
-        where: al.artist_id == parent_as(:artist).id,
-        select: count(al.artist_id)
-      )
-
     query
-    |> select_merge(%{
-      album_count: subquery(album_count_query)
-    })
   end
 end

@@ -5,6 +5,7 @@ defmodule MusicBox.Cleanup.Worker do
 
   alias MusicBox.Albums.Album
   alias MusicBox.Artists.Artist
+  alias MusicBox.Cleanup
   alias MusicBox.FileScanner.Utils
   alias MusicBox.Repo
   alias MusicBox.Settings
@@ -46,24 +47,48 @@ defmodule MusicBox.Cleanup.Worker do
 
   @impl true
   def handle_info(%{topic: "library:sync", event: "completed"}, state) do
-    do_step(:unused)
+    Cleanup.work_async([:unused, :update_album_counts])
     {:noreply, state}
   end
 
   def handle_info(_payload, state), do: {:noreply, state}
 
-  defp do_step(:sort_names) do
+  def do_step(:sort_names) do
     settings = Settings.get()
     update_sort_names(Artist, settings.strip_sort_prefixes)
     update_sort_names(Album, settings.strip_sort_prefixes)
   end
 
-  defp do_step(:unused) do
+  def do_step(:unused) do
     cleanup_unused_albums()
     cleanup_unused_artists()
   end
 
-  defp do_step(:update_fts) do
+  def do_step(:update_album_counts) do
+    Repo.transact(fn repo ->
+      # First, set all to 0
+      from(a in Artist, update: [set: [album_count: 0]])
+      |> repo.update_all([])
+
+      # Then update those that have albums
+      subquery =
+        from(al in Album,
+          group_by: al.artist_id,
+          select: %{artist_id: al.artist_id, count: count(al.id)}
+        )
+
+      from(a in Artist,
+        join: s in subquery(subquery),
+        on: a.id == s.artist_id,
+        update: [set: [album_count: s.count]]
+      )
+      |> repo.update_all([])
+
+      {:ok, :noop}
+    end)
+  end
+
+  def do_step(:update_fts) do
     Repo.query!("INSERT INTO artists_fts(artists_fts) VALUES('rebuild');")
     Repo.query!("INSERT INTO albums_fts(albums_fts) VALUES('rebuild');")
     Repo.query!("INSERT INTO tracks_fts(tracks_fts) VALUES('rebuild');")

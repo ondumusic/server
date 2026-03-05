@@ -4,6 +4,7 @@ defmodule TestSeeds do
   alias MusicBox.Accounts
   alias MusicBox.Albums.Album
   alias MusicBox.Artists.Artist
+  alias MusicBox.Cleanup
   alias MusicBox.Files.File
   alias MusicBox.Files.FileMetadata
   alias MusicBox.FileScanner.Utils
@@ -39,6 +40,9 @@ defmodule TestSeeds do
       }
     ]
     |> Enum.each(&insert_artist/1)
+
+    [:update_album_counts, :update_fts]
+    |> Enum.each(&Cleanup.Worker.do_step/1)
 
     Repo.query!("INSERT INTO artists_fts(artists_fts) VALUES('rebuild');")
     Repo.query!("INSERT INTO albums_fts(albums_fts) VALUES('rebuild');")

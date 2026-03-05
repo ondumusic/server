@@ -429,7 +429,11 @@ defmodule MusicBoxWeb.LibraryControllerTest do
                %{
                  "duration" => 133.0,
                  "name" => "It Won't Be Long",
-                 "number" => 1
+                 "number" => 1,
+                 "artist" => %{
+                   "name" => "The Beatles",
+                   "albumCount" => 1
+                 }
                },
                %{
                  "duration" => 125.0,
