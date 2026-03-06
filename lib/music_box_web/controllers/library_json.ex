@@ -69,23 +69,21 @@ defmodule MusicBoxWeb.LibraryJSON do
       artworkUrl: artwork_url
     }
 
-    if assigns[:tracks] != false do
+    if assigns[:render_tracks] != false do
       Map.put(item, :tracks, json_map(assigns, [:album, :tracks], :track, include: [:album]))
     else
       item
     end
   end
 
-  def track(%{track: track, album: album}) do
+  def track(%{track: track, album: album} = assigns) do
     mimetype = MusicBox.Files.File.mimetype(track.file)
 
-    %{
+    item = %{
       __type: "track",
       id: track.id,
       artistId: track.artist_id,
       albumArtistId: album.artist_id,
-      artist: artist(%{artist: track.artist}),
-      album: album(%{album: track.album, tracks: false}),
       albumId: album.id,
       name: track.name,
       disc: track.disc,
@@ -94,6 +92,22 @@ defmodule MusicBoxWeb.LibraryJSON do
       mimetype: mimetype,
       streamUrl: url(~p"/stream/#{track}")
     }
+
+    item =
+      if assigns[:render_album] != false do
+        Map.put(item, :album, album(%{album: album, render_tracks: false}))
+      else
+        item
+      end
+
+    item =
+      if assigns[:render_album] != false do
+        Map.put(item, :artist, artist(%{artist: track.artist}))
+      else
+        item
+      end
+
+    item
   end
 
   def track(%{track: %{album: album} = track}),

@@ -60,6 +60,8 @@ defmodule MusicBoxWeb.Router do
 
     post "/transcode/:track_id", StreamController, :transcode
 
+    get "/sync", SyncController, :sync
+
     get "/search", SearchController, :search
   end
 end
