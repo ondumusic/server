@@ -5,7 +5,7 @@ defmodule MusicBoxWeb.SyncJSON do
 
   def result(%{result: result, cursor: cursor}) do
     incomplete? =
-      Enum.all?(result, fn {_k, v} ->
+      Enum.any?(result, fn {_k, v} ->
         v.has_more?
       end)
 
