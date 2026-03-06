@@ -47,7 +47,7 @@ defmodule MusicBox.Cleanup.Worker do
 
   @impl true
   def handle_info(%{topic: "library:sync", event: "completed"}, state) do
-    Cleanup.work_async([:unused, :update_album_counts])
+    Cleanup.work_async([:unused, :update_album_counts, :update_track_counts])
     {:noreply, state}
   end
 
@@ -81,6 +81,30 @@ defmodule MusicBox.Cleanup.Worker do
         join: s in subquery(subquery),
         on: a.id == s.artist_id,
         update: [set: [album_count: s.count]]
+      )
+      |> repo.update_all([])
+
+      {:ok, :noop}
+    end)
+  end
+
+  def do_step(:update_track_counts) do
+    Repo.transact(fn repo ->
+      # First, set all to 0
+      from(al in Album, update: [set: [track_count: 0]])
+      |> repo.update_all([])
+
+      # Then update to get a track count per album
+      subquery =
+        from(t in Track,
+          group_by: t.album_id,
+          select: %{album_id: t.album_id, count: count(t.id)}
+        )
+
+      from(al in Album,
+        join: s in subquery(subquery),
+        on: al.id == s.album_id,
+        update: [set: [track_count: s.count]]
       )
       |> repo.update_all([])
 
