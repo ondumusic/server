@@ -68,6 +68,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       sortName: album.sort_name,
       releaseYear: album.release_year,
       isUnknown: album.is_unknown,
+      trackCount: album.track_count,
       artworkUrl: artwork_url
     }
 
