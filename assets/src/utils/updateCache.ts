@@ -10,6 +10,7 @@ interface Item {
   id: string;
   slug?: string;
   name: string;
+  sortName?: string;
   __type: string;
 }
 
@@ -94,8 +95,14 @@ function updatePaginatedCache(oldData: Result<Item>, items: Item[]) {
         const entries = page.entries;
         entries.push(entry);
         entries.sort((a: Item, b: Item) => {
-          if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
-          if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+          if (a.sortName && b.sortName) {
+            if (a.sortName.toLowerCase() < b.sortName.toLowerCase()) return -1;
+            if (a.sortName.toLowerCase() > b.sortName.toLowerCase()) return 1;
+          } else {
+            if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+            if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+          }
+
           return 0;
         });
 
