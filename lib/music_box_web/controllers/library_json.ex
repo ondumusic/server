@@ -18,6 +18,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       __type: "artist",
       id: artist.id,
       name: artist.name,
+      sortName: artist.sort_name,
       slug: artist.slug,
       albumCount: artist.album_count
     }
@@ -64,6 +65,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       slug: album.slug,
       artistId: album.artist_id,
       name: album.name,
+      sortName: album.sort_name,
       releaseYear: album.release_year,
       isUnknown: album.is_unknown,
       artworkUrl: artwork_url
