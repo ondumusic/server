@@ -39,12 +39,3 @@ defmodule MusicBox.Repo do
     }
   end
 end
-
-defmodule TestMod do
-  functions = MusicBox.Repo.__info__(:functions)
-
-  for {name, arity} <- functions do
-    args = Macro.generate_arguments(arity, __MODULE__)
-    defdelegate unquote(name)(unquote_splicing(args)), to: MusicBox.Repo
-  end
-end
