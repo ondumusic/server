@@ -96,6 +96,10 @@ defmodule MusicBoxWeb.LibraryJSON do
       duration: track.duration,
       mimetype: mimetype,
       insertedAt: track.inserted_at,
+      file: %{
+        size: track.file.size,
+        checksum: track.file.checksum
+      },
       streamUrl: url(~p"/stream/#{track}")
     }
 
