@@ -20,7 +20,8 @@ defmodule MusicBoxWeb.LibraryJSON do
       name: artist.name,
       sortName: artist.sort_name,
       slug: artist.slug,
-      albumCount: artist.album_count
+      albumCount: artist.album_count,
+      insertedAt: artist.inserted_at
     }
   end
 
@@ -69,7 +70,8 @@ defmodule MusicBoxWeb.LibraryJSON do
       releaseYear: album.release_year,
       isUnknown: album.is_unknown,
       trackCount: album.track_count,
-      artworkUrl: artwork_url
+      artworkUrl: artwork_url,
+      insertedAt: album.inserted_at
     }
 
     if assigns[:render_tracks] != false do
@@ -93,6 +95,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       number: track.number,
       duration: track.duration,
       mimetype: mimetype,
+      insertedAt: track.inserted_at,
       streamUrl: url(~p"/stream/#{track}")
     }
 
