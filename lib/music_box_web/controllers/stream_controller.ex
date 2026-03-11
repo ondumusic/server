@@ -26,7 +26,7 @@ defmodule MusicBoxWeb.StreamController do
 
   def stream(conn, %{"transcode" => "1"}) do
     meta = Transcoder.get_meta(conn.assigns.track.file, conn.assigns.preset)
-    estimated_file_size = Utils.estimate_opus_size(conn.assigns.track.file, conn.assigns.preset)
+    estimated_file_size = Utils.estimate_file_size(conn.assigns.track.file, conn.assigns.preset)
     actual_file_size = meta && meta.file_size
 
     complete_file_ranges =
@@ -139,6 +139,13 @@ defmodule MusicBoxWeb.StreamController do
     |> put_resp_header("x-content-duration", Float.to_string(duration))
   end
 
+  defp send_busy(conn) do
+    conn
+    |> put_status(:service_unavailable)
+    |> put_resp_header("retry-after", "5")
+    |> text("Range Not Satisfiable")
+  end
+
   defp send_transcoded_file(conn) do
     conn
     |> put_stream_headers()
@@ -154,6 +161,7 @@ defmodule MusicBoxWeb.StreamController do
          {:ok, new_conn} <- chunk(conn, chunk_data) do
       transcode_file(new_conn, chunk_index + 1)
     else
+      {:error, :server_busy} -> send_busy(conn)
       _ -> conn
     end
   end
@@ -167,7 +175,7 @@ defmodule MusicBoxWeb.StreamController do
 
   defp send_transcoded_chunk(conn, start_byte, end_byte) do
     meta = Transcoder.get_meta(conn.assigns.track.file, conn.assigns.preset)
-    estimated_file_size = Utils.estimate_opus_size(conn.assigns.track.file, conn.assigns.preset)
+    estimated_file_size = Utils.estimate_file_size(conn.assigns.track.file, conn.assigns.preset)
     actual_file_size = meta && meta.file_size
     file_size = actual_file_size || estimated_file_size
     end_byte = min(end_byte, file_size - 1)
@@ -203,6 +211,7 @@ defmodule MusicBoxWeb.StreamController do
          {:ok, new_conn} <- chunk(conn, chunk_part_data) do
       transcode_range(new_conn, chunk_index + 1, 0, remaining_bytes)
     else
+      {:error, :server_busy} -> send_busy(conn)
       _ -> conn
     end
   end

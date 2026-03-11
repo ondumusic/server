@@ -11,6 +11,8 @@ defmodule MusicBox.Transcoder do
   @meta_table :transcoder_meta
   @max_concurrency 3
   @max_cached_files 5
+  @max_queue_depth 6
+  @queue_timeout_ms 30_000
   @cleanup_timer_ms 5_000
 
   @type preset :: :default | :mobile
@@ -105,9 +107,17 @@ defmodule MusicBox.Transcoder do
   end
 
   # Too many concurrent jobs, queue the request
-  defp start_or_enqueue(_file, _preset, _chunk_index, _from, %{jobs: jobs} = _state)
-       when map_size(jobs) >= @max_concurrency,
-       do: raise("TODO: Not Implemented Yet")
+  defp start_or_enqueue(file, preset, chunk_index, from, %{jobs: jobs, queue: queue} = state)
+    when map_size(jobs) >= @max_concurrency do
+    if :queue.len(queue) >= @max_queue_depth do
+      {:reply, {:error, :server_busy}, state}
+    else
+      timer_ref = Process.send_after(self(), {:queue_timeout, from}, @queue_timeout_ms)
+      entry = {file, preset, chunk_index, from, timer_ref}
+      new_queue = :queue.in(entry, queue)
+      {:noreply, %{state | queue: new_queue}}
+    end
+  end
 
   # Request already transcoding, queue the request
   defp start_or_enqueue(
@@ -233,6 +243,17 @@ defmodule MusicBox.Transcoder do
     {:noreply, state}
   end
 
+    def handle_info({:queue_timeout, from}, state) do
+    new_queue =
+      state.queue
+      |> :queue.to_list()
+      |> Enum.reject(fn {_, _, _, f, _} -> f == from end)
+      |> :queue.from_list()
+
+    GenServer.reply(from, {:error, :server_busy})
+    {:noreply, %{state | queue: new_queue}}
+  end
+
   def handle_info({:DOWN, _ref, :process, pid, reason}, state) do
     case Enum.find(state.jobs, fn {_, job} -> job.pid == pid end) do
       {{_file_id, _preset}, active_job} ->
@@ -295,6 +316,27 @@ defmodule MusicBox.Transcoder do
     state = schedule_cleanup(state)
 
     %{state | jobs: new_jobs, requests: new_requests}
+    |> drain_queue()
+  end
+
+  defp drain_queue(%{queue: _queue, jobs: jobs} = state) when map_size(jobs) >= @max_concurrency do
+    state
+  end
+
+  defp drain_queue(%{queue: queue} = state) do
+    case :queue.out(queue) do
+      {:empty, _} ->
+        state
+
+      {{:value, {file, preset, chunk_index, from, timer_ref}}, new_queue} ->
+        Process.cancel_timer(timer_ref)
+        state = %{state | queue: new_queue}
+        # This will either start a new job or enqueue on an existing one
+        case start_or_enqueue(file, preset, chunk_index, from, state) do
+          {:noreply, new_state} -> drain_queue(new_state)
+          {:reply, _, new_state} -> drain_queue(new_state)
+        end
+    end
   end
 
   defp schedule_cleanup(state) do
