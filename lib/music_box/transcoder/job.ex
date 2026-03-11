@@ -44,7 +44,7 @@ defmodule MusicBox.Transcoder.Job do
     %{job | pid: pid}
   end
 
-  defp ffmpeg_shared_args(%File{} = file, bitrate, sample_rate) do
+  defp ffmpeg_shared_args(%File{} = file, :opus, bitrate, sample_rate) do
     ~w(
         -c:a libopus -b:a #{bitrate}k -f webm -ar #{sample_rate} -vn
         -fflags +genpts+nobuffer -max_delay 0
@@ -56,12 +56,27 @@ defmodule MusicBox.Transcoder.Job do
       )
   end
 
+  defp ffmpeg_shared_args(%File{} = _file, :aac, bitrate, sample_rate) do
+    ~w(
+        -c:a aac -b:a #{bitrate}k -ar #{sample_rate} -f adts
+        -ac 2 pipe:1 -v quiet -nostats
+    )
+  end
+
+  defp ffmpeg_args(%Job{file: %File{} = file, preset: :mobile_aac}) do
+    ["-i", file.path] ++ ffmpeg_shared_args(file, :aac, 160, 48_000)
+  end
+
+  defp ffmpeg_args(%Job{file: %File{} = file, preset: :default_aac}) do
+    ["-i", file.path] ++ ffmpeg_shared_args(file, :aac, 192, 48_000)
+  end
+
   defp ffmpeg_args(%Job{file: %File{} = file, preset: :mobile}) do
-    ["-i", file.path] ++ ffmpeg_shared_args(file, 128, 48_000)
+    ["-i", file.path] ++ ffmpeg_shared_args(file, :opus, 128, 48_000)
   end
 
   defp ffmpeg_args(%Job{file: %File{} = file, preset: _preset}) do
-    ["-i", file.path] ++ ffmpeg_shared_args(file, 160, 48_000)
+    ["-i", file.path] ++ ffmpeg_shared_args(file, :opus, 160, 48_000)
   end
 
   defp transcode_file(%Job{} = job, parent) do

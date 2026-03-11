@@ -122,8 +122,14 @@ defmodule MusicBoxWeb.StreamController do
   defp put_stream_headers(conn) do
     duration = conn.assigns.track.duration
 
+    content_type =
+      case conn.assigns.preset do
+        aac when aac in ~w(mobile_aac default_aac)a -> "audio/aac"
+        _ -> "audio/webm"
+      end
+
     conn
-    |> put_resp_header("content-type", "audio/webm")
+    |> put_resp_header("content-type", content_type)
     |> put_resp_header("accept-ranges", "bytes")
     |> put_resp_header("cache-control", "no-cache, no-store, must-revalidate")
     |> put_resp_header("pragma", "no-cache")
@@ -216,6 +222,8 @@ defmodule MusicBoxWeb.StreamController do
   defp assign_preset(conn, _opts) do
     case Map.get(conn.params, "preset") do
       "mobile" -> assign(conn, :preset, :mobile)
+      "mobile_aac" -> assign(conn, :preset, :mobile_aac)
+      "default_aac" -> assign(conn, :preset, :default_aac)
       _ -> assign(conn, :preset, :default)
     end
   end
