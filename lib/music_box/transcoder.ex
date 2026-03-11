@@ -68,7 +68,7 @@ defmodule MusicBox.Transcoder do
   @spec request_chunk(File.t(), preset(), non_neg_integer()) ::
           {:ok, binary()} | {:error, chunk_error()}
   def request_chunk(file, preset, chunk_index) do
-    GenServer.call(__MODULE__, {:request_chunk, file, preset, chunk_index}, 10_000)
+    GenServer.call(__MODULE__, {:request_chunk, file, preset, chunk_index}, :infinity)
   end
 
   @impl true
@@ -259,7 +259,7 @@ defmodule MusicBox.Transcoder do
       {{_file_id, _preset}, active_job} ->
         Logger.error("Failed transcoding file: #{active_job.file.id} - Error: #{inspect(reason)}")
         upsert_meta(active_job, %{failed_at: Utils.timestamp()})
-        send(self(), {:transcoding_failed, active_job.file})
+        send(self(), {:transcoding_failed, active_job})
 
       nil ->
         :noop
