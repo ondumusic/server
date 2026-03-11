@@ -108,7 +108,7 @@ defmodule MusicBox.Transcoder do
 
   # Too many concurrent jobs, queue the request
   defp start_or_enqueue(file, preset, chunk_index, from, %{jobs: jobs, queue: queue} = state)
-    when map_size(jobs) >= @max_concurrency do
+       when map_size(jobs) >= @max_concurrency do
     if :queue.len(queue) >= @max_queue_depth do
       {:reply, {:error, :server_busy}, state}
     else
@@ -243,7 +243,7 @@ defmodule MusicBox.Transcoder do
     {:noreply, state}
   end
 
-    def handle_info({:queue_timeout, from}, state) do
+  def handle_info({:queue_timeout, from}, state) do
     new_queue =
       state.queue
       |> :queue.to_list()
@@ -319,7 +319,8 @@ defmodule MusicBox.Transcoder do
     |> drain_queue()
   end
 
-  defp drain_queue(%{queue: _queue, jobs: jobs} = state) when map_size(jobs) >= @max_concurrency do
+  defp drain_queue(%{queue: _queue, jobs: jobs} = state)
+       when map_size(jobs) >= @max_concurrency do
     state
   end
 

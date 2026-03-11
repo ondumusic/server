@@ -20,7 +20,8 @@ defmodule MusicBox.Transcoder.Utils do
   def timestamp, do: DateTime.utc_now() |> DateTime.to_unix()
 
   @spec estimate_file_size(File.t(), Transcoder.preset()) :: non_neg_integer()
-  def estimate_file_size(%File{metadata: %{duration: duration}}, preset) when preset in ~w(mobile_aac default_aac)a do
+  def estimate_file_size(%File{metadata: %{duration: duration}}, preset)
+      when preset in ~w(mobile_aac default_aac)a do
     audio_bytes = bitrate_kbps(preset) * 1000 * duration / 8
     est_overhead = 1.06
     round(audio_bytes * est_overhead)
