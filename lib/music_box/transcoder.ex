@@ -345,7 +345,13 @@ defmodule MusicBox.Transcoder do
   end
 
   defp cache_file_path(file_id, preset) do
-    filename = "#{file_id}-#{preset}.webm"
+    ext =
+      case preset do
+        aac when aac in ~w(mobile_aac default_aac)a -> "aac"
+        _ -> "webm"
+      end
+
+    filename = "#{file_id}-#{preset}.#{ext}"
     Path.join(config(:cache_path), filename)
   end
 
