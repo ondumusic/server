@@ -64,4 +64,10 @@ defmodule MusicBoxWeb.ConnCase do
     conn
     |> Plug.Conn.assign(:session_token, session_token)
   end
+
+  def update_record(record, changes) do
+    record
+    |> Ecto.Changeset.change(changes)
+    |> MusicBox.Repo.update!()
+  end
 end

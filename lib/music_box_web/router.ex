@@ -29,6 +29,11 @@ defmodule MusicBoxWeb.Router do
     get "/onboarding/:step", PageController, :react
 
     get "/artwork/:filename", ArtworkController, :show
+  end
+
+  scope "/", MusicBoxWeb do
+    pipe_through [:browser, :api]
+
     get "/stream/:track_id", StreamController, :stream
   end
 
