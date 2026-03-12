@@ -9,11 +9,8 @@ defmodule MusicBoxWeb.StreamController do
   plug :assign_track
   plug :assign_preset
 
-  def transcode(conn, _params) do
+  def transcode(conn, %{"async" => "1"}) do
     %{track: track, preset: preset} = conn.assigns
-
-    require Logger
-    Logger.info("Starting transcoder!")
 
     # By requesting the first chunk the transcoding will start (if needed).
     Task.start(fn ->
@@ -22,6 +19,53 @@ defmodule MusicBoxWeb.StreamController do
 
     conn
     |> json(%{ok: true})
+  end
+
+  def transcode(conn, _params) do
+    %{track: track, preset: preset} = conn.assigns
+
+    # By requesting the first chunk the transcoding will start (if needed).
+    Transcoder.request_chunk(track.file, preset, 0)
+
+    conn
+    |> put_resp_content_type("text/event-stream")
+    |> send_chunked(200)
+    |> await_transcode()
+  end
+
+  defp await_transcode(conn) do
+    meta = Transcoder.get_meta(conn.assigns.track.file, conn.assigns.preset)
+
+    case meta do
+      %{completed_at: completed} when not is_nil(completed) ->
+        chunk(conn, "data: #{JSON.encode!(%{size: meta.file_size})}\n\n")
+        conn
+
+      _ ->
+        # SSE keepalive comment
+        chunk(conn, ":\n\n")
+        Process.sleep(500)
+        await_transcode(conn)
+    end
+  end
+
+  def download(conn, %{"transcode" => "1"}) do
+    meta = Transcoder.get_meta(conn.assigns.track.file, conn.assigns.preset)
+
+    case meta do
+      %{file_size: file_size} when file_size > 0 ->
+        conn
+        |> put_resp_header("content-length", "#{file_size}")
+        |> send_transcoded_file()
+
+      _ ->
+        conn
+        |> send_transcoded_file()
+    end
+  end
+
+  def download(conn, params) do
+    stream(conn, params)
   end
 
   def stream(conn, %{"transcode" => "1"}) do
@@ -121,12 +165,7 @@ defmodule MusicBoxWeb.StreamController do
 
   defp put_stream_headers(conn) do
     duration = conn.assigns.track.duration
-
-    content_type =
-      case conn.assigns.preset do
-        aac when aac in ~w(mobile_aac default_aac)a -> "audio/aac"
-        _ -> "audio/webm"
-      end
+    content_type = conn.assigns.preset.mimetype
 
     conn
     |> put_resp_header("content-type", content_type)

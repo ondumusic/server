@@ -100,6 +100,7 @@ defmodule MusicBoxWeb.LibraryJSON do
         size: track.file.size,
         checksum: track.file.checksum
       },
+      downloadUrl: url(~p"/download/#{track}"),
       streamUrl: url(~p"/stream/#{track}")
     }
 

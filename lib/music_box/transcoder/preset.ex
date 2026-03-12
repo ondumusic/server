@@ -8,6 +8,7 @@ defmodule MusicBox.Transcoder.Preset do
     :ext,
     :bitrate,
     :ffmpeg_preset,
+    :mimetype,
     sample_rate: 48_000
   ]
 
@@ -16,6 +17,7 @@ defmodule MusicBox.Transcoder.Preset do
           bitrate: non_neg_integer(),
           sample_rate: non_neg_integer(),
           ffmpeg_preset: :aac | :webm,
+          mimetype: String.t(),
           ext: String.t()
         }
 
@@ -29,24 +31,28 @@ defmodule MusicBox.Transcoder.Preset do
         id: :mobile_aac,
         bitrate: 160,
         ffmpeg_preset: :aac,
+        mimetype: "audio/aac",
         ext: "aac"
       },
       %__MODULE__{
         id: :default_aac,
         bitrate: 192,
         ffmpeg_preset: :aac,
+        mimetype: "audio/aac",
         ext: "aac"
       },
       %__MODULE__{
         id: :mobile_webm,
         bitrate: 128,
         ffmpeg_preset: :webm,
+        mimetype: "audio/webm",
         ext: "webm"
       },
       %__MODULE__{
         id: :default_webm,
         bitrate: 160,
         ffmpeg_preset: :webm,
+        mimetype: "audio/webm",
         ext: "webm"
       }
     ]
