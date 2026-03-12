@@ -36,8 +36,7 @@ defmodule MusicBox.Transcoder do
     lookup_key = {file_id, preset.id}
 
     path = cache_file_path(file_id, preset)
-    persisted? = false
-    # Elixir.File.exists?(path)
+    persisted? = Elixir.File.exists?(path)
 
     if persisted? do
       stat = Elixir.File.stat!(path, time: :posix)
@@ -169,7 +168,7 @@ defmodule MusicBox.Transcoder do
   end
 
   def handle_info({:transcoding_complete, %Job{} = job, chunk_count}, state) do
-    %{file: file, preset: preset} = job
+    %{file: file, preset: %{id: preset_id}} = job
     file_size = transcoded_file_size(job)
 
     upsert_meta(job, %{
@@ -181,7 +180,7 @@ defmodule MusicBox.Transcoder do
     # If there are still pending requests we should deal with them
     state.requests
     |> Enum.filter(fn
-      {{file_id, ^preset, chunk_index}, _requests} ->
+      {{file_id, ^preset_id, chunk_index}, _requests} ->
         file_id == file.id and chunk_index >= chunk_count
 
       _ ->
@@ -255,7 +254,7 @@ defmodule MusicBox.Transcoder do
 
   def handle_info({:DOWN, _ref, :process, pid, reason}, state) do
     case Enum.find(state.jobs, fn {_, job} -> job.pid == pid end) do
-      {{_file_id, _preset}, active_job} ->
+      {{_file_id, _preset_id}, active_job} ->
         Logger.error("Failed transcoding file: #{active_job.file.id} - Error: #{inspect(reason)}")
         upsert_meta(active_job, %{failed_at: Utils.timestamp()})
         send(self(), {:transcoding_failed, active_job})
@@ -287,7 +286,7 @@ defmodule MusicBox.Transcoder do
   end
 
   defp cleanup_lookup_key(lookup_key) do
-    {file_id, preset} = lookup_key
+    {file_id, preset_id} = lookup_key
     :ets.delete(@meta_table, lookup_key)
 
     :ets.select_delete(@chunks_table, [
@@ -295,7 +294,7 @@ defmodule MusicBox.Transcoder do
         {{:"$1", :"$2", :_}, :_},
         [
           {:==, :"$1", file_id},
-          {:==, :"$2", preset}
+          {:==, :"$2", preset_id}
         ],
         [true]
       }
@@ -303,15 +302,15 @@ defmodule MusicBox.Transcoder do
   end
 
   defp cleanup_job(state, job) do
-    %{file: file, preset: preset} = job
+    %{file: file, preset: %{id: preset_id}} = job
 
     new_requests =
       Map.reject(state.requests, fn
-        {{file_id, ^preset, _}, _} -> file_id == file.id
+        {{file_id, ^preset_id, _}, _} -> file_id == file.id
         _ -> false
       end)
 
-    new_jobs = Map.delete(state.jobs, {file.id, preset.id})
+    new_jobs = Map.delete(state.jobs, {file.id, preset_id})
     state = schedule_cleanup(state)
 
     %{state | jobs: new_jobs, requests: new_requests}
@@ -370,7 +369,7 @@ defmodule MusicBox.Transcoder do
 
   defp transcoded_file_size(%Job{file: %File{id: file_id}, preset: preset}) do
     :ets.select(@chunks_table, [
-      {{{file_id, preset, :"$1"}, :"$2"}, [], [:"$_"]}
+      {{{file_id, preset.id, :"$1"}, :"$2"}, [], [:"$_"]}
     ])
     |> Enum.reduce(0, fn {_key, data}, acc ->
       acc + byte_size(data)
@@ -385,7 +384,7 @@ defmodule MusicBox.Transcoder do
     case Elixir.File.open(path, [:write, :binary, :exclusive]) do
       {:ok, file} ->
         :ets.select(@chunks_table, [
-          {{{file_id, preset, :"$1"}, :"$2"}, [], [:"$_"]}
+          {{{file_id, preset.id, :"$1"}, :"$2"}, [], [:"$_"]}
         ])
         |> Enum.sort_by(fn {{_, _, n}, _} -> n end)
         |> Enum.each(fn {_key, data} ->
