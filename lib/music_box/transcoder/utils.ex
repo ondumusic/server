@@ -3,12 +3,7 @@ defmodule MusicBox.Transcoder.Utils do
 
   alias MusicBox.Files.File
   alias MusicBox.Transcoder
-
-  @spec bitrate_kbps(Transcoder.preset()) :: non_neg_integer()
-  def bitrate_kbps(:mobile_aac), do: 160
-  def bitrate_kbps(:default_aac), do: 192
-  def bitrate_kbps(:mobile), do: 128
-  def bitrate_kbps(_default), do: 160
+  alias MusicBox.Transcoder.Preset
 
   @spec chunk_size() :: non_neg_integer()
   def chunk_size, do: 1024 * 128
@@ -19,16 +14,16 @@ defmodule MusicBox.Transcoder.Utils do
   @spec timestamp() :: non_neg_integer()
   def timestamp, do: DateTime.utc_now() |> DateTime.to_unix()
 
-  @spec estimate_file_size(File.t(), Transcoder.preset()) :: non_neg_integer()
+  @spec estimate_file_size(File.t(), Preset.t()) :: non_neg_integer()
   def estimate_file_size(%File{metadata: %{duration: duration}}, preset)
       when preset in ~w(mobile_aac default_aac)a do
-    audio_bytes = bitrate_kbps(preset) * 1000 * duration / 8
+    audio_bytes = preset.bitrate * 1000 * duration / 8
     est_overhead = 1.06
     round(audio_bytes * est_overhead)
   end
 
   def estimate_file_size(%File{metadata: %{duration: duration}}, preset) do
-    audio_bytes = bitrate_kbps(preset) * 1000 * duration / 8
+    audio_bytes = preset.bitrate * 1000 * duration / 8
 
     # Estimate the container and opus overhead (6%)
     # this is most likely too much, but that's preferred because if we
@@ -37,7 +32,7 @@ defmodule MusicBox.Transcoder.Utils do
     round(audio_bytes * est_overhead)
   end
 
-  @spec continue_stream?(File.t(), Transcoder.preset(), non_neg_integer()) :: boolean()
+  @spec continue_stream?(File.t(), Preset.t(), non_neg_integer()) :: boolean()
   def continue_stream?(file, preset, chunk_index) do
     meta = Transcoder.get_meta(file, preset)
 

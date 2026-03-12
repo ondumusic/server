@@ -4,7 +4,7 @@ defmodule MusicBoxWeb.StreamController do
 
   alias MusicBox.Tracks
   alias MusicBox.Transcoder
-  alias MusicBox.Transcoder.Utils
+  alias MusicBox.Transcoder.{Preset, Utils}
 
   plug :assign_track
   plug :assign_preset
@@ -229,12 +229,12 @@ defmodule MusicBoxWeb.StreamController do
   end
 
   defp assign_preset(conn, _opts) do
-    case Map.get(conn.params, "preset") do
-      "mobile" -> assign(conn, :preset, :mobile)
-      "mobile_aac" -> assign(conn, :preset, :mobile_aac)
-      "default_aac" -> assign(conn, :preset, :default_aac)
-      _ -> assign(conn, :preset, :default)
-    end
+    preset =
+      conn.params
+      |> Map.get("preset", Preset.default_id())
+      |> Preset.get()
+
+    assign(conn, :preset, preset)
   end
 
   defp authenticated?(%{assigns: %{current_user: %{id: _id}}}), do: true

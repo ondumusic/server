@@ -5,7 +5,7 @@ defmodule MusicBox.Transcoder do
   require Logger
 
   alias MusicBox.Files.File
-  alias MusicBox.Transcoder.{Job, Result, State, Utils}
+  alias MusicBox.Transcoder.{Job, Preset, Result, State, Utils}
 
   @chunks_table :transcoder_chunks
   @meta_table :transcoder_meta
@@ -14,8 +14,6 @@ defmodule MusicBox.Transcoder do
   @max_queue_depth 6
   @queue_timeout_ms 30_000
   @cleanup_timer_ms 5_000
-
-  @type preset :: :default | :mobile
 
   @spec start_link(Keyword.t()) :: {:ok, pid()}
   def start_link(_opts) do
@@ -33,12 +31,13 @@ defmodule MusicBox.Transcoder do
     {:ok, %State{}}
   end
 
-  @spec get_meta(File.t(), preset()) :: Result.t() | nil
+  @spec get_meta(File.t(), Preset.t()) :: Result.t() | nil
   def get_meta(%File{id: file_id}, preset) do
-    lookup_key = {file_id, preset}
+    lookup_key = {file_id, preset.id}
 
     path = cache_file_path(file_id, preset)
-    persisted? = Elixir.File.exists?(path)
+    persisted? = false
+    # Elixir.File.exists?(path)
 
     if persisted? do
       stat = Elixir.File.stat!(path, time: :posix)
@@ -65,7 +64,7 @@ defmodule MusicBox.Transcoder do
   end
 
   @type chunk_error :: :unknown_chunk | :transcoding_failed | :no_longer_available
-  @spec request_chunk(File.t(), preset(), non_neg_integer()) ::
+  @spec request_chunk(File.t(), Preset.t(), non_neg_integer()) ::
           {:ok, binary()} | {:error, chunk_error()}
   def request_chunk(file, preset, chunk_index) do
     GenServer.call(__MODULE__, {:request_chunk, file, preset, chunk_index}, :infinity)
@@ -74,7 +73,7 @@ defmodule MusicBox.Transcoder do
   @impl true
   def handle_call({:request_chunk, %File{} = file, preset, chunk_index}, from, state) do
     meta = get_meta(file, preset) || %Result{}
-    lookup_key = {file.id, preset, chunk_index}
+    lookup_key = {file.id, preset.id, chunk_index}
     completed? = not is_nil(Map.get(meta, :completed_at))
     persisted? = Map.get(meta, :persisted, false)
     chunk_count = if(completed?, do: meta.chunk_count)
@@ -127,7 +126,7 @@ defmodule MusicBox.Transcoder do
          from,
          %{jobs: jobs} = state
        )
-       when is_map_key(jobs, {file_id, preset}),
+       when is_map_key(jobs, {file_id, preset.id}),
        do: enqueue_chunk_request(file, preset, chunk_index, from, state)
 
   # Start a new transcoding job
@@ -139,14 +138,14 @@ defmodule MusicBox.Transcoder do
     upsert_meta(job, %{started_at: Utils.timestamp()})
     Process.monitor(job.pid)
 
-    new_jobs = Map.put(state.jobs, {file.id, preset}, job)
+    new_jobs = Map.put(state.jobs, {file.id, preset.id}, job)
     new_state = %{state | jobs: new_jobs}
 
     enqueue_chunk_request(file, preset, chunk_index, from, new_state)
   end
 
   defp enqueue_chunk_request(%File{} = file, preset, chunk_index, from, state) do
-    lookup_key = {file.id, preset, chunk_index}
+    lookup_key = {file.id, preset.id, chunk_index}
     pending_requests = Map.get(state.requests, lookup_key, [])
 
     new_requests = Map.put(state.requests, lookup_key, [from | pending_requests])
@@ -158,7 +157,7 @@ defmodule MusicBox.Transcoder do
   @impl true
   def handle_info({:chunk, %Job{} = job, chunk_index, data}, state) do
     %{file: file, preset: preset} = job
-    lookup_key = {file.id, preset, chunk_index}
+    lookup_key = {file.id, preset.id, chunk_index}
     :ets.insert(@chunks_table, {lookup_key, data})
 
     state.requests
@@ -312,7 +311,7 @@ defmodule MusicBox.Transcoder do
         _ -> false
       end)
 
-    new_jobs = Map.delete(state.jobs, {file.id, preset})
+    new_jobs = Map.delete(state.jobs, {file.id, preset.id})
     state = schedule_cleanup(state)
 
     %{state | jobs: new_jobs, requests: new_requests}
@@ -338,7 +337,7 @@ defmodule MusicBox.Transcoder do
   end
 
   defp serve_or_enqueue(file, preset, chunk_index, from, state) do
-    lookup_key = {file.id, preset, chunk_index}
+    lookup_key = {file.id, preset.id, chunk_index}
 
     case :ets.lookup(@chunks_table, lookup_key) do
       [{^lookup_key, chunk_data}] ->
@@ -363,7 +362,7 @@ defmodule MusicBox.Transcoder do
   end
 
   defp upsert_meta(%Job{file: %File{} = file, preset: preset}, params) do
-    lookup_key = {file.id, preset}
+    lookup_key = {file.id, preset.id}
     current = get_meta(file, preset) || %Result{}
     new_map = Map.merge(current, params)
     :ets.insert(@meta_table, {lookup_key, new_map})
@@ -400,14 +399,8 @@ defmodule MusicBox.Transcoder do
     end
   end
 
-  defp cache_file_path(file_id, preset) do
-    ext =
-      case preset do
-        aac when aac in ~w(mobile_aac default_aac)a -> "aac"
-        _ -> "webm"
-      end
-
-    filename = "#{file_id}-#{preset}.#{ext}"
+  defp cache_file_path(file_id, %Preset{} = preset) do
+    filename = "#{file_id}-#{preset.id}.#{preset.ext}"
     Path.join(config(:cache_path), filename)
   end
 
