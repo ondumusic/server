@@ -332,10 +332,23 @@ defmodule MusicBox.Transcoder do
       {{:value, {file, preset, chunk_index, from, timer_ref}}, new_queue} ->
         Process.cancel_timer(timer_ref)
         state = %{state | queue: new_queue}
-        # This will either start a new job or enqueue on an existing one
+        state = serve_or_enqueue(file, preset, chunk_index, from, state)
+        drain_queue(state)
+    end
+  end
+
+  defp serve_or_enqueue(file, preset, chunk_index, from, state) do
+    lookup_key = {file.id, preset, chunk_index}
+
+    case :ets.lookup(@chunks_table, lookup_key) do
+      [{^lookup_key, chunk_data}] ->
+        GenServer.reply(from, {:ok, chunk_data})
+        state
+
+      [] ->
         case start_or_enqueue(file, preset, chunk_index, from, state) do
-          {:noreply, new_state} -> drain_queue(new_state)
-          {:reply, _, new_state} -> drain_queue(new_state)
+          {:noreply, new_state} -> new_state
+          {:reply, _, new_state} -> new_state
         end
     end
   end
