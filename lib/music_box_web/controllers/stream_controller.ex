@@ -128,21 +128,6 @@ defmodule MusicBoxWeb.StreamController do
         _ -> "audio/webm"
       end
 
-    conn =
-      if conn.params["download"] == "1" do
-        meta = Transcoder.get_meta(conn.assigns.track.file, conn.assigns.preset)
-
-        estimated_file_size =
-          Utils.estimate_file_size(conn.assigns.track.file, conn.assigns.preset)
-
-        actual_file_size = meta && meta.file_size
-        file_size = actual_file_size || estimated_file_size
-
-        put_resp_header(conn, "content-length", "#{file_size}")
-      else
-        conn
-      end
-
     conn
     |> put_resp_header("content-type", content_type)
     |> put_resp_header("accept-ranges", "bytes")
