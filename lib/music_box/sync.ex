@@ -3,6 +3,7 @@ defmodule MusicBox.Sync do
 
   alias MusicBox.Albums.Album
   alias MusicBox.Artists.Artist
+  alias MusicBox.DeletionLog
   alias MusicBox.Repo
   alias MusicBox.Tracks.Track
 
@@ -17,7 +18,13 @@ defmodule MusicBox.Sync do
     %{
       artists: get_new_entities(Artist, cursor["artists"], limit: limit),
       albums: get_new_entities(Album.preloaded(), cursor["albums"], limit: limit),
-      tracks: get_new_entities(Track.preloaded(), cursor["tracks"], limit: limit)
+      tracks: get_new_entities(Track.preloaded(), cursor["tracks"], limit: limit),
+      deletions:
+        get_new_entities(DeletionLog, cursor["deleted"],
+          limit: limit,
+          pk_field: :entity_id,
+          date_field: :deleted_at
+        )
     }
   end
 
@@ -30,8 +37,10 @@ defmodule MusicBox.Sync do
           acc
 
         {k, %{entries: v}}, acc ->
-          last = List.last(v)
-          Map.put(acc, k, [last.updated_at, last.id])
+          case List.last(v) do
+            %{deleted_at: date} = last -> Map.put(acc, k, [date, last.entity_id])
+            %{updated_at: date} = last -> Map.put(acc, k, [date, last.id])
+          end
       end)
       |> JSON.encode!()
       |> Base.url_encode64()
@@ -50,21 +59,23 @@ defmodule MusicBox.Sync do
 
   defp get_new_entities(mod, cursor, opts) do
     limit = Keyword.get(opts, :limit) || @default_limit
+    pk_field = Keyword.get(opts, :pk_field, :id)
+    date_field = Keyword.get(opts, :date_field, :updated_at)
 
     query =
       from(m in mod,
-        order_by: [asc: :updated_at, asc: :id],
+        order_by: [asc: field(m, ^date_field), asc: field(m, ^pk_field)],
         limit: ^(limit + 1)
       )
 
     query =
       case cursor do
-        [updated_at, id] ->
+        [last_date, id] ->
           where(
             query,
             [m],
-            m.updated_at >= ^updated_at and
-              m.id != ^id
+            field(m, ^date_field) >= ^last_date and
+              field(m, ^pk_field) != ^id
           )
 
         _ ->

@@ -18,9 +18,16 @@ defmodule MusicBoxWeb.SyncJSON do
           result.tracks.entries,
           &LibraryJSON.track(%{track: &1, render_album: false, render_artist: false})
         ),
-      deletions: [],
+      deletions: Enum.map(result.deletions.entries, &deletion(%{entity: &1})),
       cursor: cursor,
       complete: not incomplete?
+    }
+  end
+
+  defp deletion(%{entity: entity}) do
+    %{
+      "entityType" => entity.entity_type,
+      "entityId" => entity.entity_id
     }
   end
 end
