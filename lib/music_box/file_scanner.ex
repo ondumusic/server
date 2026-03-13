@@ -40,6 +40,11 @@ defmodule MusicBox.FileScanner do
     scan_type = scan_type || settings.scan_type
     Agent.start(scan_type)
 
+    # started_at = DateTime.utc_now()
+    started_at = ~U[2026-03-13 09:18:19.444530Z]
+
+    Operations.find_deleted_files()
+
     walker = Walker.walk(settings.music_path)
 
     walker =
@@ -61,6 +66,8 @@ defmodule MusicBox.FileScanner do
     |> Stream.flat_map(&discard_errors/1)
     |> Stream.each(&safe_apply({Operations, :broadcast, [:batch, &1]}))
     |> Stream.run()
+
+    Operations.broadcast(:deleted, started_at)
 
     Agent.stop()
     Operations.broadcast(:completed)

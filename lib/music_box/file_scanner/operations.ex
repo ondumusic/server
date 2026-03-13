@@ -7,6 +7,7 @@ defmodule MusicBox.FileScanner.Operations do
   alias Ecto.Multi
   alias MusicBox.Albums.Album
   alias MusicBox.Artists.Artist
+  alias MusicBox.DeletionLog
   alias MusicBox.Files.{File, FileMetadata}
   alias MusicBox.FileScanner.{Analyzer, Utils}
   alias MusicBox.Repo
@@ -14,6 +15,8 @@ defmodule MusicBox.FileScanner.Operations do
   alias MusicBox.Tracks.Track
 
   import Ecto.Query
+
+  require Logger
 
   @spec batch_insert([Analyzer.Result.t()]) ::
           :noop
@@ -49,6 +52,24 @@ defmodule MusicBox.FileScanner.Operations do
       |> Map.new()
 
     broadcast(MusicBox.PubSub, "library:sync", "processed", changes)
+  end
+
+  def broadcast(:deleted, %DateTime{} = before) do
+    results =
+      DeletionLog
+      |> where([d], d.deleted_at >= ^before)
+      |> Repo.all()
+      |> Enum.group_by(& &1.entity_type, & &1.entity_id)
+
+    # Pubsub expect pluralized keys, deletion log is singular
+    deleted = %{
+      files: Map.get(results, :file, []),
+      tracks: Map.get(results, :track, []),
+      artists: Map.get(results, :artist, []),
+      albums: Map.get(results, :album, [])
+    }
+
+    broadcast(MusicBox.PubSub, "library:sync", "deleted", deleted)
   end
 
   def broadcast(:completed) do
@@ -254,6 +275,78 @@ defmodule MusicBox.FileScanner.Operations do
       )
 
     {:ok, tracks}
+  end
+
+  def find_deleted_files do
+    Repo.transact(
+      fn repo ->
+        from(f in File, select: {f.id, f.path})
+        |> repo.stream()
+        |> Stream.chunk_every(20)
+        |> Stream.flat_map(&verify_files/1)
+        |> Stream.filter(fn {_, _, status} -> status == :missing end)
+        |> Stream.map(&elem(&1, 0))
+        |> Stream.chunk_every(20)
+        |> Enum.reduce({0, 0}, &delete_files_reducer(repo, &1, &2))
+        |> case do
+          {_deleted, 0} ->
+            :noop
+
+          {_deleted, errored} ->
+            Logger.warning("failed to delete #{errored} files")
+        end
+
+        {:ok, []}
+      end,
+      timeout: :infinity
+    )
+  end
+
+  defp delete_files_reducer(repo, file_ids, {deleted_acc, error_acc}) do
+    File
+    |> where([f], f.id in ^file_ids)
+    |> repo.delete_all()
+    |> case do
+      {count, _} ->
+        {deleted_acc + count, error_acc}
+
+      _ ->
+        {deleted_acc, error_acc + length(file_ids)}
+    end
+  end
+
+  defp verify_files(files) do
+    files
+    |> Task.async_stream(
+      fn {id, path} ->
+        status =
+          case Elixir.File.stat(path) do
+            {:ok, _stat} -> :exists
+            {:error, :enoent} -> :missing
+            {:error, reason} -> {:error, reason}
+          end
+
+        {id, path, status}
+      end,
+      max_concurrency: 3,
+      timeout: 5_000,
+      on_timeout: :kill_task
+    )
+    |> Enum.flat_map(fn
+      {:ok, {id, path, :missing}} ->
+        [{id, path, :missing}]
+
+      {:ok, {_id, path, {:error, reason}}} ->
+        Logger.warning("failed to verify #{path} (#{reason})")
+        []
+
+      {:ok, {_id, _path, :exists}} ->
+        []
+
+      {:exit, :timeout} ->
+        Logger.warning("timeout while checking if files still exist")
+        []
+    end)
   end
 
   defp add_timestamps(entry, additional_fields \\ []) do
