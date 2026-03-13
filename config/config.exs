@@ -37,6 +37,7 @@ config :music_box, custom_artwork_endpoint: nil
 config :music_box,
   extract_artwork_tool: MusicBox.Tool.ExtractArtwork,
   resize_artwork_tool: MusicBox.Tool.ResizeArtwork,
+  transcode_tool: MusicBox.Tool.Transcode,
   probe_tool: MusicBox.Tool.Probe
 
 config :music_box, MusicBox.Transcoder,

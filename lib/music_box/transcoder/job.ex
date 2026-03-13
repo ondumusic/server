@@ -7,6 +7,7 @@ defmodule MusicBox.Transcoder.Job do
 
   alias __MODULE__
   alias MusicBox.Files.File
+  alias MusicBox.Tool
   alias MusicBox.Transcoder.{Job, Preset, Utils}
 
   require Logger
@@ -44,22 +45,8 @@ defmodule MusicBox.Transcoder.Job do
   end
 
   defp transcode_file(%Job{} = job, parent) do
-    ffmpeg_bin = System.find_executable("ffmpeg")
     args = Preset.ffmpeg_args(job.file, job.preset)
-
-    port =
-      Port.open(
-        {:spawn_executable, ffmpeg_bin},
-        [
-          :binary,
-          :stream,
-          :exit_status,
-          :use_stdio,
-          :stderr_to_stdout,
-          args: args
-        ]
-      )
-
+    {:ok, port} = Tool.transcode(args)
     read_chunks(port, job, parent)
   end
 

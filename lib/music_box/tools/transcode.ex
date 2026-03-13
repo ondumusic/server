@@ -3,7 +3,22 @@ defmodule MusicBox.Tool.Transcode do
   @behaviour MusicBox.Tool
 
   @impl true
-  def exec(_args) do
-    {:error, :not_implemented}
+  def exec(args) do
+    ffmpeg_bin = System.find_executable("ffmpeg")
+
+    port =
+      Port.open(
+        {:spawn_executable, ffmpeg_bin},
+        [
+          :binary,
+          :stream,
+          :exit_status,
+          :use_stdio,
+          :stderr_to_stdout,
+          args: args
+        ]
+      )
+
+    {:ok, port}
   end
 end

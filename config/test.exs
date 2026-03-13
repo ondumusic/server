@@ -29,4 +29,6 @@ config :logger, level: :warning
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
 
-config :music_box, probe_tool: MusicBox.Tool.ProbeMock
+config :music_box,
+  transcode_tool: MusicBox.Tool.TranscodeMock,
+  probe_tool: MusicBox.Tool.ProbeMock
