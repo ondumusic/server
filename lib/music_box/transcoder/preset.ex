@@ -88,10 +88,10 @@ defmodule MusicBox.Transcoder.Preset do
       )
   end
 
-  defp ffmpeg_shared_args(%File{} = _file, %__MODULE__{ffmpeg_preset: :aac} = preset) do
+  defp ffmpeg_shared_args(%File{} = file, %__MODULE__{ffmpeg_preset: :aac} = preset) do
     ~w(
         -c:a aac -b:a #{preset.bitrate}k -ar #{preset.sample_rate} -f adts
-        -ac 2 pipe:1 -v quiet -nostats
+        -ac 2 pipe:1 -v quiet -nostats -t #{file.metadata.duration}
     )
   end
 end
