@@ -40,8 +40,7 @@ defmodule MusicBox.FileScanner do
     scan_type = scan_type || settings.scan_type
     Agent.start(scan_type)
 
-    # started_at = DateTime.utc_now()
-    started_at = ~U[2026-03-13 09:18:19.444530Z]
+    started_at = DateTime.utc_now()
 
     Operations.find_deleted_files()
 

@@ -69,7 +69,9 @@ defmodule MusicBox.FileScanner.Operations do
       albums: Map.get(results, :album, [])
     }
 
-    broadcast(MusicBox.PubSub, "library:sync", "deleted", deleted)
+    if Enum.any?(deleted, fn {_, ids} -> ids != [] end) do
+      broadcast(MusicBox.PubSub, "library:sync", "deleted", deleted)
+    end
   end
 
   def broadcast(:completed) do

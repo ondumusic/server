@@ -53,6 +53,12 @@ defmodule MusicBox.FileScannerTest do
     end
 
     test "skips existing files when doing a quick scan" do
+      Repo.delete_all(MusicBox.Files.File)
+      Repo.delete_all(MusicBox.Albums.Album)
+      Repo.delete_all(MusicBox.Artists.Artist)
+      Repo.delete_all(MusicBox.Tracks.Track)
+      Repo.delete_all(MusicBox.DeletionLog)
+
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
       file_count = Repo.aggregate(MusicBox.Files.File, :count)
       assert_receive %{topic: "library:sync", event: "processed", payload: payload}
