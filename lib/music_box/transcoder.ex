@@ -393,6 +393,9 @@ defmodule MusicBox.Transcoder do
 
         Elixir.File.close(file)
 
+        lookup_key = {file_id, preset.id}
+        cleanup_lookup_key(lookup_key)
+
       _ ->
         :ok
     end
