@@ -198,26 +198,29 @@ defmodule MusicBox.TranscoderTest do
       Transcoder.request_chunk(track.file, preset, 0)
 
       path = track.file.path
-      assert_receive {:transcode_called, args}
+      duration = to_string(track.file.metadata.duration)
 
-      assert [
-               "-i",
-               ^path,
-               "-c:a",
-               "aac",
-               "-b:a",
-               "160k",
-               "-ar",
-               "48000",
-               "-f",
-               "adts",
-               "-ac",
-               "2",
-               "pipe:1",
-               "-v",
-               "quiet",
-               "-nostats"
-             ] = args
+      assert_receive {:transcode_called,
+                      [
+                        "-i",
+                        ^path,
+                        "-c:a",
+                        "aac",
+                        "-b:a",
+                        "160k",
+                        "-ar",
+                        "48000",
+                        "-f",
+                        "adts",
+                        "-ac",
+                        "2",
+                        "pipe:1",
+                        "-v",
+                        "quiet",
+                        "-nostats",
+                        "-t",
+                        ^duration
+                      ]}
     end
 
     test "preset: default_aac", %{track: track} do
@@ -225,26 +228,29 @@ defmodule MusicBox.TranscoderTest do
       Transcoder.request_chunk(track.file, preset, 0)
 
       path = track.file.path
-      assert_receive {:transcode_called, args}
+      duration = to_string(track.file.metadata.duration)
 
-      assert [
-               "-i",
-               ^path,
-               "-c:a",
-               "aac",
-               "-b:a",
-               "192k",
-               "-ar",
-               "48000",
-               "-f",
-               "adts",
-               "-ac",
-               "2",
-               "pipe:1",
-               "-v",
-               "quiet",
-               "-nostats"
-             ] = args
+      assert_receive {:transcode_called,
+                      [
+                        "-i",
+                        ^path,
+                        "-c:a",
+                        "aac",
+                        "-b:a",
+                        "192k",
+                        "-ar",
+                        "48000",
+                        "-f",
+                        "adts",
+                        "-ac",
+                        "2",
+                        "pipe:1",
+                        "-v",
+                        "quiet",
+                        "-nostats",
+                        "-t",
+                        ^duration
+                      ]}
     end
 
     test "preset: mobile_webm", %{track: track} do
@@ -253,41 +259,41 @@ defmodule MusicBox.TranscoderTest do
 
       path = track.file.path
       duration = to_string(track.file.metadata.duration)
-      assert_receive {:transcode_called, args}
 
-      assert [
-               "-i",
-               ^path,
-               "-c:a",
-               "libopus",
-               "-b:a",
-               "128k",
-               "-f",
-               "webm",
-               "-ar",
-               "48000",
-               "-vn",
-               "-fflags",
-               "+genpts+nobuffer",
-               "-max_delay",
-               "0",
-               "-avoid_negative_ts",
-               "make_zero",
-               "-vbr",
-               "on",
-               "-ss",
-               "0",
-               "-t",
-               ^duration,
-               "-cluster_time_limit",
-               "4000",
-               "-cues_to_front",
-               "1",
-               "-v",
-               "quiet",
-               "-nostats",
-               "pipe:1"
-             ] = args
+      assert_receive {:transcode_called,
+                      [
+                        "-i",
+                        ^path,
+                        "-c:a",
+                        "libopus",
+                        "-b:a",
+                        "128k",
+                        "-f",
+                        "webm",
+                        "-ar",
+                        "48000",
+                        "-vn",
+                        "-fflags",
+                        "+genpts+nobuffer",
+                        "-max_delay",
+                        "0",
+                        "-avoid_negative_ts",
+                        "make_zero",
+                        "-vbr",
+                        "on",
+                        "-ss",
+                        "0",
+                        "-t",
+                        ^duration,
+                        "-cluster_time_limit",
+                        "4000",
+                        "-cues_to_front",
+                        "1",
+                        "-v",
+                        "quiet",
+                        "-nostats",
+                        "pipe:1"
+                      ]}
     end
 
     test "preset: default_webm", %{track: track} do
@@ -297,41 +303,40 @@ defmodule MusicBox.TranscoderTest do
       path = track.file.path
       duration = to_string(track.file.metadata.duration)
 
-      assert_receive {:transcode_called, args}
-
-      assert [
-               "-i",
-               ^path,
-               "-c:a",
-               "libopus",
-               "-b:a",
-               "160k",
-               "-f",
-               "webm",
-               "-ar",
-               "48000",
-               "-vn",
-               "-fflags",
-               "+genpts+nobuffer",
-               "-max_delay",
-               "0",
-               "-avoid_negative_ts",
-               "make_zero",
-               "-vbr",
-               "on",
-               "-ss",
-               "0",
-               "-t",
-               ^duration,
-               "-cluster_time_limit",
-               "4000",
-               "-cues_to_front",
-               "1",
-               "-v",
-               "quiet",
-               "-nostats",
-               "pipe:1"
-             ] = args
+      assert_receive {:transcode_called,
+                      [
+                        "-i",
+                        ^path,
+                        "-c:a",
+                        "libopus",
+                        "-b:a",
+                        "160k",
+                        "-f",
+                        "webm",
+                        "-ar",
+                        "48000",
+                        "-vn",
+                        "-fflags",
+                        "+genpts+nobuffer",
+                        "-max_delay",
+                        "0",
+                        "-avoid_negative_ts",
+                        "make_zero",
+                        "-vbr",
+                        "on",
+                        "-ss",
+                        "0",
+                        "-t",
+                        ^duration,
+                        "-cluster_time_limit",
+                        "4000",
+                        "-cues_to_front",
+                        "1",
+                        "-v",
+                        "quiet",
+                        "-nostats",
+                        "pipe:1"
+                      ]}
     end
   end
 
