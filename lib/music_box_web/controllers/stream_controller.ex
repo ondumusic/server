@@ -81,10 +81,19 @@ defmodule MusicBoxWeb.StreamController do
       |> Enum.reject(&is_nil/1)
       |> Enum.map(&(&1 - 1))
 
-    conn
-    |> get_req_header("range")
-    |> Utils.parse_range_header()
-    |> case do
+    range_header =
+      conn
+      |> get_req_header("range")
+      |> Utils.parse_range_header()
+
+    range_header =
+      case conn.assigns.preset do
+        # ADTS doesn't support byte-range seeking
+        %{ffmpeg_preset: :adts} -> {:error, :no_range}
+        _ -> range_header
+      end
+
+    case range_header do
       # The client wants the rest, but already has everything.
       {:ok, ^actual_file_size, :infinity} ->
         send_transcode_completed(conn, actual_file_size)
