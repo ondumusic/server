@@ -38,21 +38,29 @@ defmodule MusicBox.Transcoder do
     path = Utils.cache_file_path(file_id, preset)
     persisted? = Elixir.File.exists?(path)
 
-    if persisted? do
-      stat = Elixir.File.stat!(path, time: :posix)
+    meta =
+      if persisted? do
+        stat = Elixir.File.stat!(path, time: :posix)
 
-      %Result{
-        completed_at: DateTime.from_unix(stat.ctime),
-        file_size: stat.size,
-        chunk_count: ceil(stat.size / Utils.chunk_size()),
-        persisted: true
-      }
-    else
-      case :ets.lookup(@meta_table, lookup_key) do
-        [{^lookup_key, %{} = meta}] -> meta
-        _ -> nil
+        %Result{
+          completed_at: DateTime.from_unix(stat.ctime),
+          file_size: stat.size,
+          chunk_count: ceil(stat.size / Utils.chunk_size()),
+          persisted: true
+        }
+      else
+        case :ets.lookup(@meta_table, lookup_key) do
+          [{^lookup_key, %{} = meta}] -> meta
+          _ -> nil
+        end
       end
-    end
+
+    meta =
+      if meta.persisted and not persisted?,
+        do: nil,
+        else: meta
+
+    meta
   end
 
   @spec clear_cache() :: :ok
@@ -287,6 +295,7 @@ defmodule MusicBox.Transcoder do
 
   defp cleanup_lookup_key(lookup_key) do
     {file_id, preset_id} = lookup_key
+
     :ets.delete(@meta_table, lookup_key)
 
     :ets.select_delete(@chunks_table, [
@@ -396,7 +405,15 @@ defmodule MusicBox.Transcoder do
         lookup_key = {file_id, preset.id}
         cleanup_lookup_key(lookup_key)
 
-      _ ->
+      {:error, :eexist} ->
+        # Non-streamable transcodes already have existing files, so if the file
+        # already exists we will presume it is the correct file.
+        unless preset.streamable? do
+          lookup_key = {file_id, preset.id}
+          cleanup_lookup_key(lookup_key)
+        end
+
+      _error ->
         :ok
     end
   end
