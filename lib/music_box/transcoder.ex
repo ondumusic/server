@@ -39,7 +39,16 @@ defmodule MusicBox.Transcoder do
     persisted? = Elixir.File.exists?(path)
 
     meta =
-      if persisted? do
+      case :ets.lookup(@meta_table, lookup_key) do
+        [{^lookup_key, %{} = meta}] -> meta
+        _ -> nil
+      end
+
+    cond do
+      not is_nil(meta) and meta.persisted and not persisted? ->
+        nil
+
+      persisted? ->
         stat = Elixir.File.stat!(path, time: :posix)
 
         %Result{
@@ -48,19 +57,10 @@ defmodule MusicBox.Transcoder do
           chunk_count: ceil(stat.size / Utils.chunk_size()),
           persisted: true
         }
-      else
-        case :ets.lookup(@meta_table, lookup_key) do
-          [{^lookup_key, %{} = meta}] -> meta
-          _ -> nil
-        end
-      end
 
-    meta =
-      if meta.persisted and not persisted?,
-        do: nil,
-        else: meta
-
-    meta
+      true ->
+        meta
+    end
   end
 
   @spec clear_cache() :: :ok
