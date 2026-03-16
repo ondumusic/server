@@ -43,7 +43,7 @@
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-router": "^1.167.3",
-    "@tanstack/router-cli": "^1.166.11",
+    "@tanstack/router-cli": "1.166.6",
     "@tanstack/router-plugin": "^1.166.12",
     "culori": "^4.0.2",
     "i18next": "^25.8.18",
