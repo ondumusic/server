@@ -38,7 +38,8 @@ config :music_box,
   extract_artwork_tool: MusicBox.Tool.ExtractArtwork,
   resize_artwork_tool: MusicBox.Tool.ResizeArtwork,
   transcode_tool: MusicBox.Tool.Transcode,
-  probe_tool: MusicBox.Tool.Probe
+  probe_tool: MusicBox.Tool.Probe,
+  cat_tool: MusicBox.Tool.Cat
 
 config :music_box, MusicBox.Transcoder,
   artwork_path: Path.absname("./tmp/artwork"),

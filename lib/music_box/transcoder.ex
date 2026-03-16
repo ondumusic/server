@@ -35,7 +35,7 @@ defmodule MusicBox.Transcoder do
   def get_meta(%File{id: file_id}, preset) do
     lookup_key = {file_id, preset.id}
 
-    path = cache_file_path(file_id, preset)
+    path = Utils.cache_file_path(file_id, preset)
     persisted? = Elixir.File.exists?(path)
 
     if persisted? do
@@ -76,7 +76,7 @@ defmodule MusicBox.Transcoder do
     completed? = not is_nil(Map.get(meta, :completed_at))
     persisted? = Map.get(meta, :persisted, false)
     chunk_count = if(completed?, do: meta.chunk_count)
-    path = cache_file_path(file.id, preset)
+    path = Utils.cache_file_path(file.id, preset)
 
     if not is_nil(chunk_count) and chunk_index > chunk_count do
       throw({:unknown_chunk, state})
@@ -378,7 +378,7 @@ defmodule MusicBox.Transcoder do
 
   defp persist_cache(job) do
     %{file: %{id: file_id}, preset: preset} = job
-    path = cache_file_path(file_id, preset)
+    path = Utils.cache_file_path(file_id, preset)
     Elixir.File.mkdir_p!(Path.dirname(path))
 
     case Elixir.File.open(path, [:write, :binary, :exclusive]) do
@@ -400,12 +400,4 @@ defmodule MusicBox.Transcoder do
         :ok
     end
   end
-
-  defp cache_file_path(file_id, %Preset{} = preset) do
-    filename = "#{file_id}-#{preset.id}.#{preset.ext}"
-    Path.join(config(:cache_path), filename)
-  end
-
-  defp config(key),
-    do: Application.get_env(:music_box, MusicBox.Transcoder) |> Keyword.get(key)
 end

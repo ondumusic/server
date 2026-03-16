@@ -2,6 +2,7 @@ defmodule MusicBox.Tool do
   @moduledoc false
   @callback exec(args :: term()) :: {:ok, term()} | :ok | {:error, term()}
 
+  def cat(path), do: impl(:cat_tool).exec(path)
   def probe(path), do: impl(:probe_tool).exec(path)
   def transcode(args), do: impl(:transcode_tool).exec(args)
   def extract_artwork(path), do: impl(:extract_artwork_tool).exec(path)

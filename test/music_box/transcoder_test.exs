@@ -61,7 +61,7 @@ defmodule MusicBox.TranscoderTest do
 
   describe "transcoder" do
     test "concurrent chunk requests are served independently", %{track: track} do
-      preset = hd(Transcoder.Preset.list())
+      preset = Transcoder.Preset.default_preset()
 
       # Fire off multiple chunk requests
       task1 = Task.async(fn -> Transcoder.request_chunk(track.file, preset, 0) end)
@@ -76,10 +76,12 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "get metadata for a transcode job (file and preset)", %{track: track} do
-      preset = hd(Transcoder.Preset.list())
+      preset = Transcoder.Preset.default_preset()
 
       refute Transcoder.get_meta(track.file, preset)
-      assert {:ok, chunk} = Transcoder.request_chunk(track.file, preset, 0)
+
+      task = Task.async(fn -> Transcoder.request_chunk(track.file, preset, 0) end)
+      assert {:ok, chunk} = Task.await(task)
 
       assert %Transcoder.Result{
                failed_at: nil,
@@ -88,6 +90,7 @@ defmodule MusicBox.TranscoderTest do
                persisted: false
              } = Transcoder.get_meta(track.file, preset)
 
+      # Expect same chunk for same request
       assert {:ok, ^chunk} = Transcoder.request_chunk(track.file, preset, 0)
 
       assert %Transcoder.Result{
@@ -97,6 +100,7 @@ defmodule MusicBox.TranscoderTest do
                persisted: true
              } = Transcoder.get_meta(track.file, preset)
 
+      # Expect same chunk for same request
       assert {:ok, ^chunk} = Transcoder.request_chunk(track.file, preset, 0)
     end
 
@@ -112,7 +116,7 @@ defmodule MusicBox.TranscoderTest do
           with_fixture(t, Enum.at(@fixtures, i))
         end)
 
-      preset = hd(Transcoder.Preset.list())
+      preset = Transcoder.Preset.default_preset()
 
       # Fire off multiple chunk requests
       task1 = Task.async(fn -> Transcoder.request_chunk(Enum.at(tracks, 0).file, preset, 0) end)
@@ -140,7 +144,7 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "stream chunks until finished", %{track: track} do
-      preset = hd(Transcoder.Preset.list())
+      preset = Transcoder.Preset.default_preset()
 
       refute Transcoder.get_meta(track.file, preset)
 
@@ -163,7 +167,7 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "fails on unknown chunk", %{track: track} do
-      preset = hd(Transcoder.Preset.list())
+      preset = Transcoder.Preset.default_preset()
 
       # This chunk does not exist
       assert {:error, :no_longer_available} = Transcoder.request_chunk(track.file, preset, 50)
@@ -171,7 +175,7 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "fails on unknown file", %{track: track} do
-      preset = hd(Transcoder.Preset.list())
+      preset = Transcoder.Preset.default_preset()
       file = update_record(track.file, %{path: "does/not/exist.mp3"})
 
       # This chunk does not exist
@@ -180,7 +184,7 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "fails on DOWN", %{track: track} do
-      preset = hd(Transcoder.Preset.list())
+      preset = Transcoder.Preset.default_preset()
 
       stub(MusicBox.Tool.TranscodeMock, :exec, fn args ->
         {:ok, port} = open_port(args)
@@ -207,22 +211,21 @@ defmodule MusicBox.TranscoderTest do
                         "-c:a",
                         "aac",
                         "-b:a",
-                        "160k",
-                        "-ar",
-                        "48000",
+                        "128k",
                         "-f",
                         "mp4",
+                        "-ar",
+                        "44100",
                         "-vn",
                         "-ac",
                         "2",
-                        "-movflags",
-                        "frag_keyframe+empty_moov+default_base_moof",
-                        "pipe:1",
-                        "-v",
-                        "quiet",
-                        "-nostats",
                         "-t",
-                        ^duration
+                        ^duration,
+                        "-y",
+                        "-v",
+                        "error",
+                        "-nostats",
+                        _output_file
                       ]}
     end
 
@@ -240,27 +243,26 @@ defmodule MusicBox.TranscoderTest do
                         "-c:a",
                         "aac",
                         "-b:a",
-                        "192k",
-                        "-ar",
-                        "48000",
+                        "256k",
                         "-f",
                         "mp4",
+                        "-ar",
+                        "44100",
                         "-vn",
                         "-ac",
                         "2",
-                        "-movflags",
-                        "frag_keyframe+empty_moov+default_base_moof",
-                        "pipe:1",
-                        "-v",
-                        "quiet",
-                        "-nostats",
                         "-t",
-                        ^duration
+                        ^duration,
+                        "-y",
+                        "-v",
+                        "error",
+                        "-nostats",
+                        _output_file
                       ]}
     end
 
-    test "preset: mobile_webm", %{track: track} do
-      preset = Transcoder.Preset.get(:mobile_webm)
+    test "preset: mobile_adts", %{track: track} do
+      preset = Transcoder.Preset.get(:mobile_adts)
       Transcoder.request_chunk(track.file, preset, 0)
 
       path = track.file.path
@@ -271,39 +273,60 @@ defmodule MusicBox.TranscoderTest do
                         "-i",
                         ^path,
                         "-c:a",
-                        "libopus",
+                        "aac",
                         "-b:a",
                         "128k",
                         "-f",
-                        "webm",
+                        "adts",
                         "-ar",
-                        "48000",
+                        "44100",
                         "-vn",
-                        "-fflags",
-                        "+genpts+nobuffer",
-                        "-max_delay",
-                        "0",
-                        "-avoid_negative_ts",
-                        "make_zero",
-                        "-vbr",
-                        "on",
-                        "-ss",
-                        "0",
+                        "-ac",
+                        "2",
                         "-t",
                         ^duration,
-                        "-cluster_time_limit",
-                        "4000",
-                        "-cues_to_front",
-                        "1",
+                        "-y",
                         "-v",
-                        "quiet",
+                        "error",
                         "-nostats",
                         "pipe:1"
                       ]}
     end
 
-    test "preset: default_webm", %{track: track} do
-      preset = Transcoder.Preset.get(:default_webm)
+    test "preset: default_adts", %{track: track} do
+      preset = Transcoder.Preset.get(:default_adts)
+      Transcoder.request_chunk(track.file, preset, 0)
+
+      path = track.file.path
+      duration = to_string(track.file.metadata.duration)
+
+      assert_receive {:transcode_called,
+                      [
+                        "-i",
+                        ^path,
+                        "-c:a",
+                        "aac",
+                        "-b:a",
+                        "256k",
+                        "-f",
+                        "adts",
+                        "-ar",
+                        "44100",
+                        "-vn",
+                        "-ac",
+                        "2",
+                        "-t",
+                        ^duration,
+                        "-y",
+                        "-v",
+                        "error",
+                        "-nostats",
+                        "pipe:1"
+                      ]}
+    end
+
+    test "preset: mobile_opus", %{track: track} do
+      preset = Transcoder.Preset.get(:mobile_opus)
       Transcoder.request_chunk(track.file, preset, 0)
 
       path = track.file.path
@@ -316,7 +339,7 @@ defmodule MusicBox.TranscoderTest do
                         "-c:a",
                         "libopus",
                         "-b:a",
-                        "160k",
+                        "96k",
                         "-f",
                         "webm",
                         "-ar",
@@ -338,11 +361,135 @@ defmodule MusicBox.TranscoderTest do
                         "4000",
                         "-cues_to_front",
                         "1",
+                        "-y",
                         "-v",
-                        "quiet",
+                        "error",
                         "-nostats",
                         "pipe:1"
                       ]}
+    end
+
+    test "preset: default_opus", %{track: track} do
+      preset = Transcoder.Preset.get(:default_opus)
+      Transcoder.request_chunk(track.file, preset, 0)
+
+      path = track.file.path
+      duration = to_string(track.file.metadata.duration)
+
+      assert_receive {:transcode_called,
+                      [
+                        "-i",
+                        ^path,
+                        "-c:a",
+                        "libopus",
+                        "-b:a",
+                        "192k",
+                        "-f",
+                        "webm",
+                        "-ar",
+                        "48000",
+                        "-vn",
+                        "-fflags",
+                        "+genpts+nobuffer",
+                        "-max_delay",
+                        "0",
+                        "-avoid_negative_ts",
+                        "make_zero",
+                        "-vbr",
+                        "on",
+                        "-ss",
+                        "0",
+                        "-t",
+                        ^duration,
+                        "-cluster_time_limit",
+                        "4000",
+                        "-cues_to_front",
+                        "1",
+                        "-y",
+                        "-v",
+                        "error",
+                        "-nostats",
+                        "pipe:1"
+                      ]}
+    end
+  end
+
+  describe "aac gapless playback support" do
+    test "manual write_smpb test", %{track: track} do
+      preset = Transcoder.Preset.get(:mobile_aac)
+      track = with_fixture(track, "with_tags/sample.m4a")
+
+      # Copy fixture to tmp path because we will write to it.
+      tmp_file = Path.join(System.tmp_dir!(), "test_smpb.m4a")
+      File.cp!(track.file.path, tmp_file)
+      file = update_record(track.file, %{path: tmp_file})
+
+      # First test calculation
+      assert {:ok, smpb} = Transcoder.AACGapless.compute_smpb(file.path, preset)
+      assert smpb == "00000000 00000400 00000000 0000000000024800"
+
+      # Then try writing
+      assert :ok = Transcoder.AACGapless.write_smpb(tmp_file, smpb)
+
+      # Verify tag was written via ffprobe
+      {output, 0} =
+        System.cmd("ffprobe", [
+          "-v",
+          "quiet",
+          "-show_entries",
+          "format_tags=iTunSMPB",
+          "-of",
+          "default=noprint_wrappers=1",
+          tmp_file
+        ])
+
+      assert String.contains?(output, "iTunSMPB")
+      assert String.contains?(output, smpb)
+
+      # Verify file is still valid
+      {_, 0} = System.cmd("ffprobe", ["-v", "error", tmp_file])
+
+      # Cleanup
+      File.rm!(tmp_file)
+    end
+
+    test "transcode pipeline write_smpb test", %{track: track} do
+      preset = Transcoder.Preset.get(:mobile_aac)
+      track = with_fixture(track, "with_tags/sample.m4a")
+
+      # Copy fixture to tmp path because we will write to it.
+      tmp_file = Path.join(System.tmp_dir!(), "test_smpb.m4a")
+      File.cp!(track.file.path, tmp_file)
+      file = update_record(track.file, %{path: tmp_file})
+
+      transcoded_file = Transcoder.Utils.cache_file_path(file.id, preset)
+      refute File.exists?(transcoded_file)
+
+      # First test calculation
+      task = Task.async(fn -> Transcoder.request_chunk(file, preset, 0) end)
+      assert {:ok, _chunk} = Task.await(task)
+      assert File.exists?(transcoded_file)
+
+      # Verify tag was written via ffprobe
+      {output, 0} =
+        System.cmd("ffprobe", [
+          "-v",
+          "quiet",
+          "-show_entries",
+          "format_tags=iTunSMPB",
+          "-of",
+          "default=noprint_wrappers=1",
+          transcoded_file
+        ])
+
+      assert String.contains?(output, "iTunSMPB")
+
+      # Verify file is still valid
+      {_, 0} = System.cmd("ffprobe", ["-v", "error", transcoded_file])
+
+      # Cleanup
+      File.rm!(tmp_file)
+      File.rm!(transcoded_file)
     end
   end
 
@@ -359,7 +506,10 @@ defmodule MusicBox.TranscoderTest do
 
   defp open_port(args) do
     input_arg_index = Enum.find_index(args, &(&1 == "-i"))
-    input_file_path = Enum.at(args, input_arg_index + 1)
+    input_file = Enum.at(args, input_arg_index + 1)
+
+    format_arg_index = Enum.find_index(args, &(&1 == "-f"))
+    format = Enum.at(args, format_arg_index + 1)
 
     cat_bin = System.find_executable("cat")
 
@@ -372,9 +522,15 @@ defmodule MusicBox.TranscoderTest do
           :exit_status,
           :use_stdio,
           :stderr_to_stdout,
-          args: [input_file_path]
+          args: [input_file]
         ]
       )
+
+    if format == "mp4" do
+      output_file = List.last(args)
+      File.mkdir_p!(Path.dirname(output_file))
+      File.cp!(input_file, output_file)
+    end
 
     # small startup delay simulation
     :timer.sleep(100)

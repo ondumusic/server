@@ -270,7 +270,7 @@ defmodule MusicBoxWeb.StreamController do
   defp assign_preset(conn, _opts) do
     preset =
       conn.params
-      |> Map.get("preset", Preset.default_id())
+      |> Map.get("preset", "default")
       |> Preset.get()
 
     assign(conn, :preset, preset)

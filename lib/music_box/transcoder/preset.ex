@@ -1,7 +1,44 @@
 defmodule MusicBox.Transcoder.Preset do
-  @moduledoc false
+  @moduledoc """
+  This module defines all possible presets and ffmpeg argument helper functions.
+
+  ## Currently defined presets
+  ┌─────────────────────┬───────┬─────────┬─────────────┬─────────┬───────────┬────────────┐
+  │       Preset        │ Codec │ Bitrate │ Sample Rate │ Format  │ Extension │    MIME    │
+  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┤
+  │ Default AAC (M4A)   │ AAC   │ 256k    │ 44100       │ -f mp4  │ .m4a      │ audio/mp4  │
+  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┤
+  │ Default ADTS stream │ AAC   │ 256k    │ 44100       │ -f adts │ .aac      │ audio/aac  │
+  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┤
+  │ Default Opus        │ Opus  │ 192k    │ 48000       │ -f webm │ .webm     │ audio/webm │
+  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┤
+  │ Mobile AAC (M4A)    │ AAC   │ 128k    │ 44100       │ -f mp4  │ .m4a      │ audio/mp4  │
+  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┤
+  │ Mobile ADTS stream  │ AAC   │ 128k    │ 44100       │ -f adts │ .aac      │ audio/aac  │
+  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┤
+  │ Mobile Opus         │ Opus  │ 96k     │ 48000       │ -f webm │ .webm     │ audio/webm │
+  └─────────────────────┴───────┴─────────┴─────────────┴─────────┴───────────┴────────────┘
+
+  ## About AAC/ADTS
+  This seems a bit confusing but the reasoning behind it is a best attempt at
+  having working gapless playback support. However doing this requires a two-step
+  transcoding pipeline, where after converting the file we also need to inject a
+  iTunSMPB metatag into the file. This seems to yield the best results, however
+  also means we can't stream the file until this is processed.
+
+  So iOS clients should ideally try to use the AAC version (which should include
+  the iTunSMPB metadata) for downloads, but could revert to ADTS for streaming so
+  the playback happens as soon as possible. (There are always possible reasons
+  for delays, like a full transcoding queue). This does still mean there might be
+  a more noticeable gap between sequential tracks while streaming, compared to
+  downloads. It would be nice if AVPlayer just supported opus too.
+
+  I still feel like it is not perfect but at this point this combination of
+  presets is the best I can do, for now.
+  """
 
   alias MusicBox.Files.File
+  alias MusicBox.Transcoder.Utils
 
   defstruct [
     :id,
@@ -9,49 +46,73 @@ defmodule MusicBox.Transcoder.Preset do
     :bitrate,
     :ffmpeg_preset,
     :mimetype,
-    sample_rate: 48_000
+    :sample_rate,
+    streamable?: true
   ]
 
   @type t :: %__MODULE__{
           id: atom(),
           bitrate: non_neg_integer(),
           sample_rate: non_neg_integer(),
-          ffmpeg_preset: :aac | :webm,
+          ffmpeg_preset: :aac | :adts | :opus,
+          streamable?: boolean(),
           mimetype: String.t(),
           ext: String.t()
         }
 
-  @spec default_id :: atom()
-  def default_id, do: :default_webm
+  @spec default_preset :: t()
+  def default_preset, do: Enum.find(list(), &(&1.id == :default_opus))
 
   @spec list() :: [t()]
   def list do
     [
       %__MODULE__{
-        id: :mobile_aac,
-        bitrate: 160,
-        ffmpeg_preset: :aac,
-        mimetype: "audio/aac",
-        ext: "aac"
-      },
-      %__MODULE__{
         id: :default_aac,
-        bitrate: 192,
+        bitrate: 256,
+        sample_rate: 44_100,
         ffmpeg_preset: :aac,
+        streamable?: false,
+        mimetype: "audio/mp4",
+        ext: "m4a"
+      },
+      %__MODULE__{
+        id: :mobile_aac,
+        bitrate: 128,
+        sample_rate: 44_100,
+        ffmpeg_preset: :aac,
+        streamable?: false,
+        mimetype: "audio/mp4",
+        ext: "m4a"
+      },
+      %__MODULE__{
+        id: :default_adts,
+        bitrate: 256,
+        sample_rate: 44_100,
+        ffmpeg_preset: :adts,
         mimetype: "audio/aac",
         ext: "aac"
       },
       %__MODULE__{
-        id: :mobile_webm,
+        id: :mobile_adts,
         bitrate: 128,
-        ffmpeg_preset: :webm,
+        sample_rate: 44_100,
+        ffmpeg_preset: :adts,
+        mimetype: "audio/aac",
+        ext: "aac"
+      },
+      %__MODULE__{
+        id: :default_opus,
+        bitrate: 192,
+        sample_rate: 48_000,
+        ffmpeg_preset: :opus,
         mimetype: "audio/webm",
         ext: "webm"
       },
       %__MODULE__{
-        id: :default_webm,
-        bitrate: 160,
-        ffmpeg_preset: :webm,
+        id: :mobile_opus,
+        bitrate: 96,
+        sample_rate: 48_000,
+        ffmpeg_preset: :opus,
         mimetype: "audio/webm",
         ext: "webm"
       }
@@ -63,36 +124,48 @@ defmodule MusicBox.Transcoder.Preset do
     list()
     |> Enum.find(&(to_string(&1.id) == to_string(id)))
     |> case do
-      nil ->
-        Enum.find(list(), &(&1.id == default_id()))
-
-      preset ->
-        preset
+      nil -> default_preset()
+      preset -> preset
     end
   end
 
   @spec ffmpeg_args(file :: File.t(), preset :: t()) :: [String.t()]
   def ffmpeg_args(%File{} = file, %__MODULE__{} = preset) do
-    ["-i", file.path] ++ ffmpeg_shared_args(file, preset)
+    args = ["-i", file.path] ++ ffmpeg_shared_args(file, preset)
+
+    if preset.streamable? do
+      args
+    else
+      args ++ [Utils.cache_file_path(file.id, preset)]
+    end
   end
 
-  defp ffmpeg_shared_args(%File{} = file, %__MODULE__{ffmpeg_preset: :webm} = preset) do
+  defp ffmpeg_shared_args(%File{} = file, %__MODULE__{ffmpeg_preset: :opus} = preset) do
     ~w(
         -c:a libopus -b:a #{preset.bitrate}k -f webm -ar #{preset.sample_rate} -vn
         -fflags +genpts+nobuffer -max_delay 0
         -avoid_negative_ts make_zero -vbr on
         -ss 0 -t #{file.metadata.duration}
         -cluster_time_limit 4000 -cues_to_front 1
-        -v quiet -nostats
+        -y -v error -nostats
         pipe:1
       )
   end
 
   defp ffmpeg_shared_args(%File{} = file, %__MODULE__{ffmpeg_preset: :aac} = preset) do
     ~w(
-        -c:a aac -b:a #{preset.bitrate}k -ar #{preset.sample_rate} -f mp4
-        -vn -ac 2 -movflags frag_keyframe+empty_moov+default_base_moof
-        pipe:1 -v quiet -nostats -t #{file.metadata.duration}
+        -c:a aac -b:a #{preset.bitrate}k -f mp4 -ar #{preset.sample_rate} -vn
+        -ac 2 -t #{file.metadata.duration}
+        -y -v error -nostats
+    )
+  end
+
+  defp ffmpeg_shared_args(%File{} = file, %__MODULE__{ffmpeg_preset: :adts} = preset) do
+    ~w(
+        -c:a aac -b:a #{preset.bitrate}k -f adts -ar #{preset.sample_rate} -vn
+        -ac 2 -t #{file.metadata.duration}
+        -y -v error -nostats
+        pipe:1
     )
   end
 end

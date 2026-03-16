@@ -55,6 +55,34 @@ defmodule TestSeeds do
     })
   end
 
+  def generate_artists(count) do
+    for i <- 1..count do
+      album_count = Enum.random(1..5)
+
+      %{
+        name: "Artist #{i}",
+        albums:
+          for j <- 1..album_count do
+            track_count = Enum.random(5..15)
+
+            %{
+              name: "Album #{j} by Artist #{i}",
+              release_year: Enum.random(1960..2025),
+              tracks:
+                for k <- 1..track_count do
+                  %{
+                    track: k,
+                    name: "Track #{j}.#{i}.#{k}",
+                    duration: Enum.random(90..420) * 1.0
+                  }
+                end
+            }
+          end
+      }
+    end
+    |> Enum.each(&insert_artist/1)
+  end
+
   def insert_artist(seed) do
     artist =
       Repo.insert!(%Artist{
@@ -120,10 +148,7 @@ defmodule TestSeeds do
     })
   end
 
-  defp generate_checksum,
-    do: Base.encode16(:crypto.hash(:md5, to_string(:rand.uniform())))
-
-  defp seconds(duration) do
+  def seconds(duration) do
     [minutes, seconds] =
       duration
       |> String.split(":")
@@ -132,4 +157,7 @@ defmodule TestSeeds do
 
     minutes * 60.0 + seconds
   end
+
+  defp generate_checksum,
+    do: Base.encode16(:crypto.hash(:md5, to_string(:rand.uniform())))
 end

@@ -8,7 +8,7 @@ defmodule MusicBox.Transcoder.Job do
   alias __MODULE__
   alias MusicBox.Files.File
   alias MusicBox.Tool
-  alias MusicBox.Transcoder.{Job, Preset, Utils}
+  alias MusicBox.Transcoder.{AACGapless, Job, Preset, Utils}
 
   require Logger
 
@@ -47,6 +47,21 @@ defmodule MusicBox.Transcoder.Job do
   defp transcode_file(%Job{} = job, parent) do
     args = Preset.ffmpeg_args(job.file, job.preset)
     {:ok, port} = Tool.transcode(args)
+
+    # ffmpeg will not create directories so we need to make sure the output
+    # path exists for non streamable files.
+    unless job.preset.streamable? do
+      ffmpeg_output_file = Utils.cache_file_path(job.file.id, job.preset)
+      Elixir.File.mkdir_p!(Path.dirname(ffmpeg_output_file))
+    end
+
+    port =
+      if job.preset.streamable? do
+        port
+      else
+        await_then_cat(job, port)
+      end
+
     read_chunks(port, job, parent)
   end
 
@@ -83,5 +98,48 @@ defmodule MusicBox.Transcoder.Job do
         if Port.info(port), do: Port.close(port)
         raise "ffmpeg time out"
     end
+  end
+
+  defp await_then_cat(job, port, data \\ <<>>) do
+    receive do
+      {^port, {:data, new_data}} ->
+        await_then_cat(job, port, data <> new_data)
+
+      {^port, {:exit_status, 0}} ->
+        if Port.info(port), do: Port.close(port)
+        open_cat(job)
+
+      {^port, {:exit_status, status}} ->
+        if Port.info(port), do: Port.close(port)
+        raise "ffmpeg exited with unexpected status code (#{status})"
+    after
+      30_000 ->
+        if Port.info(port), do: Port.close(port)
+        raise "ffmpeg time out"
+    end
+  end
+
+  defp open_cat(job) do
+    ffmpeg_output_file = Utils.cache_file_path(job.file.id, job.preset)
+
+    unless Elixir.File.exists?(ffmpeg_output_file) do
+      raise "ffmpeg probably failed, output file not found (#{ffmpeg_output_file})"
+    end
+
+    with false <- job.preset.streamable?,
+         :aac <- job.preset.ffmpeg_preset,
+         :ok <- AACGapless.inject_smpb(ffmpeg_output_file, job.preset) do
+      Logger.debug("injecting iTunSMPB into transcoded file: #{job.file.id}")
+    else
+      error ->
+        Logger.debug(
+          "failed to inject iTunSMPB into transcoded file: #{job.file.id} (#{inspect(error)})"
+        )
+
+        :noop
+    end
+
+    {:ok, port} = Tool.cat(ffmpeg_output_file)
+    port
   end
 end

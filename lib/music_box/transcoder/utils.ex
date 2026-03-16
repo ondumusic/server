@@ -89,4 +89,13 @@ defmodule MusicBox.Transcoder.Utils do
   end
 
   def parse_range_header(_), do: {:error, :invalid_range}
+
+  @spec cache_file_path(file_id :: String.t(), preset :: Preset.t()) :: String.t()
+  def cache_file_path(file_id, %Preset{} = preset) do
+    filename = "#{file_id}-#{preset.id}.#{preset.ext}"
+    Path.join(config(:cache_path), filename)
+  end
+
+  defp config(key),
+    do: Application.get_env(:music_box, MusicBox.Transcoder) |> Keyword.get(key)
 end

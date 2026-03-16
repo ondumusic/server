@@ -507,6 +507,8 @@ defmodule MusicBoxWeb.LibraryControllerTest do
       seed1 = 0.12_345
       seed2 = 0.98_765_432
 
+      TestSeeds.generate_artists(50)
+
       assert %{
                "entries" => tracks
              } =
