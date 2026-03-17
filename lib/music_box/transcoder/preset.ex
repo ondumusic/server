@@ -136,7 +136,8 @@ defmodule MusicBox.Transcoder.Preset do
     if preset.streamable? do
       args
     else
-      args ++ [Utils.cache_file_path(file.id, preset)]
+      tmp_output_file = Utils.tmp_file_path(file.id, preset)
+      args ++ [tmp_output_file]
     end
   end
 

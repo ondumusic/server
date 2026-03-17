@@ -51,7 +51,7 @@ defmodule MusicBox.Transcoder.Job do
     # ffmpeg will not create directories so we need to make sure the output
     # path exists for non streamable files.
     unless job.preset.streamable? do
-      ffmpeg_output_file = Utils.cache_file_path(job.file.id, job.preset)
+      ffmpeg_output_file = Utils.tmp_file_path(job.file.id, job.preset)
       Elixir.File.mkdir_p!(Path.dirname(ffmpeg_output_file))
     end
 
@@ -120,7 +120,8 @@ defmodule MusicBox.Transcoder.Job do
   end
 
   defp open_cat(job) do
-    ffmpeg_output_file = Utils.cache_file_path(job.file.id, job.preset)
+    cache_file = Utils.cache_file_path(job.file.id, job.preset)
+    ffmpeg_output_file = Utils.tmp_file_path(job.file.id, job.preset)
 
     unless Elixir.File.exists?(ffmpeg_output_file) do
       raise "ffmpeg probably failed, output file not found (#{ffmpeg_output_file})"
@@ -128,8 +129,10 @@ defmodule MusicBox.Transcoder.Job do
 
     with false <- job.preset.streamable?,
          :aac <- job.preset.ffmpeg_preset,
-         :ok <- AACGapless.inject_smpb(ffmpeg_output_file, job.preset) do
-      Logger.debug("injecting iTunSMPB into transcoded file: #{job.file.id}")
+         :ok <- AACGapless.inject_smpb(ffmpeg_output_file, job.preset),
+         :ok <- Elixir.File.cp(ffmpeg_output_file, cache_file),
+         :ok <- Elixir.File.rm(ffmpeg_output_file) do
+      Logger.debug("injected iTunSMPB into transcoded file: #{job.file.id}")
     else
       error ->
         Logger.debug(
@@ -139,7 +142,7 @@ defmodule MusicBox.Transcoder.Job do
         :noop
     end
 
-    {:ok, port} = Tool.cat(ffmpeg_output_file)
+    {:ok, port} = Tool.cat(cache_file)
     port
   end
 end
