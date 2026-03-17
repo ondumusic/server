@@ -202,15 +202,17 @@ defmodule MusicBoxWeb.StreamController do
   end
 
   defp transcode_file(conn, chunk_index \\ 0) do
-    with true <-
-           Utils.continue_stream?(conn.assigns.track.file, conn.assigns.preset, chunk_index),
+    with true <- Utils.continue_stream?(conn.assigns.track.file, conn.assigns.preset, chunk_index),
          {:ok, chunk_data} <-
            Transcoder.request_chunk(conn.assigns.track.file, conn.assigns.preset, chunk_index),
          {:ok, new_conn} <- chunk(conn, chunk_data) do
       transcode_file(new_conn, chunk_index + 1)
     else
-      {:error, :server_busy} -> send_busy(conn)
-      _ -> conn
+      {:error, :server_busy} ->
+        if chunk_index == 0, do: send_busy(conn), else: conn
+
+      _other ->
+        conn
     end
   end
 
