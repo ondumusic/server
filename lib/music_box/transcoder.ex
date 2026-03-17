@@ -52,7 +52,7 @@ defmodule MusicBox.Transcoder do
         stat = Elixir.File.stat!(path, time: :posix)
 
         %Result{
-          completed_at: DateTime.from_unix(stat.ctime),
+          completed_at: DateTime.from_unix!(stat.ctime),
           file_size: stat.size,
           chunk_count: ceil(stat.size / Utils.chunk_size()),
           persisted: true
@@ -112,6 +112,17 @@ defmodule MusicBox.Transcoder do
     error -> error
   end
 
+  # Request already transcoding, queue the request
+  defp start_or_enqueue(
+         %File{id: file_id} = file,
+         preset,
+         chunk_index,
+         from,
+         %{jobs: jobs} = state
+       )
+       when is_map_key(jobs, {file_id, preset.id}),
+       do: enqueue_chunk_request(file, preset, chunk_index, from, state)
+
   # Too many concurrent jobs, queue the request
   defp start_or_enqueue(file, preset, chunk_index, from, %{jobs: jobs, queue: queue} = state)
        when map_size(jobs) >= @max_concurrency do
@@ -124,17 +135,6 @@ defmodule MusicBox.Transcoder do
       {:noreply, %{state | queue: new_queue}}
     end
   end
-
-  # Request already transcoding, queue the request
-  defp start_or_enqueue(
-         %File{id: file_id} = file,
-         preset,
-         chunk_index,
-         from,
-         %{jobs: jobs} = state
-       )
-       when is_map_key(jobs, {file_id, preset.id}),
-       do: enqueue_chunk_request(file, preset, chunk_index, from, state)
 
   # Start a new transcoding job
   defp start_or_enqueue(file, preset, chunk_index, from, state),
