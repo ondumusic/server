@@ -5,7 +5,7 @@ config :music_box, :env, :dev
 # Configure your database
 config :music_box, MusicBox.Repo,
   database: Path.expand("../db/music_box_dev.db", __DIR__),
-  pool_size: 5,
+  pool_size: 1,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true
 

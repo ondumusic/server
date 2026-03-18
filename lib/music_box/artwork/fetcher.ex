@@ -30,9 +30,7 @@ defmodule MusicBox.Artwork.Fetcher do
   end
 
   def artwork_path(album) do
-    Path.join(config(:artwork_path), "#{album.id}.jpg")
+    MusicBox.Config.artwork_path()
+    |> Path.join("#{album.id}.jpg")
   end
-
-  defp config(key),
-    do: Application.get_env(:music_box, MusicBox.Transcoder) |> Keyword.get(key)
 end

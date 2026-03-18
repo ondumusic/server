@@ -35,34 +35,56 @@ if config_env() == :prod do
 
   music_box_uri = URI.parse(music_box_uri)
 
+  if is_nil(music_box_uri.scheme) do
+    raise "MB_URL is missing scheme (example value: https://example.com)"
+  end
+
+  if is_nil(music_box_uri.host) do
+    raise "MB_URL is missing hostname (example value: https://example.com)"
+  end
+
   database_path =
-    System.get_env("DATABASE_PATH") ||
+    System.get_env("MB_DATABASE_PATH") ||
       raise """
-      environment variable DATABASE_PATH is missing.
+      environment variable MB_DATABASE_PATH is missing.
       For example: /etc/music_box/music_box.db
       """
 
   transcode_cache_path =
-    System.get_env("TRANSCODE_CACHE_PATH") ||
+    System.get_env("MB_TRANSCODE_CACHE_PATH") ||
       raise """
-      environment variable TRANSCODE_CACHE_PATH is missing.
+      environment variable MB_TRANSCODE_CACHE_PATH is missing.
       For example: /tmp/transcode-cache/
       """
 
   artwork_path =
-    System.get_env("ARTWORK_PATH") ||
+    System.get_env("MB_ARTWORK_PATH") ||
       raise """
-      environment variable ARTWORK_PATH is missing.
+      environment variable MB_ARTWORK_PATH is missing.
       For example: /tmp/artwork/
       """
 
+  music_brainz_enabled? =
+    System.get_env("MB_ARTWORK_ENABLE_MUSICBRAINZ", "false")
+    |> String.downcase()
+    |> case do
+      truthy when truthy in ~w(1 yes on enabled true) -> true
+      _ -> false
+    end
+
   config :music_box, MusicBox.Repo,
     database: database_path,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5")
+    pool_size: String.to_integer(System.get_env("MB_SQLITE_POOL_SIZE") || "1")
+
+  config :music_box, MusicBox.Artwork,
+    artwork_path: Path.absname(artwork_path),
+    custom_api: System.get_env("MB_ARTWORK_CUSTOM_API"),
+    use_music_brainz: music_brainz_enabled?
 
   config :music_box, MusicBox.Transcoder,
-    artwork_path: artwork_path,
-    cache_path: transcode_cache_path
+    max_concurrency: String.to_integer(System.get_env("MB_TRANSCODE_MAX_CONCURRENCY") || "3"),
+    max_queue_size: String.to_integer(System.get_env("MB_TRANSCODE_QUEUE_SIZE") || "10"),
+    cache_path: Path.absname(transcode_cache_path)
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
@@ -70,13 +92,11 @@ if config_env() == :prod do
   # to check this value into version control, so we use an environment
   # variable instead.
   secret_key_base =
-    System.get_env("SECRET_KEY_BASE") ||
+    System.get_env("MB_SECRET_KEY_BASE") ||
       raise """
-      environment variable SECRET_KEY_BASE is missing.
+      environment variable MB_SECRET_KEY_BASE is missing.
       You can generate one by calling: mix phx.gen.secret
       """
-
-  config :music_box, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :music_box, MusicBoxWeb.Endpoint,
     url: [host: music_box_uri.host, port: music_box_uri.port, scheme: music_box_uri.scheme],
@@ -89,36 +109,4 @@ if config_env() == :prod do
       port: 4000
     ],
     secret_key_base: secret_key_base
-
-  # ## SSL Support
-  #
-  # To get SSL working, you will need to add the `https` key
-  # to your endpoint configuration:
-  #
-  #     config :music_box, MusicBoxWeb.Endpoint,
-  #       https: [
-  #         ...,
-  #         port: 443,
-  #         cipher_suite: :strong,
-  #         keyfile: System.get_env("SOME_APP_SSL_KEY_PATH"),
-  #         certfile: System.get_env("SOME_APP_SSL_CERT_PATH")
-  #       ]
-  #
-  # The `cipher_suite` is set to `:strong` to support only the
-  # latest and more secure SSL ciphers. This means old browsers
-  # and clients may not be supported. You can set it to
-  # `:compatible` for wider support.
-  #
-  # `:keyfile` and `:certfile` expect an absolute path to the key
-  # and cert in disk or a relative path inside priv, for example
-  # "priv/ssl/server.key". For all supported SSL configuration
-  # options, see https://hexdocs.pm/plug/Plug.SSL.html#configure/1
-  #
-  # We also recommend setting `force_ssl` in your config/prod.exs,
-  # ensuring no data is ever sent via http, always redirecting to https:
-  #
-  #     config :music_box, MusicBoxWeb.Endpoint,
-  #       force_ssl: [hsts: true]
-  #
-  # Check `Plug.SSL` for all available options in `force_ssl`.
 end

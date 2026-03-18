@@ -2,10 +2,9 @@ defmodule MusicBoxWeb.ArtworkController do
   use MusicBoxWeb, :controller
 
   def show(conn, %{"filename" => filename}) do
-    artwork_path =
-      Application.get_env(:music_box, MusicBox.Transcoder) |> Keyword.fetch!(:artwork_path)
-
-    file_path = Path.join(artwork_path, filename)
+    file_path =
+      MusicBox.Config.artwork_path()
+      |> Path.join(filename)
 
     conn
     |> send_download({:file, file_path},

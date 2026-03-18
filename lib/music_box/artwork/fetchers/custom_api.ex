@@ -3,14 +3,12 @@ defmodule MusicBox.Artwork.Fetcher.CustomApi do
 
   use MusicBox.Artwork.Fetcher
 
-  @endpoint Application.compile_env!(:music_box, :custom_artwork_endpoint)
+  alias MusicBox.Repo
 
-  if is_nil(@endpoint) do
-    def find(_album), do: {:error, :skip}
-  else
-    alias MusicBox.Repo
+  def find(album) do
+    endpoint = MusicBox.Config.artwork_custom_api()
 
-    def find(album) do
+    if endpoint do
       album = Repo.preload(album, [:artist])
 
       search_payload = %{
@@ -19,10 +17,12 @@ defmodule MusicBox.Artwork.Fetcher.CustomApi do
         release_year: album.release_year
       }
 
-      case Req.get(@endpoint, params: search_payload) do
+      case Req.get(endpoint, params: search_payload) do
         {:ok, %{status: 200, body: bytes}} -> save_artwork(album, bytes)
         _ -> {:error, :not_found}
       end
+    else
+      {:error, :skip}
     end
   end
 end

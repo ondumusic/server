@@ -9,13 +9,17 @@ defmodule MusicBox.Artwork.Fetcher.MusicBrainz do
   def find(%{is_unknown: true}), do: {:error, :not_found}
 
   def find(album) do
-    album = Repo.preload(album, [:artist])
+    if MusicBox.Config.artwork_musicbrainz?() do
+      album = Repo.preload(album, [:artist])
 
-    with {:ok, releases} <- find_releases(album),
-         {:ok, bytes} <- find_artwork(releases) do
-      save_artwork(album, bytes)
+      with {:ok, releases} <- find_releases(album),
+           {:ok, bytes} <- find_artwork(releases) do
+        save_artwork(album, bytes)
+      else
+        _ -> {:error, :not_found}
+      end
     else
-      _ -> {:error, :not_found}
+      {:error, :skip}
     end
   end
 

@@ -32,8 +32,6 @@ config :phoenix, :json_library, JSON
 config :ecto, :json_library, JSON
 config :ecto_sqlite3, :json_library, JSON
 
-config :music_box, custom_artwork_endpoint: nil
-
 config :music_box,
   extract_artwork_tool: MusicBox.Tool.ExtractArtwork,
   resize_artwork_tool: MusicBox.Tool.ResizeArtwork,
@@ -41,8 +39,14 @@ config :music_box,
   probe_tool: MusicBox.Tool.Probe,
   cat_tool: MusicBox.Tool.Cat
 
-config :music_box, MusicBox.Transcoder,
+config :music_box, MusicBox.Artwork,
   artwork_path: Path.absname("./tmp/artwork"),
+  custom_api: nil,
+  use_music_brainz: false
+
+config :music_box, MusicBox.Transcoder,
+  max_concurrency: 3,
+  max_queue_size: 10,
   cache_path: Path.absname("./tmp/transcode")
 
 # Import environment specific config. This must remain at the bottom
