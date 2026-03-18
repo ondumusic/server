@@ -115,3 +115,7 @@ end
 defmodule MusicBoxWeb.ConflictError do
   defexception message: "conflict", plug_status: 409
 end
+
+defmodule MusicBoxWeb.NotFoundError do
+  defexception message: "not_found", plug_status: 404
+end

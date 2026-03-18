@@ -39,6 +39,9 @@ config :music_box,
   probe_tool: MusicBox.Tool.Probe,
   cat_tool: MusicBox.Tool.Cat
 
+config :music_box,
+  web_enabled: true
+
 config :music_box, MusicBox.Artwork,
   artwork_path: Path.absname("./tmp/artwork"),
   custom_api: nil,

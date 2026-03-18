@@ -72,6 +72,17 @@ if config_env() == :prod do
       _ -> false
     end
 
+  web_enabled? =
+    System.get_env("MB_DISABLE_WEB", "false")
+    |> String.downcase()
+    |> case do
+      falsy when falsy in ~w(0 no off disabled false) -> true
+      _ -> false
+    end
+
+  config :music_box,
+    web_enabled: web_enabled?
+
   config :music_box, MusicBox.Repo,
     database: database_path,
     pool_size: String.to_integer(System.get_env("MB_SQLITE_POOL_SIZE") || "1")

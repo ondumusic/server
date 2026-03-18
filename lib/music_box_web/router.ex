@@ -17,7 +17,7 @@ defmodule MusicBoxWeb.Router do
   end
 
   scope "/", MusicBoxWeb do
-    pipe_through :browser
+    pipe_through [:browser, MusicBoxWeb.Plugs.WebEnabled]
 
     get "/", PageController, :react
     get "/login", PageController, :react
@@ -27,12 +27,12 @@ defmodule MusicBoxWeb.Router do
     get "/artists/:id/:album_id", PageController, :react
 
     get "/onboarding/:step", PageController, :react
-
-    get "/artwork/:filename", ArtworkController, :show
   end
 
   scope "/", MusicBoxWeb do
     pipe_through [:browser, :api]
+
+    get "/artwork/:filename", ArtworkController, :show
 
     get "/transcode/:track_id", StreamController, :transcode
     get "/download/:track_id", StreamController, :download

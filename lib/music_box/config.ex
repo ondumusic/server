@@ -19,7 +19,13 @@ defmodule MusicBox.Config do
   │ MB_SECRET_KEY_BASE             │ Yes       │ This is used to sign and encrypt secrets  │
   │                                │           │ and requires a minimum length of 32, but  │
   │                                │           │ 64 characters is recommended.             │
+  ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
+  │ MB_DISABLE_WEB                 │ No        │ If you only want API access you can use   │
+  │                                │           │ this to disable the built-in web ui.      │
+  │                                │           │ Defaults to false                         │
   └────────────────────────────────┴───────────┴───────────────────────────────────────────┘
+
+
 
   ## Transcoder Settings
   Transcoding only happens for streams/downloads when requested, by default the original
