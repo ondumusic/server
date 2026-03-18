@@ -32,6 +32,22 @@ defmodule MusicBox.TranscoderTest do
       open_port(args)
     end)
 
+    stub(MusicBox.Tool.ProbeMock, :exec, fn _path ->
+      {:ok,
+       %{
+         "streams" => [
+           %{
+             "codec_type" => "audio",
+             "sample_rate" => 132,
+             "duration_ts" => 132,
+             "start_pts" => 132,
+             "format" => %{},
+             "tags" => %{}
+           }
+         ]
+       }}
+    end)
+
     transcoder_pid = start_supervised!(Transcoder)
 
     on_exit(fn ->
@@ -54,7 +70,7 @@ defmodule MusicBox.TranscoderTest do
 
     # Cleanup old transcoded files
     Transcoder.clear_cache()
-    File.rm_rf!("./tmp")
+    File.rm_rf!("./tmp/test")
 
     [track: track, transcoder_pid: transcoder_pid]
   end
@@ -198,11 +214,9 @@ defmodule MusicBox.TranscoderTest do
 
   describe "presets" do
     test "preset: mobile_aac", %{track: track} do
+      path = track.file.path
       preset = Transcoder.Preset.get(:mobile_aac)
       Transcoder.request_chunk(track.file, preset, 0)
-
-      path = track.file.path
-      duration = to_string(track.file.metadata.duration)
 
       assert_receive {:transcode_called,
                       [
@@ -219,8 +233,6 @@ defmodule MusicBox.TranscoderTest do
                         "-vn",
                         "-ac",
                         "2",
-                        "-t",
-                        ^duration,
                         "-y",
                         "-v",
                         "error",
@@ -230,11 +242,9 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "preset: default_aac", %{track: track} do
+      path = track.file.path
       preset = Transcoder.Preset.get(:default_aac)
       Transcoder.request_chunk(track.file, preset, 0)
-
-      path = track.file.path
-      duration = to_string(track.file.metadata.duration)
 
       assert_receive {:transcode_called,
                       [
@@ -251,8 +261,6 @@ defmodule MusicBox.TranscoderTest do
                         "-vn",
                         "-ac",
                         "2",
-                        "-t",
-                        ^duration,
                         "-y",
                         "-v",
                         "error",
@@ -262,11 +270,10 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "preset: mobile_adts", %{track: track} do
-      preset = Transcoder.Preset.get(:mobile_adts)
-      Transcoder.request_chunk(track.file, preset, 0)
-
       path = track.file.path
       duration = to_string(track.file.metadata.duration)
+      preset = Transcoder.Preset.get(:mobile_adts)
+      Transcoder.request_chunk(track.file, preset, 0)
 
       assert_receive {:transcode_called,
                       [
@@ -287,18 +294,17 @@ defmodule MusicBox.TranscoderTest do
                         ^duration,
                         "-y",
                         "-v",
-                        "error",
+                        "quiet",
                         "-nostats",
                         "pipe:1"
                       ]}
     end
 
     test "preset: default_adts", %{track: track} do
-      preset = Transcoder.Preset.get(:default_adts)
-      Transcoder.request_chunk(track.file, preset, 0)
-
       path = track.file.path
       duration = to_string(track.file.metadata.duration)
+      preset = Transcoder.Preset.get(:default_adts)
+      Transcoder.request_chunk(track.file, preset, 0)
 
       assert_receive {:transcode_called,
                       [
@@ -319,18 +325,17 @@ defmodule MusicBox.TranscoderTest do
                         ^duration,
                         "-y",
                         "-v",
-                        "error",
+                        "quiet",
                         "-nostats",
                         "pipe:1"
                       ]}
     end
 
     test "preset: mobile_opus", %{track: track} do
-      preset = Transcoder.Preset.get(:mobile_opus)
-      Transcoder.request_chunk(track.file, preset, 0)
-
       path = track.file.path
       duration = to_string(track.file.metadata.duration)
+      preset = Transcoder.Preset.get(:mobile_opus)
+      Transcoder.request_chunk(track.file, preset, 0)
 
       assert_receive {:transcode_called,
                       [
@@ -363,18 +368,17 @@ defmodule MusicBox.TranscoderTest do
                         "1",
                         "-y",
                         "-v",
-                        "error",
+                        "quiet",
                         "-nostats",
                         "pipe:1"
                       ]}
     end
 
     test "preset: default_opus", %{track: track} do
-      preset = Transcoder.Preset.get(:default_opus)
-      Transcoder.request_chunk(track.file, preset, 0)
-
       path = track.file.path
       duration = to_string(track.file.metadata.duration)
+      preset = Transcoder.Preset.get(:default_opus)
+      Transcoder.request_chunk(track.file, preset, 0)
 
       assert_receive {:transcode_called,
                       [
@@ -407,7 +411,7 @@ defmodule MusicBox.TranscoderTest do
                         "1",
                         "-y",
                         "-v",
-                        "error",
+                        "quiet",
                         "-nostats",
                         "pipe:1"
                       ]}
@@ -416,7 +420,6 @@ defmodule MusicBox.TranscoderTest do
 
   describe "aac gapless playback support" do
     test "manual write_smpb test", %{track: track} do
-      preset = Transcoder.Preset.get(:mobile_aac)
       track = with_fixture(track, "with_tags/sample.m4a")
 
       # Copy fixture to tmp path because we will write to it.
@@ -425,8 +428,9 @@ defmodule MusicBox.TranscoderTest do
       file = update_record(track.file, %{path: tmp_file})
 
       # First test calculation
-      assert {:ok, smpb} = Transcoder.AACGapless.compute_smpb(file.path, preset)
-      assert smpb == "00000000 00000400 00000000 0000000000024800"
+      source_valid_samples = 1234
+      assert {:ok, smpb} = Transcoder.AACGapless.compute_smpb(file.path, source_valid_samples)
+      assert smpb == "00000000 00000400 0002432E 00000000000004D2"
 
       # Then try writing
       assert :ok = Transcoder.AACGapless.write_smpb(tmp_file, smpb)

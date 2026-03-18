@@ -37,6 +37,8 @@ defmodule MusicBox.Transcoder.Job do
               "Failed transcoding file: #{job.file.id} - Error: #{Exception.message(error)}"
             )
 
+            Logger.error(Exception.format_stacktrace())
+
             send(parent, {:transcoding_failed, job})
         end
       end)
@@ -129,9 +131,11 @@ defmodule MusicBox.Transcoder.Job do
 
     with false <- job.preset.streamable?,
          :aac <- job.preset.ffmpeg_preset,
-         :ok <- AACGapless.inject_smpb(ffmpeg_output_file, job.preset),
-         :ok <- Elixir.File.cp(ffmpeg_output_file, cache_file),
-         :ok <- Elixir.File.rm(ffmpeg_output_file) do
+         {:ok, probe_json} <- Tool.probe(job.file.path),
+         valid_samples when not is_nil(valid_samples) <-
+           AACGapless.source_valid_samples(probe_json, job.preset.sample_rate),
+         :ok <- AACGapless.inject_smpb(ffmpeg_output_file, valid_samples),
+         :ok <- AACGapless.inject_elst(ffmpeg_output_file, valid_samples) do
       Logger.debug("injected iTunSMPB into transcoded file: #{job.file.id}")
     else
       error ->
@@ -141,6 +145,9 @@ defmodule MusicBox.Transcoder.Job do
 
         :noop
     end
+
+    Elixir.File.cp!(ffmpeg_output_file, cache_file)
+    Elixir.File.rm!(ffmpeg_output_file)
 
     {:ok, port} = Tool.cat(cache_file)
     port

@@ -148,15 +148,15 @@ defmodule MusicBox.Transcoder.Preset do
         -avoid_negative_ts make_zero -vbr on
         -ss 0 -t #{file.metadata.duration}
         -cluster_time_limit 4000 -cues_to_front 1
-        -y -v error -nostats
+        -y -v quiet -nostats
         pipe:1
       )
   end
 
-  defp ffmpeg_shared_args(%File{} = file, %__MODULE__{ffmpeg_preset: :aac} = preset) do
+  defp ffmpeg_shared_args(%File{} = _file, %__MODULE__{ffmpeg_preset: :aac} = preset) do
     ~w(
         -c:a aac -b:a #{preset.bitrate}k -f mp4 -ar #{preset.sample_rate} -vn
-        -ac 2 -t #{file.metadata.duration}
+        -ac 2
         -y -v error -nostats
     )
   end
@@ -165,7 +165,7 @@ defmodule MusicBox.Transcoder.Preset do
     ~w(
         -c:a aac -b:a #{preset.bitrate}k -f adts -ar #{preset.sample_rate} -vn
         -ac 2 -t #{file.metadata.duration}
-        -y -v error -nostats
+        -y -v quiet -nostats
         pipe:1
     )
   end
