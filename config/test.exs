@@ -35,4 +35,7 @@ config :music_box,
 
 config :music_box, MusicBox.Artwork, artwork_path: Path.absname("./tmp/test/artwork")
 
-config :music_box, MusicBox.Transcoder, cache_path: Path.absname("./tmp/test/transcode")
+config :music_box, MusicBox.Transcoder,
+  max_concurrency: 3,
+  max_queue_size: 6,
+  cache_path: Path.absname("./tmp/test/transcode")

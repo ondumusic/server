@@ -5,30 +5,33 @@ defmodule MusicBox.Transcoder do
   require Logger
 
   alias MusicBox.Files.File
-  alias MusicBox.Transcoder.{Job, Preset, Result, State, Utils}
+  alias MusicBox.Transcoder.{Config, Job, Preset, Result, State, Utils}
 
   @chunks_table :transcoder_chunks
   @meta_table :transcoder_meta
-  @max_concurrency 3
   @max_cached_files 5
-  @max_queue_depth 6
   @queue_timeout_ms 30_000
   @cleanup_timer_ms 5_000
 
   @spec start_link(Keyword.t()) :: {:ok, pid()}
-  def start_link(_opts) do
-    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+  def start_link(opts) do
+    config = %Config{
+      max_concurrency: opts[:max_concurrency] || MusicBox.Config.transcode_max_concurrency(),
+      max_queue_size: opts[:max_queue_size] || MusicBox.Config.transcode_max_queue_size()
+    }
+
+    GenServer.start_link(__MODULE__, config, name: __MODULE__)
   end
 
   @impl true
-  def init(_) do
+  def init(config) do
     if :ets.whereis(@chunks_table) == :undefined,
       do: :ets.new(@chunks_table, [:set, :public, :named_table])
 
     if :ets.whereis(@meta_table) == :undefined,
       do: :ets.new(@meta_table, [:set, :public, :named_table])
 
-    {:ok, %State{}}
+    {:ok, %State{config: config}}
   end
 
   @spec get_meta(File.t(), Preset.t()) :: Result.t() | nil
@@ -125,8 +128,8 @@ defmodule MusicBox.Transcoder do
 
   # Too many concurrent jobs, queue the request
   defp start_or_enqueue(file, preset, chunk_index, from, %{jobs: jobs, queue: queue} = state)
-       when map_size(jobs) >= @max_concurrency do
-    if :queue.len(queue) >= @max_queue_depth do
+       when map_size(jobs) >= state.config.max_concurrency do
+    if :queue.len(queue) >= state.config.max_queue_size do
       {:reply, {:error, :server_busy}, state}
     else
       timer_ref = Process.send_after(self(), {:queue_timeout, from}, @queue_timeout_ms)
@@ -328,7 +331,7 @@ defmodule MusicBox.Transcoder do
   end
 
   defp drain_queue(%{queue: _queue, jobs: jobs} = state)
-       when map_size(jobs) >= @max_concurrency do
+       when map_size(jobs) >= state.config.max_concurrency do
     state
   end
 

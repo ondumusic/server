@@ -26,7 +26,6 @@ defmodule MusicBox.Config do
   └────────────────────────────────┴───────────┴───────────────────────────────────────────┘
 
 
-
   ## Transcoder Settings
   Transcoding only happens for streams/downloads when requested, by default the original
   files are always sent.
@@ -91,8 +90,8 @@ defmodule MusicBox.Config do
   @spec transcode_max_concurrency() :: non_neg_integer()
   def transcode_max_concurrency, do: config(Transcoder, :max_concurrency)
 
-  @spec transcode_max_queue() :: non_neg_integer()
-  def transcode_max_queue, do: config(Transcoder, :max_queue_size)
+  @spec transcode_max_queue_size() :: non_neg_integer()
+  def transcode_max_queue_size, do: config(Transcoder, :max_queue_size)
 
   defp config(mod, key) do
     conf = Application.get_env(:music_box, mod) || []
