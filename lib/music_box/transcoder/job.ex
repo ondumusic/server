@@ -57,14 +57,11 @@ defmodule MusicBox.Transcoder.Job do
       Elixir.File.mkdir_p!(Path.dirname(ffmpeg_output_file))
     end
 
-    port =
-      if job.preset.streamable? do
-        port
-      else
-        await_then_cat(job, port)
-      end
-
-    read_chunks(port, job, parent)
+    if job.preset.streamable? do
+      read_chunks(port, job, parent)
+    else
+      await_transcode(port, job, parent)
+    end
   end
 
   defp read_chunks(port, job, parent, chunk_index \\ 0, buffer \\ <<>>) do
@@ -102,14 +99,18 @@ defmodule MusicBox.Transcoder.Job do
     end
   end
 
-  defp await_then_cat(job, port, data \\ <<>>) do
+  defp await_transcode(port, job, parent, data \\ <<>>) do
     receive do
       {^port, {:data, new_data}} ->
-        await_then_cat(job, port, data <> new_data)
+        await_transcode(port, job, parent, data <> new_data)
 
       {^port, {:exit_status, 0}} ->
         if Port.info(port), do: Port.close(port)
-        open_cat(job)
+
+        case persist_unstreamable(job) do
+          {:ok, result} -> stream_persisted(job, parent, result)
+          _ -> raise "something went wrong with persisting unstreamable transcode"
+        end
 
       {^port, {:exit_status, status}} ->
         if Port.info(port), do: Port.close(port)
@@ -121,8 +122,7 @@ defmodule MusicBox.Transcoder.Job do
     end
   end
 
-  defp open_cat(job) do
-    cache_file = Utils.cache_file_path(job.file.id, job.preset)
+  defp persist_unstreamable(job) do
     ffmpeg_output_file = Utils.tmp_file_path(job.file.id, job.preset)
 
     unless Elixir.File.exists?(ffmpeg_output_file) do
@@ -146,10 +146,36 @@ defmodule MusicBox.Transcoder.Job do
         :noop
     end
 
-    Elixir.File.cp!(ffmpeg_output_file, cache_file)
-    Elixir.File.rm!(ffmpeg_output_file)
+    cache_impl().persist(job.file.id, job.preset, fn ->
+      Elixir.File.stream!(ffmpeg_output_file, 4096)
+    end)
+    |> case do
+      :ok -> Elixir.File.rm!(ffmpeg_output_file)
+      {:error, :already_exists} -> Elixir.File.rm!(ffmpeg_output_file)
+    end
 
-    {:ok, port} = Tool.cat(cache_file)
-    port
+    cache_impl().get_meta(job.file.id, job.preset)
+  end
+
+  defp stream_persisted(job, parent, result) do
+    chunk_size = Utils.chunk_size()
+    %{file_size: file_size, chunk_count: chunk_count} = result
+
+    Enum.each(0..(chunk_count - 1), fn chunk_index ->
+      start_byte = chunk_index * chunk_size
+      bytes_to_read = min(chunk_size, file_size - start_byte)
+      chunk = cache_impl().get_bytes(job.file.id, job.preset, start_byte, bytes_to_read)
+
+      if chunk do
+        send(parent, {:chunk, job, chunk_index, chunk})
+      end
+    end)
+
+    # return last chunk index
+    chunk_count - 1
+  end
+
+  defp cache_impl do
+    Application.get_env(:music_box, MusicBox.Transcoder) |> Keyword.fetch!(:cache_impl)
   end
 end
