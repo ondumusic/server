@@ -466,13 +466,15 @@ defmodule MusicBox.TranscoderTest do
       File.cp!(track.file.path, tmp_file)
       file = update_record(track.file, %{path: tmp_file})
 
-      transcoded_file = Transcoder.Utils.cache_file_path(file.id, preset)
+      transcoded_file = MusicBox.Transcoder.Cache.File.cache_file_path(file.id, preset)
       refute File.exists?(transcoded_file)
+      refute Transcoder.get_meta(file, preset)
 
       # First test calculation
       task = Task.async(fn -> Transcoder.request_chunk(file, preset, 0) end)
       assert {:ok, _chunk} = Task.await(task)
       assert File.exists?(transcoded_file)
+      assert %{persisted: true} = Transcoder.get_meta(file, preset)
 
       # Verify tag was written via ffprobe
       {output, 0} =

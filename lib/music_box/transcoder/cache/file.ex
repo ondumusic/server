@@ -27,6 +27,7 @@ defmodule MusicBox.Transcoder.Cache.File do
   @impl true
   def persist(file_id, preset, callback) do
     path = cache_file_path(file_id, preset)
+    File.mkdir_p!(Path.dirname(path))
 
     case File.open(path, [:write, :binary, :exclusive]) do
       {:ok, file} ->
@@ -61,7 +62,7 @@ defmodule MusicBox.Transcoder.Cache.File do
     end
   end
 
-  defp cache_file_path(file_id, %Preset{} = preset) do
+  def cache_file_path(file_id, %Preset{} = preset) do
     filename = "#{file_id}-#{preset.id}.#{preset.ext}"
     Path.join(MusicBox.Config.transcode_cache_path(), filename)
   end

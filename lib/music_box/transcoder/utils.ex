@@ -90,14 +90,9 @@ defmodule MusicBox.Transcoder.Utils do
 
   def parse_range_header(_), do: {:error, :invalid_range}
 
-  @spec cache_file_path(file_id :: String.t(), preset :: Preset.t()) :: String.t()
-  def cache_file_path(file_id, %Preset{} = preset) do
-    filename = "#{file_id}-#{preset.id}.#{preset.ext}"
-    Path.join(MusicBox.Config.transcode_cache_path(), filename)
-  end
-
   @spec tmp_file_path(file_id :: String.t(), preset :: Preset.t()) :: String.t()
   def tmp_file_path(file_id, %Preset{} = preset) do
-    cache_file_path(file_id, preset) <> ".tmp"
+    filename = "#{file_id}-#{preset.id}.#{preset.ext}.tmp"
+    Path.join(System.tmp_dir!(), filename)
   end
 end
