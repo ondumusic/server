@@ -36,33 +36,20 @@ defmodule MusicBox.Transcoder do
 
   @spec get_meta(File.t(), Preset.t()) :: Result.t() | nil
   def get_meta(%File{id: file_id}, preset) do
-    lookup_key = {file_id, preset.id}
+    case cache_impl().get_meta(file_id, preset) do
+      {:ok, result} ->
+        result
 
-    path = Utils.cache_file_path(file_id, preset)
-    persisted? = Elixir.File.exists?(path)
+      {:error, :not_found} ->
+        lookup_key = {file_id, preset.id}
 
-    meta =
-      case :ets.lookup(@meta_table, lookup_key) do
-        [{^lookup_key, %{} = meta}] -> meta
-        _ -> nil
-      end
-
-    cond do
-      not is_nil(meta) and meta.persisted and not persisted? ->
-        nil
-
-      persisted? ->
-        stat = Elixir.File.stat!(path, time: :posix)
-
-        %Result{
-          completed_at: DateTime.from_unix!(stat.ctime),
-          file_size: stat.size,
-          chunk_count: ceil(stat.size / Utils.chunk_size()),
-          persisted: true
-        }
-
-      true ->
-        meta
+        case :ets.lookup(@meta_table, lookup_key) do
+          # it claims to be persisted but cache_impl did not return it
+          # so it cannot exist.
+          [{^lookup_key, %{persisted: true}}] -> nil
+          [{^lookup_key, %{} = meta}] -> meta
+          _ -> nil
+        end
     end
   end
 
@@ -87,7 +74,6 @@ defmodule MusicBox.Transcoder do
     completed? = not is_nil(Map.get(meta, :completed_at))
     persisted? = Map.get(meta, :persisted, false)
     chunk_count = if(completed?, do: meta.chunk_count)
-    path = Utils.cache_file_path(file.id, preset)
 
     if not is_nil(chunk_count) and chunk_index > chunk_count do
       throw({:unknown_chunk, state})
@@ -97,7 +83,7 @@ defmodule MusicBox.Transcoder do
       start_byte = chunk_index * Utils.chunk_size()
       end_byte = min(meta.file_size, start_byte + Utils.chunk_size())
       bytes_to_read = max(0, end_byte - start_byte)
-      chunk_data = read_file_bytes(path, start_byte, bytes_to_read)
+      chunk_data = cache_impl().get_bytes(file.id, preset, start_byte, bytes_to_read)
 
       if chunk_data do
         {:reply, {:ok, chunk_data}, state}
@@ -284,19 +270,6 @@ defmodule MusicBox.Transcoder do
     end)
   end
 
-  defp read_file_bytes(path, start_byte, bytes_to_read) do
-    case Elixir.File.open(path, [:binary, :read]) do
-      {:ok, file} ->
-        :file.position(file, start_byte)
-        chunk_data = IO.binread(file, bytes_to_read)
-        Elixir.File.close(file)
-        chunk_data
-
-      _ ->
-        nil
-    end
-  end
-
   defp cleanup_lookup_key(lookup_key) do
     {file_id, preset_id} = lookup_key
 
@@ -391,34 +364,33 @@ defmodule MusicBox.Transcoder do
 
   defp persist_cache(job) do
     %{file: %{id: file_id}, preset: preset} = job
-    path = Utils.cache_file_path(file_id, preset)
-    Elixir.File.mkdir_p!(Path.dirname(path))
+    lookup_key = {file_id, preset.id}
 
-    case Elixir.File.open(path, [:write, :binary, :exclusive]) do
-      {:ok, file} ->
-        :ets.select(@chunks_table, [
-          {{{file_id, preset.id, :"$1"}, :"$2"}, [], [:"$_"]}
-        ])
-        |> Enum.sort_by(fn {{_, _, n}, _} -> n end)
-        |> Enum.each(fn {_key, data} ->
-          :ok = IO.binwrite(file, data)
-        end)
-
-        Elixir.File.close(file)
-
-        lookup_key = {file_id, preset.id}
+    cache_impl().persist(file_id, preset, fn ->
+      :ets.select(@chunks_table, [
+        {{{file_id, preset.id, :"$1"}, :"$2"}, [], [:"$_"]}
+      ])
+      |> Enum.sort_by(fn {{_, _, n}, _} -> n end)
+      |> Enum.map(fn {_key, chunk} -> chunk end)
+    end)
+    |> case do
+      :ok ->
         cleanup_lookup_key(lookup_key)
+        :ok
 
-      {:error, :eexist} ->
+      {:error, :already_exists} ->
         # Non-streamable transcodes already have existing files, so if the file
         # already exists we will presume it is the correct file.
         unless preset.streamable? do
-          lookup_key = {file_id, preset.id}
           cleanup_lookup_key(lookup_key)
         end
 
-      _error ->
+      _ ->
         :ok
     end
+  end
+
+  defp cache_impl do
+    Application.get_env(:music_box, __MODULE__) |> Keyword.fetch!(:cache_impl)
   end
 end
