@@ -20,9 +20,14 @@ defmodule MusicBox.Settings do
 
   @spec get() :: t()
   def get do
-    case Repo.get_by(Settings, is_current: true) do
-      %Settings{} = settings -> settings
-      _ -> create_settings!()
+    case :persistent_term.get({__MODULE__, :current}, nil) do
+      nil ->
+        settings = Repo.get_by(Settings, is_current: true) || create_settings!()
+        :persistent_term.put({__MODULE__, :current}, settings)
+        settings
+
+      %Settings{} = settings ->
+        settings
     end
   end
 
@@ -41,6 +46,8 @@ defmodule MusicBox.Settings do
     )
     |> tap(fn
       {:ok, new_settings} ->
+        :persistent_term.put({__MODULE__, :current}, new_settings)
+
         if new_settings.strip_sort_prefixes != settings.strip_sort_prefixes do
           MusicBox.Cleanup.work_async(:sort_names)
         end
