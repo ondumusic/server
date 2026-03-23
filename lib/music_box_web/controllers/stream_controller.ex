@@ -2,6 +2,7 @@
 defmodule MusicBoxWeb.StreamController do
   use MusicBoxWeb, :controller
 
+  alias MusicBox.Storage
   alias MusicBox.Tracks
   alias MusicBox.Transcoder
   alias MusicBox.Transcoder.{Preset, Utils}
@@ -29,7 +30,7 @@ defmodule MusicBoxWeb.StreamController do
 
     conn
     |> put_resp_content_type("text/event-stream")
-    |> send_chunked(200)
+    |> send_chunked(:ok)
     |> await_transcode()
   end
 
@@ -151,7 +152,7 @@ defmodule MusicBoxWeb.StreamController do
       {:ok, start_byte, end_byte} ->
         end_byte =
           if end_byte == :infinity,
-            do: file.size,
+            do: file.size - 1,
             else: end_byte
 
         length = end_byte - start_byte + 1
@@ -161,14 +162,16 @@ defmodule MusicBoxWeb.StreamController do
         |> put_resp_header("accept-ranges", "bytes")
         |> put_resp_header("content-range", "bytes #{start_byte}-#{end_byte}/#{file.size}")
         |> put_resp_header("content-length", "#{length}")
-        |> send_file(206, file.path, start_byte, length)
+        |> send_chunked(:partial_content)
+        |> stream_file(Storage.get_bytes(file.path, start_byte, length))
 
       _ ->
         conn
         |> put_resp_header("content-type", content_type)
         |> put_resp_header("accept-ranges", "bytes")
         |> put_resp_header("content-length", "#{file.size}")
-        |> send_file(200, file.path)
+        |> send_chunked(:ok)
+        |> stream_file(Storage.stream!(file.path))
     end
   end
 
@@ -197,7 +200,7 @@ defmodule MusicBoxWeb.StreamController do
   defp send_transcoded_file(conn) do
     conn
     |> put_stream_headers()
-    |> send_chunked(200)
+    |> send_chunked(:ok)
     |> transcode_file()
   end
 
@@ -220,7 +223,7 @@ defmodule MusicBoxWeb.StreamController do
     conn
     |> put_stream_headers()
     |> put_resp_header("content-range", "bytes */#{file_size}")
-    |> send_resp(200, <<>>)
+    |> send_resp(:ok, <<>>)
   end
 
   defp send_transcoded_chunk(conn, start_byte, end_byte) do
@@ -235,7 +238,7 @@ defmodule MusicBoxWeb.StreamController do
     conn
     |> put_stream_headers()
     |> put_resp_header("content-range", range_header)
-    |> send_chunked(206)
+    |> send_chunked(:partial_content)
     |> transcode_range(Range.new(start_byte, end_byte))
   end
 
@@ -264,6 +267,22 @@ defmodule MusicBoxWeb.StreamController do
       {:error, :server_busy} -> send_busy(conn)
       _ -> conn
     end
+  end
+
+  defp stream_file(conn, data) when is_binary(data) or is_list(data) do
+    case chunk(conn, data) do
+      {:ok, conn} -> conn
+      {:error, :closed} -> conn
+    end
+  end
+
+  defp stream_file(conn, stream) do
+    Enum.reduce_while(stream, conn, fn data, conn ->
+      case chunk(conn, data) do
+        {:ok, conn} -> {:cont, conn}
+        {:error, :closed} -> {:halt, conn}
+      end
+    end)
   end
 
   defp assign_track(conn, _opts) do

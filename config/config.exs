@@ -40,6 +40,9 @@ config :music_box,
   cat_tool: MusicBox.Tool.Cat
 
 config :music_box,
+  storage_impl: MusicBox.Storage.File
+
+config :music_box,
   web_enabled: true
 
 config :music_box, MusicBox.Artwork,

@@ -87,8 +87,8 @@ defmodule MusicBox.TranscoderTest do
       results = Task.await_many([task1, task2], 5_000)
       assert Enum.all?(results, fn {:ok, chunk} -> is_binary(chunk) end)
 
-      path = track.file.path
-      assert_receive {:transcode_called, ["-i", ^path | _args]}
+      uri = "file://" <> track.file.path
+      assert_receive {:transcode_called, ["-i", ^uri | _args]}
     end
 
     test "get metadata for a transcode job (file and preset)", %{track: track} do
@@ -214,14 +214,14 @@ defmodule MusicBox.TranscoderTest do
 
   describe "presets" do
     test "preset: mobile_aac", %{track: track} do
-      path = track.file.path
+      uri = "file://" <> track.file.path
       preset = Transcoder.Preset.get(:mobile_aac)
       Transcoder.request_chunk(track.file, preset, 0)
 
       assert_receive {:transcode_called,
                       [
                         "-i",
-                        ^path,
+                        ^uri,
                         "-c:a",
                         "aac",
                         "-b:a",
@@ -242,14 +242,14 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "preset: default_aac", %{track: track} do
-      path = track.file.path
+      uri = "file://" <> track.file.path
       preset = Transcoder.Preset.get(:default_aac)
       Transcoder.request_chunk(track.file, preset, 0)
 
       assert_receive {:transcode_called,
                       [
                         "-i",
-                        ^path,
+                        ^uri,
                         "-c:a",
                         "aac",
                         "-b:a",
@@ -270,7 +270,7 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "preset: mobile_adts", %{track: track} do
-      path = track.file.path
+      uri = "file://" <> track.file.path
       duration = to_string(track.file.metadata.duration)
       preset = Transcoder.Preset.get(:mobile_adts)
       Transcoder.request_chunk(track.file, preset, 0)
@@ -278,7 +278,7 @@ defmodule MusicBox.TranscoderTest do
       assert_receive {:transcode_called,
                       [
                         "-i",
-                        ^path,
+                        ^uri,
                         "-c:a",
                         "aac",
                         "-b:a",
@@ -301,7 +301,7 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "preset: default_adts", %{track: track} do
-      path = track.file.path
+      uri = "file://" <> track.file.path
       duration = to_string(track.file.metadata.duration)
       preset = Transcoder.Preset.get(:default_adts)
       Transcoder.request_chunk(track.file, preset, 0)
@@ -309,7 +309,7 @@ defmodule MusicBox.TranscoderTest do
       assert_receive {:transcode_called,
                       [
                         "-i",
-                        ^path,
+                        ^uri,
                         "-c:a",
                         "aac",
                         "-b:a",
@@ -332,7 +332,7 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "preset: mobile_opus", %{track: track} do
-      path = track.file.path
+      uri = "file://" <> track.file.path
       duration = to_string(track.file.metadata.duration)
       preset = Transcoder.Preset.get(:mobile_opus)
       Transcoder.request_chunk(track.file, preset, 0)
@@ -340,7 +340,7 @@ defmodule MusicBox.TranscoderTest do
       assert_receive {:transcode_called,
                       [
                         "-i",
-                        ^path,
+                        ^uri,
                         "-c:a",
                         "libopus",
                         "-b:a",
@@ -375,7 +375,7 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "preset: default_opus", %{track: track} do
-      path = track.file.path
+      uri = "file://" <> track.file.path
       duration = to_string(track.file.metadata.duration)
       preset = Transcoder.Preset.get(:default_opus)
       Transcoder.request_chunk(track.file, preset, 0)
@@ -383,7 +383,7 @@ defmodule MusicBox.TranscoderTest do
       assert_receive {:transcode_called,
                       [
                         "-i",
-                        ^path,
+                        ^uri,
                         "-c:a",
                         "libopus",
                         "-b:a",
@@ -512,7 +512,7 @@ defmodule MusicBox.TranscoderTest do
 
   defp open_port(args) do
     input_arg_index = Enum.find_index(args, &(&1 == "-i"))
-    input_file = Enum.at(args, input_arg_index + 1)
+    "file://" <> input_file = Enum.at(args, input_arg_index + 1)
 
     format_arg_index = Enum.find_index(args, &(&1 == "-f"))
     format = Enum.at(args, format_arg_index + 1)

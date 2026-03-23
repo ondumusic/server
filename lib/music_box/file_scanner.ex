@@ -5,7 +5,6 @@ defmodule MusicBox.FileScanner do
   alias MusicBox.FileScanner.Analyzer
   alias MusicBox.FileScanner.Operations
   alias MusicBox.FileScanner.PeriodicWorker
-  alias MusicBox.FileScanner.Walker
   alias MusicBox.Settings
 
   @type scan_type :: :full | :quick | nil
@@ -44,7 +43,7 @@ defmodule MusicBox.FileScanner do
 
     Operations.find_deleted_files()
 
-    walker = Walker.walk(settings.music_path)
+    walker = MusicBox.Storage.walk(settings.music_path)
 
     walker =
       if scan_type == :quick,

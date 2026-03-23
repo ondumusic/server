@@ -38,6 +38,7 @@ defmodule MusicBox.Transcoder.Preset do
   """
 
   alias MusicBox.Files.File
+  alias MusicBox.Storage
   alias MusicBox.Transcoder.Utils
 
   defstruct [
@@ -131,7 +132,8 @@ defmodule MusicBox.Transcoder.Preset do
 
   @spec ffmpeg_args(file :: File.t(), preset :: t()) :: [String.t()]
   def ffmpeg_args(%File{} = file, %__MODULE__{} = preset) do
-    args = ["-i", file.path] ++ ffmpeg_shared_args(file, preset)
+    uri = Storage.get_uri(file.path)
+    args = ["-i", uri] ++ ffmpeg_shared_args(file, preset)
 
     if preset.streamable? do
       args

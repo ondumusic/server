@@ -5,7 +5,7 @@ defmodule MusicBox.Transcoder do
   require Logger
 
   alias MusicBox.Files.File
-  alias MusicBox.Transcoder.{Config, Job, Preset, Result, State, Utils}
+  alias MusicBox.Transcoder.{Cache, Config, Job, Preset, Result, State, Utils}
 
   @chunks_table :transcoder_chunks
   @meta_table :transcoder_meta
@@ -36,7 +36,7 @@ defmodule MusicBox.Transcoder do
 
   @spec get_meta(File.t(), Preset.t()) :: Result.t() | nil
   def get_meta(%File{id: file_id}, preset) do
-    case cache_impl().get_meta(file_id, preset) do
+    case Cache.get_meta(file_id, preset) do
       {:ok, result} ->
         result
 
@@ -83,7 +83,7 @@ defmodule MusicBox.Transcoder do
       start_byte = chunk_index * Utils.chunk_size()
       end_byte = min(meta.file_size, start_byte + Utils.chunk_size())
       bytes_to_read = max(0, end_byte - start_byte)
-      chunk_data = cache_impl().get_bytes(file.id, preset, start_byte, bytes_to_read)
+      chunk_data = Cache.get_bytes(file.id, preset, start_byte, bytes_to_read)
 
       if chunk_data do
         {:reply, {:ok, chunk_data}, state}
@@ -366,7 +366,7 @@ defmodule MusicBox.Transcoder do
     %{file: %{id: file_id}, preset: preset} = job
     lookup_key = {file_id, preset.id}
 
-    cache_impl().persist(file_id, preset, fn ->
+    Cache.persist(file_id, preset, fn ->
       :ets.select(@chunks_table, [
         {{{file_id, preset.id, :"$1"}, :"$2"}, [], [:"$_"]}
       ])
@@ -388,9 +388,5 @@ defmodule MusicBox.Transcoder do
       _ ->
         :ok
     end
-  end
-
-  defp cache_impl do
-    Application.get_env(:music_box, __MODULE__) |> Keyword.fetch!(:cache_impl)
   end
 end

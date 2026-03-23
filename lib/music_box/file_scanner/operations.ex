@@ -318,36 +318,18 @@ defmodule MusicBox.FileScanner.Operations do
   end
 
   defp verify_files(files) do
+    missing_files =
+      files
+      |> Enum.map(fn {_id, path} -> path end)
+      |> MusicBox.Storage.find_missing_files()
+
     files
-    |> Task.async_stream(
-      fn {id, path} ->
-        status =
-          case Elixir.File.stat(path) do
-            {:ok, _stat} -> :exists
-            {:error, :enoent} -> :missing
-            {:error, reason} -> {:error, reason}
-          end
-
-        {id, path, status}
-      end,
-      max_concurrency: 3,
-      timeout: 5_000,
-      on_timeout: :kill_task
-    )
-    |> Enum.flat_map(fn
-      {:ok, {id, path, :missing}} ->
+    |> Enum.flat_map(fn {id, path} ->
+      if path in missing_files do
         [{id, path, :missing}]
-
-      {:ok, {_id, path, {:error, reason}}} ->
-        Logger.warning("failed to verify #{path} (#{reason})")
+      else
         []
-
-      {:ok, {_id, _path, :exists}} ->
-        []
-
-      {:exit, :timeout} ->
-        Logger.warning("timeout while checking if files still exist")
-        []
+      end
     end)
   end
 

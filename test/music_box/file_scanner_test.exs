@@ -7,8 +7,8 @@ defmodule MusicBox.FileScannerTest do
   alias MusicBox.FileScanner
   alias MusicBox.FileScanner.Analyzer
   alias MusicBox.FileScanner.Utils
-  alias MusicBox.FileScanner.Walker
   alias MusicBox.Settings
+  alias MusicBox.Storage
 
   @fixtures_path Path.expand("../support/fixtures/music_files", __DIR__)
 
@@ -131,7 +131,7 @@ defmodule MusicBox.FileScannerTest do
       ]
 
       for path <- files do
-        expect_probe(fn ^path ->
+        expect_probe(fn "file://" <> ^path ->
           {:ok,
            %{
              format: %{
@@ -180,7 +180,7 @@ defmodule MusicBox.FileScannerTest do
       ]
 
       for {type, path} <- files do
-        expect_probe(fn ^path -> {:ok, %{}} end)
+        expect_probe(fn "file://" <> ^path -> {:ok, %{}} end)
         assert {:ok, result} = Analyzer.analyze(path)
         assert result.path == path
         assert result.type == type
@@ -199,12 +199,11 @@ defmodule MusicBox.FileScannerTest do
     end
   end
 
-  describe "walker" do
+  describe "file walker" do
     test "walks given directory to find all files" do
-      walker = Walker.walk(@fixtures_path)
+      walker = Storage.File.walk(@fixtures_path)
 
       expected = [
-        Path.join(@fixtures_path, "/README.md"),
         Path.join(@fixtures_path, "/with_tags/sample.flac"),
         Path.join(@fixtures_path, "/with_tags/sample.id3v11.mp3"),
         Path.join(@fixtures_path, "/with_tags/sample.id3v22.mp3"),

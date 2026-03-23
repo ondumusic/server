@@ -1,8 +1,8 @@
 defmodule MusicBox.FileScanner.Analyzer do
   @moduledoc false
 
-  alias MusicBox.FileScanner.FileTypes
   alias MusicBox.FileScanner.Utils
+  alias MusicBox.Storage
   alias MusicBox.Tool
 
   defmodule Metadata do
@@ -42,7 +42,7 @@ defmodule MusicBox.FileScanner.Analyzer do
   @spec analyze(path :: String.t()) :: {:ok, Result.t()} | {:error, :analyzing_failed}
   def analyze("" <> path) do
     with {:ok, stat} <- File.stat(path, time: :posix),
-         {:ok, type} <- detect_file_type(path),
+         {:ok, type} <- Utils.detect_file_type(path),
          {:ok, metadata} <- get_metadata(path) do
       {:ok,
        %Result{
@@ -58,19 +58,8 @@ defmodule MusicBox.FileScanner.Analyzer do
     end
   end
 
-  defp detect_file_type(path) do
-    with {:ok, file} <- File.open(path, [:binary, :read]),
-         header_bytes <- IO.binread(file, 262),
-         _ <- File.close(file),
-         {:ok, type} <- FileTypes.detect(header_bytes) do
-      {:ok, type}
-    else
-      _ -> {:error, :unknown_type}
-    end
-  end
-
   defp get_metadata(path) do
-    with {:ok, json} <- Tool.probe(path) do
+    with {:ok, json} <- Tool.probe(Storage.get_uri(path)) do
       metadata = %Metadata{}
       keys = Map.keys(metadata)
       {:ok, parse(metadata, keys, json)}

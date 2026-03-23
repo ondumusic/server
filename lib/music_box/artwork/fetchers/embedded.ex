@@ -4,6 +4,7 @@ defmodule MusicBox.Artwork.Fetcher.Embedded do
   use MusicBox.Artwork.Fetcher
 
   alias MusicBox.Repo
+  alias MusicBox.Storage
   alias MusicBox.Tool
 
   def find(album) do
@@ -11,7 +12,10 @@ defmodule MusicBox.Artwork.Fetcher.Embedded do
 
     album.tracks
     |> Enum.reduce_while(nil, fn track, result ->
-      case Tool.extract_artwork(track.file.path) do
+      track.file.path
+      |> Storage.get_uri()
+      |> Tool.extract_artwork()
+      |> case do
         nil -> {:cont, result}
         bytes -> {:halt, bytes}
       end

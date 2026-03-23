@@ -39,7 +39,8 @@ defmodule MusicBox.FileScanner.Utils do
 
   @spec calculate_checksum!(Path.t()) :: String.t()
   def calculate_checksum!(path) do
-    File.stream!(path, 2048, [])
+    path
+    |> MusicBox.Storage.stream!()
     |> Enum.reduce(:crypto.hash_init(:sha), &:crypto.hash_update(&2, &1))
     |> :crypto.hash_final()
     |> Base.encode16(case: :lower)
@@ -58,9 +59,7 @@ defmodule MusicBox.FileScanner.Utils do
 
   @spec detect_file_type(String.t()) :: {:ok, FileTypes.t()} | {:error, :unknown}
   def detect_file_type(path) do
-    with {:ok, file} <- File.open(path, [:binary, :read]),
-         header_bytes <- IO.binread(file, 262),
-         _ <- File.close(file),
+    with header_bytes <- MusicBox.Storage.get_bytes(path, 0, 262),
          {:ok, type} <- FileTypes.detect(header_bytes) do
       {:ok, type}
     else

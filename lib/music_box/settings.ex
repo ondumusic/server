@@ -54,14 +54,16 @@ defmodule MusicBox.Settings do
     music_path = get_field(changeset, :music_path)
 
     with {:path, "/" <> _absolute} <- {:path, music_path},
-         true <- File.dir?(music_path),
-         {:ok, _} <- File.ls(music_path) do
+         :ok <- MusicBox.Storage.validate_origin(music_path) do
       changeset
     else
       {:path, _path} ->
         add_error(changeset, :music_path, "should be an absolute path")
 
-      false ->
+      {:error, :enoent} ->
+        add_error(changeset, :music_path, "does not exist")
+
+      {:error, :enotdir} ->
         add_error(changeset, :music_path, "is not a directory")
 
       {:error, :eacces} ->

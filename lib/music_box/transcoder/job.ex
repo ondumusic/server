@@ -7,8 +7,9 @@ defmodule MusicBox.Transcoder.Job do
 
   alias __MODULE__
   alias MusicBox.Files.File
+  alias MusicBox.Storage
   alias MusicBox.Tool
-  alias MusicBox.Transcoder.{AACGapless, Job, Preset, Utils}
+  alias MusicBox.Transcoder.{AACGapless, Cache, Job, Preset, Utils}
 
   require Logger
 
@@ -131,7 +132,7 @@ defmodule MusicBox.Transcoder.Job do
 
     with false <- job.preset.streamable?,
          :aac <- job.preset.ffmpeg_preset,
-         {:ok, probe_json} <- Tool.probe(job.file.path),
+         {:ok, probe_json} <- Tool.probe(Storage.get_uri(job.file.path)),
          valid_samples when not is_nil(valid_samples) <-
            AACGapless.source_valid_samples(probe_json, job.preset.sample_rate),
          :ok <- AACGapless.inject_smpb(ffmpeg_output_file, valid_samples),
@@ -146,7 +147,7 @@ defmodule MusicBox.Transcoder.Job do
         :noop
     end
 
-    cache_impl().persist(job.file.id, job.preset, fn ->
+    Cache.persist(job.file.id, job.preset, fn ->
       Elixir.File.stream!(ffmpeg_output_file, 4096)
     end)
     |> case do
@@ -154,7 +155,7 @@ defmodule MusicBox.Transcoder.Job do
       {:error, :already_exists} -> Elixir.File.rm!(ffmpeg_output_file)
     end
 
-    cache_impl().get_meta(job.file.id, job.preset)
+    Cache.get_meta(job.file.id, job.preset)
   end
 
   defp stream_persisted(job, parent, result) do
@@ -164,7 +165,7 @@ defmodule MusicBox.Transcoder.Job do
     Enum.each(0..(chunk_count - 1), fn chunk_index ->
       start_byte = chunk_index * chunk_size
       bytes_to_read = min(chunk_size, file_size - start_byte)
-      chunk = cache_impl().get_bytes(job.file.id, job.preset, start_byte, bytes_to_read)
+      chunk = Cache.get_bytes(job.file.id, job.preset, start_byte, bytes_to_read)
 
       if chunk do
         send(parent, {:chunk, job, chunk_index, chunk})
@@ -173,9 +174,5 @@ defmodule MusicBox.Transcoder.Job do
 
     # return last chunk index
     chunk_count - 1
-  end
-
-  defp cache_impl do
-    Application.get_env(:music_box, MusicBox.Transcoder) |> Keyword.fetch!(:cache_impl)
   end
 end
