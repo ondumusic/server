@@ -51,7 +51,11 @@ defmodule MusicBox.MixProject do
       {:observer_cli, "~> 1.8", only: [:dev]},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:mox, "~> 1.2"}
+      {:mox, "~> 1.2"},
+      # S3 support
+      {:ex_aws, "~> 2.5"},
+      {:ex_aws_s3, "~> 2.5"},
+      {:sweet_xml, "~> 0.7"}
     ]
   end
 

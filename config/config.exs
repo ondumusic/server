@@ -32,6 +32,10 @@ config :phoenix, :json_library, JSON
 config :ecto, :json_library, JSON
 config :ecto_sqlite3, :json_library, JSON
 
+config :ex_aws,
+  http_client: MusicBox.AWSReqClient,
+  json_codec: JSON
+
 config :music_box,
   extract_artwork_tool: MusicBox.Tool.ExtractArtwork,
   resize_artwork_tool: MusicBox.Tool.ResizeArtwork,
