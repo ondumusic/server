@@ -33,6 +33,9 @@ config :music_box,
   transcode_tool: MusicBox.Tool.TranscodeMock,
   probe_tool: MusicBox.Tool.ProbeMock
 
+config :music_box,
+  settings_cache: false
+
 config :music_box, MusicBox.Artwork, artwork_path: Path.absname("./tmp/test/artwork")
 
 config :music_box, MusicBox.Transcoder,

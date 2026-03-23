@@ -7,7 +7,7 @@ defmodule MusicBox.Storage.File do
   require Logger
 
   @impl true
-  def get_uri("/" <> _ = path) do
+  def get_uri(path) do
     "file://" <> path
   end
 
@@ -31,7 +31,7 @@ defmodule MusicBox.Storage.File do
   end
 
   @impl true
-  def validate_origin(path) do
+  def validate_origin("/" <> _ = path) do
     with true <- File.dir?(path),
          {:ok, _} <- File.ls(path) do
       :ok

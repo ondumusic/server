@@ -20,14 +20,16 @@ defmodule MusicBox.Settings do
 
   @spec get() :: t()
   def get do
-    case :persistent_term.get({__MODULE__, :current}, nil) do
-      nil ->
-        settings = Repo.get_by(Settings, is_current: true) || create_settings!()
+    if cache_enabled?() do
+      case :persistent_term.get({__MODULE__, :current}, nil) do
+        nil -> Repo.get_by(Settings, is_current: true) || create_settings!()
+        %Settings{} = settings -> settings
+      end
+      |> tap(fn settings ->
         :persistent_term.put({__MODULE__, :current}, settings)
-        settings
-
-      %Settings{} = settings ->
-        settings
+      end)
+    else
+      Repo.get_by(Settings, is_current: true) || create_settings!()
     end
   end
 
@@ -46,7 +48,8 @@ defmodule MusicBox.Settings do
     )
     |> tap(fn
       {:ok, new_settings} ->
-        :persistent_term.put({__MODULE__, :current}, new_settings)
+        if cache_enabled?(),
+          do: :persistent_term.put({__MODULE__, :current}, new_settings)
 
         if new_settings.strip_sort_prefixes != settings.strip_sort_prefixes do
           MusicBox.Cleanup.work_async(:sort_names)
@@ -85,5 +88,9 @@ defmodule MusicBox.Settings do
     %Settings{is_current: true}
     |> change()
     |> Repo.insert!()
+  end
+
+  defp cache_enabled? do
+    Application.get_env(:music_box, :settings_cache, true)
   end
 end

@@ -43,7 +43,8 @@ defmodule MusicBox.FileScanner do
 
     Operations.find_deleted_files()
 
-    walker = MusicBox.Storage.walk(settings.music_path)
+    # NOTE: / is relative to settings.music_path
+    walker = MusicBox.Storage.walk("/")
 
     walker =
       if scan_type == :quick,
@@ -88,9 +89,9 @@ defmodule MusicBox.FileScanner do
   end
 
   defp discard_errors({:ok, {:error, _error}}), do: []
-  defp discard_errors({:exit, _reason}), do: []
   defp discard_errors({:ok, {:ok, result}}), do: [result]
   defp discard_errors({:ok, result}), do: [result]
+  defp discard_errors({:exit, _reason}), do: []
 
   defp safe_apply({m, f, a}) do
     apply(m, f, a)

@@ -10,13 +10,13 @@ defmodule MusicBox.Storage.S3 do
   @batch_concurrency 5
 
   @impl true
-  def get_uri("/" <> _ = key) do
+  def get_uri(key) do
     {:ok, url} =
       ExAws.S3.presigned_url(
         ExAws.Config.new(:s3, region: region()),
         :get,
         bucket(),
-        key,
+        ensure_prefix(key),
         expires_in: @presigned_ttl
       )
 
@@ -24,40 +24,37 @@ defmodule MusicBox.Storage.S3 do
   end
 
   @impl true
-  def validate_origin("/" <> prefix_key) do
-    prefix_key = ensure_trailing_slash(prefix_key)
+  def validate_origin(prefix_key) do
+    prefix_key =
+      prefix_key
+      |> ensure_prefix()
+      |> ensure_trailing_slash()
 
     bucket()
     |> ExAws.S3.list_objects(prefix: prefix_key, max_keys: 1, region: region())
     |> ExAws.request()
     |> case do
-      {:ok, %{body: %{contents: [_ | _]}}} ->
-        :ok
-
-      {:ok, %{body: %{contents: []}}} ->
-        {:error, :enoent}
-
-      {:error, {:http_error, 403, _}} ->
-        {:error, :eacces}
-
-      {:error, {:http_error, 404, _}} ->
-        {:error, :enoent}
-
-      {:error, _reason} ->
-        {:error, :enoent}
+      {:ok, %{body: %{contents: [_ | _]}}} -> :ok
+      {:ok, %{body: %{contents: []}}} -> {:error, :enoent}
+      {:error, {:http_error, 403, _}} -> {:error, :eacces}
+      {:error, {:http_error, 404, _}} -> {:error, :enoent}
+      {:error, _reason} -> {:error, :enoent}
     end
   end
 
   @impl true
-  def walk("/" <> prefix_key) do
-    prefix_key = ensure_trailing_slash(prefix_key)
+  def walk(prefix_key) do
+    prefix_key =
+      prefix_key
+      |> ensure_prefix
+      |> ensure_trailing_slash
 
     bucket()
     |> ExAws.S3.list_objects(prefix: prefix_key)
     |> ExAws.stream!()
     |> Stream.map(fn object ->
       %{
-        path: "/" <> object.key,
+        path: object.key,
         size: String.to_integer(object.size),
         mtime: parse_s3_timestamp(object.last_modified)
       }
@@ -70,7 +67,7 @@ defmodule MusicBox.Storage.S3 do
     keys
     |> Task.async_stream(
       fn key ->
-        case bucket() |> ExAws.S3.head_object(key) |> ExAws.request() do
+        case bucket() |> ExAws.S3.head_object(ensure_prefix(key)) |> ExAws.request() do
           {:ok, _} -> nil
           {:error, _} -> key
         end
@@ -109,12 +106,12 @@ defmodule MusicBox.Storage.S3 do
   end
 
   @impl true
-  def get_bytes("/" <> key, start_byte, bytes_to_read) do
+  def get_bytes(key, start_byte, bytes_to_read) do
     end_byte = start_byte + bytes_to_read - 1
     range = "bytes=#{start_byte}-#{end_byte}"
 
     bucket()
-    |> ExAws.S3.get_object(key, range: range)
+    |> ExAws.S3.get_object(ensure_prefix(key), range: range)
     |> ExAws.request!()
     |> Map.fetch!(:body)
   end
@@ -122,6 +119,8 @@ defmodule MusicBox.Storage.S3 do
   # Private
   defp bucket, do: "musicbox-dev"
   defp region, do: "eu-west-1"
+
+  defp ensure_prefix(key), do: String.trim_leading(key, "/")
 
   defp ensure_trailing_slash(""), do: ""
 

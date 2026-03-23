@@ -13,12 +13,17 @@ defmodule MusicBox.FileScannerTest do
   @fixtures_path Path.expand("../support/fixtures/music_files", __DIR__)
 
   test "cannot start scan if music_path not configured" do
+    MusicBox.Repo.delete_all(Settings)
     assert {:error, :missing_music_path} = FileScanner.scan()
+  end
+
+  setup do
+    Settings.set(%{music_path: @fixtures_path})
+    []
   end
 
   describe "filescanner" do
     setup do
-      Settings.set(%{music_path: @fixtures_path})
       start_supervised!(FileScanner.Supervisor)
 
       Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:sync")
@@ -102,7 +107,7 @@ defmodule MusicBox.FileScannerTest do
         {:ok, %{format: %{duration: "3.448125"}}}
       end)
 
-      path = Path.join(@fixtures_path, "without_tags/sample.mp3")
+      path = "without_tags/sample.mp3"
       assert {:ok, result} = Analyzer.analyze(file_result(path))
       assert result.path == path
       assert result.type == :mp3
@@ -119,18 +124,20 @@ defmodule MusicBox.FileScannerTest do
 
     test "can scan files with tags" do
       files = [
-        Path.join(@fixtures_path, "with_tags/sample.id3v11.mp3"),
-        Path.join(@fixtures_path, "with_tags/sample.m4a"),
-        Path.join(@fixtures_path, "with_tags/sample.flac"),
-        Path.join(@fixtures_path, "with_tags/sample.multipage.ogg"),
-        Path.join(@fixtures_path, "with_tags/sample.id3v22.mp3"),
-        Path.join(@fixtures_path, "with_tags/sample.ogg"),
-        Path.join(@fixtures_path, "with_tags/sample.id3v23.mp3"),
-        Path.join(@fixtures_path, "with_tags/sample.id3v24.mp3")
+        "with_tags/sample.id3v11.mp3",
+        "with_tags/sample.m4a",
+        "with_tags/sample.flac",
+        "with_tags/sample.multipage.ogg",
+        "with_tags/sample.id3v22.mp3",
+        "with_tags/sample.ogg",
+        "with_tags/sample.id3v23.mp3",
+        "with_tags/sample.id3v24.mp3"
       ]
 
       for path <- files do
-        expect_probe(fn "file://" <> ^path ->
+        abs_path = Path.join(@fixtures_path, path)
+
+        expect_probe(fn "file://" <> ^abs_path ->
           {:ok,
            %{
              format: %{
@@ -162,24 +169,25 @@ defmodule MusicBox.FileScannerTest do
 
     test "understands multiple music file types" do
       files = [
-        {:mp3, Path.join(@fixtures_path, "without_tags/sample.mp3")},
-        {:m4a, Path.join(@fixtures_path, "without_tags/sample.m4a")},
-        {:flac, Path.join(@fixtures_path, "without_tags/sample.flac")},
-        {:ogg, Path.join(@fixtures_path, "without_tags/sample.ogg")},
-        {:opus, Path.join(@fixtures_path, "without_tags/sample.opus")},
-        {:wav, Path.join(@fixtures_path, "without_tags/sample.wav")},
-        {:mp3, Path.join(@fixtures_path, "with_tags/sample.id3v11.mp3")},
-        {:m4a, Path.join(@fixtures_path, "with_tags/sample.m4a")},
-        {:flac, Path.join(@fixtures_path, "with_tags/sample.flac")},
-        {:ogg, Path.join(@fixtures_path, "with_tags/sample.multipage.ogg")},
-        {:mp3, Path.join(@fixtures_path, "with_tags/sample.id3v22.mp3")},
-        {:ogg, Path.join(@fixtures_path, "with_tags/sample.ogg")},
-        {:mp3, Path.join(@fixtures_path, "with_tags/sample.id3v23.mp3")},
-        {:mp3, Path.join(@fixtures_path, "with_tags/sample.id3v24.mp3")}
+        {:mp3, "without_tags/sample.mp3"},
+        {:m4a, "without_tags/sample.m4a"},
+        {:flac, "without_tags/sample.flac"},
+        {:ogg, "without_tags/sample.ogg"},
+        {:opus, "without_tags/sample.opus"},
+        {:wav, "without_tags/sample.wav"},
+        {:mp3, "with_tags/sample.id3v11.mp3"},
+        {:m4a, "with_tags/sample.m4a"},
+        {:flac, "with_tags/sample.flac"},
+        {:ogg, "with_tags/sample.multipage.ogg"},
+        {:mp3, "with_tags/sample.id3v22.mp3"},
+        {:ogg, "with_tags/sample.ogg"},
+        {:mp3, "with_tags/sample.id3v23.mp3"},
+        {:mp3, "with_tags/sample.id3v24.mp3"}
       ]
 
       for {type, path} <- files do
-        expect_probe(fn "file://" <> ^path -> {:ok, %{}} end)
+        abs_path = Path.join(@fixtures_path, path)
+        expect_probe(fn "file://" <> ^abs_path -> {:ok, %{}} end)
 
         assert {:ok, result} = Analyzer.analyze(file_result(path))
 
@@ -190,8 +198,8 @@ defmodule MusicBox.FileScannerTest do
 
     test "ignores non-music files" do
       files = [
-        Path.join(@fixtures_path, "README.md"),
-        Path.join(@fixtures_path, "random.bin")
+        "README.md",
+        "random.bin"
       ]
 
       for path <- files do
@@ -202,23 +210,23 @@ defmodule MusicBox.FileScannerTest do
 
   describe "file walker" do
     test "walks given directory to find all files" do
-      walker = Storage.File.walk(@fixtures_path)
+      walker = Storage.walk("/")
 
       expected = [
-        Path.join(@fixtures_path, "/with_tags/sample.flac"),
-        Path.join(@fixtures_path, "/with_tags/sample.id3v11.mp3"),
-        Path.join(@fixtures_path, "/with_tags/sample.id3v22.mp3"),
-        Path.join(@fixtures_path, "/with_tags/sample.id3v23.mp3"),
-        Path.join(@fixtures_path, "/with_tags/sample.id3v24.mp3"),
-        Path.join(@fixtures_path, "/with_tags/sample.m4a"),
-        Path.join(@fixtures_path, "/with_tags/sample.multipage.ogg"),
-        Path.join(@fixtures_path, "/with_tags/sample.ogg"),
-        Path.join(@fixtures_path, "/without_tags/sample.flac"),
-        Path.join(@fixtures_path, "/without_tags/sample.m4a"),
-        Path.join(@fixtures_path, "/without_tags/sample.mp3"),
-        Path.join(@fixtures_path, "/without_tags/sample.ogg"),
-        Path.join(@fixtures_path, "/without_tags/sample.opus"),
-        Path.join(@fixtures_path, "/without_tags/sample.wav")
+        "with_tags/sample.flac",
+        "with_tags/sample.id3v11.mp3",
+        "with_tags/sample.id3v22.mp3",
+        "with_tags/sample.id3v23.mp3",
+        "with_tags/sample.id3v24.mp3",
+        "with_tags/sample.m4a",
+        "with_tags/sample.multipage.ogg",
+        "with_tags/sample.ogg",
+        "without_tags/sample.flac",
+        "without_tags/sample.m4a",
+        "without_tags/sample.mp3",
+        "without_tags/sample.ogg",
+        "without_tags/sample.opus",
+        "without_tags/sample.wav"
       ]
 
       assert ^expected = Enum.into(walker, []) |> Enum.map(& &1.path)

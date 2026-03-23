@@ -6,6 +6,7 @@ defmodule MusicBox.TranscoderTest do
 
   setup :set_mox_global
 
+  @fixtures_path Path.expand("../support/fixtures/music_files", __DIR__)
   @default_fixture "with_tags/sample.id3v24.mp3"
 
   @fixtures [
@@ -26,6 +27,8 @@ defmodule MusicBox.TranscoderTest do
 
   setup do
     pid = self()
+
+    MusicBox.Settings.set(%{music_path: @fixtures_path})
 
     stub(MusicBox.Tool.TranscodeMock, :exec, fn args ->
       send(pid, {:transcode_called, args})
@@ -87,7 +90,7 @@ defmodule MusicBox.TranscoderTest do
       results = Task.await_many([task1, task2], 5_000)
       assert Enum.all?(results, fn {:ok, chunk} -> is_binary(chunk) end)
 
-      uri = "file://" <> track.file.path
+      uri = "file://" <> absolute(track.file.path)
       assert_receive {:transcode_called, ["-i", ^uri | _args]}
     end
 
@@ -214,7 +217,7 @@ defmodule MusicBox.TranscoderTest do
 
   describe "presets" do
     test "preset: mobile_aac", %{track: track} do
-      uri = "file://" <> track.file.path
+      uri = "file://" <> absolute(track.file.path)
       preset = Transcoder.Preset.get(:mobile_aac)
       Transcoder.request_chunk(track.file, preset, 0)
 
@@ -242,7 +245,7 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "preset: default_aac", %{track: track} do
-      uri = "file://" <> track.file.path
+      uri = "file://" <> absolute(track.file.path)
       preset = Transcoder.Preset.get(:default_aac)
       Transcoder.request_chunk(track.file, preset, 0)
 
@@ -270,7 +273,7 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "preset: mobile_adts", %{track: track} do
-      uri = "file://" <> track.file.path
+      uri = "file://" <> absolute(track.file.path)
       duration = to_string(track.file.metadata.duration)
       preset = Transcoder.Preset.get(:mobile_adts)
       Transcoder.request_chunk(track.file, preset, 0)
@@ -301,7 +304,7 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "preset: default_adts", %{track: track} do
-      uri = "file://" <> track.file.path
+      uri = "file://" <> absolute(track.file.path)
       duration = to_string(track.file.metadata.duration)
       preset = Transcoder.Preset.get(:default_adts)
       Transcoder.request_chunk(track.file, preset, 0)
@@ -332,7 +335,7 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "preset: mobile_opus", %{track: track} do
-      uri = "file://" <> track.file.path
+      uri = "file://" <> absolute(track.file.path)
       duration = to_string(track.file.metadata.duration)
       preset = Transcoder.Preset.get(:mobile_opus)
       Transcoder.request_chunk(track.file, preset, 0)
@@ -375,7 +378,7 @@ defmodule MusicBox.TranscoderTest do
     end
 
     test "preset: default_opus", %{track: track} do
-      uri = "file://" <> track.file.path
+      uri = "file://" <> absolute(track.file.path)
       duration = to_string(track.file.metadata.duration)
       preset = Transcoder.Preset.get(:default_opus)
       Transcoder.request_chunk(track.file, preset, 0)
@@ -424,12 +427,15 @@ defmodule MusicBox.TranscoderTest do
 
       # Copy fixture to tmp path because we will write to it.
       tmp_file = Path.join(System.tmp_dir!(), "test_smpb.m4a")
-      File.cp!(track.file.path, tmp_file)
+      File.cp!(absolute(track.file.path), tmp_file)
       file = update_record(track.file, %{path: tmp_file})
 
       # First test calculation
       source_valid_samples = 1234
-      assert {:ok, smpb} = Transcoder.AACGapless.compute_smpb(file.path, source_valid_samples)
+
+      assert {:ok, smpb} =
+               Transcoder.AACGapless.compute_smpb(file.path, source_valid_samples)
+
       assert smpb == "00000000 00000400 0002432E 00000000000004D2"
 
       # Then try writing
@@ -463,7 +469,7 @@ defmodule MusicBox.TranscoderTest do
 
       # Copy fixture to tmp path because we will write to it.
       tmp_file = Path.join(System.tmp_dir!(), "test_smpb.m4a")
-      File.cp!(track.file.path, tmp_file)
+      File.cp!(absolute(track.file.path), tmp_file)
       file = update_record(track.file, %{path: tmp_file})
 
       transcoded_file = MusicBox.Transcoder.Cache.File.cache_file_path(file.id, preset)
@@ -500,13 +506,7 @@ defmodule MusicBox.TranscoderTest do
   end
 
   defp with_fixture(track, fixture) do
-    # Files in test database don't have real file paths, so lets
-    # use a fixture here.
-    fixture_path =
-      Path.expand("../support/fixtures/music_files", __DIR__)
-      |> Path.join(fixture)
-
-    file = update_record(track.file, %{path: fixture_path})
+    file = update_record(track.file, %{path: fixture})
     %{track | file: file}
   end
 
@@ -542,5 +542,9 @@ defmodule MusicBox.TranscoderTest do
     :timer.sleep(100)
 
     {:ok, port}
+  end
+
+  defp absolute(path) do
+    Path.join(@fixtures_path, path)
   end
 end
