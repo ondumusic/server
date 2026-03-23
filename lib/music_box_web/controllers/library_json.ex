@@ -98,7 +98,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       insertedAt: track.inserted_at,
       file: %{
         size: track.file.size,
-        checksum: track.file.checksum
+        checksum: "obsolete"
       },
       downloadUrl: url(~p"/download/#{track}"),
       streamUrl: url(~p"/stream/#{track}")

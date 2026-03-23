@@ -23,8 +23,7 @@ defmodule MusicBox.Storage do
   @type file_entry :: %{
           path: String.t(),
           size: non_neg_integer(),
-          mtime: DateTime.t(),
-          checksum: String.t()
+          mtime: DateTime.t()
         }
   @callback walk(path :: String.t()) :: Enumerable.t(file_entry())
   @spec walk(path :: String.t()) :: Enumerable.t(file_entry())

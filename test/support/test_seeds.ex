@@ -122,7 +122,6 @@ defmodule TestSeeds do
       Repo.insert!(%File{
         path: "/Path/to/Music/#{seed.name}.mp3",
         type: Map.get(seed, :type, :mp3),
-        checksum: Map.get(seed, :checksum, generate_checksum()),
         size: Map.get(seed, :size, round(:rand.uniform() * 1024 * 1024 * 4)),
         metadata: %FileMetadata{
           artist: if(artist, do: artist.name),
@@ -157,7 +156,4 @@ defmodule TestSeeds do
 
     minutes * 60.0 + seconds
   end
-
-  defp generate_checksum,
-    do: Base.encode16(:crypto.hash(:md5, to_string(:rand.uniform())))
 end

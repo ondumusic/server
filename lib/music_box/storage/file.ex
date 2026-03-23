@@ -97,18 +97,10 @@ defmodule MusicBox.Storage.File do
     |> Stream.map(fn path ->
       %File.Stat{size: size, mtime: mtime} = File.stat!(path, time: :posix)
 
-      checksum =
-        path
-        |> File.stream!()
-        |> Enum.reduce(:crypto.hash_init(:sha), &:crypto.hash_update(&2, &1))
-        |> :crypto.hash_final()
-        |> Base.encode16(case: :lower)
-
       %{
         path: path,
         size: size,
-        mtime: DateTime.from_unix!(mtime),
-        checksum: checksum
+        mtime: DateTime.from_unix!(mtime)
       }
     end)
   end

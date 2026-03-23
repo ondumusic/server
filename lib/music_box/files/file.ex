@@ -12,7 +12,6 @@ defmodule MusicBox.Files.File do
   @foreign_key_type :binary_id
   schema "files" do
     field :path, :string
-    field :checksum, :string
     field :size, :integer
     field :type, Ecto.Enum, values: ~w(m4a mp3 opus ogg flac wav)a
 

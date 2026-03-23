@@ -59,8 +59,7 @@ defmodule MusicBox.Storage.S3 do
       %{
         path: "/" <> object.key,
         size: String.to_integer(object.size),
-        mtime: parse_s3_timestamp(object.last_modified),
-        checksum: String.trim(object.e_tag, "\"")
+        mtime: parse_s3_timestamp(object.last_modified)
       }
     end)
     |> Stream.filter(&Utils.valid_extname?(&1.path))

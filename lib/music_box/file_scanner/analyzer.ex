@@ -32,7 +32,6 @@ defmodule MusicBox.FileScanner.Analyzer do
       :size,
       :type,
       :last_modified_at,
-      :checksum,
       metadata: %Metadata{}
     ]
 
@@ -49,7 +48,6 @@ defmodule MusicBox.FileScanner.Analyzer do
          size: file.size,
          type: type,
          last_modified_at: file.mtime,
-         checksum: file.checksum,
          metadata: metadata
        }}
     else

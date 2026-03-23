@@ -107,7 +107,6 @@ defmodule MusicBox.FileScannerTest do
       assert result.path == path
       assert result.type == :mp3
       assert result.size == 123_456
-      assert result.checksum == "checksum"
       assert result.last_modified_at
       refute result.metadata.artist
       refute result.metadata.album
@@ -316,7 +315,6 @@ defmodule MusicBox.FileScannerTest do
     %{
       path: path,
       size: 123_456,
-      checksum: "checksum",
       mtime: DateTime.utc_now() |> DateTime.truncate(:second)
     }
   end
