@@ -103,11 +103,11 @@ defmodule MusicBox.FileScannerTest do
       end)
 
       path = Path.join(@fixtures_path, "without_tags/sample.mp3")
-      assert {:ok, result} = Analyzer.analyze(path)
+      assert {:ok, result} = Analyzer.analyze(file_result(path))
       assert result.path == path
       assert result.type == :mp3
-      assert result.size == 55_170
-      assert result.checksum == "1392cce60f3309ed44d089500ae92e77dc5c966a"
+      assert result.size == 123_456
+      assert result.checksum == "checksum"
       assert result.last_modified_at
       refute result.metadata.artist
       refute result.metadata.album
@@ -147,7 +147,7 @@ defmodule MusicBox.FileScannerTest do
            }}
         end)
 
-        assert {:ok, result} = Analyzer.analyze(path)
+        assert {:ok, result} = Analyzer.analyze(file_result(path))
         assert result.path == path
 
         assert %{
@@ -181,7 +181,9 @@ defmodule MusicBox.FileScannerTest do
 
       for {type, path} <- files do
         expect_probe(fn "file://" <> ^path -> {:ok, %{}} end)
-        assert {:ok, result} = Analyzer.analyze(path)
+
+        assert {:ok, result} = Analyzer.analyze(file_result(path))
+
         assert result.path == path
         assert result.type == type
       end
@@ -194,7 +196,7 @@ defmodule MusicBox.FileScannerTest do
       ]
 
       for path <- files do
-        assert {:error, :analyzing_failed} = Analyzer.analyze(path)
+        assert {:error, :analyzing_failed} = Analyzer.analyze(file_result(path))
       end
     end
   end
@@ -220,7 +222,7 @@ defmodule MusicBox.FileScannerTest do
         Path.join(@fixtures_path, "/without_tags/sample.wav")
       ]
 
-      assert ^expected = Enum.into(walker, [])
+      assert ^expected = Enum.into(walker, []) |> Enum.map(& &1.path)
     end
   end
 
@@ -308,5 +310,14 @@ defmodule MusicBox.FileScannerTest do
           error
       end
     end)
+  end
+
+  defp file_result(path) do
+    %{
+      path: path,
+      size: 123_456,
+      checksum: "checksum",
+      mtime: DateTime.utc_now() |> DateTime.truncate(:second)
+    }
   end
 end
