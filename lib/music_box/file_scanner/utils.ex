@@ -37,15 +37,6 @@ defmodule MusicBox.FileScanner.Utils do
     end)
   end
 
-  @spec calculate_checksum!(Path.t()) :: String.t()
-  def calculate_checksum!(path) do
-    path
-    |> MusicBox.Storage.stream!()
-    |> Enum.reduce(:crypto.hash_init(:sha), &:crypto.hash_update(&2, &1))
-    |> :crypto.hash_final()
-    |> Base.encode16(case: :lower)
-  end
-
   @spec to_integer(String.t() | integer() | nil) :: integer() | nil
   def to_integer(nil), do: nil
   def to_integer(n) when is_integer(n), do: n

@@ -80,9 +80,10 @@ defmodule MusicBox.FileScanner do
   defp skip_existing_files(enum) do
     enum
     |> Stream.chunk_every(50)
-    |> Stream.flat_map(fn paths ->
-      existing_paths = Operations.find_existing_paths(paths)
-      Enum.reject(paths, &Enum.member?(existing_paths, &1))
+    |> Stream.flat_map(fn files ->
+      all_paths = Enum.map(files, & &1.path)
+      existing_paths = Operations.find_existing_paths(all_paths)
+      Enum.reject(files, &Enum.member?(existing_paths, &1.path))
     end)
   end
 

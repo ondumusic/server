@@ -20,8 +20,14 @@ defmodule MusicBox.Storage do
   @doc """
   Finds all music file paths inside the given path.
   """
-  @callback walk(path :: String.t()) :: Enumerable.t()
-  @spec walk(path :: String.t()) :: Enumerable.t()
+  @type file_entry :: %{
+          path: String.t(),
+          size: non_neg_integer(),
+          mtime: DateTime.t(),
+          checksum: String.t()
+        }
+  @callback walk(path :: String.t()) :: Enumerable.t(file_entry())
+  @spec walk(path :: String.t()) :: Enumerable.t(file_entry())
   def walk(path), do: impl().walk(path)
 
   @doc """
