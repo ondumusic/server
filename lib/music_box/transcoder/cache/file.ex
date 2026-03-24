@@ -3,6 +3,7 @@ defmodule MusicBox.Transcoder.Cache.File do
 
   @behaviour MusicBox.Transcoder.Cache
 
+  alias MusicBox.Storage
   alias MusicBox.Transcoder.{Preset, Result, Utils}
 
   @impl true
@@ -49,17 +50,7 @@ defmodule MusicBox.Transcoder.Cache.File do
   @impl true
   def get_bytes(file_id, preset, start_byte, bytes_to_read) do
     path = cache_file_path(file_id, preset)
-
-    case File.open(path, [:binary, :read]) do
-      {:ok, file} ->
-        :file.position(file, start_byte)
-        chunk_data = IO.binread(file, bytes_to_read)
-        File.close(file)
-        chunk_data
-
-      _ ->
-        nil
-    end
+    Storage.File.get_bytes(path, start_byte, bytes_to_read)
   end
 
   def cache_file_path(file_id, %Preset{} = preset) do

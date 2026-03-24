@@ -477,9 +477,10 @@ defmodule MusicBox.TranscoderTest do
       refute Transcoder.get_meta(file, preset)
 
       # First test calculation
-      task = Task.async(fn -> Transcoder.request_chunk(file, preset, 0) end)
-      assert {:ok, _chunk} = Task.await(task)
-      assert File.exists?(transcoded_file)
+      assert {:ok, _chunk} = Transcoder.request_chunk(file, preset, 0)
+
+      # wait for persist (happens after chunking is completed)
+      assert_eventually(fn -> File.exists?(transcoded_file) end)
       assert %{persisted: true} = Transcoder.get_meta(file, preset)
 
       # Verify tag was written via ffprobe
@@ -538,13 +539,23 @@ defmodule MusicBox.TranscoderTest do
       File.cp!(input_file, output_file)
     end
 
-    # small startup delay simulation
-    :timer.sleep(100)
+    # # small startup delay simulation
+    # :timer.sleep(100)
 
     {:ok, port}
   end
 
   defp absolute(path) do
     Path.join(@fixtures_path, path)
+  end
+
+  defp assert_eventually(fun, retries \\ 100) do
+    if fun.() do
+      :ok
+    else
+      if retries <= 0, do: flunk("assert_eventually timed out")
+      :timer.sleep(10)
+      assert_eventually(fun, retries - 1)
+    end
   end
 end

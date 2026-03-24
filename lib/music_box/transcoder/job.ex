@@ -9,7 +9,7 @@ defmodule MusicBox.Transcoder.Job do
   alias MusicBox.Files.File
   alias MusicBox.Storage
   alias MusicBox.Tool
-  alias MusicBox.Transcoder.{AACGapless, Cache, Job, Preset, Utils}
+  alias MusicBox.Transcoder.{AACGapless, Job, Preset, Utils}
 
   require Logger
 
@@ -107,11 +107,7 @@ defmodule MusicBox.Transcoder.Job do
 
       {^port, {:exit_status, 0}} ->
         if Port.info(port), do: Port.close(port)
-
-        case persist_unstreamable(job) do
-          {:ok, result} -> stream_persisted(job, parent, result)
-          _ -> raise "something went wrong with persisting unstreamable transcode"
-        end
+        consume_output_file!(job, parent)
 
       {^port, {:exit_status, status}} ->
         if Port.info(port), do: Port.close(port)
@@ -123,16 +119,49 @@ defmodule MusicBox.Transcoder.Job do
     end
   end
 
-  defp persist_unstreamable(job) do
+  defp consume_output_file!(job, parent) do
     ffmpeg_output_file = Utils.tmp_file_path(job.file.id, job.preset)
 
     unless Elixir.File.exists?(ffmpeg_output_file) do
       raise "ffmpeg probably failed, output file not found (#{ffmpeg_output_file})"
     end
 
-    with false <- job.preset.streamable?,
-         :aac <- job.preset.ffmpeg_preset,
-         {:ok, probe_json} <- Tool.probe(Storage.get_uri(job.file.path)),
+    # If needed inject the iTunSMPB tag for gapless AAC.
+    maybe_make_gapless(job)
+
+    # Get the File size to calculate the amount of chunks we will be streaming
+    %Elixir.File.Stat{size: file_size} = Elixir.File.stat!(ffmpeg_output_file, time: :posix)
+    chunk_size = Utils.chunk_size()
+    chunk_count = ceil(file_size / chunk_size)
+
+    # Now start "streaming" the output file, this will look as normal to the
+    # transcoder so that should handle the persisting as well.
+    Enum.each(0..(chunk_count - 1), fn chunk_index ->
+      start_byte = chunk_index * chunk_size
+      bytes_to_read = min(chunk_size, file_size - start_byte)
+
+      # We are using the Storage.File driver directly because otherwise we would
+      # just write the same function again. Note that using `Storage.get_bytes`
+      # would use the impl (could be S3) and prefix it with the `music_path` so
+      # that is why we are directly calling the implementation here.
+      chunk = Storage.File.get_bytes(ffmpeg_output_file, start_byte, bytes_to_read)
+
+      if chunk do
+        send(parent, {:chunk, job, chunk_index, chunk})
+      end
+    end)
+
+    # Finally we can remove the temporarily stored ffmpeg file
+    Elixir.File.rm!(ffmpeg_output_file)
+
+    # return last chunk index
+    chunk_count - 1
+  end
+
+  defp maybe_make_gapless(%{preset: %{streamable?: false, ffmpeg_preset: :aac}} = job) do
+    ffmpeg_output_file = Utils.tmp_file_path(job.file.id, job.preset)
+
+    with {:ok, probe_json} <- Tool.probe(Storage.get_uri(job.file.path)),
          valid_samples when not is_nil(valid_samples) <-
            AACGapless.source_valid_samples(probe_json, job.preset.sample_rate),
          :ok <- AACGapless.inject_smpb(ffmpeg_output_file, valid_samples),
@@ -140,39 +169,15 @@ defmodule MusicBox.Transcoder.Job do
       Logger.debug("injected iTunSMPB into transcoded file: #{job.file.id}")
     else
       error ->
-        Logger.debug(
+        # NOTE: On failure we don't raise because the file can still be played
+        # without this tag. Do log it though.
+        Logger.warning(
           "failed to inject iTunSMPB into transcoded file: #{job.file.id} (#{inspect(error)})"
         )
 
         :noop
     end
-
-    Cache.persist(job.file.id, job.preset, fn ->
-      Elixir.File.stream!(ffmpeg_output_file, 4096)
-    end)
-    |> case do
-      :ok -> Elixir.File.rm!(ffmpeg_output_file)
-      {:error, :already_exists} -> Elixir.File.rm!(ffmpeg_output_file)
-    end
-
-    Cache.get_meta(job.file.id, job.preset)
   end
 
-  defp stream_persisted(job, parent, result) do
-    chunk_size = Utils.chunk_size()
-    %{file_size: file_size, chunk_count: chunk_count} = result
-
-    Enum.each(0..(chunk_count - 1), fn chunk_index ->
-      start_byte = chunk_index * chunk_size
-      bytes_to_read = min(chunk_size, file_size - start_byte)
-      chunk = Cache.get_bytes(job.file.id, job.preset, start_byte, bytes_to_read)
-
-      if chunk do
-        send(parent, {:chunk, job, chunk_index, chunk})
-      end
-    end)
-
-    # return last chunk index
-    chunk_count - 1
-  end
+  defp maybe_make_gapless(_job), do: :noop
 end
