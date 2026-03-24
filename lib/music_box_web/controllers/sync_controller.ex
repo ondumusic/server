@@ -5,8 +5,8 @@ defmodule MusicBoxWeb.SyncController do
 
   def sync(conn, params) do
     result = Sync.get_entities(params)
-    cursor = Sync.encode_cursor(result)
+    new_cursor = Sync.encode_cursor(result, params)
 
-    render(conn, :result, result: result, cursor: cursor)
+    render(conn, :result, result: result, cursor: new_cursor)
   end
 end

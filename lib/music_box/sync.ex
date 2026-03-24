@@ -28,13 +28,17 @@ defmodule MusicBox.Sync do
     }
   end
 
-  def encode_cursor(result) do
+  def encode_cursor(result, params \\ %{}) do
+    prev_cursor = Map.get(params, "cursor") |> decode_cursor()
     version = 1
 
     cursor =
       Enum.reduce(result, %{}, fn
-        {_k, %{entries: []}}, acc ->
-          acc
+        {k, %{entries: []}}, acc ->
+          case Map.get(prev_cursor, to_string(k)) do
+            [_date, _last_id] = old_value -> Map.put(acc, k, old_value)
+            _ -> acc
+          end
 
         {k, %{entries: v}}, acc ->
           case List.last(v) do
