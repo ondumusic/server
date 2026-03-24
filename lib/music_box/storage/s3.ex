@@ -24,6 +24,7 @@ defmodule MusicBox.Storage.S3 do
   end
 
   @impl true
+  @dialyzer {:no_return, validate_origin: 1}
   def validate_origin(prefix_key) do
     prefix_key =
       prefix_key
@@ -46,8 +47,8 @@ defmodule MusicBox.Storage.S3 do
   def walk(prefix_key) do
     prefix_key =
       prefix_key
-      |> ensure_prefix
-      |> ensure_trailing_slash
+      |> ensure_prefix()
+      |> ensure_trailing_slash()
 
     bucket()
     |> ExAws.S3.list_objects(prefix: prefix_key)

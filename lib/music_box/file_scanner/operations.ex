@@ -28,6 +28,7 @@ defmodule MusicBox.FileScanner.Operations do
                files: [File]
              }}
           | Ecto.Multi.failure()
+  @dialyzer {:no_opaque, batch_insert: 1}
   def batch_insert([]), do: :noop
 
   def batch_insert([%Analyzer.Result{} | _] = files) do

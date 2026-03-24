@@ -5,8 +5,6 @@ defmodule MusicBox.FileScanner.PeriodicWorker do
   alias MusicBox.FileScanner
   alias MusicBox.Settings
 
-  @autostart Mix.env() != :test
-
   @spec start_link(Keyword.t()) :: {:ok, pid()}
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
@@ -23,8 +21,9 @@ defmodule MusicBox.FileScanner.PeriodicWorker do
       timer: nil
     }
 
+    # Only schedule the worker when not testing.
     state =
-      if @autostart,
+      if MusicBox.env() != :test,
         do: schedule_worker(default_state, 1_000),
         else: default_state
 

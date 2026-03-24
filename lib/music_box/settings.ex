@@ -78,9 +78,6 @@ defmodule MusicBox.Settings do
 
       {:error, :eacces} ->
         add_error(changeset, :music_path, "cannot access directory (check permissions)")
-
-      _ ->
-        add_error(changeset, :music_path, "unknown error trying to read directory")
     end
   end
 

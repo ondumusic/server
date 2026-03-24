@@ -14,7 +14,7 @@ defmodule MusicBox.Search do
     @type t :: %__MODULE__{}
   end
 
-  @spec search(String.t(), [Repo.paginate_opts()]) :: [Result.t()]
+  @spec search(String.t(), map()) :: Result.t()
   def search(query, params \\ %{}) do
     query = parse_query(query)
 

@@ -23,6 +23,7 @@ defmodule MusicBox.Artwork.Fetcher.MusicBrainz do
     end
   end
 
+  @dialyzer {:no_opaque, find_releases: 1}
   defp find_releases(%{artist: nil}), do: {:error, :not_found}
 
   defp find_releases(album) do

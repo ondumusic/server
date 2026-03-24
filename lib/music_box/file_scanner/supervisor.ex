@@ -13,8 +13,7 @@ defmodule MusicBox.FileScanner.Supervisor do
         MusicBox.FileScanner.Agent,
         MusicBox.FileScanner.PeriodicWorker
       ],
-      strategy: :one_for_one,
-      name: __MODULE__
+      strategy: :one_for_one
     )
   end
 end

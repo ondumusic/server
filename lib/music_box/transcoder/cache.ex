@@ -36,7 +36,7 @@ defmodule MusicBox.Transcoder.Cache do
           preset :: Preset.t(),
           start_byte :: non_neg_integer(),
           bytes_to_read :: non_neg_integer()
-        ) :: iodata()
+        ) :: iodata() | nil
   def get_bytes(file_id, preset, start_byte, bytes_to_read),
     do: impl().get_bytes(file_id, preset, start_byte, bytes_to_read)
 

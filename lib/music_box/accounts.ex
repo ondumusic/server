@@ -43,6 +43,7 @@ defmodule MusicBox.Accounts do
   end
 
   @spec update_user_password(User.t(), String.t(), map()) :: Repo.result(User.t())
+  @dialyzer {:no_opaque, update_user_password: 3}
   def update_user_password(user, password, attrs) do
     changeset =
       user
