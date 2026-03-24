@@ -12,6 +12,7 @@ defmodule MusicBox.FileScanner.Operations do
   alias MusicBox.FileScanner.{Analyzer, Utils}
   alias MusicBox.Repo
   alias MusicBox.Settings
+  alias MusicBox.Storage
   alias MusicBox.Tracks.Track
 
   import Ecto.Query
@@ -79,11 +80,32 @@ defmodule MusicBox.FileScanner.Operations do
     broadcast(MusicBox.PubSub, "library:sync", "completed", %{})
   end
 
-  def find_existing_paths([]), do: []
+  @spec find_unchanged_paths([Storage.file_entry()]) :: [String.t()]
+  def find_unchanged_paths([]), do: []
 
-  def find_existing_paths(paths) do
-    from(f in File, where: f.path in ^paths, select: f.path)
+  def find_unchanged_paths(entries) do
+    paths = Enum.map(entries, & &1.path)
+    lookup = Map.new(entries, &{&1.path, &1})
+
+    from(f in File, where: f.path in ^paths)
     |> Repo.all()
+    |> Enum.filter(fn old_file ->
+      new_file = Map.get(lookup, old_file.path)
+      unchanged? = true
+
+      unchanged? =
+        if new_file.mtime == old_file.last_modified_at,
+          do: unchanged?,
+          else: false
+
+      unchanged? =
+        if new_file.size == old_file.size,
+          do: unchanged?,
+          else: false
+
+      unchanged?
+    end)
+    |> Enum.map(& &1.path)
   end
 
   defp maybe_create_files(repo, files, _results) do
@@ -328,7 +350,7 @@ defmodule MusicBox.FileScanner.Operations do
     missing_files =
       files
       |> Enum.map(fn {_id, path} -> path end)
-      |> MusicBox.Storage.find_missing_files()
+      |> Storage.find_missing_files()
 
     files
     |> Enum.flat_map(fn {id, path} ->
