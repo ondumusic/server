@@ -279,35 +279,41 @@ defmodule MusicBox.FileScanner.Operations do
     {:ok, tracks}
   end
 
-  def find_deleted_files do
-    Repo.transact(
-      fn repo ->
-        from(f in File, select: {f.id, f.path})
-        |> repo.stream()
-        |> Stream.chunk_every(20)
-        |> Stream.flat_map(&verify_files/1)
-        |> Stream.filter(fn {_, _, status} -> status == :missing end)
-        |> Stream.map(&elem(&1, 0))
-        |> Stream.chunk_every(20)
-        |> Enum.reduce({0, 0}, &delete_files_reducer(repo, &1, &2))
-        |> case do
-          {_deleted, 0} ->
-            :noop
+  def find_deleted_files(opts \\ []) do
+    batch_size = Keyword.get(opts, :batch_size, 500)
+    base_query = from(f in File, select: {f.id, f.path}, order_by: [asc: :updated_at])
+    file_count = Repo.aggregate(base_query, :count)
 
-          {_deleted, errored} ->
-            Logger.warning("failed to delete #{errored} files")
-        end
+    # NOTE: Repo.stream is useless with SQLite so let's do our own batching.
+    for page <- 0..div(file_count, batch_size) do
+      base_query
+      |> offset(^(page * batch_size))
+      |> limit(^batch_size)
+      |> Repo.all()
+      |> Stream.chunk_every(50)
+      |> Stream.flat_map(&verify_files/1)
+      |> Stream.filter(fn {_, _, status} -> status == :missing end)
+      |> Stream.map(&elem(&1, 0))
+      |> Stream.chunk_every(50)
+      |> Enum.reduce({0, 0}, &delete_files_reducer(&1, &2))
+      |> case do
+        {_deleted, 0} ->
+          :noop
 
-        {:ok, []}
-      end,
-      timeout: :infinity
-    )
+        {_deleted, errored} ->
+          Logger.warning("failed to delete #{errored} files")
+      end
+    end
+
+    # The results of deletions are not important, they are marked as deleted
+    # through SQLite triggers.
+    :ok
   end
 
-  defp delete_files_reducer(repo, file_ids, {deleted_acc, error_acc}) do
+  defp delete_files_reducer(file_ids, {deleted_acc, error_acc}) do
     File
     |> where([f], f.id in ^file_ids)
-    |> repo.delete_all()
+    |> Repo.delete_all()
     |> case do
       {count, _} ->
         {deleted_acc + count, error_acc}
