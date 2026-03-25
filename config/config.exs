@@ -34,7 +34,8 @@ config :ecto_sqlite3, :json_library, JSON
 
 config :ex_aws,
   http_client: MusicBox.AWSReqClient,
-  json_codec: JSON
+  json_codec: JSON,
+  region: {:system, "AWS_REGION"}
 
 config :music_box,
   extract_artwork_tool: MusicBox.Tool.ExtractArtwork,
