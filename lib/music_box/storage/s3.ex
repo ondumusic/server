@@ -13,9 +13,9 @@ defmodule MusicBox.Storage.S3 do
   def get_uri(key) do
     {:ok, url} =
       ExAws.S3.presigned_url(
-        ExAws.Config.new(:s3, region: region()),
+        ExAws.Config.new(:s3, region: config(:region)),
         :get,
-        bucket(),
+        config(:bucket),
         ensure_prefix(key),
         expires_in: @presigned_ttl
       )
@@ -31,8 +31,8 @@ defmodule MusicBox.Storage.S3 do
       |> ensure_prefix()
       |> ensure_trailing_slash()
 
-    bucket()
-    |> ExAws.S3.list_objects(prefix: prefix_key, max_keys: 1, region: region())
+    config(:bucket)
+    |> ExAws.S3.list_objects(prefix: prefix_key, max_keys: 1, region: config(:region))
     |> ExAws.request()
     |> case do
       {:ok, %{body: %{contents: [_ | _]}}} -> :ok
@@ -50,7 +50,7 @@ defmodule MusicBox.Storage.S3 do
       |> ensure_prefix()
       |> ensure_trailing_slash()
 
-    bucket()
+    config(:bucket)
     |> ExAws.S3.list_objects(prefix: prefix_key)
     |> ExAws.stream!()
     |> Stream.map(fn object ->
@@ -68,7 +68,7 @@ defmodule MusicBox.Storage.S3 do
     keys
     |> Task.async_stream(
       fn key ->
-        case bucket() |> ExAws.S3.head_object(ensure_prefix(key)) |> ExAws.request() do
+        case config(:bucket) |> ExAws.S3.head_object(ensure_prefix(key)) |> ExAws.request() do
           {:ok, _} -> nil
           {:error, _} -> key
         end
@@ -111,15 +111,15 @@ defmodule MusicBox.Storage.S3 do
     end_byte = start_byte + bytes_to_read - 1
     range = "bytes=#{start_byte}-#{end_byte}"
 
-    bucket()
+    config(:bucket)
     |> ExAws.S3.get_object(ensure_prefix(key), range: range)
     |> ExAws.request!()
     |> Map.fetch!(:body)
   end
 
   # Private
-  defp bucket, do: "musicbox-dev"
-  defp region, do: "eu-west-1"
+  defp config(key),
+    do: Application.get_env(:music_box, __MODULE__) |> Keyword.get(key)
 
   defp ensure_prefix(key), do: String.trim_leading(key, "/")
 

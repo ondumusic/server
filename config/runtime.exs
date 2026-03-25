@@ -80,8 +80,37 @@ if config_env() == :prod do
       _ -> false
     end
 
+  file_storage_impl =
+    System.get_env("MB_STORAGE_DRIVER", :file)
+    |> String.downcase()
+    |> case do
+      "s3" -> MusicBox.Storage.S3
+      _ -> MusicBox.Storage.File
+    end
+
   config :music_box,
-    web_enabled: web_enabled?
+    web_enabled: web_enabled?,
+    storage_impl: file_storage_impl
+
+  if file_storage_impl == MusicBox.Storage.S3 do
+    bucket =
+      System.get_env("MB_STORAGE_BUCKET") ||
+        raise """
+        environment variable MB_STORAGE_BUCKET is missing.
+        For example: my-s3-bucket-name
+        """
+
+    region =
+      System.get_env("MB_STORAGE_REGION") ||
+        raise """
+        environment variable MB_STORAGE_REGION is missing.
+        For example: us-east-1
+        """
+
+    config :music_box, MusicBox.Storage.S3,
+      bucket: bucket,
+      region: region
+  end
 
   config :music_box, MusicBox.Repo,
     database: database_path,
