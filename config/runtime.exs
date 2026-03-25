@@ -88,22 +88,26 @@ if config_env() == :prod do
       _ -> MusicBox.Storage.File
     end
 
-  config :music_box,
-    web_enabled: web_enabled?,
-    storage_impl: file_storage_impl
+  transcoder_cache_impl =
+    System.get_env("MB_TRANSCODE_CACHE_DRIVER", :cache)
+    |> String.downcase()
+    |> case do
+      "s3" -> MusicBox.Transcoder.Cache.S3
+      _ -> MusicBox.Transcoder.Cache.File
+    end
 
   if file_storage_impl == MusicBox.Storage.S3 do
     bucket =
-      System.get_env("MB_STORAGE_BUCKET") ||
+      System.get_env("MB_STORAGE_S3_BUCKET") ||
         raise """
-        environment variable MB_STORAGE_BUCKET is missing.
+        environment variable MB_STORAGE_S3_BUCKET is missing.
         For example: my-s3-bucket-name
         """
 
     region =
-      System.get_env("MB_STORAGE_REGION") ||
+      System.get_env("MB_STORAGE_S3_REGION") ||
         raise """
-        environment variable MB_STORAGE_REGION is missing.
+        environment variable MB_STORAGE_S3_REGION is missing.
         For example: us-east-1
         """
 
@@ -111,6 +115,30 @@ if config_env() == :prod do
       bucket: bucket,
       region: region
   end
+
+  if transcoder_cache_impl == MusicBox.Transcoder.Cache.S3 do
+    bucket =
+      System.get_env("MB_TRANSCODE_S3_BUCKET") ||
+        raise """
+        environment variable MB_TRANSCODE_S3_BUCKET is missing.
+        For example: my-s3-bucket-name
+        """
+
+    region =
+      System.get_env("MB_TRANSCODE_S3_REGION") ||
+        raise """
+        environment variable MB_TRANSCODE_S3_REGION is missing.
+        For example: us-east-1
+        """
+
+    config :music_box, MusicBox.Transcoder.Cache.S3,
+      bucket: bucket,
+      region: region
+  end
+
+  config :music_box, storage_impl: file_storage_impl
+
+  config :music_box, MusicBox.Transcoder, cache_impl: transcoder_cache_impl
 
   config :music_box, MusicBox.Repo,
     database: database_path,
