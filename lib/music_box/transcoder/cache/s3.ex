@@ -45,6 +45,7 @@ defmodule MusicBox.Transcoder.Cache.S3 do
     end
   end
 
+  @dialyzer {:no_return, do_persist: 3}
   defp do_persist(upload, key, callback) do
     upload_id = upload.body.upload_id
 
@@ -56,8 +57,8 @@ defmodule MusicBox.Transcoder.Cache.S3 do
       |> Enum.map(fn {body, part_number} ->
         {:ok, resp} =
           config(:bucket)
-          |> ExAws.S3.upload_part(key, upload_id, part_number, body, region: config(:region))
-          |> ExAws.request()
+          |> ExAws.S3.upload_part(key, upload_id, part_number, body)
+          |> ExAws.request(region: config(:region))
 
         etag = Map.new(resp.headers) |> Map.get("etag")
         {part_number, etag}
@@ -79,14 +80,15 @@ defmodule MusicBox.Transcoder.Cache.S3 do
     range = "bytes=#{start_byte}-#{end_byte}"
 
     config(:bucket)
-    |> ExAws.S3.get_object(ensure_prefix(key), range: range, region: config(:region))
-    |> ExAws.request!()
+    |> ExAws.S3.get_object(ensure_prefix(key), range: range)
+    |> ExAws.request!(region: config(:region))
     |> Map.fetch!(:body)
   end
 
   defp config(key),
     do: Application.get_env(:music_box, __MODULE__) |> Keyword.get(key)
 
+  @spec cache_file_key(file_id :: String.t(), preset :: Preset.t()) :: String.t()
   def cache_file_key(file_id, %Preset{} = preset) do
     filename = "#{file_id}-#{preset.id}.#{preset.ext}"
 

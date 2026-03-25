@@ -113,7 +113,7 @@ defmodule MusicBox.Storage.S3 do
 
     config(:bucket)
     |> ExAws.S3.get_object(ensure_prefix(key), range: range)
-    |> ExAws.request!()
+    |> ExAws.request!(region: config(:region))
     |> Map.fetch!(:body)
   end
 

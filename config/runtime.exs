@@ -136,6 +136,8 @@ if config_env() == :prod do
       region: region
   end
 
+  config :music_box, web_enabled: web_enabled?
+
   config :music_box, storage_impl: file_storage_impl
 
   config :music_box, MusicBox.Transcoder, cache_impl: transcoder_cache_impl
