@@ -213,9 +213,7 @@ export class AudioService {
         ? [`${audioTrack.streamUrl}?transcode=1&token=${this.#playToken}`]
         : [
             `${audioTrack.streamUrl}?transcode=0&token=${this.#playToken}`,
-            // `${audioTrack.streamUrl}?transcode=1&token=${this.#playToken}`,
-            // `${audioTrack.streamUrl}?transcode=1&preset=mobile_aac&token=${this.#playToken}`,
-            // `${audioTrack.streamUrl}?transcode=1&preset=mobile_aac&token=${this.#playToken}`,
+            `${audioTrack.streamUrl}?transcode=1&token=${this.#playToken}`,
           ];
 
     audioRef.src = sources[0];
