@@ -24,7 +24,7 @@ ARG NODE_BUILDER_IMAGE="docker.io/node:${NODEJS_VERSION}-slim"
 ########################################
 # Step 1. Build assets
 ########################################
-FROM --platform=linux/amd64 ${NODE_BUILDER_IMAGE} AS node-builder
+FROM ${NODE_BUILDER_IMAGE} AS node-builder
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV NODE_OPTIONS="--max-old-space-size=2048"
@@ -106,16 +106,24 @@ ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 ENV MIX_ENV="prod"
 
-# Install software
+# Install software and configure locale
 RUN apt-get update \
   && apt-get install --fix-missing -y --no-install-recommends \
     libstdc++6 openssl libncurses6 locales \
-    ca-certificates libvips libvips-tools ffmpeg \
-  && rm -rf /var/lib/apt/lists/*
+    ca-certificates ffmpeg \
+  && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
+  && locale-gen \
+  # --- Video codecs (ffmpeg used for audio only) ---
+  && rm -f /usr/lib/*/libx265* \
+  && rm -f /usr/lib/*/libx264* \
+  && rm -f /usr/lib/*/libSvtAv1Enc* \
+  && rm -f /usr/lib/*/libaom* \
+  && rm -f /usr/lib/*/libvpx* \
+  && rm -f /usr/lib/*/librav1e* \
+  && rm -f /usr/lib/*/libplacebo* \
+  && rm -f /usr/lib/*/libSDL2* \
+  && rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man
 
-# Configure locale
-RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
-  && locale-gen
 
 # Copy the compiled application
 WORKDIR "/app"

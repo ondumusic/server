@@ -45,11 +45,6 @@ jobs:
         otp-version: ${{matrix.otp}}
         elixir-version: ${{matrix.elixir}}
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -fy libvips libvips-tools ffmpeg --fix-missing
-
     - name: Checkout code
       uses: actions/checkout@v6
 
