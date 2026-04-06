@@ -13,7 +13,7 @@ defmodule MusicBox.Files.File do
   schema "files" do
     field :path, :string
     field :size, :integer
-    field :type, Ecto.Enum, values: ~w(m4a mp3 opus ogg flac wav)a
+    field :type, Ecto.Enum, values: ~w(aac aiff m4a mp3 opus ogg flac wav)a
 
     embeds_one :metadata, FileMetadata, on_replace: :delete
 
@@ -27,11 +27,13 @@ defmodule MusicBox.Files.File do
   @spec mimetype(t()) :: String.t()
   def mimetype(%__MODULE__{type: type}) do
     case type do
+      :aac -> "audio/aac"
+      :aiff -> "audio/aiff"
+      :flac -> "audio/flac"
       :m4a -> "audio/mp4"
       :mp3 -> "audio/mpeg"
-      :opus -> "audio/ogg"
       :ogg -> "audio/ogg"
-      :flac -> "audio/flac"
+      :opus -> "audio/opus"
       :wav -> "audio/wav"
     end
   end
