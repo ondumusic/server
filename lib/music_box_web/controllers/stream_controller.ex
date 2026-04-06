@@ -1,4 +1,3 @@
-# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule MusicBoxWeb.StreamController do
   use MusicBoxWeb, :controller
 
@@ -7,154 +6,75 @@ defmodule MusicBoxWeb.StreamController do
   alias MusicBox.Transcoder
   alias MusicBox.Transcoder.{Preset, Utils}
 
+  plug :require_authentication
   plug :assign_track
   plug :assign_preset
 
   def transcode(conn, %{"async" => "1"}) do
-    %{track: track, preset: preset} = conn.assigns
-
-    # By requesting the first chunk the transcoding will start (if needed).
-    Task.start(fn ->
-      Transcoder.request_chunk(track.file, preset, 0)
-    end)
-
-    conn
-    |> json(%{ok: true})
+    %{track: %{file: file}, preset: preset} = conn.assigns
+    Task.start(fn -> Transcoder.request_chunk(file, preset, 0) end)
+    json(conn, %{ok: true})
   end
 
   def transcode(conn, _params) do
-    %{track: track, preset: preset} = conn.assigns
-
-    # By requesting the first chunk the transcoding will start (if needed).
-    Transcoder.request_chunk(track.file, preset, 0)
+    %{track: %{file: file}, preset: preset} = conn.assigns
+    Transcoder.request_chunk(file, preset, 0)
 
     conn
     |> put_resp_content_type("text/event-stream")
     |> send_chunked(:ok)
-    |> await_transcode()
+    |> await_transcode(file, preset)
   end
 
-  defp await_transcode(conn) do
-    meta = Transcoder.get_meta(conn.assigns.track.file, conn.assigns.preset)
-
-    case meta do
-      %{completed_at: completed} when not is_nil(completed) ->
-        chunk(conn, "data: #{JSON.encode!(%{size: meta.file_size})}\n\n")
+  defp await_transcode(conn, file, preset) do
+    case Transcoder.get_meta(file, preset) do
+      %{completed_at: completed, file_size: size} when not is_nil(completed) ->
+        chunk(conn, "data: #{JSON.encode!(%{size: size})}\n\n")
         conn
 
       _ ->
-        # SSE keepalive comment
         chunk(conn, ":\n\n")
         Process.sleep(500)
-        await_transcode(conn)
+        await_transcode(conn, file, preset)
     end
   end
 
   def download(conn, %{"transcode" => "1"}) do
-    meta = Transcoder.get_meta(conn.assigns.track.file, conn.assigns.preset)
+    %{track: %{file: file} = track, preset: preset} = conn.assigns
 
-    case meta do
-      %{file_size: file_size} when file_size > 0 ->
+    case actual_file_size(file, preset) do
+      size when is_integer(size) ->
         conn
-        |> put_resp_header("content-length", "#{file_size}")
-        |> send_transcoded_file()
+        |> put_resp_header("content-length", "#{size}")
+        |> send_transcoded_file_with_headers(track, preset)
 
-      _ ->
-        conn
-        |> send_transcoded_file()
+      nil ->
+        send_transcoded_file_with_headers(conn, track, preset)
     end
   end
 
-  def download(conn, params) do
-    stream(conn, params)
-  end
+  def download(conn, params), do: stream(conn, params)
 
   def stream(conn, %{"transcode" => "1"}) do
-    meta = Transcoder.get_meta(conn.assigns.track.file, conn.assigns.preset)
-    estimated_file_size = Utils.estimate_file_size(conn.assigns.track.file, conn.assigns.preset)
-    actual_file_size = meta && meta.file_size
+    %{track: track, preset: preset} = conn.assigns
 
-    complete_file_ranges =
-      [
-        actual_file_size,
-        estimated_file_size
-      ]
-      |> Enum.reject(&is_nil/1)
-      |> Enum.map(&(&1 - 1))
-
-    range_header =
+    range =
       conn
-      |> get_req_header("range")
-      |> Utils.parse_range_header()
+      |> parse_range()
+      |> disable_range_for_adts(preset)
 
-    range_header =
-      case conn.assigns.preset do
-        # ADTS doesn't support byte-range seeking
-        %{ffmpeg_preset: :adts} -> {:error, :no_range}
-        _ -> range_header
-      end
-
-    case range_header do
-      # The client wants the rest, but already has everything.
-      {:ok, ^actual_file_size, :infinity} ->
-        send_transcode_completed(conn, actual_file_size)
-
-      {:ok, 0, :infinity} ->
-        if actual_file_size do
-          send_transcoded_chunk(conn, 0, actual_file_size)
-        else
-          end_byte = Utils.default_range_size() - 1
-          send_transcoded_chunk(conn, 0, end_byte)
-        end
-
-      {:ok, start_byte, :infinity} ->
-        end_byte = start_byte + Utils.default_range_size() - 1
-        send_transcoded_chunk(conn, start_byte, end_byte)
-
-      # For some reason browser prefers to request 0-$filesize instead of just
-      # not using a ranged request. So we will treat that scenario as a client
-      # that just wants to receive the entire file, as it might be using the
-      # estimated file size which is often too small or too big.
-      {:ok, 0, file_size} ->
-        if file_size in complete_file_ranges do
-          send_transcoded_file(conn)
-        else
-          send_transcoded_chunk(conn, 0, file_size)
-        end
-
-      # Alright this client actually wants a small chunk
-      {:ok, start_byte, end_byte} ->
-        send_transcoded_chunk(conn, start_byte, end_byte)
-
-      # No range? No problem! Send the entire file!
-      {:error, :no_range} ->
-        send_transcoded_file(conn)
-
-      {:error, :invalid_range} ->
-        file_size = actual_file_size || estimated_file_size
-
-        conn
-        |> put_status(416)
-        |> put_resp_header("content-range", "bytes */#{file_size}")
-        |> text("Range Not Satisfiable")
-    end
+    conn
+    |> serve_transcoded(range, track, preset)
     |> halt()
   end
 
   def stream(conn, _params) do
-    file = conn.assigns.track.file
+    %{track: %{file: file}} = conn.assigns
     content_type = MusicBox.Files.File.mimetype(file)
 
-    conn
-    |> get_req_header("range")
-    |> Utils.parse_range_header()
-    |> case do
+    case parse_range(conn) do
       {:ok, start_byte, end_byte} ->
-        end_byte =
-          if end_byte == :infinity,
-            do: file.size - 1,
-            else: end_byte
-
+        end_byte = if end_byte == :infinity, do: file.size - 1, else: end_byte
         length = end_byte - start_byte + 1
 
         conn
@@ -163,7 +83,7 @@ defmodule MusicBoxWeb.StreamController do
         |> put_resp_header("content-range", "bytes #{start_byte}-#{end_byte}/#{file.size}")
         |> put_resp_header("content-length", "#{length}")
         |> send_chunked(:partial_content)
-        |> stream_file(Storage.get_bytes(file.path, start_byte, length))
+        |> stream_data(Storage.get_bytes(file.path, start_byte, length))
 
       _ ->
         conn
@@ -171,112 +91,160 @@ defmodule MusicBoxWeb.StreamController do
         |> put_resp_header("accept-ranges", "bytes")
         |> put_resp_header("content-length", "#{file.size}")
         |> send_chunked(:ok)
-        |> stream_file(Storage.stream!(file.path))
+        |> stream_data(Storage.stream!(file.path))
     end
   end
 
-  defp put_stream_headers(conn) do
-    duration = conn.assigns.track.duration
-    content_type = conn.assigns.preset.mimetype
+  # Transcoded range dispatch
+  # - No range at all -> send entire file
+  # - 0 - :infinity -> send entire file (or first default chunk if still transcoding)
+  # - N - :infinity -> send a default-sized chunk from offset N
+  # - 0 - <full size> -> browsers sometimes request 0-filesize instead of no range, so treat it as "send everything"
+  # - N-M -> actual partial range request
+  # - Invalid -> 416
 
-    conn
-    |> put_resp_header("content-type", content_type)
-    |> put_resp_header("accept-ranges", "bytes")
-    |> put_resp_header("cache-control", "no-cache, no-store, must-revalidate")
-    |> put_resp_header("pragma", "no-cache")
-    |> put_resp_header("expires", "0")
-    |> put_resp_header("connection", "keep-alive")
-    |> put_resp_header("x-content-type-options", "nosniff")
-    |> put_resp_header("x-content-duration", Float.to_string(duration))
+  defp serve_transcoded(conn, {:error, :no_range}, track, preset) do
+    send_transcoded_file_with_headers(conn, track, preset)
   end
 
-  defp send_busy(conn) do
+  defp serve_transcoded(conn, {:error, :invalid_range}, track, preset) do
+    file = track.file
+    file_size = actual_file_size(file, preset) || estimated_file_size(file, preset)
+
     conn
-    |> put_status(:service_unavailable)
-    |> put_resp_header("retry-after", "5")
+    |> put_status(416)
+    |> put_resp_header("content-range", "bytes */#{file_size}")
     |> text("Range Not Satisfiable")
   end
 
-  defp send_transcoded_file(conn) do
-    conn
-    |> put_stream_headers()
-    |> send_chunked(:ok)
-    |> transcode_file()
-  end
+  defp serve_transcoded(conn, {:ok, 0, :infinity}, track, preset) do
+    file = track.file
 
-  defp transcode_file(conn, chunk_index \\ 0) do
-    with true <- Utils.continue_stream?(conn.assigns.track.file, conn.assigns.preset, chunk_index),
-         {:ok, chunk_data} <-
-           Transcoder.request_chunk(conn.assigns.track.file, conn.assigns.preset, chunk_index),
-         {:ok, new_conn} <- chunk(conn, chunk_data) do
-      transcode_file(new_conn, chunk_index + 1)
-    else
-      {:error, :server_busy} ->
-        if chunk_index == 0, do: send_busy(conn), else: conn
-
-      _other ->
-        conn
+    case actual_file_size(file, preset) do
+      nil -> send_transcoded_chunk(conn, track, preset, 0, Utils.default_range_size() - 1)
+      _size -> send_transcoded_file_with_headers(conn, track, preset)
     end
   end
 
-  defp send_transcode_completed(conn, file_size) do
+  # Client already has everything
+  defp serve_transcoded(conn, {:ok, start_byte, :infinity}, track, preset) do
+    file = track.file
+    actual = actual_file_size(file, preset)
+
+    if actual && start_byte == actual do
+      send_transcode_completed(conn, track, preset, actual)
+    else
+      end_byte = start_byte + Utils.default_range_size() - 1
+      send_transcoded_chunk(conn, track, preset, start_byte, end_byte)
+    end
+  end
+
+  # Browser quirk: requesting 0-<full file size> instead of omitting range
+  defp serve_transcoded(conn, {:ok, 0, end_byte}, track, preset) do
+    if full_file_range?(track.file, preset, end_byte) do
+      send_transcoded_file_with_headers(conn, track, preset)
+    else
+      send_transcoded_chunk(conn, track, preset, 0, end_byte)
+    end
+  end
+
+  defp serve_transcoded(conn, {:ok, start_byte, end_byte}, track, preset) do
+    send_transcoded_chunk(conn, track, preset, start_byte, end_byte)
+  end
+
+  defp parse_range(conn) do
     conn
-    |> put_stream_headers()
+    |> get_req_header("range")
+    |> Utils.parse_range_header()
+  end
+
+  defp disable_range_for_adts(_range, %{ffmpeg_preset: :adts}), do: {:error, :no_range}
+  defp disable_range_for_adts(range, _preset), do: range
+
+  defp full_file_range?(file, preset, end_byte) do
+    actual = actual_file_size(file, preset)
+    estimated = estimated_file_size(file, preset)
+
+    (actual && end_byte == actual - 1) || (estimated && end_byte == estimated - 1)
+  end
+
+  defp actual_file_size(file, preset) do
+    case Transcoder.get_meta(file, preset) do
+      %{file_size: size} when is_integer(size) and size > 0 -> size
+      _ -> nil
+    end
+  end
+
+  defp estimated_file_size(file, preset), do: Utils.estimate_file_size(file, preset)
+
+  defp send_transcoded_file_with_headers(conn, track, preset) do
+    conn
+    |> put_stream_headers(track, preset)
+    |> send_chunked(:ok)
+    |> stream_transcoded_chunks(track.file, preset)
+  end
+
+  defp send_transcode_completed(conn, track, preset, file_size) do
+    conn
+    |> put_stream_headers(track, preset)
     |> put_resp_header("content-range", "bytes */#{file_size}")
     |> send_resp(:ok, <<>>)
   end
 
-  defp send_transcoded_chunk(conn, start_byte, end_byte) do
-    meta = Transcoder.get_meta(conn.assigns.track.file, conn.assigns.preset)
-    estimated_file_size = Utils.estimate_file_size(conn.assigns.track.file, conn.assigns.preset)
-    actual_file_size = meta && meta.file_size
-    file_size = actual_file_size || estimated_file_size
+  defp send_transcoded_chunk(conn, track, preset, start_byte, end_byte) do
+    file = track.file
+    file_size = actual_file_size(file, preset) || estimated_file_size(file, preset)
     end_byte = min(end_byte, file_size - 1)
 
-    range_header = "bytes #{start_byte}-#{end_byte}/#{file_size}"
-
     conn
-    |> put_stream_headers()
-    |> put_resp_header("content-range", range_header)
+    |> put_stream_headers(track, preset)
+    |> put_resp_header("content-range", "bytes #{start_byte}-#{end_byte}/#{file_size}")
     |> send_chunked(:partial_content)
-    |> transcode_range(Range.new(start_byte, end_byte))
+    |> stream_transcoded_range(file, preset, start_byte, end_byte)
   end
 
-  defp transcode_range(conn, %Range{first: start_byte, last: end_byte}) do
+  defp stream_transcoded_chunks(conn, file, preset, chunk_index \\ 0) do
+    with true <- Utils.continue_stream?(file, preset, chunk_index),
+         {:ok, data} <- Transcoder.request_chunk(file, preset, chunk_index),
+         {:ok, conn} <- chunk(conn, data) do
+      stream_transcoded_chunks(conn, file, preset, chunk_index + 1)
+    else
+      {:error, :server_busy} when chunk_index == 0 -> send_busy(conn)
+      _ -> conn
+    end
+  end
+
+  defp stream_transcoded_range(conn, file, preset, start_byte, end_byte) do
     chunk_size = Utils.chunk_size()
     start_chunk = div(start_byte, chunk_size)
     offset = max(0, start_byte - start_chunk * chunk_size)
-    transcode_range(conn, start_chunk, offset, end_byte - start_byte)
+    remaining = end_byte - start_byte
+
+    do_stream_range(conn, file, preset, start_chunk, offset, remaining)
   end
 
-  defp transcode_range(conn, _chunk_index, _offset, 0) do
-    conn
-  end
+  defp do_stream_range(conn, _file, _preset, _chunk_index, _offset, 0), do: conn
 
-  defp transcode_range(conn, chunk_index, offset, remaining_bytes)
-       when is_integer(remaining_bytes) do
-    with true <-
-           Utils.continue_stream?(conn.assigns.track.file, conn.assigns.preset, chunk_index),
-         {:ok, chunk_data} <-
-           Transcoder.request_chunk(conn.assigns.track.file, conn.assigns.preset, chunk_index),
-         {chunk_part_data, remaining_bytes} <-
-           Utils.get_chunk_part(chunk_data, offset, remaining_bytes),
-         {:ok, new_conn} <- chunk(conn, chunk_part_data) do
-      transcode_range(new_conn, chunk_index + 1, 0, remaining_bytes)
+  defp do_stream_range(conn, file, preset, chunk_index, offset, remaining) do
+    with true <- Utils.continue_stream?(file, preset, chunk_index),
+         {:ok, data} <- Transcoder.request_chunk(file, preset, chunk_index),
+         {part, remaining} <- Utils.get_chunk_part(data, offset, remaining),
+         {:ok, conn} <- chunk(conn, part) do
+      do_stream_range(conn, file, preset, chunk_index + 1, 0, remaining)
     else
       {:error, :server_busy} -> send_busy(conn)
       _ -> conn
     end
   end
 
-  defp stream_file(conn, data) when is_binary(data) or is_list(data) do
+  defp stream_data(conn, data) when is_binary(data) or is_list(data) do
     case chunk(conn, data) do
       {:ok, conn} -> conn
       {:error, :closed} -> conn
     end
   end
 
-  defp stream_file(conn, stream) do
+  defp stream_data(conn, stream) do
     Enum.reduce_while(stream, conn, fn data, conn ->
       case chunk(conn, data) do
         {:ok, conn} -> {:cont, conn}
@@ -285,16 +253,44 @@ defmodule MusicBoxWeb.StreamController do
     end)
   end
 
-  defp assign_track(conn, _opts) do
-    track_id = Map.get(conn.params, "track_id", "")
-
-    if not authenticated?(conn),
-      do: raise(MusicBoxWeb.ForbiddenError)
-
-    track = Tracks.get_track!(track_id)
-
+  defp put_stream_headers(conn, track, preset) do
     conn
-    |> assign(:track, track)
+    |> put_resp_header("content-type", preset.mimetype)
+    |> put_resp_header("accept-ranges", "bytes")
+    |> put_resp_header("cache-control", "no-cache, no-store, must-revalidate")
+    |> put_resp_header("pragma", "no-cache")
+    |> put_resp_header("expires", "0")
+    |> put_resp_header("connection", "keep-alive")
+    |> put_resp_header("x-content-type-options", "nosniff")
+    |> put_resp_header("x-content-duration", Float.to_string(track.duration))
+  end
+
+  defp send_busy(conn) do
+    conn
+    |> put_status(:service_unavailable)
+    |> put_resp_header("retry-after", "5")
+    |> text("Server Busy")
+  end
+
+  defp require_authentication(conn, _opts) do
+    if authenticated?(conn) do
+      conn
+    else
+      raise MusicBoxWeb.ForbiddenError
+    end
+  end
+
+  defp authenticated?(%{assigns: %{current_user: %{id: _}}}), do: true
+
+  defp authenticated?(%{params: %{"token" => token}} = conn) do
+    match?({:ok, _}, MusicBoxWeb.PlayToken.verify(conn, token))
+  end
+
+  defp authenticated?(_conn), do: false
+
+  defp assign_track(conn, _opts) do
+    track = Tracks.get_track!(conn.params["track_id"])
+    assign(conn, :track, track)
   end
 
   defp assign_preset(conn, _opts) do
@@ -305,15 +301,4 @@ defmodule MusicBoxWeb.StreamController do
 
     assign(conn, :preset, preset)
   end
-
-  defp authenticated?(%{assigns: %{current_user: %{id: _id}}}), do: true
-
-  defp authenticated?(%{params: %{"token" => token}} = conn) do
-    case MusicBoxWeb.PlayToken.verify(conn, token) do
-      {:ok, _play_token} -> true
-      _ -> false
-    end
-  end
-
-  defp authenticated?(_conn), do: false
 end
