@@ -213,6 +213,8 @@ defmodule MusicBox.FileScannerTest do
       walker = Storage.walk("/")
 
       expected = [
+        "with_tags/sample.aac",
+        "with_tags/sample.aiff",
         "with_tags/sample.flac",
         "with_tags/sample.id3v11.mp3",
         "with_tags/sample.id3v22.mp3",
@@ -221,6 +223,8 @@ defmodule MusicBox.FileScannerTest do
         "with_tags/sample.m4a",
         "with_tags/sample.multipage.ogg",
         "with_tags/sample.ogg",
+        "without_tags/sample.aac",
+        "without_tags/sample.aiff",
         "without_tags/sample.flac",
         "without_tags/sample.m4a",
         "without_tags/sample.mp3",
