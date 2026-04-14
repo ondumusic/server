@@ -162,10 +162,11 @@ defmodule MusicBoxWeb.StreamController do
   defp disable_range_for_adts(range, _preset), do: range
 
   defp full_file_range?(file, preset, end_byte) do
-    actual = actual_file_size(file, preset)
-    estimated = estimated_file_size(file, preset)
-
-    (actual && end_byte == actual - 1) || (estimated && end_byte == estimated - 1)
+    case {actual_file_size(file, preset), estimated_file_size(file, preset)} do
+      {actual, _} when is_integer(actual) and end_byte == actual - 1 -> true
+      {_, estimated} when is_integer(estimated) and end_byte == estimated - 1 -> true
+      _ -> false
+    end
   end
 
   defp actual_file_size(file, preset) do
