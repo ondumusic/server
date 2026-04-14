@@ -81,7 +81,7 @@ if config_env() == :prod do
     end
 
   file_storage_impl =
-    System.get_env("MB_STORAGE_DRIVER", :file)
+    System.get_env("MB_STORAGE_DRIVER", "file")
     |> String.downcase()
     |> case do
       "s3" -> MusicBox.Storage.S3
@@ -89,7 +89,7 @@ if config_env() == :prod do
     end
 
   transcoder_cache_impl =
-    System.get_env("MB_TRANSCODE_CACHE_DRIVER", :cache)
+    System.get_env("MB_TRANSCODE_CACHE_DRIVER", "cache")
     |> String.downcase()
     |> case do
       "s3" -> MusicBox.Transcoder.Cache.S3
