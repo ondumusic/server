@@ -32,6 +32,13 @@ defmodule MusicBox.Transcoder.Utils do
     round(audio_bytes * est_overhead)
   end
 
+  @spec calculate_timeout(File.t()) :: non_neg_integer()
+  def calculate_timeout(%File{metadata: %{duration: duration}}) do
+    # use duration and add some overhead and minimal math to try and
+    # create a timeout value for fffmpeg processes.
+    round(max(15_000, (duration * 0.1 + 10.0) * 1_000))
+  end
+
   @spec continue_stream?(File.t(), Preset.t(), non_neg_integer()) :: boolean()
   def continue_stream?(file, preset, chunk_index) do
     meta = Transcoder.get_meta(file, preset)

@@ -67,6 +67,7 @@ defmodule MusicBox.Transcoder.Job do
 
   defp read_chunks(port, job, parent, chunk_index \\ 0, buffer \\ <<>>) do
     chunk_size = Utils.chunk_size()
+    timeout = Utils.calculate_timeout(job.file)
 
     receive do
       {^port, {:data, data}} ->
@@ -94,13 +95,15 @@ defmodule MusicBox.Transcoder.Job do
         if Port.info(port), do: Port.close(port)
         raise "ffmpeg exited with unexpected status code (#{status})"
     after
-      30_000 ->
+      timeout ->
         if Port.info(port), do: Port.close(port)
         raise "ffmpeg time out"
     end
   end
 
   defp await_transcode(port, job, parent, data \\ <<>>) do
+    timeout = Utils.calculate_timeout(job.file)
+
     receive do
       {^port, {:data, new_data}} ->
         await_transcode(port, job, parent, data <> new_data)
@@ -113,7 +116,7 @@ defmodule MusicBox.Transcoder.Job do
         if Port.info(port), do: Port.close(port)
         raise "ffmpeg exited with unexpected status code (#{status})"
     after
-      30_000 ->
+      timeout ->
         if Port.info(port), do: Port.close(port)
         raise "ffmpeg time out"
     end
