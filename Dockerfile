@@ -24,7 +24,7 @@ ARG NODE_BUILDER_IMAGE="docker.io/node:${NODEJS_VERSION}-slim"
 ########################################
 # Step 1. Build assets
 ########################################
-FROM ${NODE_BUILDER_IMAGE} AS node-builder
+FROM --platform=$BUILDPLATFORM ${NODE_BUILDER_IMAGE} AS node-builder
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV NODE_OPTIONS="--max-old-space-size=2048"
