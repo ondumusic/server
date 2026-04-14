@@ -154,6 +154,11 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
         progressPercentage: 0,
       });
     } else {
+      emitTimeUpdate({
+        currentTime: 0,
+        progressPercentage: 0,
+      });
+
       audioService?.current.play({
         ...currentTrack,
         queueIndex: currentTrackIndex,
@@ -168,6 +173,14 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
     // Keep the updatedTime within bounds
     updatedTime = Math.max(0, Math.min(duration, updatedTime));
     audioService.current.scrubTo(updatedTime, forcePlay);
+
+    let progressPercentage = (updatedTime / duration) * 100;
+    if (Number.isNaN(progressPercentage)) progressPercentage = 0;
+
+    emitTimeUpdate({
+      currentTime: updatedTime,
+      progressPercentage,
+    });
   };
 
   const value = {
