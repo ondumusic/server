@@ -93,6 +93,42 @@ class Repo {
     return await this.#write({ [store]: { put: items } });
   }
 
+  async delete(store: string, key: UUID) {
+    return this.deleteMany(store, [key]);
+  }
+
+  async deleteMany(store: string, keys: UUID[]) {
+    if (!keys.length) return;
+    return await this.#write({ [store]: { del: keys } });
+  }
+
+  async truncate(store: string) {
+    return this.truncateMany([store]);
+  }
+
+  async truncateMany(stores: string[]) {
+    const db = await this.instance;
+    const tx = db.transaction(stores, "readwrite");
+
+    return new Promise<void>((resolve, reject) => {
+      for (const store of stores) tx.objectStore(store).clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async teardown() {
+    const db = await this.instance;
+    if (!db) return;
+
+    this.#instance = undefined;
+    return new Promise<void>((resolve, reject) => {
+      const req = indexedDB.deleteDatabase(this.#name);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
   #result<T>(req: IDBRequest<T>) {
     return new Promise((resolve, reject) => {
       req.onsuccess = () => resolve(req.result);
