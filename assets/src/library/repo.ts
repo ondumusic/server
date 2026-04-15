@@ -1,8 +1,15 @@
+import type { UUID } from "../types";
+
 type Migrations = {
   [version: number]: (db: IDBDatabase, tx: IDBTransaction | null) => void;
 };
 
-import type { UUID } from "../types";
+type Operations<T> = {
+  [storeName: string]: {
+    put?: T[];
+    del?: UUID[];
+  };
+};
 
 class Repo {
   #name: string;
@@ -39,7 +46,7 @@ class Repo {
     return this.#instance;
   }
 
-  async getOne<T>(store: string, key: UUID) {
+  async get<T>(store: string, key: UUID) {
     const db = await this.instance;
     const tx = db.transaction(store, "readonly");
     return this.#result<T>(tx.objectStore(store).get(key));
@@ -77,10 +84,39 @@ class Repo {
     return this.#result<number>(tx.objectStore(store).count());
   }
 
+  async put<T>(store: string, item: T) {
+    return this.putMany(store, [item]);
+  }
+
+  async putMany<T>(store: string, items: T[]) {
+    if (!items.length) return;
+    return await this.#write({ [store]: { put: items } });
+  }
+
   #result<T>(req: IDBRequest<T>) {
     return new Promise((resolve, reject) => {
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
+    });
+  }
+
+  async #write<T>(operations: Operations<T>) {
+    const storeNames = Object.keys(operations);
+    if (!storeNames.length) return;
+    const db = await this.instance;
+
+    return new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(storeNames, "readwrite");
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+
+      Object.entries(operations).forEach(
+        ([storeName, { put = [], del = [] }]) => {
+          const store = tx.objectStore(storeName);
+          for (const item of put) store.put(item);
+          for (const key of del) store.delete(key);
+        },
+      );
     });
   }
 }
