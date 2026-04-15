@@ -46,13 +46,17 @@ class Repo {
     return this.#instance;
   }
 
-  async get<T>(store: string, key: UUID) {
+  async get<T>(store: string, key: UUID): Promise<T | undefined> {
     const db = await this.instance;
     const tx = db.transaction(store, "readonly");
     return this.#result<T>(tx.objectStore(store).get(key));
   }
 
-  async getAll<T>(store: string, indexName?: string, query?: IDBKeyRange) {
+  async getAll<T>(
+    store: string,
+    indexName?: string,
+    query?: IDBKeyRange,
+  ): Promise<T[]> {
     const db = await this.instance;
     const tx = db.transaction(store, "readonly");
     const target = indexName
@@ -62,7 +66,7 @@ class Repo {
     return this.#result<T[]>(target.getAll(query));
   }
 
-  async getMany<T>(store: string, keys: UUID[]) {
+  async getMany<T>(store: string, keys: UUID[]): Promise<T[]> {
     if (!keys.length) return [];
 
     const db = await this.instance;
@@ -129,7 +133,7 @@ class Repo {
     });
   }
 
-  #result<T>(req: IDBRequest<T>) {
+  #result<T>(req: IDBRequest<T>): Promise<T> {
     return new Promise((resolve, reject) => {
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
