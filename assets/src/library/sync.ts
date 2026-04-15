@@ -1,6 +1,7 @@
 import { client } from "../api";
 import type { Album, Artist, Track } from "../types";
 import { repo } from "./repo";
+import { transforms } from "./transforms";
 
 interface SyncMeta {
   key: string;
@@ -45,10 +46,12 @@ class SyncClient {
     });
 
     // Process upserts
-    // TODO: Add transformations
-    await repo.putMany<Artist>("artists", result.artists ?? []);
-    await repo.putMany<Album>("albums", result.albums ?? []);
-    await repo.putMany<Track>("tracks", result.tracks ?? []);
+    await repo.putMany<Artist>(
+      "artists",
+      await transforms.artists(result.artists),
+    );
+    await repo.putMany<Album>("albums", await transforms.albums(result.albums));
+    await repo.putMany<Track>("tracks", await transforms.tracks(result.tracks));
 
     // Process deletions
     const deletions = result.deletions ?? [];

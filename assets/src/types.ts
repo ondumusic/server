@@ -19,6 +19,9 @@ export interface Artist {
   name: string;
   slug: string;
   albumCount: number;
+
+  sortName?: string;
+  insertedAt?: Date | string | number;
 }
 
 export interface Album {
@@ -31,6 +34,10 @@ export interface Album {
   tracks: Track[];
   isUnknown: boolean;
   artworkUrl?: string;
+
+  artistName?: string;
+  artistSortName?: string;
+  insertedAt?: Date | string | number;
 }
 
 export interface Track {
@@ -46,6 +53,11 @@ export interface Track {
   duration: number;
   mimetype: string;
   streamUrl: string;
+
+  artistName?: string;
+  albumName?: string;
+  albumArtistName?: string;
+  insertedAt?: Date | string | number;
 }
 
 export interface Disc {
