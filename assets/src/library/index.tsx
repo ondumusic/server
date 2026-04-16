@@ -13,7 +13,7 @@ import { sync } from "./sync";
 export interface LibraryContext {
   syncing: boolean;
   lastSynced?: Date;
-  syncError?: Error;
+  syncError?: unknown;
   doSync: () => void;
 }
 
@@ -32,7 +32,7 @@ export function LibraryProvider({
 }>) {
   const [syncing, setSyncing] = useState(false);
   const [lastSynced, setLastSynced] = useState<Date | undefined>(undefined);
-  const [syncError, setSyncError] = useState<Error | undefined>(undefined);
+  const [syncError, setSyncError] = useState<unknown | undefined>(undefined);
   const syncLock = useRef(false);
 
   const doSync = useCallback(async () => {
@@ -45,10 +45,8 @@ export function LibraryProvider({
       await sync.startSync();
       setLastSynced(new Date());
     } catch (err) {
-      if (err instanceof Error) {
-        console.error("Sync error:", err);
-        setSyncError(err);
-      }
+      console.error("Sync error:", err);
+      setSyncError(err);
     } finally {
       setSyncing(false);
       syncLock.current = false;
@@ -89,4 +87,53 @@ export function useLibrary() {
   const ctx = useContext(LibraryContext);
   if (!ctx) throw new Error("useLibrary must be used inside <LibraryProvider>");
   return ctx;
+}
+
+import type { Artist } from "../types";
+import { repo } from "./repo";
+
+export function useArtists() {
+  const [data, setData] = useState<Artist[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
+
+  const queryRef = useRef(() =>
+    repo.query<Artist, Artist.Indexes>("artists", {
+      whereIndex: ["filter_albumCount", ">", 0],
+      sortDir: "asc",
+      sortBy: "sortName",
+    }),
+  );
+
+  const load = useCallback(async () => {
+    if (!queryRef.current) return;
+
+    try {
+      const results = await queryRef.current();
+      setData(results);
+      setError(null);
+    } catch (err) {
+      console.error("Query failed:", err);
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // // Subscribe to change events from all relevant stores
+  // useEffect(() => {
+  //   load();
+  //   const unsubs = storeNames.map((name) => subscribe(name, load));
+  //   return () => unsubs.forEach((u) => u());
+  // }, [load, ...storeNames]);
+
+  // Re-query when deps change (e.g. filters)
+  // const depKey = JSON.stringify(deps);
+  useEffect(() => {
+    setLoading(true);
+    load();
+  }, [load]);
+  // }, [depKey, load]);
+
+  return { data, loading, error };
 }

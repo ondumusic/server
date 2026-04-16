@@ -1,5 +1,6 @@
 import { client } from "../api";
 import type { Album, Artist, Track } from "../types";
+import { notifyChanges } from "./events";
 import { repo } from "./repo";
 import { transforms } from "./transforms";
 
@@ -54,19 +55,29 @@ class SyncClient {
     await repo.putMany<Track>("tracks", await transforms.tracks(result.tracks));
 
     // Process deletions
-    const deletions = result.deletions ?? [];
+    const deletions = Map.groupBy(result.deletions ?? [], (e) => e.entityType);
     await repo.deleteMany(
       "artists",
-      deletions.filter((d) => d.entityType === "artist").map((d) => d.entityId),
+      deletions.get("artist")?.map((d) => d.entityId) ?? [],
     );
     await repo.deleteMany(
       "albums",
-      deletions.filter((d) => d.entityType === "album").map((d) => d.entityId),
+      deletions.get("album")?.map((d) => d.entityId) ?? [],
     );
     await repo.deleteMany(
       "tracks",
-      deletions.filter((d) => d.entityType === "track").map((d) => d.entityId),
+      deletions.get("track")?.map((d) => d.entityId) ?? [],
     );
+
+    // Check which stores changed and notify events
+    const changedStores = new Set<string>();
+    if (result.artists.length > 0) changedStores.add("artists");
+    if (result.albums.length > 0) changedStores.add("albums");
+    if (result.tracks.length > 0) changedStores.add("tracks");
+    if (deletions.get("artist")?.length > 0) changedStores.add("artists");
+    if (deletions.get("album")?.length > 0) changedStores.add("albums");
+    if (deletions.get("track")?.length > 0) changedStores.add("tracks");
+    if (changedStores.size > 0) notifyChanges([...changedStores]);
 
     // Fetch next page unless completed.
     if (result.complete) {

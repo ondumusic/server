@@ -3,9 +3,8 @@ import {
   applyOp,
   compare,
   opToRange,
+  type Query,
   type QueryOperation,
-  type RangeOp,
-  type SingleValueOp,
 } from "./queryHelpers";
 
 type Migrations = {
@@ -17,24 +16,6 @@ type StoreOperations<T> = {
     put?: T[];
     del?: UUID[];
   };
-};
-
-type QueryCondition<T> = {
-  [K in keyof T & string]:
-    | [field: K, op: SingleValueOp, value: T[K]]
-    | [field: K, op: RangeOp, lower: T[K], upper: T[K]];
-}[keyof T & string];
-
-type Query<T> = {
-  whereIndex?: QueryCondition<T>;
-  having?: {
-    [K in keyof T]?:
-      | [op: SingleValueOp, value: T[K]]
-      | [op: RangeOp, lower: T[K], upper: T[K]]
-      | ((value: T[K]) => boolean);
-  };
-  sortBy?: keyof T & string;
-  sortDir?: "asc" | "desc";
 };
 
 class Repo {
@@ -92,9 +73,9 @@ class Repo {
     return this.#result<T[]>(target.getAll(query));
   }
 
-  async query<T>(
+  async query<T, I>(
     store: string,
-    { whereIndex, having, sortBy, sortDir = "asc" }: Query<T>,
+    { whereIndex, having, sortBy, sortDir = "asc" }: Query<T, I>,
   ): Promise<T[]> {
     const db = await this.instance;
     const tx = db.transaction(store, "readonly");
@@ -119,12 +100,6 @@ class Repo {
       },
     );
 
-    // Fast path: sorting by the where field (or no where, sorting by primary key)
-    const sortedByIndex =
-      sortBy &&
-      ((whereIndex && whereIndex[0] === sortBy) ||
-        (!whereIndex && sortBy === target.keyPath));
-
     return new Promise((resolve, reject) => {
       const req = target.getAll(keyRange);
       req.onsuccess = () => {
@@ -136,10 +111,11 @@ class Repo {
 
         // Already sorted asc by the index by default, so only need to apply
         // our own sort if not by index.
-        if (sortBy && !sortedByIndex) {
+        if (sortBy) {
           results.sort((a, b) => compare(a[sortBy], b[sortBy]));
         }
 
+        // Default sort is ASC so we just reverse if we want DESC
         if (sortDir === "desc") results.reverse();
         resolve(results);
       };

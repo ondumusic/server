@@ -1,6 +1,24 @@
-export type SingleValueOp = "=" | "!=" | ">" | ">=" | "<" | "<=";
-export type RangeOp = "between" | "betweenExclusive";
+type SingleValueOp = "=" | "!=" | ">" | ">=" | "<" | "<=";
+type RangeOp = "between" | "betweenExclusive";
 export type QueryOperation = SingleValueOp | RangeOp;
+
+type QueryCondition<T> = {
+  [K in keyof T & string]:
+    | [field: K, op: SingleValueOp, value: T[K]]
+    | [field: K, op: RangeOp, lower: T[K], upper: T[K]];
+}[keyof T & string];
+
+export type Query<T, I> = {
+  whereIndex?: QueryCondition<I>;
+  having?: {
+    [K in keyof T]?:
+      | [op: SingleValueOp, value: T[K]]
+      | [op: RangeOp, lower: T[K], upper: T[K]]
+      | ((value: T[K]) => boolean);
+  };
+  sortBy?: keyof T & string;
+  sortDir?: "asc" | "desc";
+};
 
 export type Comparable = number | string | Date;
 

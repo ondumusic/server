@@ -24,6 +24,13 @@ export interface Artist {
   insertedAt?: Date | string | number;
 }
 
+export namespace Artist {
+  export type Indexes = {
+    by_slug: string;
+    filter_albumCount: number;
+  };
+}
+
 export interface Album {
   __type: "album";
   id: UUID;
@@ -38,6 +45,12 @@ export interface Album {
   artistName?: string;
   artistSortName?: string;
   insertedAt?: Date | string | number;
+}
+
+export namespace Album {
+  export type Indexes = {
+    by_slug: string;
+  };
 }
 
 export interface Track {
@@ -58,6 +71,14 @@ export interface Track {
   albumName?: string;
   albumArtistName?: string;
   insertedAt?: Date | string | number;
+}
+
+export namespace Track {
+  export type Indexes = {
+    by_artistId: UUID;
+    by_albumId: UUID;
+    by_albumArtistId: UUID;
+  };
 }
 
 export interface Disc {
