@@ -113,15 +113,6 @@ RUN apt-get update \
     ca-certificates ffmpeg \
   && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
   && locale-gen \
-  # --- Video codecs (ffmpeg used for audio only) ---
-  && rm -f /usr/lib/*/libx265* \
-  && rm -f /usr/lib/*/libx264* \
-  && rm -f /usr/lib/*/libSvtAv1Enc* \
-  && rm -f /usr/lib/*/libaom* \
-  && rm -f /usr/lib/*/libvpx* \
-  && rm -f /usr/lib/*/librav1e* \
-  && rm -f /usr/lib/*/libplacebo* \
-  && rm -f /usr/lib/*/libSDL2* \
   && rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man
 
 

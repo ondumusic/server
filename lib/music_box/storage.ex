@@ -48,7 +48,9 @@ defmodule MusicBox.Storage do
   @spec find_missing_files(paths :: [String.t()]) :: [String.t()]
   def find_missing_files(paths) do
     abs_paths = Enum.map(paths, &absolute/1)
+
     impl().find_missing_files(abs_paths)
+    |> Stream.map(&strip_prefix/1)
   end
 
   @doc """
