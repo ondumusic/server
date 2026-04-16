@@ -13,7 +13,9 @@ import { MediaSessionProvider } from "./hooks/useMediaSession";
 import { PhoenixSocketProvider } from "./hooks/usePhoenixSocket";
 import { PlayerProvider } from "./hooks/usePlayer";
 import { QueueProvider } from "./hooks/useQueue";
+import { LibraryProvider } from "./library";
 import { Router } from "./router";
+
 import "./i18next";
 
 const appRoot = document.getElementById("App");
@@ -24,23 +26,25 @@ if (appRoot) {
     <StrictMode>
       <Suspense fallback={<Loading />}>
         <AuthProvider>
-          <QueryClientProvider client={queryClient}>
-            <PhoenixSocketProvider>
-              <DialogProvider>
-                <QueueProvider>
-                  <AudioManagerProvider>
-                    <PlayerProvider>
-                      <MediaSessionProvider>
-                        <ContextMenuProvider>
-                          <Router />
-                        </ContextMenuProvider>
-                      </MediaSessionProvider>
-                    </PlayerProvider>
-                  </AudioManagerProvider>
-                </QueueProvider>
-              </DialogProvider>
-            </PhoenixSocketProvider>
-          </QueryClientProvider>
+          <LibraryProvider>
+            <QueryClientProvider client={queryClient}>
+              <PhoenixSocketProvider>
+                <DialogProvider>
+                  <QueueProvider>
+                    <AudioManagerProvider>
+                      <PlayerProvider>
+                        <MediaSessionProvider>
+                          <ContextMenuProvider>
+                            <Router />
+                          </ContextMenuProvider>
+                        </MediaSessionProvider>
+                      </PlayerProvider>
+                    </AudioManagerProvider>
+                  </QueueProvider>
+                </DialogProvider>
+              </PhoenixSocketProvider>
+            </QueryClientProvider>
+          </LibraryProvider>
         </AuthProvider>
       </Suspense>
     </StrictMode>,
