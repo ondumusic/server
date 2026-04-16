@@ -8,6 +8,10 @@ type QueryCondition<T> = {
     | [field: K, op: RangeOp, lower: T[K], upper: T[K]];
 }[keyof T & string];
 
+export type SortField<T> =
+  | (keyof T & string)
+  | [keyof T & string, "asc" | "desc"];
+
 export type Query<T, I> = {
   whereIndex?: QueryCondition<I>;
   having?: {
@@ -16,7 +20,7 @@ export type Query<T, I> = {
       | [op: RangeOp, lower: T[K], upper: T[K]]
       | ((value: T[K]) => boolean);
   };
-  sortBy?: keyof T & string;
+  sortBy?: SortField<T> | SortField<T>[];
   sortDir?: "asc" | "desc";
 };
 

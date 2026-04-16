@@ -5,6 +5,7 @@ import {
   opToRange,
   type Query,
   type QueryOperation,
+  type SortField,
 } from "./queryHelpers";
 
 type Migrations = {
@@ -104,6 +105,10 @@ export class Repo {
 
     const filters: Array<(r: T) => boolean> = Object.entries(having || {}).map(
       ([field, condition]) => {
+        if (typeof condition === "function") {
+          return (r: T) => condition((r as Record<string, unknown>)[field]);
+        }
+
         const [op, ...args] = condition as [QueryOperation, ...unknown[]];
         return (r: T) =>
           applyOp((r as Record<string, unknown>)[field], op, ...args);
@@ -119,14 +124,44 @@ export class Repo {
           results = results.filter((r) => filters.every((fn) => fn(r)));
         }
 
-        // Already sorted asc by the index by default, so only need to apply
-        // our own sort if not by index.
+        // Sort in JS if we want anything other than default behaviour.
         if (sortBy) {
-          results.sort((a, b) => compare(a[sortBy], b[sortBy]));
+          // Normalize to an array of entries.
+          // A tuple like ["year", "desc"] is itself an array, so we detect it
+          // by checking if the second element is a direction string.
+          const isSingleTuple =
+            Array.isArray(sortBy) &&
+            sortBy.length === 2 &&
+            (sortBy[1] === "asc" || sortBy[1] === "desc");
+
+          const entries: SortField<T>[] =
+            typeof sortBy === "string"
+              ? [sortBy]
+              : isSingleTuple
+                ? [sortBy as SortField<T>]
+                : (sortBy as SortField<T>[]);
+
+          const compareFns = entries.map((entry) => {
+            const [field, dir] = Array.isArray(entry)
+              ? entry
+              : [entry, sortDir];
+            const mult = dir === "desc" ? -1 : 1;
+            return (a: T, b: T) =>
+              compare(
+                (a as Record<string, unknown>)[field],
+                (b as Record<string, unknown>)[field],
+              ) * mult;
+          });
+
+          results.sort((a, b) => {
+            for (const fn of compareFns) {
+              const r = fn(a, b);
+              if (r !== 0) return r;
+            }
+            return 0;
+          });
         }
 
-        // Default sort is ASC so we just reverse if we want DESC
-        if (sortDir === "desc") results.reverse();
         resolve(results);
       };
       req.onerror = () => reject(req.error);
@@ -240,7 +275,8 @@ export const repo = new Repo("musicbox", {
     artists.createIndex("filter_albumCount", "albumCount", { unique: false });
 
     const albums = db.createObjectStore("albums", { keyPath: "id" });
-    albums.createIndex("by_slug", "slug", { unique: true });
+    albums.createIndex("by_artistId", "artistId", { unique: false });
+    albums.createIndex("by_slug", "slug", { unique: false }); // slugs are only unique artist_slug+album_slug
 
     // Keeps track of cursor et al.
     db.createObjectStore("meta", { keyPath: "key" });

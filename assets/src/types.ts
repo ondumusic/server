@@ -50,6 +50,7 @@ export interface Album {
 export namespace Album {
   export type Indexes = {
     by_slug: string;
+    by_artistId: string;
   };
 }
 
