@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { subscribe } from "./events";
-import { type Repo, repo } from "./repo";
 
 interface Options {
   enabled?: boolean;
@@ -8,7 +7,7 @@ interface Options {
 
 export function useStoreQuery<T>(
   store: string,
-  queryFn: (repo: Repo) => Promise<T[]>,
+  queryFn: () => Promise<T[]>,
   deps: unknown[] = [],
   opts: Options = {},
 ) {
@@ -24,7 +23,7 @@ export function useStoreQuery<T>(
     if (!queryRef.current) return;
 
     try {
-      const results = await queryRef.current(repo);
+      const results = await queryRef.current();
       setData(results);
       setError(null);
     } catch (err) {
@@ -55,7 +54,7 @@ export function useStoreQuery<T>(
 
 export function useStoreRecord<T>(
   store: string,
-  queryFn: (repo: Repo) => Promise<T | undefined>,
+  queryFn: () => Promise<T | undefined>,
   deps: unknown[] = [],
   opts: Options = {},
 ) {
@@ -71,7 +70,7 @@ export function useStoreRecord<T>(
     if (!queryRef.current) return;
 
     try {
-      const results = await queryRef.current(repo);
+      const results = await queryRef.current();
       setData(results);
       setError(null);
     } catch (err) {
