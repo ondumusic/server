@@ -32,6 +32,7 @@ export function LibraryProvider({
 }: PropsWithChildren<{
   pollInterval?: number;
 }>) {
+  const [pageLoadSync, setPageLoadSync] = useState(true);
   const [syncing, setSyncing] = useState(true);
   const [lastSynced, setLastSynced] = useState<Date | undefined>(undefined);
   const [syncError, setSyncError] = useState<unknown | undefined>(undefined);
@@ -51,6 +52,7 @@ export function LibraryProvider({
       setSyncError(err);
     } finally {
       setSyncing(false);
+      setPageLoadSync(false);
       syncLock.current = false;
     }
   }, []);
@@ -82,7 +84,7 @@ export function LibraryProvider({
 
   return (
     <LibraryContext.Provider value={{ syncing, lastSynced, syncError, doSync }}>
-      {syncing ? <Loading /> : children}
+      {pageLoadSync ? <Loading /> : children}
     </LibraryContext.Provider>
   );
 }
@@ -93,6 +95,7 @@ export function useLibrary() {
   return ctx;
 }
 
+//////
 import type { Album, Artist, Track, UUID } from "../types";
 import { isUUID } from "../utils/isUUID";
 import { useStoreQuery, useStoreRecord } from "./hooks";
@@ -105,19 +108,19 @@ export function useArtists() {
     }),
   );
 }
-export function useArtistAlbums(artistId: UUID) {
+export function useArtistAlbums(artistId: UUID | undefined) {
   return useStoreQuery<Album>(
     "albums",
     async (repo) => {
       const albums = await repo.query<Album, Album.Indexes>("albums", {
-        whereIndex: ["by_artistId", "=", artistId],
+        whereIndex: ["by_artistId", "=", artistId as UUID],
         sortDir: "desc",
         sortBy: "releaseYear",
       });
 
       const albumIds = new Set(albums.map((a) => a.id));
       const tracks = await repo.query<Track, Track.Indexes>("tracks", {
-        whereIndex: ["by_albumArtistId", "=", artistId],
+        whereIndex: ["by_albumArtistId", "=", artistId as UUID],
         having: {
           albumId: (albumId: UUID) => albumIds.has(albumId),
         },
@@ -140,6 +143,9 @@ export function useArtistAlbums(artistId: UUID) {
       }));
     },
     [artistId],
+    {
+      enabled: !!artistId,
+    },
   );
 }
 export function useArtist(idOrSlug: UUID | string) {
@@ -150,5 +156,15 @@ export function useArtist(idOrSlug: UUID | string) {
         ? repo.get<Artist>("artists", idOrSlug)
         : repo.getBy<Artist>("artists", "by_slug", idOrSlug),
     [idOrSlug],
+  );
+}
+export function useAlbum(albumId: UUID | undefined) {
+  return useStoreRecord<Album>(
+    "albums",
+    (repo) => repo.get<Album>("albums", albumId as UUID),
+    [albumId],
+    {
+      enabled: !!albumId,
+    },
   );
 }
