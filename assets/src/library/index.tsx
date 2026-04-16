@@ -102,42 +102,49 @@ export function useArtists() {
   );
 }
 export function useArtistAlbums(artistId: UUID) {
-  return useStoreQuery<Album>("albums", async (repo) => {
-    const albums = await repo.query<Album, Album.Indexes>("albums", {
-      whereIndex: ["by_artistId", "=", artistId],
-      sortDir: "desc",
-      sortBy: "releaseYear",
-    });
+  return useStoreQuery<Album>(
+    "albums",
+    async (repo) => {
+      const albums = await repo.query<Album, Album.Indexes>("albums", {
+        whereIndex: ["by_artistId", "=", artistId],
+        sortDir: "desc",
+        sortBy: "releaseYear",
+      });
 
-    const albumIds = new Set(albums.map((a) => a.id));
-    const tracks = await repo.query<Track, Track.Indexes>("tracks", {
-      whereIndex: ["by_albumArtistId", "=", artistId],
-      having: {
-        albumId: (albumId: UUID) => albumIds.has(albumId),
-      },
-      sortBy: [
-        ["disc", "asc"],
-        ["number", "asc"],
-      ],
-    });
+      const albumIds = new Set(albums.map((a) => a.id));
+      const tracks = await repo.query<Track, Track.Indexes>("tracks", {
+        whereIndex: ["by_albumArtistId", "=", artistId],
+        having: {
+          albumId: (albumId: UUID) => albumIds.has(albumId),
+        },
+        sortBy: [
+          ["disc", "asc"],
+          ["number", "asc"],
+        ],
+      });
 
-    const tracksByAlbumId = new Map<string, Track[]>();
-    for (const track of tracks) {
-      const arr = tracksByAlbumId.get(track.albumId) ?? [];
-      arr.push(track);
-      tracksByAlbumId.set(track.albumId, arr);
-    }
+      const tracksByAlbumId = new Map<string, Track[]>();
+      for (const track of tracks) {
+        const arr = tracksByAlbumId.get(track.albumId) ?? [];
+        arr.push(track);
+        tracksByAlbumId.set(track.albumId, arr);
+      }
 
-    return albums.map((album) => ({
-      ...album,
-      tracks: tracksByAlbumId.get(album.id) ?? [],
-    }));
-  });
+      return albums.map((album) => ({
+        ...album,
+        tracks: tracksByAlbumId.get(album.id) ?? [],
+      }));
+    },
+    [artistId],
+  );
 }
 export function useArtist(idOrSlug: UUID | string) {
-  return useStoreRecord<Artist>("artists", (repo) =>
-    isUUID(idOrSlug)
-      ? repo.get<Artist>("artists", idOrSlug)
-      : repo.getBy<Artist>("artists", "by_slug", idOrSlug),
+  return useStoreRecord<Artist>(
+    "artists",
+    (repo) =>
+      isUUID(idOrSlug)
+        ? repo.get<Artist>("artists", idOrSlug)
+        : repo.getBy<Artist>("artists", "by_slug", idOrSlug),
+    [idOrSlug],
   );
 }

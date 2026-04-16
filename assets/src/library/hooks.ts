@@ -5,11 +5,12 @@ import { type Repo, repo } from "./repo";
 export function useStoreQuery<T>(
   store: string,
   queryFn: (repo: Repo) => Promise<T[]>,
-  // deps: unknown[] = []
+  deps: unknown[] = [],
 ) {
   const [data, setData] = useState<T[]>([]);
   const [error, setError] = useState<unknown>(null);
   const queryRef = useRef(queryFn);
+  queryRef.current = queryFn;
 
   const load = useCallback(async () => {
     if (!queryRef.current) return;
@@ -30,11 +31,12 @@ export function useStoreQuery<T>(
   }, [store, load]);
 
   // Re-query when deps change (e.g. filters)
-  // const depKey = JSON.stringify(deps);
+  const depKey = JSON.stringify(deps);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies(depKey): dont need it
   useEffect(() => {
     load();
-  }, [load]);
-  // }, [depKey, load]);
+  }, [depKey, load]);
 
   return {
     data,
@@ -46,7 +48,7 @@ export function useStoreQuery<T>(
 export function useStoreRecord<T>(
   store: string,
   queryFn: (repo: Repo) => Promise<T | undefined>,
-  // deps: unknown[] = []
+  deps: unknown[] = [],
 ) {
   const [data, setData] = useState<T | undefined>(undefined);
   const [error, setError] = useState<unknown>(null);
@@ -71,11 +73,12 @@ export function useStoreRecord<T>(
   }, [store, load]);
 
   // Re-query when deps change (e.g. filters)
-  // const depKey = JSON.stringify(deps);
+  const depKey = JSON.stringify(deps);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies(depKey): dont need it
   useEffect(() => {
     load();
-  }, [load]);
-  // }, [depKey, load]);
+  }, [depKey, load]);
 
   return {
     data,
