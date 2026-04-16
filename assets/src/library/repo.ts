@@ -1,14 +1,40 @@
 import type { UUID } from "../types";
+import {
+  applyOp,
+  compare,
+  opToRange,
+  type QueryOperation,
+  type RangeOp,
+  type SingleValueOp,
+} from "./queryHelpers";
 
 type Migrations = {
   [version: number]: (db: IDBDatabase, tx: IDBTransaction | null) => void;
 };
 
-type Operations<T> = {
+type StoreOperations<T> = {
   [storeName: string]: {
     put?: T[];
     del?: UUID[];
   };
+};
+
+type QueryCondition<T> = {
+  [K in keyof T & string]:
+    | [field: K, op: SingleValueOp, value: T[K]]
+    | [field: K, op: RangeOp, lower: T[K], upper: T[K]];
+}[keyof T & string];
+
+type Query<T> = {
+  whereIndex?: QueryCondition<T>;
+  having?: {
+    [K in keyof T]?:
+      | [op: SingleValueOp, value: T[K]]
+      | [op: RangeOp, lower: T[K], upper: T[K]]
+      | ((value: T[K]) => boolean);
+  };
+  sortBy?: keyof T & string;
+  sortDir?: "asc" | "desc";
 };
 
 class Repo {
@@ -64,6 +90,61 @@ class Repo {
       : tx.objectStore(store);
 
     return this.#result<T[]>(target.getAll(query));
+  }
+
+  async query<T>(
+    store: string,
+    { whereIndex, having, sortBy, sortDir = "asc" }: Query<T>,
+  ): Promise<T[]> {
+    const db = await this.instance;
+    const tx = db.transaction(store, "readonly");
+
+    let target: IDBObjectStore | IDBIndex = tx.objectStore(store);
+    let keyRange = null;
+    if (whereIndex) {
+      const [indexName, op, ...args] = whereIndex as [
+        string,
+        QueryOperation,
+        ...unknown[],
+      ];
+      target = target.index(indexName);
+      keyRange = opToRange(op, ...args);
+    }
+
+    const filters: Array<(r: T) => boolean> = Object.entries(having || {}).map(
+      ([field, condition]) => {
+        const [op, ...args] = condition as [QueryOperation, ...unknown[]];
+        return (r: T) =>
+          applyOp((r as Record<string, unknown>)[field], op, ...args);
+      },
+    );
+
+    // Fast path: sorting by the where field (or no where, sorting by primary key)
+    const sortedByIndex =
+      sortBy &&
+      ((whereIndex && whereIndex[0] === sortBy) ||
+        (!whereIndex && sortBy === target.keyPath));
+
+    return new Promise((resolve, reject) => {
+      const req = target.getAll(keyRange);
+      req.onsuccess = () => {
+        let results = req.result;
+
+        if (filters.length) {
+          results = results.filter((r) => filters.every((fn) => fn(r)));
+        }
+
+        // Already sorted asc by the index by default, so only need to apply
+        // our own sort if not by index.
+        if (sortBy && !sortedByIndex) {
+          results.sort((a, b) => compare(a[sortBy], b[sortBy]));
+        }
+
+        if (sortDir === "desc") results.reverse();
+        resolve(results);
+      };
+      req.onerror = () => reject(req.error);
+    });
   }
 
   async getMany<T>(store: string, keys: UUID[]): Promise<T[]> {
@@ -140,7 +221,7 @@ class Repo {
     });
   }
 
-  async #write<T>(operations: Operations<T>) {
+  async #write<T>(operations: StoreOperations<T>) {
     const storeNames = Object.keys(operations);
     if (!storeNames.length) return;
     const db = await this.instance;
@@ -170,6 +251,7 @@ export const repo = new Repo("musicbox", {
 
     const artists = db.createObjectStore("artists", { keyPath: "id" });
     artists.createIndex("by_slug", "slug", { unique: true });
+    artists.createIndex("filter_albumCount", "albumCount", { unique: false });
 
     const albums = db.createObjectStore("albums", { keyPath: "id" });
     albums.createIndex("by_slug", "slug", { unique: true });
