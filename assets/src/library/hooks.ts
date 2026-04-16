@@ -8,7 +8,6 @@ export function useStoreQuery<T>(
   // deps: unknown[] = []
 ) {
   const [data, setData] = useState<T[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
   const queryRef = useRef(queryFn);
 
@@ -22,8 +21,6 @@ export function useStoreQuery<T>(
     } catch (err) {
       console.error("Query failed:", err);
       setError(err);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -35,10 +32,54 @@ export function useStoreQuery<T>(
   // Re-query when deps change (e.g. filters)
   // const depKey = JSON.stringify(deps);
   useEffect(() => {
-    setLoading(true);
     load();
   }, [load]);
   // }, [depKey, load]);
 
-  return { data, loading, error };
+  return {
+    data,
+    error,
+    loading: data === undefined && error === null,
+  };
+}
+
+export function useStoreRecord<T>(
+  store: string,
+  queryFn: (repo: Repo) => Promise<T | undefined>,
+  // deps: unknown[] = []
+) {
+  const [data, setData] = useState<T | undefined>(undefined);
+  const [error, setError] = useState<unknown>(null);
+  const queryRef = useRef(queryFn);
+
+  const load = useCallback(async () => {
+    if (!queryRef.current) return;
+
+    try {
+      const results = await queryRef.current(repo);
+      setData(results);
+      setError(null);
+    } catch (err) {
+      console.error("Query failed:", err);
+      setError(err);
+    }
+  }, []);
+
+  // Subscribe to change events
+  useEffect(() => {
+    return subscribe(store, load);
+  }, [store, load]);
+
+  // Re-query when deps change (e.g. filters)
+  // const depKey = JSON.stringify(deps);
+  useEffect(() => {
+    load();
+  }, [load]);
+  // }, [depKey, load]);
+
+  return {
+    data,
+    error,
+    loading: data === undefined && error === null,
+  };
 }

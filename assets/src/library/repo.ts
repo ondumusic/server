@@ -59,6 +59,16 @@ export class Repo {
     return this.#result<T>(tx.objectStore(store).get(key));
   }
 
+  async getBy<T>(
+    store: string,
+    indexName: string,
+    value: IDBValidKey,
+  ): Promise<T | undefined> {
+    const db = await this.instance;
+    const tx = db.transaction(store, "readonly");
+    return this.#result<T>(tx.objectStore(store).index(indexName).get(value));
+  }
+
   async getAll<T>(
     store: string,
     indexName?: string,

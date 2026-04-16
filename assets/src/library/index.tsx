@@ -89,8 +89,9 @@ export function useLibrary() {
   return ctx;
 }
 
-import type { Artist } from "../types";
-import { useStoreQuery } from "./hooks";
+import type { Artist, UUID } from "../types";
+import { isUUID } from "../utils/isUUID";
+import { useStoreQuery, useStoreRecord } from "./hooks";
 export function useArtists() {
   return useStoreQuery<Artist>("artists", (repo) =>
     repo.query<Artist, Artist.Indexes>("artists", {
@@ -98,5 +99,12 @@ export function useArtists() {
       sortDir: "asc",
       sortBy: "sortName",
     }),
+  );
+}
+export function useArtist(idOrSlug: UUID | string) {
+  return useStoreRecord<Artist>("artists", (repo) =>
+    isUUID(idOrSlug)
+      ? repo.get<Artist>("artists", idOrSlug)
+      : repo.getBy<Artist>("artists", "by_slug", idOrSlug),
   );
 }
