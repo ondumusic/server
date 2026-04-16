@@ -324,6 +324,13 @@ export function SelectableList<T>({
     scrollHeight,
   ]);
 
+  // Reset scroll when items change
+  // biome-ignore lint/correctness/useExhaustiveDependencies(items): suppress dependency
+  useEffect(() => {
+    if (!listRef.current) return;
+    listRef.current.scrollTop = 0;
+  }, [items]);
+
   // Handle scroll with throttling
   useEffect(() => {
     if (!listRef.current) return;
