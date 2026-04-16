@@ -79,11 +79,25 @@ class SyncClient {
     if (deletions.get("track")?.length) changedStores.add("tracks");
     if (changedStores.size > 0) notifyChanges([...changedStores]);
 
+    this.#prewarm(result.albums);
+
     // Fetch next page unless completed.
     if (result.complete) {
       this.#setCursor(result.cursor);
     } else {
       this.#fetch(result.cursor);
+    }
+  }
+
+  async #prewarm(albums: Album[]) {
+    if (!albums.length) return;
+    const urls = albums.map((album) => album.artworkUrl).filter((url) => !!url);
+    const sw = await navigator.serviceWorker?.ready;
+    if (sw?.active) {
+      sw.active.postMessage({
+        type: "PREWARM",
+        urls,
+      });
     }
   }
 

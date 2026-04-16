@@ -8,6 +8,8 @@ import {
   useState,
 } from "react";
 
+import { Loading } from "../components/Loading";
+
 import { sync } from "./sync";
 
 export interface LibraryContext {
@@ -30,7 +32,7 @@ export function LibraryProvider({
 }: PropsWithChildren<{
   pollInterval?: number;
 }>) {
-  const [syncing, setSyncing] = useState(false);
+  const [syncing, setSyncing] = useState(true);
   const [lastSynced, setLastSynced] = useState<Date | undefined>(undefined);
   const [syncError, setSyncError] = useState<unknown | undefined>(undefined);
   const syncLock = useRef(false);
@@ -54,10 +56,6 @@ export function LibraryProvider({
   }, []);
 
   useEffect(() => {
-    doSync();
-  }, [doSync]);
-
-  useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState === "visible") doSync();
     };
@@ -76,9 +74,15 @@ export function LibraryProvider({
     return () => clearInterval(id);
   }, [doSync, pollInterval]);
 
+  // Sync on component mount
+  // biome-ignore lint/correctness/useExhaustiveDependencies(doSync): suppress dependency
+  useEffect(() => {
+    doSync();
+  }, []);
+
   return (
     <LibraryContext.Provider value={{ syncing, lastSynced, syncError, doSync }}>
-      {children}
+      {syncing ? <Loading /> : children}
     </LibraryContext.Provider>
   );
 }

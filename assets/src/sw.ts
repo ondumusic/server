@@ -2,10 +2,16 @@
 
 declare const self: ServiceWorkerGlobalScope;
 
-const CACHE_NAME = "thumbnails-v1";
+interface PrewarmMessage {
+  type: "PREWARM";
+  urls: string[];
+}
 
-function isThumbnailRequest(url: URL): boolean {
-  return url.pathname.startsWith("/thumbnails/");
+const CACHE_NAME = "artwork-v1";
+const PREWARM_CONCURRENCY = 3;
+
+function isArtworkRequest(url: URL): boolean {
+  return url.pathname.startsWith("/artwork/");
 }
 
 self.addEventListener("install", () => {
@@ -18,7 +24,7 @@ self.addEventListener("activate", (event) => {
       const names = await caches.keys();
       await Promise.all(
         names
-          .filter((n) => n.startsWith("thumbnails-") && n !== CACHE_NAME)
+          .filter((n) => n.startsWith("artwork-") && n !== CACHE_NAME)
           .map((n) => caches.delete(n)),
       );
       await self.clients.claim();
@@ -31,7 +37,7 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
 
   const url = new URL(req.url);
-  if (!isThumbnailRequest(url)) return;
+  if (!isArtworkRequest(url)) return;
 
   event.respondWith(
     (async () => {
@@ -49,3 +55,37 @@ self.addEventListener("fetch", (event) => {
     })(),
   );
 });
+
+self.addEventListener("message", (event: ExtendableMessageEvent) => {
+  const data = event.data as PrewarmMessage | undefined;
+  if (data?.type === "PREWARM") {
+    event.waitUntil(prewarm(data.urls));
+  }
+});
+
+async function prewarm(urls: string[]): Promise<void> {
+  const cache = await caches.open(CACHE_NAME);
+  const queue = [...urls];
+
+  const worker = async (): Promise<void> => {
+    while (queue.length > 0) {
+      const url = queue.shift();
+      if (!url) return;
+
+      // Skip if already cached (cheap, hits disk-backed cache storage)
+      const existing = await cache.match(url);
+      if (existing) continue;
+
+      try {
+        const res = await fetch(url, { priority: "low" } as RequestInit);
+        if (res.ok) await cache.put(url, res);
+      } catch {
+        // Network error, just skip — on-demand fetch will retry when the user scrolls to it
+      }
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: PREWARM_CONCURRENCY }, () => worker()),
+  );
+}
