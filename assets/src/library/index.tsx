@@ -90,50 +90,13 @@ export function useLibrary() {
 }
 
 import type { Artist } from "../types";
-import { repo } from "./repo";
-
+import { useStoreQuery } from "./hooks";
 export function useArtists() {
-  const [data, setData] = useState<Artist[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<unknown>(null);
-
-  const queryRef = useRef(() =>
+  return useStoreQuery<Artist>("artists", (repo) =>
     repo.query<Artist, Artist.Indexes>("artists", {
       whereIndex: ["filter_albumCount", ">", 0],
       sortDir: "asc",
       sortBy: "sortName",
     }),
   );
-
-  const load = useCallback(async () => {
-    if (!queryRef.current) return;
-
-    try {
-      const results = await queryRef.current();
-      setData(results);
-      setError(null);
-    } catch (err) {
-      console.error("Query failed:", err);
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // // Subscribe to change events from all relevant stores
-  // useEffect(() => {
-  //   load();
-  //   const unsubs = storeNames.map((name) => subscribe(name, load));
-  //   return () => unsubs.forEach((u) => u());
-  // }, [load, ...storeNames]);
-
-  // Re-query when deps change (e.g. filters)
-  // const depKey = JSON.stringify(deps);
-  useEffect(() => {
-    setLoading(true);
-    load();
-  }, [load]);
-  // }, [depKey, load]);
-
-  return { data, loading, error };
 }

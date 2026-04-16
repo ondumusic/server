@@ -71,12 +71,12 @@ class SyncClient {
 
     // Check which stores changed and notify events
     const changedStores = new Set<string>();
-    if (result.artists.length > 0) changedStores.add("artists");
-    if (result.albums.length > 0) changedStores.add("albums");
-    if (result.tracks.length > 0) changedStores.add("tracks");
-    if (deletions.get("artist")?.length > 0) changedStores.add("artists");
-    if (deletions.get("album")?.length > 0) changedStores.add("albums");
-    if (deletions.get("track")?.length > 0) changedStores.add("tracks");
+    if (result.artists.length) changedStores.add("artists");
+    if (result.albums.length) changedStores.add("albums");
+    if (result.tracks.length) changedStores.add("tracks");
+    if (deletions.get("artist")?.length) changedStores.add("artists");
+    if (deletions.get("album")?.length) changedStores.add("albums");
+    if (deletions.get("track")?.length) changedStores.add("tracks");
     if (changedStores.size > 0) notifyChanges([...changedStores]);
 
     // Fetch next page unless completed.

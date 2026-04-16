@@ -18,7 +18,7 @@ type StoreOperations<T> = {
   };
 };
 
-class Repo {
+export class Repo {
   #name: string;
   #migrations: Migrations;
   #version: number;
