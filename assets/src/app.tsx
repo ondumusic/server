@@ -16,6 +16,14 @@ import { QueueProvider } from "./hooks/useQueue";
 import { LibraryProvider } from "./library";
 import { Router } from "./router";
 
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js")
+      .catch((err) => console.error("SW registration failed:", err));
+  });
+}
+
 import "./i18next";
 
 const appRoot = document.getElementById("App");

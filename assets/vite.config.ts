@@ -34,11 +34,15 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       copyPublicDir: true,
       rollupOptions: {
-        input: "src/app.tsx",
+        input: {
+          app: "src/app.tsx",
+          sw: "src/sw.ts",
+        },
         output: {
           assetFileNames: "assets/[name][extname]",
           chunkFileNames: "assets/[name].js",
-          entryFileNames: "assets/[name].js",
+          entryFileNames: (chunk) =>
+            chunk.name === "sw" ? "[name].js" : "assets/[name].js",
         },
         // 1000 is default, CI was being difficult and wanted 1. I don't
         // remember exactly where the issue was but I believe with docker buildx
