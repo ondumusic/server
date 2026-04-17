@@ -361,6 +361,7 @@ function Artists() {
         items={listItems}
         defaultFocusId={currentAlbum?.id}
         defaultFocusType="start"
+        resetScrollOnItemsChange={true}
         selectedIds={selectedTrackIds}
         onChange={setSelectedTrackIds}
         onSubmit={onSubmit}

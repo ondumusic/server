@@ -34,7 +34,7 @@ export function useAuth() {
 export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [isFetching, setIsFetching] = useState<boolean>(true);
   const [state, setState] = useState<AuthState>({
-    isLoggedIn: false,
+    isLoggedIn: !!auth.sessionToken,
     currentUser: undefined,
   });
 

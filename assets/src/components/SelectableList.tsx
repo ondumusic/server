@@ -34,6 +34,7 @@ type BaseProps<T> = {
   itemHeight?: "auto" | number | ((item: T) => number);
   scrollOverscan?: number;
   paddingBottom?: number;
+  resetScrollOnItemsChange?: boolean;
   onChange: (selectedIds: Set<string>) => void;
   onDelete?: (selectedIds: Set<string>) => void;
   onSubmit?: (selectedIds: Set<string>) => void;
@@ -67,6 +68,7 @@ export function SelectableList<T>({
   renderItem,
   defaultFocusId,
   defaultFocusType = "nearest",
+  resetScrollOnItemsChange = false,
   multiple: allowMultiple,
   allowDrag = false,
   allowDropFrom = [],
@@ -328,8 +330,9 @@ export function SelectableList<T>({
   // biome-ignore lint/correctness/useExhaustiveDependencies(items): suppress dependency
   useEffect(() => {
     if (!listRef.current) return;
+    if (!resetScrollOnItemsChange) return;
     listRef.current.scrollTop = 0;
-  }, [items]);
+  }, [resetScrollOnItemsChange, items]);
 
   // Handle scroll with throttling
   useEffect(() => {

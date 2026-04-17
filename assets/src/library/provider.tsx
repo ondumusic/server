@@ -79,25 +79,20 @@ export function LibraryProvider({
     return () => clearInterval(id);
   }, [doSync, pollInterval]);
 
-  // Check sync status on component mount
-  useEffect(() => {
-    sync.getLastSyncedAt().then((lastSyncedAt?: Date) => {
-      if (lastSyncedAt) setPageLoadSync(false);
-    });
-  }, []);
-
   // Sync when logged in
   // biome-ignore lint/correctness/useExhaustiveDependencies(doSync): suppress dependency
   useEffect(() => {
-    if (isLoggedIn) {
-      setPageLoadSync(true);
+    if (!isLoggedIn) return;
+
+    sync.getLastSyncedAt().then((lastSyncedAt?: Date) => {
+      setPageLoadSync(!lastSyncedAt);
       doSync();
-    }
+    });
   }, [isLoggedIn]);
 
   return (
     <LibraryContext.Provider value={{ syncing, lastSynced, syncError, doSync }}>
-      {pageLoadSync ? <Loading /> : children}
+      {isLoggedIn && pageLoadSync ? <Loading /> : children}
     </LibraryContext.Provider>
   );
 }
