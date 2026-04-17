@@ -1,9 +1,9 @@
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { Marquee } from "../components/Marquee";
-import { useAlbumQuery } from "../hooks/useAlbumQuery";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
 import i18next from "../i18next";
+import { useAlbum } from "../library";
 import { formatDuration } from "../utils/formatDuration";
 import {
   resetAccentColor,
@@ -30,9 +30,7 @@ export function NowPlaying() {
     return unsubscribe;
   }, [addTimeObserver]);
 
-  const { data: currentAlbum } = useAlbumQuery({
-    albumId: currentTrack?.albumId,
-  });
+  const { data: currentAlbum } = useAlbum(currentTrack?.albumId);
 
   useEffect(() => {
     if (!currentAlbum) return;

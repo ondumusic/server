@@ -1,16 +1,15 @@
 import { useNavigate } from "@tanstack/react-router";
-import { type PropsWithChildren, useCallback, useMemo } from "react";
+import { type PropsWithChildren, useCallback } from "react";
 import { ArtistListItem } from "../components/ArtistListItem";
 import { Loading } from "../components/Loading";
 import {
   type ListItemState,
   SelectableList,
 } from "../components/SelectableList";
-import { useInfiniteArtistsQuery } from "../hooks/useInfiniteArtistsQuery";
 import { usePlayer } from "../hooks/usePlayer";
 import i18next from "../i18next";
+import { useArtists } from "../library";
 import type { Artist, UUID } from "../types";
-import { paginatedMap } from "../utils/paginatedMap";
 
 function isArtist(artist: Artist, artistId: string): boolean {
   return artist.id === artistId || artist.slug === artistId;
@@ -23,22 +22,7 @@ export function ArtistList({
 }>) {
   const navigate = useNavigate();
   const { populateUpNext, userConfirmQueueReplace } = usePlayer();
-
-  const {
-    hasItem: hasArtist,
-    isCompleted,
-    hasFirstPage,
-    data,
-  } = useInfiniteArtistsQuery({
-    matchItem: artistId
-      ? (entry: Artist) => isArtist(entry, artistId)
-      : undefined,
-  });
-
-  const listItems = useMemo(
-    () => paginatedMap<Artist, Artist>(data, (artist) => artist),
-    [data],
-  );
+  const { data: listItems, loading: isLoading } = useArtists();
 
   const onTypeMatch = useCallback((item: Artist, query: string) => {
     const matcher = new RegExp(`^${query.replace(/\s+/g, "")}`, "iu");
@@ -122,8 +106,7 @@ export function ArtistList({
     [],
   );
 
-  if ((artistId && !hasArtist && !isCompleted) || !hasFirstPage)
-    return <Loading />;
+  if (isLoading) return <Loading />;
 
   const currentArtist = artistId
     ? listItems.find((artist) => isArtist(artist, artistId))

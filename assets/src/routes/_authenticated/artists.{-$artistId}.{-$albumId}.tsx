@@ -5,7 +5,6 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { artistApi } from "../../api";
 
 import {
   ArtistAlbumListItem,
@@ -17,12 +16,11 @@ import {
   type ListItemState,
   SelectableList,
 } from "../../components/SelectableList";
-import { useInfiniteArtistAlbumsQuery } from "../../hooks/useInfiniteArtistAlbumsQuery";
 import { usePlayer } from "../../hooks/usePlayer";
 import { useQueue } from "../../hooks/useQueue";
 import i18next from "../../i18next";
+import { queryArtist, useArtistAlbums } from "../../library";
 import type { Album, Track, UUID } from "../../types";
-import { paginatedMap } from "../../utils/paginatedMap";
 import { splitTracksByDisc } from "../../utils/splitTracksByDisc";
 
 export const Route = createFileRoute(
@@ -30,7 +28,7 @@ export const Route = createFileRoute(
 )({
   async loader({ params: { artistId } }: { params: { artistId?: UUID } }) {
     if (!artistId) return;
-    return await artistApi.getArtist(artistId);
+    return await queryArtist(artistId);
   },
   component: Artists,
   notFoundComponent: () => <Navigate to="/artists" />,
@@ -72,6 +70,8 @@ function Artists() {
     populateUpNext,
     userConfirmQueueReplace,
   } = usePlayer();
+
+  // const { data: dataArtist } = useArtist(artistId);
   const dataArtist = Route.useLoaderData();
   const { currentTrack } = useQueue();
   const hasArtistId = !!artistId;
@@ -93,23 +93,7 @@ function Artists() {
     setSelectedTrackIds(new Set());
   }, [artistId, albumId]);
 
-  const {
-    isFetching,
-    hasItem: hasAlbum,
-    hasFirstPage,
-    data,
-    error,
-  } = useInfiniteArtistAlbumsQuery(
-    {
-      artistId: dataArtist?.id,
-    },
-    {
-      enabled: !!dataArtist?.id,
-      matchItem: albumId
-        ? (entry: Album) => isAlbum(entry, albumId)
-        : undefined,
-    },
-  );
+  const { data, error, loading: isFetching } = useArtistAlbums(dataArtist?.id);
 
   const listItems: ListItem[] = useMemo(() => {
     if (!dataArtist || !data) return [];
@@ -117,11 +101,11 @@ function Artists() {
     return [
       {
         id: "artistHeader",
-        type: "artist",
+        type: "artist" as const,
         selectable: false,
         artist: dataArtist,
       },
-      ...paginatedMap<Album, ListItem>(data, (album, albumIndex) => {
+      ...data.flatMap((album, albumIndex) => {
         const tracksPerDisc = splitTracksByDisc(album.tracks);
 
         // Only show disc number headers if there is more than one.
@@ -135,7 +119,7 @@ function Artists() {
         return [
           {
             id: album.id,
-            type: "album",
+            type: "album" as const,
             selectable: false,
             album,
             firstAlbumInList: albumIndex === 0,
@@ -149,7 +133,7 @@ function Artists() {
                 return [
                   {
                     id: track.id,
-                    type: "track",
+                    type: "track" as const,
                     track,
                     showTrackArtist,
                     lastTrackOnDisc: trackIndex === trackCount - 1,
@@ -165,14 +149,14 @@ function Artists() {
               tracks.push({
                 id: `${album.id}-placeholder-track-${i}`,
                 selectable: false,
-                type: "placeholder",
+                type: "placeholder" as const,
               });
             }
 
             if (showDiscNumbers) {
               tracks.unshift({
                 id: `${album.id}-disc-${disc.number}`,
-                type: "disc",
+                type: "disc" as const,
                 selectable: false,
                 disc,
               });
@@ -182,7 +166,7 @@ function Artists() {
                 tracks.unshift({
                   id: `${album.id}-placeholder-disc-${disc.number}`,
                   selectable: false,
-                  type: "placeholder",
+                  type: "placeholder" as const,
                 });
               }
             }
@@ -199,7 +183,7 @@ function Artists() {
       if (item.type !== "album") return;
       if (!(await userConfirmQueueReplace())) return;
 
-      const albumTracks = paginatedMap<Album, Track>(data, (album) => {
+      const albumTracks = data.flatMap((album) => {
         if (album.id !== item.album.id) return [];
         return album.tracks;
       });
@@ -218,7 +202,7 @@ function Artists() {
 
         // The default behaviour we want is to add all tracks from the same
         // album to the queue and start playback at the selected track.
-        const albumTracks = paginatedMap<Album, Track>(data, (album) => {
+        const albumTracks = data.flatMap((album) => {
           if (album.id !== selectedTrack.albumId) return [];
           return album.tracks;
         });
@@ -238,7 +222,7 @@ function Artists() {
 
       // The default behaviour we want is to add all tracks from the same
       // album to the queue and start playback at the selected track.
-      const albumTracks = paginatedMap<Album, Track>(data, (album) => {
+      const albumTracks = data.flatMap((album) => {
         if (album.id !== item.track.albumId) return [];
         return album.tracks;
       });
@@ -354,8 +338,7 @@ function Artists() {
       />
     );
 
-  if (isFetching && ((albumId && !hasAlbum) || !hasFirstPage))
-    return <Loading />;
+  if (isFetching) return <Loading />;
   if (error) throw error;
   if (!dataArtist) return;
 
