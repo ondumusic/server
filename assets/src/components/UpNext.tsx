@@ -8,14 +8,14 @@ import {
   useState,
 } from "react";
 import { Trans } from "react-i18next";
-import { trackApi } from "../api";
 import {
   type ListItem,
   type ListItemState,
   SelectableList,
 } from "../components/SelectableList";
 import { useQueue } from "../hooks/useQueue";
-import type { Track, UUID } from "../types";
+import { queryTracksByIds } from "../library";
+import type { Track } from "../types";
 import { classNames } from "../utils/classNames";
 import { formatDuration } from "../utils/formatDuration";
 
@@ -108,11 +108,7 @@ export function UpNext({
           e.dataTransfer.getData("application/json"),
         );
 
-        Promise.all(
-          Array.from(itemIds).flatMap((itemId) =>
-            trackApi.getTrack(itemId as UUID),
-          ),
-        ).then(addQueueAfter);
+        queryTracksByIds(Array.from(itemIds)).then(addQueueAfter);
       } catch (_error) {
         return;
       }
@@ -161,11 +157,7 @@ export function UpNext({
           currentTrackIndex + 1 + insertAtIndex,
         );
       } else {
-        Promise.all(
-          Array.from(itemIds).flatMap((itemId) =>
-            trackApi.getTrack(itemId as UUID),
-          ),
-        ).then((newTracks) => {
+        queryTracksByIds(Array.from(itemIds)).then((newTracks) => {
           // The visible Up Next is not the full queue so the indexes
           // don't match, luckily we can fix that problem using the
           // currentTrackIndex + 1 and voila.

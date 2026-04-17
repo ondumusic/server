@@ -119,3 +119,7 @@ export const queryTracks = (filters: TrackFilters) => {
 export function useTracks(filters: TrackFilters) {
   return useStoreQuery<Track>("tracks", () => queryTracks(filters), [filters]);
 }
+
+export const queryTracksByIds = (trackIds: UUID[]) => {
+  return repo.getMany<Track>("tracks", trackIds);
+};
