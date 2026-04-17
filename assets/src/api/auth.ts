@@ -1,6 +1,5 @@
 import type { User } from "../types";
 import { client, type RequestOptions } from "./client";
-import { queryClient } from "./queryClient";
 
 type LoginResult =
   | {
@@ -101,13 +100,11 @@ export const authApi = {
     );
   },
 
-  getCurrentUser() {
-    return queryClient.ensureQueryData<User>(authQueries.getCurrentUser());
+  getCurrentUser(opts?: RequestOptions) {
+    return client.get<undefined, User>(`/auth/me`, opts);
   },
 
-  getPlayToken() {
-    return queryClient.ensureQueryData<PlayTokenResult>(
-      authQueries.getPlayToken(),
-    );
+  getPlayToken(opts?: RequestOptions) {
+    return client.get<undefined, PlayTokenResult>(`/auth/playtoken`, opts);
   },
 };

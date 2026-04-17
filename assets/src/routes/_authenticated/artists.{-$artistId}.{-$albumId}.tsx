@@ -113,7 +113,7 @@ function Artists() {
 
         // Only show track artists if there is more than one.
         const showTrackArtist =
-          new Set(album.tracks.map((track) => track.artist.id)).size > 1;
+          new Set(album.tracks.map((track) => track.artistId)).size > 1;
 
         // Return album item and iterate over tracks
         return [

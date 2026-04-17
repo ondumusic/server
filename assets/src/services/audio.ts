@@ -1,3 +1,4 @@
+import { authApi } from "../api";
 import type { Track, UUID } from "../types";
 
 // TODO: Maybe make this configurable for user? Per album/track?
@@ -25,12 +26,16 @@ export class AudioService {
   #currentTrack?: AudioTrack;
   #preloadedTrack?: AudioTrack;
   #playToken?: string;
+  #playTokenFetchedAt?: Date;
+  #playTokenMaxAge: number = 1800 * 1000;
   #endedTimer?: ReturnType<typeof setTimeout>;
   #fadeHandler?: () => void;
   #isFading: boolean = false;
   #wakeLock?: WakeLockSentinel;
 
   constructor() {
+    this.#refreshPlayToken();
+
     document.addEventListener("visibilitychange", () => {
       if (this.isPlaying && !this.#wakeLock) {
         this.#requestWakeLock();
@@ -66,11 +71,9 @@ export class AudioService {
     };
   }
 
-  setPlayToken(playToken: string) {
-    this.#playToken = playToken;
-  }
+  async play(audioTrack: AudioTrack) {
+    await this.#refreshPlayToken();
 
-  play(audioTrack: AudioTrack) {
     this.#log("play", audioTrack.id);
 
     const isCurrentTrack =
@@ -455,6 +458,26 @@ export class AudioService {
     } catch (err) {
       this.#log("failed to acquire wake lock", err);
     }
+  }
+
+  async #refreshPlayToken() {
+    let needsRefresh = !this.#playToken;
+    if (!needsRefresh && this.#playTokenFetchedAt) {
+      needsRefresh =
+        Date.now() - this.#playTokenFetchedAt.getTime() > this.#playTokenMaxAge;
+    }
+
+    if (needsRefresh) {
+      const response = await authApi.getPlayToken();
+      if (response.ok) {
+        this.#playToken = response.playToken;
+        this.#playTokenFetchedAt = new Date();
+      } else {
+        this.#playToken = undefined;
+      }
+    }
+
+    return this.#playToken;
   }
 
   #log(...args: unknown[]): void {

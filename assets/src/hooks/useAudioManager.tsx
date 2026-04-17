@@ -8,7 +8,6 @@ import {
 } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { type Observer, useObserver } from "../hooks/useObserver";
-import { usePlayTokenQuery } from "../hooks/usePlayTokenQuery";
 import { useQueue } from "../hooks/useQueue";
 import { AudioService } from "../services/audio";
 
@@ -56,26 +55,17 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
     hasNextTrack,
     getNextTrack,
   } = useQueue();
-  const { playToken } = usePlayTokenQuery({ enabled: isLoggedIn });
 
   // Manage the AudioService (only execute on first render/mount)
-  // biome-ignore lint/correctness/useExhaustiveDependencies(playToken): suppress dependency playToken
   useEffect(() => {
+    if (!isLoggedIn) return;
     audioService.current = new AudioService();
-    if (playToken) audioService.current.setPlayToken(playToken);
 
     return () => {
       if (!audioService.current) return;
       audioService.current.destroy();
     };
-  }, []);
-
-  // Make sure the PlayToken is up to date
-  useEffect(() => {
-    if (!audioService.current) return;
-    if (!playToken) return;
-    audioService.current.setPlayToken(playToken);
-  }, [playToken]);
+  }, [isLoggedIn]);
 
   // Subscribe to Audio Service Events
   useEffect(() => {
@@ -139,7 +129,6 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
   }, [hasNextTrack, getNextTrack, currentTrackIndex, addTimeObserver]);
 
   // Reset when track changes
-  // We don't want to track when playToken changes because that would interrupt playback
   // biome-ignore lint/correctness/useExhaustiveDependencies(setIsPlaying): suppress dependency setIsPlaying
   // biome-ignore lint/correctness/useExhaustiveDependencies(emitTimeUpdate): suppress dependency emitTimeUpdate
   useEffect(() => {
