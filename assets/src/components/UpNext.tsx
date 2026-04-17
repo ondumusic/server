@@ -200,7 +200,7 @@ export function UpNext({
               state.isSelected ? "text-white" : "text-accent-400",
             ])}
           >
-            {item.track.artist.name}
+            {item.track.artistName}
           </span>
         </div>
         <div className="tabular-nums">

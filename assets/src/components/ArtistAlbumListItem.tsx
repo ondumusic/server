@@ -217,9 +217,9 @@ export const ArtistAlbumListItem = memo(
                       "w-full line-clamp-1",
                       !isSelected && "text-stone-400",
                     ])}
-                    title={item.track.artist.name}
+                    title={item.track.artistName}
                   >
-                    {item.track.artist.name}
+                    {item.track.artistName}
                   </div>
                 )}
               </div>
