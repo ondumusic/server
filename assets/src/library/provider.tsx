@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { Loading } from "../components/Loading";
+import { useAuth } from "../hooks/useAuth";
 
 import { sync } from "./sync";
 
@@ -32,13 +33,15 @@ export function LibraryProvider({
 }: PropsWithChildren<{
   pollInterval?: number;
 }>) {
-  const [pageLoadSync, setPageLoadSync] = useState(true);
+  const { isLoggedIn } = useAuth();
+  const [pageLoadSync, setPageLoadSync] = useState(isLoggedIn);
   const [syncing, setSyncing] = useState(true);
   const [lastSynced, setLastSynced] = useState<Date | undefined>(undefined);
   const [syncError, setSyncError] = useState<unknown | undefined>(undefined);
   const syncLock = useRef(false);
 
   const doSync = useCallback(async () => {
+    if (!isLoggedIn) return;
     if (syncLock.current || !navigator.onLine) return;
     syncLock.current = true;
     setSyncing(true);
@@ -55,7 +58,7 @@ export function LibraryProvider({
       setPageLoadSync(false);
       syncLock.current = false;
     }
-  }, []);
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const onVisible = () => {
@@ -76,11 +79,21 @@ export function LibraryProvider({
     return () => clearInterval(id);
   }, [doSync, pollInterval]);
 
-  // Sync on component mount
+  // Check sync status on component mount
+  useEffect(() => {
+    sync.getLastSyncedAt().then((lastSyncedAt?: Date) => {
+      if (lastSyncedAt) setPageLoadSync(false);
+    });
+  }, []);
+
+  // Sync when logged in
   // biome-ignore lint/correctness/useExhaustiveDependencies(doSync): suppress dependency
   useEffect(() => {
-    doSync();
-  }, []);
+    if (isLoggedIn) {
+      setPageLoadSync(true);
+      doSync();
+    }
+  }, [isLoggedIn]);
 
   return (
     <LibraryContext.Provider value={{ syncing, lastSynced, syncError, doSync }}>

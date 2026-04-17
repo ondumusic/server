@@ -4,9 +4,9 @@ import { notifyChanges } from "./events";
 import { repo } from "./repo";
 import { transforms } from "./transforms";
 
-interface SyncMeta {
+interface SyncMeta<T> {
   key: string;
-  value: string;
+  value: T;
 }
 
 interface SyncDeletion {
@@ -36,6 +36,7 @@ class SyncClient {
 
     try {
       await this.#fetch(cursor);
+      this.#setLastSyncedAt(new Date());
     } finally {
       this.#syncing = false;
     }
@@ -112,8 +113,20 @@ class SyncClient {
     }
   }
 
+  async getLastSyncedAt() {
+    const meta = await repo.get<SyncMeta<Date>>("meta", "sync-lastSyncedAt");
+    return meta?.value;
+  }
+
+  async #setLastSyncedAt(lastSyncedAt: Date) {
+    return await repo.put("meta", {
+      key: "sync-lastSyncedAt",
+      value: lastSyncedAt,
+    });
+  }
+
   async #getCursor() {
-    const meta = await repo.get<SyncMeta>("meta", "sync-cursor");
+    const meta = await repo.get<SyncMeta<string>>("meta", "sync-cursor");
     return meta?.value;
   }
 
