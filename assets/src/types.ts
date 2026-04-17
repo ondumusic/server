@@ -2,6 +2,9 @@ export type UUID = string;
 
 export type OnboardingStep = "user" | "settings" | null;
 
+type One<E> = { entity: E; cardinality: "one" };
+type Many<E> = { entity: E; cardinality: "many" };
+
 export interface RouteContext {
   auth: {
     isLoggedIn: boolean;
@@ -52,6 +55,10 @@ export namespace Album {
     by_slug: string;
     by_artistId: string;
   };
+  export type Joins = {
+    artist: One<Artist>;
+    tracks: Many<Track>;
+  };
 }
 
 export interface Track {
@@ -80,6 +87,9 @@ export namespace Track {
     by_albumId: UUID;
     by_albumArtistId: UUID;
   };
+  export type Joins = {
+    albumId: One<Album>;
+  };
 }
 
 export interface Disc {
@@ -101,3 +111,17 @@ export interface User {
   id: UUID;
   username: string;
 }
+
+export type IndexesOf<T> = T extends Artist
+  ? Artist.Indexes
+  : T extends Album
+    ? Album.Indexes
+    : T extends Track
+      ? Track.Indexes
+      : never;
+
+export type JoinsOf<T> = T extends Album
+  ? Album.Joins
+  : T extends Track
+    ? Track.Joins
+    : never;

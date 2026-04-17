@@ -1,12 +1,12 @@
 import type { UUID } from "../types";
+import { executeJoins } from "./repo/joinHelpers";
 import {
   applyOp,
-  compare,
   opToRange,
   type Query,
   type QueryOperation,
-  type SortField,
-} from "./queryHelpers";
+} from "./repo/queryHelpers";
+import { executeSort } from "./repo/sortHelpers";
 
 type Migrations = {
   [version: number]: (db: IDBDatabase, tx: IDBTransaction | null) => void;
@@ -84,9 +84,9 @@ export class Repo {
     return this.#result<T[]>(target.getAll(query));
   }
 
-  async query<T, I>(
+  async query<T>(
     store: string,
-    { whereIndex, having, sortBy, sortDir = "asc" }: Query<T, I>,
+    { whereIndex, having, join, sortBy, sortDir = "asc" }: Query<T>,
   ): Promise<T[]> {
     const db = await this.instance;
     const tx = db.transaction(store, "readonly");
@@ -126,43 +126,16 @@ export class Repo {
 
         // Sort in JS if we want anything other than default behaviour.
         if (sortBy) {
-          // Normalize to an array of entries.
-          // A tuple like ["year", "desc"] is itself an array, so we detect it
-          // by checking if the second element is a direction string.
-          const isSingleTuple =
-            Array.isArray(sortBy) &&
-            sortBy.length === 2 &&
-            (sortBy[1] === "asc" || sortBy[1] === "desc");
-
-          const entries: SortField<T>[] =
-            typeof sortBy === "string"
-              ? [sortBy]
-              : isSingleTuple
-                ? [sortBy as SortField<T>]
-                : (sortBy as SortField<T>[]);
-
-          const compareFns = entries.map((entry) => {
-            const [field, dir] = Array.isArray(entry)
-              ? entry
-              : [entry, sortDir];
-            const mult = dir === "desc" ? -1 : 1;
-            return (a: T, b: T) =>
-              compare(
-                (a as Record<string, unknown>)[field],
-                (b as Record<string, unknown>)[field],
-              ) * mult;
-          });
-
-          results.sort((a, b) => {
-            for (const fn of compareFns) {
-              const r = fn(a, b);
-              if (r !== 0) return r;
-            }
-            return 0;
-          });
+          executeSort(results, sortBy, sortDir);
         }
 
-        resolve(results);
+        // If there are no joins we are done.
+        if (!join) {
+          return resolve(results);
+        }
+
+        // Execute the joins
+        executeJoins(this, results, join).then(resolve).catch(reject);
       };
       req.onerror = () => reject(req.error);
     });

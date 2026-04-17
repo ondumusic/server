@@ -2,10 +2,11 @@ import type { Album, Artist, Track, UUID } from "../types";
 import { isUUID } from "../utils/isUUID";
 import { useStoreQuery, useStoreRecord } from "./hooks";
 import { repo } from "./repo";
+import type { JoinQuery } from "./repo/queryHelpers";
 
 // List Artists
 export const queryArtists = () =>
-  repo.query<Artist, Artist.Indexes>("artists", {
+  repo.query<Artist>("artists", {
     whereIndex: ["filter_albumCount", ">", 0],
     sortDir: "asc",
     sortBy: "sortName",
@@ -17,35 +18,26 @@ export function useArtists() {
 
 // List Artist Albums
 export const queryArtistAlbums = async (artistId: UUID) => {
-  const albums = await repo.query<Album, Album.Indexes>("albums", {
+  return await repo.query<Album>("albums", {
     whereIndex: ["by_artistId", "=", artistId],
     sortDir: "desc",
     sortBy: "releaseYear",
-  });
-
-  const albumIds = new Set(albums.map((a) => a.id));
-  const tracks = await repo.query<Track, Track.Indexes>("tracks", {
-    whereIndex: ["by_albumArtistId", "=", artistId],
-    having: {
-      albumId: (albumId: UUID) => albumIds.has(albumId),
+    join: {
+      tracks: (albumIds: Set<UUID>): JoinQuery<Track> => ({
+        store: "tracks",
+        foreignKey: "albumId",
+        cardinality: "many",
+        whereIndex: ["by_albumArtistId", "=", artistId],
+        having: {
+          albumId: (albumId: UUID) => albumIds.has(albumId),
+        },
+        sortBy: [
+          ["disc", "asc"],
+          ["number", "asc"],
+        ],
+      }),
     },
-    sortBy: [
-      ["disc", "asc"],
-      ["number", "asc"],
-    ],
   });
-
-  const tracksByAlbumId = new Map<string, Track[]>();
-  for (const track of tracks) {
-    const arr = tracksByAlbumId.get(track.albumId) ?? [];
-    arr.push(track);
-    tracksByAlbumId.set(track.albumId, arr);
-  }
-
-  return albums.map((album) => ({
-    ...album,
-    tracks: tracksByAlbumId.get(album.id) ?? [],
-  }));
 };
 
 export function useArtistAlbums(artistId: UUID | undefined) {

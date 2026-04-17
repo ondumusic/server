@@ -1,6 +1,9 @@
+import type { IndexesOf, JoinsOf, UUID } from "../../types";
+
 type SingleValueOp = "=" | "!=" | ">" | ">=" | "<" | "<=";
 type RangeOp = "between" | "betweenExclusive";
 export type QueryOperation = SingleValueOp | RangeOp;
+export type EntityOf<J> = J extends { entity: infer E } ? E : never;
 
 type QueryCondition<T> = {
   [K in keyof T & string]:
@@ -12,30 +15,32 @@ export type SortField<T> =
   | (keyof T & string)
   | [keyof T & string, "asc" | "desc"];
 
-export type Query<T, I> = {
-  whereIndex?: QueryCondition<I>;
+export type Query<T> = {
+  whereIndex?: QueryCondition<IndexesOf<T>>;
   having?: {
     [K in keyof T]?:
       | [op: SingleValueOp, value: T[K]]
       | [op: RangeOp, lower: T[K], upper: T[K]]
       | ((value: T[K]) => boolean);
   };
+  join?: {
+    // Only keys of T that appear in T's Joins map are joinable.
+    // The callback returns a Query of the joined entity.
+    [K in keyof JoinsOf<T>]?: (
+      ids: Set<UUID>,
+    ) => JoinQuery<EntityOf<JoinsOf<T>[K]>>;
+  };
   sortBy?: SortField<T> | SortField<T>[];
   sortDir?: "asc" | "desc";
 };
 
-export type Comparable = number | string | Date;
+export type JoinQuery<T> = Query<T> & {
+  store: string;
+  cardinality: "one" | "many";
+  foreignKey: keyof T & string;
+};
 
-export function compare(a: unknown, b: unknown): number {
-  if (a == null && b == null) return 0;
-  if (a == null) return 1;
-  if (b == null) return -1;
-  const x = a as Comparable;
-  const y = b as Comparable;
-  if (x < y) return -1;
-  if (x > y) return 1;
-  return 0;
-}
+export type Comparable = number | string | Date;
 
 export const opToRange = (op: QueryOperation, ...args: unknown[]) => {
   switch (op) {
