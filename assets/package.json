@@ -41,7 +41,6 @@
     "vitest": "^4.1.2"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.96.2",
     "@tanstack/react-router": "^1.168.10",
     "@tanstack/router-cli": "1.166.6",
     "@tanstack/router-plugin": "^1.167.12",

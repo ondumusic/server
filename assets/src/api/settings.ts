@@ -21,8 +21,6 @@ type SettingsResult =
       ok: true;
     };
 
-export const settingQueries = {};
-
 export const settingApi = {
   updateSettings(settings: Settings, opts?: RequestOptions) {
     return client.post<Settings, SettingsResult>("/settings", settings, opts);

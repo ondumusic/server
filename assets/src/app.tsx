@@ -1,9 +1,7 @@
 import "./app.css";
 
-import { QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { queryClient } from "./api";
 import { Loading } from "./components/Loading";
 import { AudioManagerProvider } from "./hooks/useAudioManager";
 import { AuthProvider } from "./hooks/useAuth";
@@ -35,23 +33,21 @@ if (appRoot) {
       <Suspense fallback={<Loading />}>
         <AuthProvider>
           <LibraryProvider>
-            <QueryClientProvider client={queryClient}>
-              <PhoenixSocketProvider>
-                <DialogProvider>
-                  <QueueProvider>
-                    <AudioManagerProvider>
-                      <PlayerProvider>
-                        <MediaSessionProvider>
-                          <ContextMenuProvider>
-                            <Router />
-                          </ContextMenuProvider>
-                        </MediaSessionProvider>
-                      </PlayerProvider>
-                    </AudioManagerProvider>
-                  </QueueProvider>
-                </DialogProvider>
-              </PhoenixSocketProvider>
-            </QueryClientProvider>
+            <PhoenixSocketProvider>
+              <DialogProvider>
+                <QueueProvider>
+                  <AudioManagerProvider>
+                    <PlayerProvider>
+                      <MediaSessionProvider>
+                        <ContextMenuProvider>
+                          <Router />
+                        </ContextMenuProvider>
+                      </MediaSessionProvider>
+                    </PlayerProvider>
+                  </AudioManagerProvider>
+                </QueueProvider>
+              </DialogProvider>
+            </PhoenixSocketProvider>
           </LibraryProvider>
         </AuthProvider>
       </Suspense>

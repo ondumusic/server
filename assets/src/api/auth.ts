@@ -40,24 +40,6 @@ type PlayTokenResult =
       playToken: string;
     };
 
-export const authQueries = {
-  getCurrentUser() {
-    return {
-      queryKey: ["currentUser"],
-      queryFn: ({ signal }: { signal?: AbortSignal }) =>
-        client.get<undefined, User>(`/auth/me`, { signal }),
-    };
-  },
-
-  getPlayToken() {
-    return {
-      queryKey: ["playToken"],
-      queryFn: ({ signal }: { signal?: AbortSignal }) =>
-        client.get<undefined, PlayTokenResult>(`/auth/playtoken`, { signal }),
-    };
-  },
-};
-
 export const authApi = {
   login(username?: string, password?: string, opts?: RequestOptions) {
     return client.post<
