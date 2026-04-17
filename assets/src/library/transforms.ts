@@ -69,12 +69,15 @@ export const transforms = {
 
         artistId: track.artistId,
         artistName: artist?.name,
+        artistSortName: artist?.sortName,
 
         albumId: track.albumId,
         albumName: album?.name,
+        albumReleaseYear: album?.releaseYear,
 
         albumArtistId: track.albumArtistId,
         albumArtistName: album?.artistName,
+        albumArtistSortName: album?.artistSortName,
 
         // TMP VALUES:
         __type: "track" as const,

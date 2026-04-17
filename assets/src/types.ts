@@ -76,8 +76,11 @@ export interface Track {
   streamUrl: string;
 
   artistName?: string;
+  artistSortName?: string;
   albumName?: string;
   albumArtistName?: string;
+  albumArtistSortName?: string;
+  albumReleaseYear?: number;
   insertedAt?: Date | string | number;
 }
 

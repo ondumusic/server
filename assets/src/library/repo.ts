@@ -242,6 +242,9 @@ export const repo = new Repo("musicbox", {
     tracks.createIndex("by_artistId", "artistId", { unique: false });
     tracks.createIndex("by_albumId", "albumId", { unique: false });
     tracks.createIndex("by_albumArtistId", "albumArtistId", { unique: false });
+    tracks.createIndex("by_albumReleaseYear", "albumReleaseYear", {
+      unique: false,
+    });
 
     const artists = db.createObjectStore("artists", { keyPath: "id" });
     artists.createIndex("by_slug", "slug", { unique: true });
