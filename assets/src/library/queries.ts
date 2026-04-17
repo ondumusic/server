@@ -86,10 +86,14 @@ interface TrackFilters {
 
 export const queryTracks = (filters: TrackFilters) => {
   let query: Query<Track> = {
-    sortBy: [
-      ["disc", "asc"],
-      ["number", "asc"],
-    ],
+    sortBy:
+      filters.random === true
+        ? "random"
+        : [
+            ["albumReleaseYear", "desc"],
+            ["disc", "asc"],
+            ["number", "asc"],
+          ],
   };
 
   if (filters.artistId && filters.albumId) {

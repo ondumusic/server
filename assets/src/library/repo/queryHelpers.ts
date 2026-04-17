@@ -13,7 +13,8 @@ type QueryCondition<T> = {
 
 export type SortField<T> =
   | (keyof T & string)
-  | [keyof T & string, "asc" | "desc"];
+  | [keyof T & string, "asc" | "desc"]
+  | "random";
 
 export type Query<T> = {
   whereIndex?: QueryCondition<IndexesOf<T>>;

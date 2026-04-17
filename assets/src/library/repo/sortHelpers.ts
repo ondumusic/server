@@ -1,3 +1,4 @@
+import { shuffle } from "../../utils/shuffle";
 import type { Comparable, SortField } from "./queryHelpers";
 
 function compare(a: unknown, b: unknown): number {
@@ -31,7 +32,17 @@ export const executeSort = <T>(
         ? [sortBy as SortField<T>]
         : (sortBy as SortField<T>[]);
 
-  const compareFns = entries.map((entry) => {
+  // If random is anywhere in the sort order, shuffle first.
+  // Stable sort then preserves random order within ties of later keys.
+  const randomIdx = entries.indexOf("random");
+  if (randomIdx !== -1) {
+    shuffle(results);
+  }
+
+  // Only field-based entries need comparators; "random" is handled by the shuffle above.
+  const fieldEntries = entries.filter((e) => e !== "random");
+
+  const compareFns = fieldEntries.map((entry) => {
     const [field, dir] = Array.isArray(entry) ? entry : [entry, sortDir];
     const mult = dir === "desc" ? -1 : 1;
     return (a: T, b: T) =>
@@ -40,6 +51,8 @@ export const executeSort = <T>(
         (b as Record<string, unknown>)[field],
       ) * mult;
   });
+
+  if (compareFns.length === 0) return; // pure shuffle, done
 
   results.sort((a, b) => {
     for (const fn of compareFns) {
