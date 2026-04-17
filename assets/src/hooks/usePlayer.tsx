@@ -4,13 +4,12 @@ import {
   useCallback,
   useContext,
 } from "react";
-import { trackApi } from "../api";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useDialog } from "../hooks/useDialog";
 import { useQueue } from "../hooks/useQueue";
 import i18next from "../i18next";
+import { queryTracks } from "../library";
 import type { Track, UUID } from "../types";
-import { batch } from "../utils/batch";
 
 interface PopulateInput {
   artistId?: UUID;
@@ -62,24 +61,10 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
 
   const populateUpNext = useCallback(
     async ({ artistId, albumId, random = false }: PopulateInput) => {
-      let firstTracks = true;
-      for await (const tracks of batch<Track>(
-        trackApi.paginateTracks({
-          artistId,
-          albumId,
-          sortBy: random === true ? "random" : "default",
-        }),
-        10,
-      )) {
-        if (firstTracks) {
-          replaceQueue(tracks);
-          firstTracks = false;
-        } else {
-          enqueueAfter(tracks);
-        }
-      }
+      const tracks = await queryTracks({ artistId, albumId, random });
+      replaceQueue(tracks);
     },
-    [replaceQueue, enqueueAfter],
+    [replaceQueue],
   );
 
   const value = {

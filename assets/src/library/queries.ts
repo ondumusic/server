@@ -2,7 +2,7 @@ import type { Album, Artist, Track, UUID } from "../types";
 import { isUUID } from "../utils/isUUID";
 import { useStoreQuery, useStoreRecord } from "./hooks";
 import { repo } from "./repo";
-import type { JoinQuery } from "./repo/queryHelpers";
+import type { JoinQuery, Query } from "./repo/queryHelpers";
 
 // List Artists
 export const queryArtists = () =>
@@ -75,4 +75,43 @@ export function useAlbum(albumId: UUID | undefined) {
       enabled: !!albumId,
     },
   );
+}
+
+// List Tracks
+interface TrackFilters {
+  artistId?: UUID;
+  albumId?: UUID;
+  random?: boolean;
+}
+
+export const queryTracks = (filters: TrackFilters) => {
+  let query: Query<Track> = {
+    sortBy: [
+      ["disc", "asc"],
+      ["number", "asc"],
+    ],
+  };
+
+  if (filters.artistId && filters.albumId) {
+    query = {
+      ...query,
+      whereIndex: ["by_albumArtistId", "=", filters.artistId],
+      having: {
+        albumId: ["=", filters.albumId],
+      },
+    };
+  } else if (filters.artistId) {
+    query = {
+      ...query,
+      whereIndex: ["by_albumArtistId", "=", filters.artistId],
+    };
+  } else if (filters.albumId) {
+    query = { ...query, whereIndex: ["by_albumId", "=", filters.albumId] };
+  }
+
+  return repo.query<Track>("tracks", query);
+};
+
+export function useTracks(filters: TrackFilters) {
+  return useStoreQuery<Track>("tracks", () => queryTracks(filters), [filters]);
 }
