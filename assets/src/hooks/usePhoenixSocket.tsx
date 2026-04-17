@@ -7,9 +7,9 @@ import {
   useRef,
 } from "react";
 import { useAuth } from "../hooks/useAuth";
+import { sync } from "../library/sync";
 import { auth } from "../services/auth";
 import type { Album } from "../types";
-import { updateCache } from "../utils/updateCache";
 
 export type OnInitialDataCallback = () => void;
 
@@ -55,31 +55,12 @@ export const PhoenixSocketProvider = ({ children }: PropsWithChildren) => {
         dataCallback.current = null;
       }
 
-      // For artists we can look at all cached queries
-      if (data.artists) {
-        for (const artist of data.artists) {
-          updateCache({ queryKey: ["artist", artist.id] }, [artist]);
-
-          updateCache({ queryKey: ["artists"], exact: true }, [artist]);
-        }
-      }
-
-      // For albums we want to make sure they are updated for the correct artist
-      if (data.albums) {
-        const groupedAlbums = Object.groupBy(
-          data.albums,
-          (album: Album) => album.artistId,
-        );
-
-        for (const artistId in groupedAlbums) {
-          if (!artistId) continue;
-
-          updateCache(
-            { queryKey: ["albums", artistId], exact: true },
-            groupedAlbums[artistId] as Album[],
-          );
-        }
-      }
+      // Update the library
+      sync.pushChanges({
+        artists: data.artists,
+        albums: data.albums,
+        tracks: data.albums.flatMap((album: Album) => album.tracks),
+      });
     });
   }, [isLoggedIn]);
 
