@@ -94,9 +94,9 @@ class SyncClient {
 
     // Fetch next page unless completed.
     if (result.complete) {
-      this.#setCursor(result.cursor);
+      await this.#setCursor(result.cursor);
     } else {
-      this.#fetch(result.cursor);
+      await this.#fetch(result.cursor);
     }
   }
 
@@ -118,7 +118,7 @@ class SyncClient {
   }
 
   async #setCursor(cursor: string) {
-    await repo.put("meta", { key: "sync-cursor", value: cursor });
+    return await repo.put("meta", { key: "sync-cursor", value: cursor });
   }
 }
 
