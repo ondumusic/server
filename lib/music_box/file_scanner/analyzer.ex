@@ -17,7 +17,7 @@ defmodule MusicBox.FileScanner.Analyzer do
       :release_year,
       :compilation,
       :duration,
-      :bit_rate,
+      :bitrate,
       :sample_rate,
       :audio_channels,
       disc: 1,
@@ -74,17 +74,17 @@ defmodule MusicBox.FileScanner.Analyzer do
       |> Map.get("streams", [])
       |> Enum.find(&(Map.get(&1, "codec_type") == "audio"))
 
-    bit_rate =
+    bitrate =
       cond do
-        value = get_field(stream, "bit_rate") -> Utils.to_integer(value)
+        value = get_field(stream, "bitrate") -> Utils.to_integer(value)
         value = get_tag(json, "BPS") -> Utils.to_integer(value)
-        value = get_in(json, ["format", "bit_rate"]) -> Utils.to_integer(value)
+        value = get_in(json, ["format", "bitrate"]) -> Utils.to_integer(value)
         true -> nil
       end
 
     %{
       metadata
-      | bit_rate: bit_rate,
+      | bitrate: bitrate,
         sample_rate: stream |> get_field("sample_rate") |> Utils.to_integer(),
         audio_channels: stream |> get_field("channels") |> Utils.to_integer()
     }

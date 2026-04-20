@@ -19,7 +19,7 @@ defmodule MusicBox.Files.FileMetadata do
     field :genres, {:array, :string}
 
     # Audio stream details
-    field :bit_rate, :integer
+    field :bitrate, :integer
     field :sample_rate, :integer
     field :audio_channels, :integer
   end
@@ -38,7 +38,7 @@ defmodule MusicBox.Files.FileMetadata do
       :release_year,
       :duration,
       :genres,
-      :bit_rate,
+      :bitrate,
       :sample_rate,
       :audio_channels
     ])
