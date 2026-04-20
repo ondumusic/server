@@ -17,6 +17,9 @@ defmodule MusicBox.FileScanner.Analyzer do
       :release_year,
       :compilation,
       :duration,
+      :bit_rate,
+      :sample_rate,
+      :audio_channels,
       disc: 1,
       genres: []
     ]
@@ -59,11 +62,33 @@ defmodule MusicBox.FileScanner.Analyzer do
     with {:ok, json} <- Tool.probe(Storage.get_uri(path)) do
       metadata = %Metadata{}
       keys = Map.keys(metadata)
+
       {:ok, parse(metadata, keys, json)}
     end
   end
 
-  defp parse(%Metadata{} = metadata, [], _json), do: metadata
+  defp parse(%Metadata{} = metadata, [], json) do
+    # Finally we add the audio detalis
+    stream =
+      json
+      |> Map.get("streams", [])
+      |> Enum.find(&(Map.get(&1, "codec_type") == "audio"))
+
+    bit_rate =
+      cond do
+        value = get_field(stream, "bit_rate") -> Utils.to_integer(value)
+        value = get_tag(json, "BPS") -> Utils.to_integer(value)
+        value = get_in(json, ["format", "bit_rate"]) -> Utils.to_integer(value)
+        true -> nil
+      end
+
+    %{
+      metadata
+      | bit_rate: bit_rate,
+        sample_rate: stream |> get_field("sample_rate") |> Utils.to_integer(),
+        audio_channels: stream |> get_field("channels") |> Utils.to_integer()
+    }
+  end
 
   @simple_fields ~w(album title)a
   defp parse(%Metadata{} = metadata, [key | keys], json) when key in @simple_fields do
@@ -207,6 +232,9 @@ defmodule MusicBox.FileScanner.Analyzer do
   end
 
   defp parse(%Metadata{} = metadata, [_key | keys], json), do: parse(metadata, keys, json)
+
+  defp get_field(nil, _key), do: nil
+  defp get_field(stream, key), do: Map.get(stream, key)
 
   defp get_tag(map, tag) do
     tags = get_in(map, ["format", "tags"])

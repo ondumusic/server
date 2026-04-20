@@ -17,6 +17,11 @@ defmodule MusicBox.Files.FileMetadata do
     field :compilation, :boolean
     field :duration, :float
     field :genres, {:array, :string}
+
+    # Audio stream details
+    field :bit_rate, :integer
+    field :sample_rate, :integer
+    field :audio_channels, :integer
   end
 
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
@@ -32,7 +37,10 @@ defmodule MusicBox.Files.FileMetadata do
       :track,
       :release_year,
       :duration,
-      :genres
+      :genres,
+      :bit_rate,
+      :sample_rate,
+      :audio_channels
     ])
   end
 end

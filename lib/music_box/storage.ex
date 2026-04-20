@@ -44,8 +44,8 @@ defmodule MusicBox.Storage do
   no longer found in storage.
   Paths should be relative to Settings.music_path.
   """
-  @callback find_missing_files(paths :: [String.t()]) :: [String.t()]
-  @spec find_missing_files(paths :: [String.t()]) :: [String.t()]
+  @callback find_missing_files(paths :: [String.t()]) :: Enumerable.t(String.t())
+  @spec find_missing_files(paths :: [String.t()]) :: Enumerable.t(String.t())
   def find_missing_files(paths) do
     abs_paths = Enum.map(paths, &absolute/1)
 
