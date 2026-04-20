@@ -1,4 +1,4 @@
-import { client } from "../api";
+import { ClientError, client } from "../api";
 import type { Album, Artist, Track } from "../types";
 import { notifyChanges } from "./events";
 import { repo } from "./repo";
@@ -112,18 +112,31 @@ class SyncClient {
     this.#prewarmArtwork(albums);
   }
 
-  async #fetch(cursor?: string) {
-    const result = await client.get<undefined, SyncResponse>(`/sync`, {
-      search: cursor ? { cursor } : {},
-    });
+  async #fetch(cursor?: string, attempt: number = 1) {
+    try {
+      const result = await client.get<undefined, SyncResponse>(`/sync`, {
+        search: cursor ? { cursor } : {},
+      });
 
-    this.pushChanges(result);
+      this.pushChanges(result);
 
-    // Fetch next page unless completed.
-    if (result.complete) {
-      await this.#setCursor(result.cursor);
-    } else {
-      await this.#fetch(result.cursor);
+      // Fetch next page unless completed.
+      if (result.complete) {
+        await this.#setCursor(result.cursor);
+      } else {
+        await this.#fetch(result.cursor);
+      }
+    } catch (error) {
+      const abortedError = error instanceof ClientError && error.aborted;
+      const clientError =
+        error instanceof ClientError && (error.response?.status ?? 0) < 500;
+
+      if (!abortedError && !clientError && attempt < 5) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await this.#fetch(cursor, attempt + 1);
+      }
+
+      throw error;
     }
   }
 

@@ -52,9 +52,8 @@ export function LibraryProvider({ children }: PropsWithChildren) {
     try {
       await sync.startSync();
       setLastSynced(new Date());
-    } catch (err) {
-      console.error("Sync error:", err);
-      setSyncError(err);
+    } catch (error) {
+      setSyncError(error);
     } finally {
       setSyncing(false);
       setPageLoadSync(false);
