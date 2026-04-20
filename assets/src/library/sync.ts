@@ -23,14 +23,39 @@ interface SyncResponse {
   complete: boolean;
 }
 
+export interface SyncProgress {
+  artists: number;
+  albums: number;
+  tracks: number;
+}
+
+type SyncProgressObserver = (progress: SyncProgress) => void;
+
 class SyncClient {
   #syncing: boolean = false;
+  #progress: SyncProgress = {
+    artists: 0,
+    albums: 0,
+    tracks: 0,
+  };
+  #observers: Set<SyncProgressObserver> = new Set();
+
+  constructor() {
+    this.#resetProgress();
+  }
+
+  addObserver(observer: SyncProgressObserver): () => void {
+    this.#observers.add(observer);
+    return () => this.#observers.delete(observer);
+  }
 
   async startSync() {
     if (this.#syncing) {
       throw new Error("failed to start sync, syncing already in progress");
     }
 
+    this.#resetProgress();
+    this.#emitProgress();
     this.#syncing = true;
     const cursor = await this.#getCursor();
 
@@ -83,6 +108,7 @@ class SyncClient {
     if (deletedEntitities.get("track")?.length) changedStores.add("tracks");
     if (changedStores.size > 0) notifyChanges([...changedStores]);
 
+    this.#emitProgress();
     this.#prewarmArtwork(albums);
   }
 
@@ -132,6 +158,30 @@ class SyncClient {
 
   async #setCursor(cursor: string) {
     return await repo.put("meta", { key: "sync-cursor", value: cursor });
+  }
+
+  #resetProgress() {
+    this.#progress = {
+      artists: 0,
+      albums: 0,
+      tracks: 0
+    }
+  }
+
+  async #emitProgress() {
+    const counts = await Promise.all([
+      await repo.count("artists"),
+      await repo.count("albums"),
+      await repo.count("tracks"),
+    ]);
+
+    this.#progress.artists = counts[0];
+    this.#progress.albums = counts[1];
+    this.#progress.tracks = counts[2];
+
+    this.#observers.forEach((callback) => {
+      callback({...this.#progress});
+    });
   }
 }
 

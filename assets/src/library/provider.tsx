@@ -11,7 +11,7 @@ import {
 import { Loading } from "../components/Loading";
 import { useAuth } from "../hooks/useAuth";
 
-import { sync } from "./sync";
+import { type SyncProgress, sync } from "./sync";
 
 export interface LibraryContext {
   syncing: boolean;
@@ -38,6 +38,9 @@ export function LibraryProvider({
   const [syncing, setSyncing] = useState(true);
   const [lastSynced, setLastSynced] = useState<Date | undefined>(undefined);
   const [syncError, setSyncError] = useState<unknown | undefined>(undefined);
+  const [syncProgress, setSyncProgress] = useState<SyncProgress | undefined>(
+    undefined,
+  );
   const syncLock = useRef(false);
 
   const doSync = useCallback(async () => {
@@ -90,9 +93,21 @@ export function LibraryProvider({
     });
   }, [isLoggedIn]);
 
+  // Monitor sync progress
+  useEffect(() => {
+    const unsubscribe = sync.addObserver(setSyncProgress);
+    return unsubscribe;
+  }, []);
+
   return (
     <LibraryContext.Provider value={{ syncing, lastSynced, syncError, doSync }}>
-      {isLoggedIn && pageLoadSync ? <Loading /> : children}
+      {isLoggedIn && pageLoadSync ? (
+        <Loading>
+          <p className="text-center py-6 text-xs">{`${syncProgress?.artists ?? 0} artists, ${syncProgress?.albums ?? 0} albums, ${syncProgress?.tracks ?? 0} tracks`}</p>
+        </Loading>
+      ) : (
+        children
+      )}
     </LibraryContext.Provider>
   );
 }
