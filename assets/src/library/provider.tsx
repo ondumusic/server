@@ -14,6 +14,8 @@ import { useAuth } from "../hooks/useAuth";
 
 import { type SyncProgress, sync } from "./sync";
 
+const FIVE_MINUTES = 5 * 60 * 1000;
+
 export interface LibraryContext {
   syncing: boolean;
   lastSynced?: Date;
@@ -28,12 +30,7 @@ const LibraryContext = createContext<LibraryContext>({
   doSync: () => {},
 });
 
-export function LibraryProvider({
-  children,
-  pollInterval = undefined,
-}: PropsWithChildren<{
-  pollInterval?: number;
-}>) {
+export function LibraryProvider({ children }: PropsWithChildren) {
   const { t } = useTranslation();
   const { isLoggedIn } = useAuth();
   const [pageLoadSync, setPageLoadSync] = useState(isLoggedIn);
@@ -67,22 +64,24 @@ export function LibraryProvider({
 
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState === "visible") doSync();
+      if (document.visibilityState !== "visible") return;
+
+      if (!lastSynced || Date.now() - lastSynced.getTime() > FIVE_MINUTES) {
+        doSync();
+      }
     };
-    const onOnline = () => doSync();
+    const onOnline = () => {
+      if (!lastSynced || Date.now() - lastSynced.getTime() > FIVE_MINUTES) {
+        doSync();
+      }
+    };
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("online", onOnline);
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("online", onOnline);
     };
-  }, [doSync]);
-
-  useEffect(() => {
-    if (!pollInterval) return;
-    const id = setInterval(doSync, pollInterval);
-    return () => clearInterval(id);
-  }, [doSync, pollInterval]);
+  }, [doSync, lastSynced]);
 
   // Sync when logged in
   // biome-ignore lint/correctness/useExhaustiveDependencies(doSync): suppress dependency
