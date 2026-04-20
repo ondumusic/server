@@ -20,7 +20,7 @@ defmodule MusicBox.Sync do
       albums: get_new_entities(Album.preloaded(), cursor["albums"], limit: limit),
       tracks: get_new_entities(Track.preloaded(), cursor["tracks"], limit: limit),
       deletions:
-        get_new_entities(DeletionLog, cursor["deleted"],
+        get_new_entities(DeletionLog, cursor["deletions"],
           limit: limit,
           pk_field: :entity_id,
           date_field: :deleted_at
@@ -74,12 +74,13 @@ defmodule MusicBox.Sync do
 
     query =
       case cursor do
-        [last_date, id] ->
+        [last_date, last_id] ->
           where(
             query,
             [m],
-            field(m, ^date_field) >= ^last_date and
-              field(m, ^pk_field) != ^id
+            field(m, ^date_field) > ^last_date or
+              (field(m, ^date_field) == ^last_date and
+                 field(m, ^pk_field) > ^last_id)
           )
 
         _ ->
