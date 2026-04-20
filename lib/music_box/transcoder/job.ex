@@ -163,10 +163,11 @@ defmodule MusicBox.Transcoder.Job do
 
   defp maybe_make_gapless(%{preset: %{streamable?: false, ffmpeg_preset: :aac}} = job) do
     ffmpeg_output_file = Utils.tmp_file_path(job.file.id, job.preset)
+    sample_rate = Preset.sample_rate(job.file, job.preset)
 
     with {:ok, probe_json} <- Tool.probe(Storage.get_uri(job.file.path)),
          valid_samples when not is_nil(valid_samples) <-
-           AACGapless.source_valid_samples(probe_json, job.preset.sample_rate),
+           AACGapless.source_valid_samples(probe_json, sample_rate),
          :ok <- AACGapless.inject_smpb(ffmpeg_output_file, valid_samples),
          :ok <- AACGapless.inject_elst(ffmpeg_output_file, valid_samples) do
       Logger.debug("injected iTunSMPB into transcoded file: #{job.file.id}")

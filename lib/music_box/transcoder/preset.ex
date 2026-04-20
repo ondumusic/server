@@ -143,11 +143,38 @@ defmodule MusicBox.Transcoder.Preset do
     end
   end
 
+  @spec bitrate(file :: File.t(), preset :: t()) :: non_neg_integer()
+  def bitrate(%{metadata: %{bitrate: bitrate}}, preset) when is_integer(bitrate),
+    do: min(bitrate, preset.bitrate)
+
+  def bitrate(_file, %{bitrate: bitrate}),
+    do: bitrate
+
+  @spec sample_rate(file :: File.t(), preset :: t()) :: non_neg_integer()
+  def sample_rate(%{metadata: %{sample_rate: sample_rate}}, preset) when is_integer(sample_rate),
+    do: min(sample_rate, preset.sample_rate)
+
+  def sample_rate(_file, %{sample_rate: sample_rate}),
+    do: sample_rate
+
+  @spec audio_channels(file :: File.t(), preset :: t()) :: non_neg_integer()
+  def audio_channels(%{metadata: %{audio_channels: audio_channels}}, _preset)
+      when is_integer(audio_channels),
+      do: min(2, audio_channels)
+
+  def audio_channels(_file, _preset),
+    do: 2
+
   defp ffmpeg_shared_args(%File{} = file, %__MODULE__{ffmpeg_preset: :opus} = preset) do
+    bitrate = bitrate(file, preset)
+    audio_channels = audio_channels(file, preset)
+    # NOTE: libopus has limited options for sample rate so we just use fixed 48000
+
     ~w(
-        -c:a libopus -b:a #{preset.bitrate}k -f webm -ar #{preset.sample_rate} -vn
+        -c:a libopus -b:a #{bitrate}k -f webm -ar 48000 -vn
         -fflags +genpts+nobuffer -max_delay 0
         -avoid_negative_ts make_zero -vbr on
+        -ac #{audio_channels}
         -ss 0 -t #{file.metadata.duration}
         -cluster_time_limit 4000 -cues_to_front 1
         -y -v quiet -nostats
@@ -155,18 +182,26 @@ defmodule MusicBox.Transcoder.Preset do
       )
   end
 
-  defp ffmpeg_shared_args(%File{} = _file, %__MODULE__{ffmpeg_preset: :aac} = preset) do
+  defp ffmpeg_shared_args(%File{} = file, %__MODULE__{ffmpeg_preset: :aac} = preset) do
+    bitrate = bitrate(file, preset)
+    sample_rate = sample_rate(file, preset)
+    audio_channels = audio_channels(file, preset)
+
     ~w(
-        -c:a aac -b:a #{preset.bitrate}k -f mp4 -ar #{preset.sample_rate} -vn
-        -ac 2
+        -c:a aac -b:a #{bitrate}k -f mp4 -ar #{sample_rate} -vn
+        -ac #{audio_channels}
         -y -v error -nostats
     )
   end
 
   defp ffmpeg_shared_args(%File{} = file, %__MODULE__{ffmpeg_preset: :adts} = preset) do
+    bitrate = bitrate(file, preset)
+    sample_rate = sample_rate(file, preset)
+    audio_channels = audio_channels(file, preset)
+
     ~w(
-        -c:a aac -b:a #{preset.bitrate}k -f adts -ar #{preset.sample_rate} -vn
-        -ac 2 -t #{file.metadata.duration}
+        -c:a aac -b:a #{bitrate}k -f adts -ar #{sample_rate} -vn
+        -ac #{audio_channels} -t #{file.metadata.duration}
         -y -v quiet -nostats
         pipe:1
     )
