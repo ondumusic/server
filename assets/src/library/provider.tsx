@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Loading } from "../components/Loading";
 import { useAuth } from "../hooks/useAuth";
@@ -33,6 +34,7 @@ export function LibraryProvider({
 }: PropsWithChildren<{
   pollInterval?: number;
 }>) {
+  const { t } = useTranslation();
   const { isLoggedIn } = useAuth();
   const [pageLoadSync, setPageLoadSync] = useState(isLoggedIn);
   const [syncing, setSyncing] = useState(true);
@@ -103,7 +105,14 @@ export function LibraryProvider({
     <LibraryContext.Provider value={{ syncing, lastSynced, syncError, doSync }}>
       {isLoggedIn && pageLoadSync ? (
         <Loading>
-          <p className="text-center py-6 text-xs">{`${syncProgress?.artists ?? 0} artists, ${syncProgress?.albums ?? 0} albums, ${syncProgress?.tracks ?? 0} tracks`}</p>
+          <p className="text-center py-6 text-xs">
+            {t("sync.progressText", {
+              defaultValue: "Syncing library...",
+              artistCount: syncProgress?.artists,
+              albumCount: syncProgress?.albums,
+              trackCount: syncProgress?.tracks,
+            })}
+          </p>
         </Loading>
       ) : (
         children

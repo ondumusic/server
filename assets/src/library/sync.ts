@@ -164,8 +164,8 @@ class SyncClient {
     this.#progress = {
       artists: 0,
       albums: 0,
-      tracks: 0
-    }
+      tracks: 0,
+    };
   }
 
   async #emitProgress() {
@@ -180,7 +180,7 @@ class SyncClient {
     this.#progress.tracks = counts[2];
 
     this.#observers.forEach((callback) => {
-      callback({...this.#progress});
+      callback({ ...this.#progress });
     });
   }
 }

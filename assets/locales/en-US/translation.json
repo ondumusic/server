@@ -111,6 +111,15 @@
     },
     "title": "Setup your Account"
   },
+  "sync": {
+    "artists_one": "{{count}} artist",
+    "artists_other": "{{count}} artists",
+    "albums_one": "{{count}} album",
+    "albums_other": "{{count}} albums",
+    "tracks_one": "{{count}} track",
+    "tracks_other": "{{count}} tracks",
+    "progressText": "$t(sync.artists, {\"count\": {{artistCount}} }), $t(sync.albums, {\"count\": {{albumCount}} }), $t(sync.tracks, {\"count\": {{trackCount}} })"
+  },
   "upNext": {
     "emptyView": "No upcoming tracks.",
     "title": "Up Next"
