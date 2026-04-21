@@ -65,6 +65,11 @@ defmodule MusicBoxWeb.Router do
     get "/tracks", LibraryController, :tracks
     get "/tracks/:track_id", LibraryController, :track
 
+    get "/playlists", PlaylistController, :playlists
+    get "/playlists/:playlist_id", PlaylistController, :playlist
+    get "/playlists/:playlist_id/items", PlaylistController, :playlist_items
+    get "/playlists/:playlist_id/items/:playlist_item_id", PlaylistController, :playlist_item
+
     get "/sync", SyncController, :sync
 
     get "/search", SearchController, :search

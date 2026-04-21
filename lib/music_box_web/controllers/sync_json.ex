@@ -2,6 +2,7 @@ defmodule MusicBoxWeb.SyncJSON do
   use MusicBoxWeb, :json
 
   alias MusicBoxWeb.LibraryJSON
+  alias MusicBoxWeb.PlaylistJSON
 
   def result(%{result: result, cursor: cursor}) do
     incomplete? =
@@ -19,9 +20,9 @@ defmodule MusicBoxWeb.SyncJSON do
           &LibraryJSON.track(%{track: &1, render_album: false, render_artist: false})
         ),
       deletions: Enum.map(result.deletions.entries, &deletion(%{entity: &1})),
-      playlists: Enum.map(result.playlists.entries, &LibraryJSON.playlist(%{playlist: &1})),
+      playlists: Enum.map(result.playlists.entries, &PlaylistJSON.playlist(%{playlist: &1})),
       playlist_items:
-        Enum.map(result.playlist_items.entries, &LibraryJSON.playlist_item(%{playlist_item: &1})),
+        Enum.map(result.playlist_items.entries, &PlaylistJSON.playlist_item(%{playlist_item: &1})),
       cursor: cursor,
       complete: not incomplete?
     }

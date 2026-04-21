@@ -123,24 +123,4 @@ defmodule MusicBoxWeb.LibraryJSON do
 
   def track(%{track: %{album: album} = track}),
     do: track(%{track: track, album: album})
-
-  def playlist(%{playlist: playlist}) do
-    %{
-      __type: "playlist",
-      id: playlist.id,
-      name: playlist.name,
-      trackCount: playlist.track_count,
-      insertedAt: playlist.inserted_at
-    }
-  end
-
-  def playlist_item(%{playlist_item: playlist_item}) do
-    %{
-      __type: "playlist_item",
-      id: playlist_item.id,
-      playlistId: playlist_item.playlist_id,
-      trackId: playlist_item.track_id,
-      insertedAt: playlist_item.inserted_at
-    }
-  end
 end

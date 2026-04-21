@@ -4,7 +4,7 @@ defmodule MusicBox.Playlists do
   import Ecto.Query, warn: false
   alias MusicBox.Repo
 
-  alias MusicBox.Playlists.Playlist
+  alias MusicBox.Playlists.{Playlist, PlaylistItem}
 
   @spec paginate_playlists(map()) :: Repo.page(Playlist)
   def paginate_playlists(params) do
@@ -13,10 +13,33 @@ defmodule MusicBox.Playlists do
     |> Repo.paginate(params, default_limit: 100)
   end
 
+  @spec paginate_playlists_items(Playlist.t(), map()) :: Repo.page(PlaylistItem)
+  def paginate_playlists_items(%Playlist{id: playlist_id}, params) do
+    PlaylistItem.preloaded()
+    |> where([playlist_item: pi], pi.playlist_id == ^playlist_id)
+    |> order_by([playlist_item: pi], asc: pi.position)
+    |> Repo.paginate(params, default_limit: 100)
+  end
+
   @spec get_playlist!(Ecto.UUID.t()) :: Playlist.t()
   def get_playlist!(playlist_id) do
     Playlist.preloaded()
     |> where([playlist: p], p.id == ^playlist_id)
+    |> Repo.one!()
+  end
+
+  @spec get_playlist_item!(Ecto.UUID.t()) :: PlaylistItem.t()
+  def get_playlist_item!(playlist_item_id) do
+    PlaylistItem.preloaded()
+    |> where([playlist_item: pi], pi.id == ^playlist_item_id)
+    |> Repo.one!()
+  end
+
+  @spec get_playlist_item_for_playlist!(Playlist.t(), Ecto.UUID.t()) :: PlaylistItem.t()
+  def get_playlist_item_for_playlist!(%Playlist{id: playlist_id}, playlist_item_id) do
+    PlaylistItem.preloaded()
+    |> where([playlist_item: pi], pi.playlist_id == ^playlist_id)
+    |> where([playlist_item: pi], pi.id == ^playlist_item_id)
     |> Repo.one!()
   end
 end
