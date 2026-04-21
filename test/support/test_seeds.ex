@@ -4,12 +4,12 @@ defmodule TestSeeds do
   alias MusicBox.Accounts
   alias MusicBox.Albums.Album
   alias MusicBox.Artists.Artist
-  alias MusicBox.Playlists.Playlist
-  alias MusicBox.Playlists.PlaylistItem
   alias MusicBox.Cleanup
   alias MusicBox.Files.File
   alias MusicBox.Files.FileMetadata
   alias MusicBox.FileScanner.Utils
+  alias MusicBox.Playlists.Playlist
+  alias MusicBox.Playlists.PlaylistItem
   alias MusicBox.Repo
   alias MusicBox.Tracks.Track
 
@@ -166,7 +166,7 @@ defmodule TestSeeds do
 
     seed
     |> Map.get(:items, [])
-    |> Enum.map(fn item ->
+    |> Enum.each(fn item ->
       insert_playlist_item(playlist, item)
     end)
 

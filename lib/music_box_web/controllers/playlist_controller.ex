@@ -3,7 +3,15 @@ defmodule MusicBoxWeb.PlaylistController do
 
   alias MusicBox.Playlists
 
-  plug :assign_playlist when action in [:playlist, :playlist_items, :playlist_item]
+  plug :assign_playlist
+       when action in [
+              :playlist,
+              :playlist_items,
+              :playlist_item,
+              :update_playlist,
+              :delete_playlist
+            ]
+
   plug :assign_playlist_item when action in [:playlist_item]
 
   def playlists(conn, params) do
@@ -21,6 +29,44 @@ defmodule MusicBoxWeb.PlaylistController do
 
   def playlist_item(conn, _params) do
     render(conn, :playlist_item, playlist_item: conn.assigns.playlist_item)
+  end
+
+  def create_playlist(conn, params) do
+    case Playlists.create_playlist(params) do
+      {:ok, playlist} ->
+        render(conn, :playlist, playlist: playlist)
+
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(:changeset, changeset: changeset)
+    end
+  end
+
+  def update_playlist(conn, params) do
+    case Playlists.update_playlist(conn.assigns.playlist, params) do
+      {:ok, playlist} ->
+        conn
+        |> render(:playlist, playlist: playlist)
+
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(:changeset, changeset: changeset)
+    end
+  end
+
+  def delete_playlist(conn, _params) do
+    case Playlists.delete_playlist(conn.assigns.playlist) do
+      {:ok, playlist} ->
+        conn
+        |> render(:playlist, playlist: playlist)
+
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(:changeset, changeset: changeset)
+    end
   end
 
   defp assign_playlist(conn, _opts) do

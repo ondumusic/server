@@ -45,4 +45,10 @@ defmodule MusicBoxWeb.PlaylistJSON do
       insertedAt: playlist_item.inserted_at
     }
   end
+
+  def changeset(%{changeset: changeset}) do
+    %{
+      fields: json_changeset(changeset)
+    }
+  end
 end

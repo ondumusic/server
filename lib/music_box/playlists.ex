@@ -13,6 +13,26 @@ defmodule MusicBox.Playlists do
     |> Repo.paginate(params, default_limit: 100)
   end
 
+  @spec create_playlist(map()) :: {:ok, Playlist.t()} | {:error, Ecto.Changeset.t()}
+  def create_playlist(params) do
+    %Playlist{}
+    |> Playlist.changeset(params)
+    |> Repo.insert()
+  end
+
+  @spec update_playlist(Playlist.t(), map()) :: {:ok, Playlist.t()} | {:error, Ecto.Changeset.t()}
+  def update_playlist(playlist, params) do
+    playlist
+    |> Playlist.changeset(params)
+    |> Repo.update()
+  end
+
+  @spec delete_playlist(Playlist.t()) :: {:ok, Playlist.t()} | {:error, Ecto.Changeset.t()}
+  def delete_playlist(playlist) do
+    playlist
+    |> Repo.delete()
+  end
+
   @spec paginate_playlists_items(Playlist.t(), map()) :: Repo.page(PlaylistItem)
   def paginate_playlists_items(%Playlist{id: playlist_id}, params) do
     PlaylistItem.preloaded()

@@ -1,6 +1,8 @@
 defmodule MusicBoxWeb.PlaylistControllerTest do
   use MusicBoxWeb.ConnCase, async: false
 
+  alias MusicBox.Playlists.Playlist
+
   setup do
     tracks = MusicBox.Tracks.paginate_tracks(%{}).entries
 
@@ -82,6 +84,46 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                conn
                |> get(~p"/api/playlists/#{playlist.id}/items/#{item.id}")
                |> json_response(200)
+    end
+
+    test "creates playlist", %{conn: conn} do
+      assert %{"fields" => %{"name" => %{"message" => "can't be blank"}}} =
+               conn
+               |> post(~p"/api/playlists", %{
+                 name: ""
+               })
+               |> json_response(422)
+
+      assert %{
+               "name" => "My Faves"
+             } =
+               conn
+               |> post(~p"/api/playlists", %{
+                 name: "My Faves"
+               })
+               |> json_response(200)
+    end
+
+    test "updates playlist", %{conn: conn, playlist: playlist} do
+      assert %{
+               "name" => "My New Faves"
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}", %{
+                 name: "My New Faves"
+               })
+               |> json_response(200)
+    end
+
+    test "deletes playlist", %{conn: conn, playlist: playlist} do
+      assert %{
+               "name" => "Test Playlist"
+             } =
+               conn
+               |> delete(~p"/api/playlists/#{playlist.id}")
+               |> json_response(200)
+
+      assert Repo.aggregate(Playlist, :count) == 0
     end
   end
 
