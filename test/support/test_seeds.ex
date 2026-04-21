@@ -4,6 +4,8 @@ defmodule TestSeeds do
   alias MusicBox.Accounts
   alias MusicBox.Albums.Album
   alias MusicBox.Artists.Artist
+  alias MusicBox.Playlists.Playlist
+  alias MusicBox.Playlists.PlaylistItem
   alias MusicBox.Cleanup
   alias MusicBox.Files.File
   alias MusicBox.Files.FileMetadata
@@ -144,6 +146,38 @@ defmodule TestSeeds do
       duration: duration,
       number: Map.get(seed, :track),
       disc: Map.get(seed, :disc)
+    })
+  end
+
+  def generate_playlists(count) do
+    for i <- 1..count do
+      %{
+        name: "Playlist #{i}"
+      }
+    end
+    |> Enum.each(&insert_playlist/1)
+  end
+
+  def insert_playlist(seed) do
+    playlist =
+      Repo.insert!(%Playlist{
+        name: seed.name
+      })
+
+    seed
+    |> Map.get(:items, [])
+    |> Enum.map(fn item ->
+      insert_playlist_item(playlist, item)
+    end)
+
+    Repo.preload(playlist, [:items], force: true)
+  end
+
+  def insert_playlist_item(playlist, seed) do
+    Repo.insert!(%PlaylistItem{
+      playlist_id: seed[:playlist_id] || playlist.id,
+      position: seed.position,
+      track_id: seed.track_id
     })
   end
 

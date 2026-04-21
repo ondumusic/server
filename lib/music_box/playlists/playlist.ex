@@ -13,7 +13,7 @@ defmodule MusicBox.Playlists.Playlist do
     field :name, :string
     field :track_count, :integer
 
-    has_many :items, PlaylistItem
+    has_many :items, PlaylistItem, preload_order: [asc: :position]
 
     timestamps(type: :utc_datetime)
   end
