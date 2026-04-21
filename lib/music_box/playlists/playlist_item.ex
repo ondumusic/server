@@ -10,8 +10,11 @@ defmodule MusicBox.Playlists.PlaylistItem do
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
-  schema "playlists" do
+  schema "playlist_items" do
+    # Position is a string and is to be used for fractional indexing, so the
+    # client determines this. For initial version back-end is dumb about this.
     field :position, :string
+
     belongs_to :playlist, Playlist
     belongs_to :track, Track
 

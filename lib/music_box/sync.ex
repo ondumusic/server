@@ -4,6 +4,8 @@ defmodule MusicBox.Sync do
   alias MusicBox.Albums.Album
   alias MusicBox.Artists.Artist
   alias MusicBox.DeletionLog
+  alias MusicBox.Playlists.Playlist
+  alias MusicBox.Playlists.PlaylistItem
   alias MusicBox.Repo
   alias MusicBox.Tracks.Track
 
@@ -19,6 +21,9 @@ defmodule MusicBox.Sync do
       artists: get_new_entities(Artist, cursor["artists"], limit: limit),
       albums: get_new_entities(Album.preloaded(), cursor["albums"], limit: limit),
       tracks: get_new_entities(Track.preloaded(), cursor["tracks"], limit: limit),
+      playlists: get_new_entities(Playlist.preloaded(), cursor["playlists"], limit: limit),
+      playlist_items:
+        get_new_entities(PlaylistItem.preloaded(), cursor["playlist_items"], limit: limit),
       deletions:
         get_new_entities(DeletionLog, cursor["deletions"],
           limit: limit,
