@@ -225,6 +225,58 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> json_response(400)
     end
 
+    test "cannot move unknown items", %{conn: conn, playlist: playlist} do
+      item_id = Ecto.UUID.generate()
+
+      assert %{
+               "error" => "unknown_items",
+               "item_ids" => [^item_id]
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}/items", %{
+                 move: [
+                   %{
+                     position: "a",
+                     item_id: item_id
+                   }
+                 ]
+               })
+               |> json_response(400)
+    end
+
+    test "cannot remove unknown items", %{conn: conn, playlist: playlist} do
+      item_id = Ecto.UUID.generate()
+
+      assert %{
+               "error" => "unknown_items",
+               "item_ids" => [^item_id]
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}/items", %{
+                 remove: [item_id]
+               })
+               |> json_response(400)
+    end
+
+    test "cannot add unknown tracks", %{conn: conn, playlist: playlist} do
+      track_id = Ecto.UUID.generate()
+
+      assert %{
+               "error" => "unknown_tracks",
+               "track_ids" => [^track_id]
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}/items", %{
+                 add: [
+                   %{
+                     track_id: track_id,
+                     position: "a"
+                   }
+                 ]
+               })
+               |> json_response(400)
+    end
+
     test "full happy path playlist test", %{conn: conn} do
       artist = MusicBox.Artists.get_artist!("the-beatles")
       album = MusicBox.Albums.get_album_for_artist!(artist, "with-the-beatles")
