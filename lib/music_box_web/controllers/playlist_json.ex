@@ -16,7 +16,7 @@ defmodule MusicBoxWeb.PlaylistJSON do
   def playlist_items(%{page: page} = assigns) do
     %{
       __type: "page",
-      __subtype: "playlist_item",
+      __subtype: "playlistItem",
       pageNumber: page.page_number,
       pageSize: page.page_size,
       totalEntries: page.total_entries,
@@ -37,7 +37,7 @@ defmodule MusicBoxWeb.PlaylistJSON do
 
   def playlist_item(%{playlist_item: playlist_item}) do
     %{
-      __type: "playlist_item",
+      __type: "playlistItem",
       id: playlist_item.id,
       position: playlist_item.position,
       playlistId: playlist_item.playlist_id,

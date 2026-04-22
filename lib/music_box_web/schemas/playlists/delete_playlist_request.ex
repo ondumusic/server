@@ -1,4 +1,5 @@
 defmodule MusicBoxWeb.Schemas.DeletePlaylistError do
+  @moduledoc false
   alias MusicBoxWeb.Schemas.ChangesetError
   alias OpenApiSpex.Schema
 

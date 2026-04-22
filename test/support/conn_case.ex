@@ -67,9 +67,13 @@ defmodule MusicBoxWeb.ConnCase do
     |> Plug.Conn.assign(:session_token, session_token)
   end
 
-  def assert_response_schema(conn, status, schema_name) do
+  def api_response(conn, status, schema_name \\ nil) do
     body = Phoenix.ConnTest.json_response(conn, status)
-    assert_schema(body, schema_name, MusicBoxWeb.ApiSpec.spec())
+
+    if schema_name do
+      assert_schema(body, schema_name, MusicBoxWeb.ApiSpec.spec())
+    end
+
     body
   end
 

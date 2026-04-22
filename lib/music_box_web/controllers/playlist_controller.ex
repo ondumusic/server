@@ -147,6 +147,19 @@ defmodule MusicBoxWeb.PlaylistController do
     end
   end
 
+  operation :update_playlist_items,
+    summary: "Update playlist items",
+    parameters: [
+      playlist_id: [in: :path, type: Schemas.PlaylistId, required: true]
+    ],
+    request_body: {"Operations", "application/json", Schemas.UpdatePlaylistItemsRequest},
+    responses: [
+      ok: {"Playlist", "application/json", Schemas.UpdatePlaylistItemsResponse},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
+      not_found: {"Not Found", "application/json", Schemas.Error},
+      bad_request: {"Bad Request", "application/json", Schemas.UpdatePlaylistItemsError}
+    ]
+
   def update_playlist_items(conn, params) do
     case Playlists.update_playlist_items(conn.assigns.playlist, params) do
       {:ok, changes} ->

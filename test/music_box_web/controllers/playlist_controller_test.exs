@@ -45,7 +45,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
              } =
                conn
                |> get(~p"/api/playlists")
-               |> assert_response_schema(200, "PlaylistPage")
+               |> api_response(200, "PlaylistPage")
     end
 
     test "returns playlist details", %{conn: conn, playlist: playlist} do
@@ -93,7 +93,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> post(~p"/api/playlists", %{
                  name: ""
                })
-               |> assert_response_schema(422, "CreatePlaylistError")
+               |> api_response(422, "CreatePlaylistError")
 
       assert %{
                "name" => "My Faves"
@@ -102,7 +102,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> post(~p"/api/playlists", %{
                  name: "My Faves"
                })
-               |> assert_response_schema(201, "Playlist")
+               |> api_response(201, "Playlist")
     end
 
     test "updates playlist", %{conn: conn, playlist: playlist} do
@@ -111,7 +111,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> patch(~p"/api/playlists/#{playlist.id}", %{
                  name: ""
                })
-               |> assert_response_schema(422, "UpdatePlaylistError")
+               |> api_response(422, "UpdatePlaylistError")
 
       assert %{
                "name" => "My New Faves"
@@ -120,7 +120,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> patch(~p"/api/playlists/#{playlist.id}", %{
                  name: "My New Faves"
                })
-               |> assert_response_schema(200, "Playlist")
+               |> api_response(200, "Playlist")
     end
 
     test "deletes playlist", %{conn: conn, playlist: playlist} do
@@ -129,7 +129,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
              } =
                conn
                |> delete(~p"/api/playlists/#{playlist.id}")
-               |> assert_response_schema(200, "Playlist")
+               |> api_response(200, "Playlist")
 
       assert Repo.aggregate(Playlist, :count) == 0
     end
@@ -162,7 +162,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                    }
                  ]
                })
-               |> json_response(200)
+               |> api_response(200, "UpdatePlaylistItemsResponse")
     end
 
     test "can move items in playlist", %{conn: conn, playlist: playlist} do
@@ -189,7 +189,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                    }
                  ]
                })
-               |> json_response(200)
+               |> api_response(200, "UpdatePlaylistItemsResponse")
     end
 
     test "can remove items from playlist", %{conn: conn, playlist: playlist} do
@@ -205,7 +205,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> patch(~p"/api/playlists/#{playlist.id}/items", %{
                  remove: [item_id]
                })
-               |> json_response(200)
+               |> api_response(200, "UpdatePlaylistItemsResponse")
 
       assert %{entries: [_a, _b]} = Playlists.paginate_playlists_items(playlist, %{})
     end
@@ -229,7 +229,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                  ],
                  remove: [item_id]
                })
-               |> json_response(400)
+               |> api_response(400, "UpdatePlaylistItemsError")
     end
 
     test "cannot move unknown items", %{conn: conn, playlist: playlist} do
@@ -248,7 +248,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                    }
                  ]
                })
-               |> json_response(400)
+               |> api_response(400, "UpdatePlaylistItemsError")
     end
 
     test "cannot remove unknown items", %{conn: conn, playlist: playlist} do
@@ -262,7 +262,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> patch(~p"/api/playlists/#{playlist.id}/items", %{
                  remove: [item_id]
                })
-               |> json_response(400)
+               |> api_response(400, "UpdatePlaylistItemsError")
     end
 
     test "cannot add unknown tracks", %{conn: conn, playlist: playlist} do
@@ -281,7 +281,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                    }
                  ]
                })
-               |> json_response(400)
+               |> api_response(400, "UpdatePlaylistItemsError")
     end
 
     test "full happy path playlist test", %{conn: conn} do
@@ -305,7 +305,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> post(~p"/api/playlists", %{
                  name: "My Faves"
                })
-               |> assert_response_schema(201, "Playlist")
+               |> api_response(201, "Playlist")
 
       assert %{
                "added" => [
@@ -354,7 +354,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                    }
                  ]
                })
-               |> json_response(200)
+               |> api_response(200, "UpdatePlaylistItemsResponse")
 
       assert %{
                "added" => [
@@ -388,7 +388,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                  ],
                  remove: [item4]
                })
-               |> json_response(200)
+               |> api_response(200, "UpdatePlaylistItemsResponse")
 
       playlist = Playlists.get_playlist!(playlist_id)
 

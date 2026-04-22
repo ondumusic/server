@@ -1,4 +1,5 @@
 defmodule MusicBoxWeb.Schemas.CreatePlaylistRequest do
+  @moduledoc false
   alias OpenApiSpex.Schema
 
   require OpenApiSpex
@@ -14,6 +15,7 @@ defmodule MusicBoxWeb.Schemas.CreatePlaylistRequest do
 end
 
 defmodule MusicBoxWeb.Schemas.CreatePlaylistError do
+  @moduledoc false
   alias MusicBoxWeb.Schemas.ChangesetError
   alias OpenApiSpex.Schema
 
