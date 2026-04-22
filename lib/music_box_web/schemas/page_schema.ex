@@ -1,4 +1,5 @@
 defmodule MusicBoxWeb.Schemas.Page do
+  @moduledoc false
   alias OpenApiSpex.Schema
 
   def of(item_schema, opts \\ []) do

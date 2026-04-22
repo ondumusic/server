@@ -93,7 +93,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> post(~p"/api/playlists", %{
                  name: ""
                })
-               |> json_response(422)
+               |> assert_response_schema(422, "CreatePlaylistError")
 
       assert %{
                "name" => "My Faves"
@@ -102,10 +102,17 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> post(~p"/api/playlists", %{
                  name: "My Faves"
                })
-               |> assert_response_schema(200, "Playlist")
+               |> assert_response_schema(201, "Playlist")
     end
 
     test "updates playlist", %{conn: conn, playlist: playlist} do
+      assert %{"fields" => %{"name" => %{"message" => "can't be blank"}}} =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}", %{
+                 name: ""
+               })
+               |> assert_response_schema(422, "UpdatePlaylistError")
+
       assert %{
                "name" => "My New Faves"
              } =
@@ -298,7 +305,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> post(~p"/api/playlists", %{
                  name: "My Faves"
                })
-               |> json_response(200)
+               |> assert_response_schema(201, "Playlist")
 
       assert %{
                "added" => [

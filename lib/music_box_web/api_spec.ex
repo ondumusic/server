@@ -1,6 +1,7 @@
 defmodule MusicBoxWeb.ApiSpec do
-  alias OpenApiSpex.{Components, Info, OpenApi, Paths, Server}
+  @moduledoc false
   alias MusicBoxWeb.{Endpoint, Router}
+  alias OpenApiSpex.{Components, Info, OpenApi, Paths, Server}
   @behaviour OpenApi
 
   @impl OpenApi

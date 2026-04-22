@@ -1,4 +1,19 @@
+defmodule MusicBoxWeb.Schemas.PlaylistId do
+  @moduledoc false
+  require OpenApiSpex
+
+  OpenApiSpex.schema(%{
+    title: "PlaylistId",
+    type: :string,
+    format: :uuid,
+    pattern: ~r/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    example: "c93bfb8e-23fc-41d5-a582-72f823e094d1",
+    description: "The UUID for a specific Playlist."
+  })
+end
+
 defmodule MusicBoxWeb.Schemas.Playlist do
+  @moduledoc false
   alias OpenApiSpex.Schema
   require OpenApiSpex
 
@@ -22,4 +37,12 @@ defmodule MusicBoxWeb.Schemas.Playlist do
   })
 
   def fields, do: [:__type, :id, :name, :trackCount, :insertedAt]
+end
+
+defmodule MusicBoxWeb.Schemas.PlaylistPage do
+  @moduledoc false
+  require OpenApiSpex
+  alias MusicBoxWeb.Schemas.{Page, Playlist}
+
+  OpenApiSpex.schema(Page.of(Playlist, __subtype: "playlist", title: "PlaylistPage"))
 end

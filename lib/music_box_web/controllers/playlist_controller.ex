@@ -18,30 +18,76 @@ defmodule MusicBoxWeb.PlaylistController do
   operation :playlists,
     summary: "List playlists",
     responses: [
-      ok: {"Playlists", "application/json", Schemas.PlaylistPage}
+      ok: {"Playlists", "application/json", Schemas.PlaylistPage},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error}
     ]
 
   def playlists(conn, params) do
     render(conn, :playlists, page: Playlists.paginate_playlists(params))
   end
 
+  operation :playlist,
+    summary: "Get a specific playlist",
+    parameters: [
+      playlist_id: [in: :path, type: Schemas.PlaylistId, required: true]
+    ],
+    responses: [
+      ok: {"Playlist", "application/json", Schemas.Playlist},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
+      not_found: {"Not Found", "application/json", Schemas.Error}
+    ]
+
   def playlist(conn, _params) do
     render(conn, :playlist, playlist: conn.assigns.playlist)
   end
+
+  operation :playlist_items,
+    summary: "List playlist items",
+    parameters: [
+      playlist_id: [in: :path, type: Schemas.PlaylistId, required: true]
+    ],
+    responses: [
+      ok: {"Playlist Items", "application/json", Schemas.PlaylistItemPage},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
+      not_found: {"Not Found", "application/json", Schemas.Error}
+    ]
 
   def playlist_items(conn, params) do
     page = Playlists.paginate_playlists_items(conn.assigns.playlist, params)
     render(conn, :playlist_items, page: page)
   end
 
+  operation :playlist_item,
+    summary: "Get a specific playlist item",
+    parameters: [
+      playlist_id: [in: :path, type: Schemas.PlaylistId, required: true],
+      playlist_item_id: [in: :path, type: Schemas.PlaylistItemId, required: true]
+    ],
+    responses: [
+      ok: {"Playlist Item", "application/json", Schemas.PlaylistItem},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
+      not_found: {"Not Found", "application/json", Schemas.Error}
+    ]
+
   def playlist_item(conn, _params) do
     render(conn, :playlist_item, playlist_item: conn.assigns.playlist_item)
   end
 
+  operation :create_playlist,
+    summary: "Create playlist",
+    request_body: {"Playlist params", "application/json", Schemas.CreatePlaylistRequest},
+    responses: [
+      created: {"Playlist", "application/json", Schemas.Playlist},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
+      unprocessable_entity: {"Validation Error", "application/json", Schemas.CreatePlaylistError}
+    ]
+
   def create_playlist(conn, params) do
     case Playlists.create_playlist(params) do
       {:ok, playlist} ->
-        render(conn, :playlist, playlist: playlist)
+        conn
+        |> put_status(:created)
+        |> render(:playlist, playlist: playlist)
 
       {:error, changeset} ->
         conn
@@ -49,6 +95,19 @@ defmodule MusicBoxWeb.PlaylistController do
         |> render(:changeset, changeset: changeset)
     end
   end
+
+  operation :update_playlist,
+    summary: "Update playlist",
+    parameters: [
+      playlist_id: [in: :path, type: Schemas.PlaylistId, required: true]
+    ],
+    request_body: {"Playlist params", "application/json", Schemas.UpdatePlaylistRequest},
+    responses: [
+      ok: {"Playlist", "application/json", Schemas.Playlist},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
+      not_found: {"Not Found", "application/json", Schemas.Error},
+      unprocessable_entity: {"Validation Error", "application/json", Schemas.UpdatePlaylistError}
+    ]
 
   def update_playlist(conn, params) do
     case Playlists.update_playlist(conn.assigns.playlist, params) do
@@ -62,6 +121,18 @@ defmodule MusicBoxWeb.PlaylistController do
         |> render(:changeset, changeset: changeset)
     end
   end
+
+  operation :delete_playlist,
+    summary: "Delete playlist",
+    parameters: [
+      playlist_id: [in: :path, type: Schemas.PlaylistId, required: true]
+    ],
+    responses: [
+      ok: {"Playlist", "application/json", Schemas.Playlist},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
+      not_found: {"Not Found", "application/json", Schemas.Error},
+      unprocessable_entity: {"Validation Error", "application/json", Schemas.DeletePlaylistError}
+    ]
 
   def delete_playlist(conn, _params) do
     case Playlists.delete_playlist(conn.assigns.playlist) do

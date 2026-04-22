@@ -1,4 +1,5 @@
 defmodule MusicBoxWeb.Schemas.TrackId do
+  @moduledoc false
   require OpenApiSpex
 
   OpenApiSpex.schema(%{
@@ -6,7 +7,7 @@ defmodule MusicBoxWeb.Schemas.TrackId do
     type: :string,
     format: :uuid,
     pattern: ~r/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-    example: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    example: "52cf997e-3acc-414e-b92c-4f32895a41d9",
     description: "The UUID for a specific Track."
   })
 end
