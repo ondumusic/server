@@ -17,6 +17,8 @@ defmodule MusicBoxWeb.ConnCase do
 
   use ExUnit.CaseTemplate
 
+  import OpenApiSpex.TestAssertions
+
   using do
     quote do
       # The default endpoint for testing
@@ -63,6 +65,12 @@ defmodule MusicBoxWeb.ConnCase do
 
     conn
     |> Plug.Conn.assign(:session_token, session_token)
+  end
+
+  def assert_response_schema(conn, status, schema_name) do
+    body = Phoenix.ConnTest.json_response(conn, status)
+    assert_schema(body, schema_name, MusicBoxWeb.ApiSpec.spec())
+    body
   end
 
   def update_record(record, changes) do

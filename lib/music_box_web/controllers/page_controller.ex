@@ -3,6 +3,8 @@ defmodule MusicBoxWeb.PageController do
 
   alias MusicBox.{Accounts, Settings}
 
+  operation :react, false
+
   def react(conn, _params) do
     settings = Settings.get()
 

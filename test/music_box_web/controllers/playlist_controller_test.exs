@@ -45,7 +45,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
              } =
                conn
                |> get(~p"/api/playlists")
-               |> json_response(200)
+               |> assert_response_schema(200, "PlaylistPage")
     end
 
     test "returns playlist details", %{conn: conn, playlist: playlist} do
@@ -102,7 +102,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> post(~p"/api/playlists", %{
                  name: "My Faves"
                })
-               |> json_response(200)
+               |> assert_response_schema(200, "Playlist")
     end
 
     test "updates playlist", %{conn: conn, playlist: playlist} do
@@ -113,7 +113,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> patch(~p"/api/playlists/#{playlist.id}", %{
                  name: "My New Faves"
                })
-               |> json_response(200)
+               |> assert_response_schema(200, "Playlist")
     end
 
     test "deletes playlist", %{conn: conn, playlist: playlist} do
@@ -122,7 +122,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
              } =
                conn
                |> delete(~p"/api/playlists/#{playlist.id}")
-               |> json_response(200)
+               |> assert_response_schema(200, "Playlist")
 
       assert Repo.aggregate(Playlist, :count) == 0
     end

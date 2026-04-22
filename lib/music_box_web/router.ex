@@ -14,6 +14,7 @@ defmodule MusicBoxWeb.Router do
   pipeline :api do
     plug :accepts, ["json"]
     plug :fetch_current_user
+    plug OpenApiSpex.Plug.PutApiSpec, module: MusicBoxWeb.ApiSpec
   end
 
   scope "/", MusicBoxWeb do
@@ -21,12 +22,18 @@ defmodule MusicBoxWeb.Router do
 
     get "/", PageController, :react
     get "/login", PageController, :react
-    get "/library", PageController, :react
     get "/artists", PageController, :react
     get "/artists/:id", PageController, :react
     get "/artists/:id/:album_id", PageController, :react
 
     get "/onboarding/:step", PageController, :react
+  end
+
+  scope "/", OpenApiSpex do
+    pipe_through [:api, MusicBoxWeb.Plugs.DocsEnabled]
+
+    get "/openapi", Plug.RenderSpec, :openapi
+    get "/docs", Plug.SwaggerUI, path: "/openapi"
   end
 
   scope "/", MusicBoxWeb do

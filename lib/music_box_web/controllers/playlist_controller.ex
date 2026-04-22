@@ -15,6 +15,12 @@ defmodule MusicBoxWeb.PlaylistController do
 
   plug :assign_playlist_item when action in [:playlist_item]
 
+  operation :playlists,
+    summary: "List playlists",
+    responses: [
+      ok: {"Playlists", "application/json", Schemas.PlaylistPage}
+    ]
+
   def playlists(conn, params) do
     render(conn, :playlists, page: Playlists.paginate_playlists(params))
   end

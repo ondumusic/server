@@ -42,6 +42,9 @@ defmodule MusicBoxWeb do
         layouts: [html: MusicBoxWeb.Layouts]
 
       use Gettext, backend: MusicBoxWeb.Gettext
+      use OpenApiSpex.ControllerSpecs
+
+      alias MusicBoxWeb.Schemas
 
       import Plug.Conn
 

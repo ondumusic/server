@@ -80,6 +80,14 @@ if config_env() == :prod do
       _ -> false
     end
 
+  docs_enabled? =
+    System.get_env("MB_DISABLE_DOCS", "false")
+    |> String.downcase()
+    |> case do
+      falsy when falsy in ~w(0 no off disabled false) -> true
+      _ -> false
+    end
+
   file_storage_impl =
     System.get_env("MB_STORAGE_DRIVER", "file")
     |> String.downcase()
@@ -137,6 +145,7 @@ if config_env() == :prod do
   end
 
   config :music_box, web_enabled: web_enabled?
+  config :music_box, docs_enabled: docs_enabled?
 
   config :music_box, storage_impl: file_storage_impl
 

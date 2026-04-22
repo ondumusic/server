@@ -48,7 +48,8 @@ config :music_box,
   storage_impl: MusicBox.Storage.File
 
 config :music_box,
-  web_enabled: true
+  web_enabled: true,
+  docs_enabled: true
 
 config :music_box, MusicBox.Artwork,
   artwork_path: Path.absname("./tmp/artwork"),

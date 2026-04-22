@@ -52,6 +52,7 @@ defmodule MusicBox.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:mox, "~> 1.2"},
+      {:open_api_spex, "~> 3.22"},
       # S3 support
       {:ex_aws, "~> 2.5"},
       {:ex_aws_s3, "~> 2.5"},
@@ -68,6 +69,7 @@ defmodule MusicBox.MixProject do
   defp aliases do
     [
       setup: ["deps.get", "ecto.setup", "assets.setup"],
+      "openapi.gen": "openapi.spec.json --spec MusicBoxWeb.ApiSpec priv/openapi.json",
       "assets.setup": ["cmd --cd assets pnpm install"],
       "assets.build": ["cmd --cd assets pnpm run build"],
       "assets.deploy": [
