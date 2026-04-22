@@ -44,13 +44,13 @@ defmodule MusicBox.Playlists.Operations do
     moves = Map.get(changes, "move", [])
     removes = Map.get(changes, "remove", [])
 
-    move_ids = Enum.map(moves, &Map.get(&1, "item_id"))
+    move_ids = Enum.map(moves, &Map.get(&1, "itemId"))
     remove_ids = removes
     combined_ids = Enum.uniq(move_ids ++ remove_ids)
 
     with :ok <- validate_batch_size(adds, moves, removes),
          :ok <- validate_item_id_conflicts(moves, removes),
-         :ok <- validate_unique_items(:move, Enum.map(moves, & &1["item_id"])),
+         :ok <- validate_unique_items(:move, Enum.map(moves, & &1["itemId"])),
          :ok <- validate_unique_items(:remove, removes),
          :ok <- validate_positions(adds, moves),
          :ok <- validate_tracks(adds),
@@ -76,7 +76,7 @@ defmodule MusicBox.Playlists.Operations do
 
   defp validate_item_id_conflicts(moves, removes) do
     conflict_items =
-      Enum.flat_map(moves, fn %{"item_id" => item_id} ->
+      Enum.flat_map(moves, fn %{"itemId" => item_id} ->
         if Enum.member?(removes, item_id) do
           [item_id]
         else
@@ -112,7 +112,7 @@ defmodule MusicBox.Playlists.Operations do
   end
 
   defp validate_tracks(adds) do
-    track_ids = Enum.map(adds, &Map.get(&1, "track_id"))
+    track_ids = Enum.map(adds, &Map.get(&1, "trackId"))
 
     existing_tracks =
       from(t in Track,
@@ -179,7 +179,7 @@ defmodule MusicBox.Playlists.Operations do
     moved =
       if moves != [] do
         rows =
-          Enum.map(moves, fn %{"item_id" => id, "position" => pos} ->
+          Enum.map(moves, fn %{"itemId" => id, "position" => pos} ->
             existing_items
             |> Map.fetch!(id)
             |> Map.from_struct()
@@ -209,7 +209,7 @@ defmodule MusicBox.Playlists.Operations do
     added =
       if adds != [] do
         rows =
-          Enum.map(adds, fn %{"track_id" => id, "position" => pos} ->
+          Enum.map(adds, fn %{"trackId" => id, "position" => pos} ->
             %{
               playlist_id: playlist.id,
               track_id: id,

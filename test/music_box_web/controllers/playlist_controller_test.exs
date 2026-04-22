@@ -151,7 +151,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                  add: [
                    %{
                      position: position,
-                     track_id: track_id
+                     trackId: track_id
                    }
                  ]
                })
@@ -178,7 +178,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                  move: [
                    %{
                      position: position,
-                     item_id: item_id
+                     itemId: item_id
                    }
                  ]
                })
@@ -210,14 +210,14 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
 
       assert %{
                "error" => "move_remove_conflict",
-               "item_ids" => [^item_id]
+               "itemIds" => [^item_id]
              } =
                conn
                |> patch(~p"/api/playlists/#{playlist.id}/items", %{
                  move: [
                    %{
                      position: position,
-                     item_id: item_id
+                     itemId: item_id
                    }
                  ],
                  remove: [item_id]
@@ -230,14 +230,14 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
 
       assert %{
                "error" => "unknown_items",
-               "item_ids" => [^item_id]
+               "itemIds" => [^item_id]
              } =
                conn
                |> patch(~p"/api/playlists/#{playlist.id}/items", %{
                  move: [
                    %{
                      position: "a",
-                     item_id: item_id
+                     itemId: item_id
                    }
                  ]
                })
@@ -249,7 +249,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
 
       assert %{
                "error" => "unknown_items",
-               "item_ids" => [^item_id]
+               "itemIds" => [^item_id]
              } =
                conn
                |> patch(~p"/api/playlists/#{playlist.id}/items", %{
@@ -263,13 +263,13 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
 
       assert %{
                "error" => "unknown_tracks",
-               "track_ids" => [^track_id]
+               "trackIds" => [^track_id]
              } =
                conn
                |> patch(~p"/api/playlists/#{playlist.id}/items", %{
                  add: [
                    %{
-                     track_id: track_id,
+                     trackId: track_id,
                      position: "a"
                    }
                  ]
@@ -331,19 +331,19 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                  add: [
                    %{
                      position: "a",
-                     track_id: track1
+                     trackId: track1
                    },
                    %{
                      position: "b",
-                     track_id: track2
+                     trackId: track2
                    },
                    %{
                      position: "c",
-                     track_id: track3
+                     trackId: track3
                    },
                    %{
                      position: "d",
-                     track_id: track4
+                     trackId: track4
                    }
                  ]
                })
@@ -370,13 +370,13 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                  add: [
                    %{
                      position: "e",
-                     track_id: track5
+                     trackId: track5
                    }
                  ],
                  move: [
                    %{
                      position: "a1",
-                     item_id: item3
+                     itemId: item3
                    }
                  ],
                  remove: [item4]

@@ -69,28 +69,28 @@ defmodule MusicBoxWeb.PlaylistJSON do
   def batch_error(%{error: {:conflict_items, ids}}) do
     %{
       error: "move_remove_conflict",
-      item_ids: ids
+      itemIds: ids
     }
   end
 
   def batch_error(%{error: {:conflict_positions, ids}}) do
     %{
       error: "add_move_conflict",
-      item_ids: ids
+      itemIds: ids
     }
   end
 
   def batch_error(%{error: {:missing_items, ids}}) do
     %{
       error: "unknown_items",
-      item_ids: ids
+      itemIds: ids
     }
   end
 
   def batch_error(%{error: {:missing_tracks, ids}}) do
     %{
       error: "unknown_tracks",
-      track_ids: ids
+      trackIds: ids
     }
   end
 end
