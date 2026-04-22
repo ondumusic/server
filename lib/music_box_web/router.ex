@@ -29,11 +29,14 @@ defmodule MusicBoxWeb.Router do
     get "/onboarding/:step", PageController, :react
   end
 
-  scope "/", OpenApiSpex do
+  scope "/" do
     pipe_through [:api, MusicBoxWeb.Plugs.DocsEnabled]
+    get "/openapi", OpenApiSpex.Plug.RenderSpec, :openapi
+  end
 
-    get "/openapi", Plug.RenderSpec, :openapi
-    get "/docs", Plug.SwaggerUI, path: "/openapi"
+  scope "/" do
+    pipe_through [:browser, MusicBoxWeb.Plugs.DocsEnabled]
+    get "/docs", MusicBoxWeb.PageController, :docs
   end
 
   scope "/", MusicBoxWeb do

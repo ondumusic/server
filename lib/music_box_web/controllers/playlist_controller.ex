@@ -15,6 +15,8 @@ defmodule MusicBoxWeb.PlaylistController do
 
   plug :assign_playlist_item when action in [:playlist_item]
 
+  tags ["Playlists"]
+
   operation :playlists,
     summary: "List playlists",
     responses: [

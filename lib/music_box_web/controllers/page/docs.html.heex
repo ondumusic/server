@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>API Reference</title>
+    <script src="/docs-assets/web-components.min.js">
+    </script>
+    <link rel="stylesheet" href="/docs-assets/styles.min.css" />
+    <style>
+      /* Kill the "Powered by Stoplight" footer link */
+      .sl-elements-api .sl-flex[class*="PoweredByLink"],
+      a[href*="stoplight.io"] {
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body style="height: 100vh; margin: 0;">
+    <elements-api
+      apiDescriptionUrl="/openapi"
+      router="hash"
+      layout="sidebar"
+      hideTryIt="true"
+      hideSchemas="true"
+      hideInternal="true"
+    />
+  </body>
+</html>

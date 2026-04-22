@@ -6,7 +6,12 @@
     "useIgnoreFile": false
   },
   "files": {
-    "includes": ["**/*", "!coverage/**/*", "!src/routeTree.gen.ts"],
+    "includes": [
+      "**/*",
+      "!public/**/*",
+      "!coverage/**/*",
+      "!src/routeTree.gen.ts"
+    ],
     "ignoreUnknown": false
   },
   "formatter": {

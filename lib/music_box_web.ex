@@ -17,7 +17,7 @@ defmodule MusicBoxWeb do
   those modules here.
   """
 
-  def static_paths, do: ~w(assets fonts images favicon.ico robots.txt sw.js)
+  def static_paths, do: ~w(assets fonts images docs-assets favicon.ico robots.txt sw.js)
 
   def router do
     quote do

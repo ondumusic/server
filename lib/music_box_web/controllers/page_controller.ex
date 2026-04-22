@@ -36,4 +36,12 @@ defmodule MusicBoxWeb.PageController do
     |> put_status(http_status)
     |> render(:react, hydrate: hydrate)
   end
+
+  operation :docs, false
+
+  def docs(conn, _params) do
+    conn
+    |> put_root_layout(false)
+    |> render(:docs, layout: false)
+  end
 end

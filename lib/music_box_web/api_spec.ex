@@ -1,7 +1,7 @@
 defmodule MusicBoxWeb.ApiSpec do
   @moduledoc false
   alias MusicBoxWeb.{Endpoint, Router}
-  alias OpenApiSpex.{Components, Info, OpenApi, Paths, Server}
+  alias OpenApiSpex.{Components, Info, OpenApi, Paths, Server, Tag}
   @behaviour OpenApi
 
   @impl OpenApi
@@ -14,6 +14,13 @@ defmodule MusicBoxWeb.ApiSpec do
         title: "MusicBox API",
         version: to_string(Application.spec(:my_app, :vsn))
       },
+      tags: [
+        %Tag{name: "Artists", description: "Artist management"},
+        %Tag{name: "Albums", description: "Album management"},
+        %Tag{name: "Tracks", description: "Track management"},
+        %Tag{name: "Sync", description: "Sync operations"},
+        %Tag{name: "Playlists", description: "Playlist management"}
+      ],
       components: %Components{
         # securitySchemes: %{"authorization" => %SecurityScheme{type: "http", scheme: "bearer"}}
       },
