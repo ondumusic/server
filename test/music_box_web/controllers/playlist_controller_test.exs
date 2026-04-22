@@ -127,6 +127,32 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
     end
   end
 
+  describe "playlist items" do
+    setup :register_and_log_in_user
+
+    test "can add items to playlist", %{conn: conn, playlist: playlist} do
+      tracks = MusicBox.Tracks.paginate_tracks(%{}).entries
+
+      new_items =
+        tracks
+        |> Enum.filter(&(&1.number in [5]))
+        |> Enum.zip(["d"])
+        |> Enum.map(fn {track, position} ->
+          %{
+            position: position,
+            track_id: track.id
+          }
+        end)
+
+      assert %{} =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}/items", %{
+                 add: new_items
+               })
+               |> json_response(200)
+    end
+  end
+
   describe "forbidden when not authenticated" do
     test "forbidden on /api/playlists", %{conn: conn} do
       assert_raise MusicBoxWeb.UnauthorizedError, fn ->

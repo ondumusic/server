@@ -4,7 +4,7 @@ defmodule MusicBox.Playlists do
   import Ecto.Query, warn: false
   alias MusicBox.Repo
 
-  alias MusicBox.Playlists.{Playlist, PlaylistItem}
+  alias MusicBox.Playlists.{Operations, Playlist, PlaylistItem}
 
   @spec paginate_playlists(map()) :: Repo.page(Playlist)
   def paginate_playlists(params) do
@@ -31,6 +31,12 @@ defmodule MusicBox.Playlists do
   def delete_playlist(playlist) do
     playlist
     |> Repo.delete()
+  end
+
+  @spec update_playlist_items(Playlist.t(), Operations.t()) ::
+          {:ok, Operations.result()} | Operations.error()
+  def update_playlist_items(playlist, changes) do
+    Operations.batch_update(playlist, changes)
   end
 
   @spec paginate_playlists_items(Playlist.t(), map()) :: Repo.page(PlaylistItem)

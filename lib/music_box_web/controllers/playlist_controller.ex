@@ -9,7 +9,8 @@ defmodule MusicBoxWeb.PlaylistController do
               :playlist_items,
               :playlist_item,
               :update_playlist,
-              :delete_playlist
+              :delete_playlist,
+              :update_playlist_items
             ]
 
   plug :assign_playlist_item when action in [:playlist_item]
@@ -67,6 +68,19 @@ defmodule MusicBoxWeb.PlaylistController do
         |> put_status(:unprocessable_entity)
         |> render(:changeset, changeset: changeset)
     end
+  end
+
+  def update_playlist_items(conn, params) do
+    case Playlists.update_playlist_items(conn.assigns.playlist, params) do
+      {:ok, _changes} ->
+        raise "not implemented"
+    end
+
+    # :too_many_operations http 400?
+    # {:missing_items, ids} http 400
+    # {:missing_tracks, ids} http 400
+    # {:conflict_items, ids} http 400
+    # {:conflict_positions, conflict_positions} http 400
   end
 
   defp assign_playlist(conn, _opts) do
