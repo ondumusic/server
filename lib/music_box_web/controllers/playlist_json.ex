@@ -51,4 +51,46 @@ defmodule MusicBoxWeb.PlaylistJSON do
       fields: json_changeset(changeset)
     }
   end
+
+  def batch_result(%{changes: changes}) do
+    %{
+      added: Enum.map(changes.added, &playlist_item(%{playlist_item: &1})),
+      moved: Enum.map(changes.moved, &playlist_item(%{playlist_item: &1})),
+      removed: changes.removed
+    }
+  end
+
+  def batch_error(%{error: :too_many_operations}) do
+    %{
+      error: "too_many_operations"
+    }
+  end
+
+  def batch_error(%{error: {:conflict_items, ids}}) do
+    %{
+      error: "move_remove_conflict",
+      item_ids: ids
+    }
+  end
+
+  def batch_error(%{error: {:conflict_positions, ids}}) do
+    %{
+      error: "add_move_conflict",
+      item_ids: ids
+    }
+  end
+
+  def batch_error(%{error: {:missing_items, ids}}) do
+    %{
+      error: "unknown_items",
+      item_ids: ids
+    }
+  end
+
+  def batch_error(%{error: {:missing_tracks, ids}}) do
+    %{
+      error: "unknown_tracks",
+      track_ids: ids
+    }
+  end
 end

@@ -166,10 +166,14 @@ defmodule MusicBox.Playlists.Operations do
 
     removed =
       if removes != [] do
-        from(i in PlaylistItem,
-          where: i.playlist_id == ^playlist.id and i.id in ^removes
-        )
-        |> Repo.delete_all()
+        {_count, results} =
+          from(i in PlaylistItem,
+            where: i.playlist_id == ^playlist.id and i.id in ^removes,
+            select: i.id
+          )
+          |> Repo.delete_all(returning: true)
+
+        results
       end
 
     moved =
@@ -190,13 +194,16 @@ defmodule MusicBox.Playlists.Operations do
             |> Map.merge(%{position: pos, updated_at: now})
           end)
 
-        Repo.insert_all(
-          PlaylistItem,
-          rows,
-          on_conflict: {:replace, [:position, :updated_at]},
-          conflict_target: [:id],
-          returning: true
-        )
+        {_count, results} =
+          Repo.insert_all(
+            PlaylistItem,
+            rows,
+            on_conflict: {:replace, [:position, :updated_at]},
+            conflict_target: [:id],
+            returning: true
+          )
+
+        results
       end
 
     added =
@@ -212,13 +219,16 @@ defmodule MusicBox.Playlists.Operations do
             }
           end)
 
-        Repo.insert_all(
-          PlaylistItem,
-          rows,
-          on_conflict: {:replace, [:position, :updated_at]},
-          conflict_target: [:id],
-          returning: true
-        )
+        {_count, results} =
+          Repo.insert_all(
+            PlaylistItem,
+            rows,
+            on_conflict: {:replace, [:position, :updated_at]},
+            conflict_target: [:id],
+            returning: true
+          )
+
+        results
       end
 
     {:ok,

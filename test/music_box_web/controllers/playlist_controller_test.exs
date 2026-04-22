@@ -1,6 +1,7 @@
 defmodule MusicBoxWeb.PlaylistControllerTest do
   use MusicBoxWeb.ConnCase, async: false
 
+  alias MusicBox.Playlists
   alias MusicBox.Playlists.Playlist
 
   setup do
@@ -131,25 +132,212 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
     setup :register_and_log_in_user
 
     test "can add items to playlist", %{conn: conn, playlist: playlist} do
-      tracks = MusicBox.Tracks.paginate_tracks(%{}).entries
+      track = MusicBox.Tracks.paginate_tracks(%{}).entries |> Enum.find(&(&1.number == 5))
+      position = "d"
+      track_id = track.id
 
-      new_items =
-        tracks
-        |> Enum.filter(&(&1.number in [5]))
-        |> Enum.zip(["d"])
-        |> Enum.map(fn {track, position} ->
-          %{
-            position: position,
-            track_id: track.id
-          }
-        end)
-
-      assert %{} =
+      assert %{
+               "added" => [
+                 %{
+                   "position" => ^position,
+                   "trackId" => ^track_id
+                 }
+               ],
+               "moved" => [],
+               "removed" => []
+             } =
                conn
                |> patch(~p"/api/playlists/#{playlist.id}/items", %{
-                 add: new_items
+                 add: [
+                   %{
+                     position: position,
+                     track_id: track_id
+                   }
+                 ]
                })
                |> json_response(200)
+    end
+
+    test "can move items in playlist", %{conn: conn, playlist: playlist} do
+      item = List.first(playlist.items)
+      position = "q"
+      item_id = item.id
+
+      assert %{
+               "added" => [],
+               "moved" => [
+                 %{
+                   "position" => ^position,
+                   "id" => ^item_id
+                 }
+               ],
+               "removed" => []
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}/items", %{
+                 move: [
+                   %{
+                     position: position,
+                     item_id: item_id
+                   }
+                 ]
+               })
+               |> json_response(200)
+    end
+
+    test "can remove items from playlist", %{conn: conn, playlist: playlist} do
+      item = List.first(playlist.items)
+      item_id = item.id
+
+      assert %{
+               "added" => [],
+               "moved" => [],
+               "removed" => [^item_id]
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}/items", %{
+                 remove: [item_id]
+               })
+               |> json_response(200)
+
+      assert %{entries: [_a, _b]} = Playlists.paginate_playlists_items(playlist, %{})
+    end
+
+    test "cannot move and remove same item in playlist", %{conn: conn, playlist: playlist} do
+      item = List.first(playlist.items)
+      position = "q"
+      item_id = item.id
+
+      assert %{
+               "error" => "move_remove_conflict",
+               "item_ids" => [^item_id]
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}/items", %{
+                 move: [
+                   %{
+                     position: position,
+                     item_id: item_id
+                   }
+                 ],
+                 remove: [item_id]
+               })
+               |> json_response(400)
+    end
+
+    test "full happy path playlist test", %{conn: conn} do
+      artist = MusicBox.Artists.get_artist!("the-beatles")
+      album = MusicBox.Albums.get_album_for_artist!(artist, "with-the-beatles")
+
+      [
+        track1,
+        track2,
+        track3,
+        track4,
+        track5
+        | _rest
+      ] = album.tracks |> Enum.map(& &1.id)
+
+      assert %{
+               "id" => playlist_id,
+               "name" => "My Faves"
+             } =
+               conn
+               |> post(~p"/api/playlists", %{
+                 name: "My Faves"
+               })
+               |> json_response(200)
+
+      assert %{
+               "added" => [
+                 %{
+                   "id" => item1,
+                   "position" => "a",
+                   "trackId" => ^track1
+                 },
+                 %{
+                   "id" => item2,
+                   "position" => "b",
+                   "trackId" => ^track2
+                 },
+                 %{
+                   "id" => item3,
+                   "position" => "c",
+                   "trackId" => ^track3
+                 },
+                 %{
+                   "id" => item4,
+                   "position" => "d",
+                   "trackId" => ^track4
+                 }
+               ],
+               "moved" => [],
+               "removed" => []
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist_id}/items", %{
+                 add: [
+                   %{
+                     position: "a",
+                     track_id: track1
+                   },
+                   %{
+                     position: "b",
+                     track_id: track2
+                   },
+                   %{
+                     position: "c",
+                     track_id: track3
+                   },
+                   %{
+                     position: "d",
+                     track_id: track4
+                   }
+                 ]
+               })
+               |> json_response(200)
+
+      assert %{
+               "added" => [
+                 %{
+                   "position" => "e",
+                   "id" => item5,
+                   "trackId" => ^track5
+                 }
+               ],
+               "moved" => [
+                 %{
+                   "position" => "a1",
+                   "id" => ^item3
+                 }
+               ],
+               "removed" => [^item4]
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist_id}/items", %{
+                 add: [
+                   %{
+                     position: "e",
+                     track_id: track5
+                   }
+                 ],
+                 move: [
+                   %{
+                     position: "a1",
+                     item_id: item3
+                   }
+                 ],
+                 remove: [item4]
+               })
+               |> json_response(200)
+
+      playlist = Playlists.get_playlist!(playlist_id)
+
+      assert [item1, item3, item2, item5] ==
+               playlist
+               |> Playlists.paginate_playlists_items(%{})
+               |> Map.get(:entries)
+               |> Enum.map(& &1.id)
     end
   end
 
