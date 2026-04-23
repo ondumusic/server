@@ -3,9 +3,9 @@ import { client, type RequestOptions } from "./client";
 type ScanType = "full" | "quick";
 
 interface Settings {
-  music_path?: string;
-  scan_type?: ScanType;
-  poll_interval?: number;
+  musicPath?: string;
+  scanType?: ScanType;
+  pollInterval?: number;
 }
 
 type SettingsResult =

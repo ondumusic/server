@@ -61,14 +61,14 @@ export const authApi = {
   signup(
     username?: string,
     password?: string,
-    password_confirmation?: string,
+    passwordConfirmation?: string,
     opts?: RequestOptions,
   ) {
     return client.post<
       {
         username?: string;
         password?: string;
-        password_confirmation?: string;
+        passwordConfirmation?: string;
       },
       SignupResult
     >(
@@ -76,7 +76,7 @@ export const authApi = {
       {
         username,
         password,
-        password_confirmation,
+        passwordConfirmation,
       },
       opts,
     );

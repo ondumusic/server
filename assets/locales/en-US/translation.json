@@ -88,14 +88,14 @@
       "save": "Continue"
     },
     "field": {
-      "music_path": "Music Directory",
-      "poll_interval": "Scan Interval",
-      "scan_type": "Scan Type"
+      "musicPath": "Music Directory",
+      "pollInterval": "Scan Interval",
+      "scanType": "Scan Type"
     },
     "help": {
-      "music_path": "The absolute path to your music collection. When running in a container (like Docker) it will generally be a volume mapped at /music",
-      "poll_interval": "How often should we scan for new music?",
-      "scan_type": "In general a quick scan is recommended as it is much faster."
+      "musicPath": "The absolute path to your music collection. When running in a container (like Docker) it will generally be a volume mapped at /music",
+      "pollInterval": "How often should we scan for new music?",
+      "scanType": "In general a quick scan is recommended as it is much faster."
     },
     "subtitle": "Fill in the form below to get started.",
     "title": "Setup MusicBox"
@@ -106,7 +106,7 @@
     },
     "field": {
       "password": "Password",
-      "password_confirmation": "Confirm Password",
+      "passwordConfirmation": "Confirm Password",
       "username": "Username"
     },
     "title": "Setup your Account"

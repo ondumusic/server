@@ -53,6 +53,7 @@ defmodule MusicBox.MixProject do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:mox, "~> 1.2"},
       {:open_api_spex, "~> 3.22"},
+      {:casex, "~> 0.4"},
       # S3 support
       {:ex_aws, "~> 2.5"},
       {:ex_aws_s3, "~> 2.5"},

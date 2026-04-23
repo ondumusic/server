@@ -17,7 +17,10 @@ defmodule MusicBoxWeb.SettingsJSON do
 
   def settings(%{settings: settings}) do
     %{
-      music_path: settings.music_path
+      musicPath: settings.music_path,
+      scanType: settings.scan_type,
+      stripSortPrefixes: settings.strip_sort_prefixes,
+      pollInterval: settings.poll_interval
     }
   end
 end

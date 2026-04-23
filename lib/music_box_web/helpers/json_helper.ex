@@ -21,6 +21,7 @@ defmodule MusicBoxWeb.Helpers.JSON do
 
       Map.put(result, field, %{message: message})
     end)
+    |> Casex.to_camel_case()
   end
 
   @type json_map_opt :: {:include, [atom()]} | {:as, (map() -> map())}

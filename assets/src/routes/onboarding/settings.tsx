@@ -13,9 +13,9 @@ import { usePhoenixSocket } from "../../hooks/usePhoenixSocket";
 type ScanType = "full" | "quick";
 
 type SettingFields = {
-  music_path?: string;
-  scan_type?: ScanType;
-  poll_interval?: number;
+  musicPath?: string;
+  scanType?: ScanType;
+  pollInterval?: number;
 };
 
 export const Route = createFileRoute("/onboarding/settings")({
@@ -37,10 +37,10 @@ export function Settings() {
     const newState: FormState<SettingFields> = {
       ...prevState,
       fields: {
-        music_path: formData.get("music_path") as string,
-        scan_type: formData.get("scan_type") as ScanType,
-        poll_interval: parseInt(
-          formData.get("poll_interval") as string,
+        musicPath: formData.get("musicPath") as string,
+        scanType: formData.get("scanType") as ScanType,
+        pollInterval: parseInt(
+          formData.get("pollInterval") as string,
           10,
         ) as number,
       },
@@ -112,12 +112,12 @@ export function Settings() {
           <Input<SettingFields>
             form={form}
             type="text"
-            field="music_path"
-            label={t("settingsForm.field.music_path", {
+            field="musicPath"
+            label={t("settingsForm.field.musicPath", {
               defaultValue: "Music Directory",
             })}
             defaultValue="/music"
-            help={t("settingsForm.help.music_path", {
+            help={t("settingsForm.help.musicPath", {
               defaultValue:
                 "The absolute path to your music collection. When running in a container (like Docker) it will generally be a volume mapped at /music",
             })}
@@ -128,15 +128,15 @@ export function Settings() {
           <Input<SettingFields>
             form={form}
             type="select"
-            field="scan_type"
-            label={t("settingsForm.field.scan_type", {
+            field="scanType"
+            label={t("settingsForm.field.scanType", {
               defaultValue: "Scan Type",
             })}
             options={{
               quick: "Quick Scan (skips existing)",
               full: "Full Scan (includes existing files)",
             }}
-            help={t("settingsForm.help.scan_type", {
+            help={t("settingsForm.help.scanType", {
               defaultValue:
                 "In general a quick scan is recommended as it is much faster.",
             })}
@@ -147,11 +147,11 @@ export function Settings() {
           <Input<SettingFields>
             form={form}
             type="select"
-            field="poll_interval"
-            label={t("settingsForm.field.poll_interval", {
+            field="pollInterval"
+            label={t("settingsForm.field.pollInterval", {
               defaultValue: "Scan Interval",
             })}
-            help={t("settingsForm.help.poll_interval", {
+            help={t("settingsForm.help.pollInterval", {
               defaultValue: "How often should we scan for new music?",
             })}
             options={{

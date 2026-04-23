@@ -15,6 +15,7 @@ defmodule MusicBoxWeb.Router do
     plug :accepts, ["json"]
     plug :fetch_current_user
     plug OpenApiSpex.Plug.PutApiSpec, module: MusicBoxWeb.ApiSpec
+    plug Casex.CamelCaseDecoderPlug
   end
 
   scope "/", MusicBoxWeb do
@@ -60,6 +61,7 @@ defmodule MusicBoxWeb.Router do
 
     get "/auth/me", AuthController, :current_user
     get "/auth/playtoken", AuthController, :play_token
+    get "/settings", SettingsController, :show
     post "/settings", SettingsController, :update
 
     get "/artists", LibraryController, :artists

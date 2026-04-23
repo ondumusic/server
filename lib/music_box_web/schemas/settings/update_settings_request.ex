@@ -1,0 +1,73 @@
+defmodule MusicBoxWeb.Schemas.UpdateSettingsRequest do
+  @moduledoc false
+  alias MusicBoxWeb.Schemas.Settings
+  alias OpenApiSpex.Schema
+
+  require OpenApiSpex
+
+  OpenApiSpex.schema(%{
+    title: "Settings",
+    description: "Application settings",
+    type: :object,
+    properties: %{
+      musicPath: %Schema{type: :string, example: "/music"},
+      scanType: %Schema{type: :string, enum: ["full", "quick"]},
+      stripSortPrefixes: %Schema{
+        type: :array,
+        items: %Schema{
+          type: :string
+        }
+      },
+      pollInterval: %Schema{
+        type: :integer,
+        example: 60,
+        description: "How many minutes between scanning for files."
+      }
+    },
+    required: []
+  })
+end
+
+defmodule MusicBoxWeb.Schemas.UpdateSettingsResponse do
+  @moduledoc false
+  alias MusicBoxWeb.Schemas.Settings
+  alias OpenApiSpex.Schema
+
+  require OpenApiSpex
+
+  OpenApiSpex.schema(%{
+    title: "UpdateSettingsResponse",
+    type: :object,
+    properties: %{
+      ok: %Schema{type: :boolean, example: "true"},
+      settings: Settings
+    },
+    required: [:ok, :settings]
+  })
+end
+
+defmodule MusicBoxWeb.Schemas.UpdateSettingsError do
+  @moduledoc false
+  alias MusicBoxWeb.Schemas.ChangesetError
+  alias OpenApiSpex.Schema
+
+  require OpenApiSpex
+
+  OpenApiSpex.schema(%{
+    title: "UpdateSettingsError",
+    description: "A response containing validation errors keyed by field name",
+    type: :object,
+    properties: %{
+      ok: %Schema{type: :boolean, example: "false"},
+      fields: %Schema{
+        type: :object,
+        description: "Map of field names to their validation errors",
+        additionalProperties: ChangesetError,
+        example: %{
+          "name" => %{"message" => "can't be blank"}
+        }
+      }
+    },
+    required: [:ok, :fields]
+  })
+end

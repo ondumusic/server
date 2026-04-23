@@ -10,7 +10,7 @@ import { type FormState, useForm } from "../../hooks/useForm";
 type SignupFields = {
   username?: string;
   password?: string;
-  password_confirmation?: string;
+  passwordConfirmation?: string;
 };
 
 export const Route = createFileRoute("/onboarding/user")({
@@ -31,7 +31,7 @@ export function UserComponent() {
       fields: {
         username: formData.get("username") as string,
         password: formData.get("password") as string,
-        password_confirmation: formData.get("password_confirmation") as string,
+        passwordConfirmation: formData.get("passwordConfirmation") as string,
       },
       errors: {},
     };
@@ -39,7 +39,7 @@ export function UserComponent() {
     const response = await authApi.signup(
       newState.fields.username,
       newState.fields.password,
-      newState.fields.password_confirmation,
+      newState.fields.passwordConfirmation,
     );
 
     if (response.ok) {
@@ -91,9 +91,9 @@ export function UserComponent() {
           <Input<SignupFields>
             form={form}
             type="password"
-            field="password_confirmation"
+            field="passwordConfirmation"
             defaultValue=""
-            label={t("signupForm.field.password_confirmation", {
+            label={t("signupForm.field.passwordConfirmation", {
               defaultValue: "Confirm Password",
             })}
             required

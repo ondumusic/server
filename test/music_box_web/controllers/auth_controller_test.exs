@@ -99,7 +99,7 @@ defmodule MusicBoxWeb.AuthControllerTest do
                |> post(~p"/api/auth/signup", %{
                  username: "testuser",
                  password: "testtest123!",
-                 password_confirmation: "testtest123!"
+                 passwordConfirmation: "testtest123!"
                })
                |> json_response(201)
     end
@@ -111,7 +111,7 @@ defmodule MusicBoxWeb.AuthControllerTest do
       assert %{
                "ok" => false,
                "fields" => %{
-                 "password_confirmation" => %{
+                 "passwordConfirmation" => %{
                    "message" => "does not match password"
                  }
                }
@@ -120,7 +120,7 @@ defmodule MusicBoxWeb.AuthControllerTest do
                |> post(~p"/api/auth/signup", %{
                  username: "testuser",
                  password: "testtest123!",
-                 password_confirmation: "!321tsettset"
+                 passwordConfirmation: "!321tsettset"
                })
                |> json_response(422)
     end
@@ -141,7 +141,7 @@ defmodule MusicBoxWeb.AuthControllerTest do
                |> post(~p"/api/auth/signup", %{
                  username: "",
                  password: "testtest123!",
-                 password_confirmation: "testtest123!"
+                 passwordConfirmation: "testtest123!"
                })
                |> json_response(422)
     end
