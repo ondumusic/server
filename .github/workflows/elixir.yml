@@ -92,7 +92,7 @@ jobs:
       run: mix credo --all --strict
 
     - name: Generate openapi spec
-      run: mix openapi.gen
+      run: SKIP_MIGRATIONS=true mix openapi.gen
 
     - name: Diff openapi
       run: git diff --exit-code priv/openapi.json
