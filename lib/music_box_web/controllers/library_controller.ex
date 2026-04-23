@@ -9,9 +9,29 @@ defmodule MusicBoxWeb.LibraryController do
   plug :assign_album when action in [:album, :artist_album]
   plug :assign_track when action in [:track]
 
+  operation :artists,
+    summary: "List artists",
+    tags: ["Artists"],
+    responses: [
+      ok: {"Playlists", "application/json", Schemas.ArtistPage},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error}
+    ]
+
   def artists(conn, params) do
     render(conn, :artists, page: Artists.paginate_artists(params))
   end
+
+  operation :artist,
+    summary: "Get a specific artist",
+    tags: ["Artists"],
+    parameters: [
+      artist_id: [in: :path, type: Schemas.ArtistId, required: true]
+    ],
+    responses: [
+      ok: {"Artist", "application/json", Schemas.Artist},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
+      not_found: {"Not Found", "application/json", Schemas.Error}
+    ]
 
   def artist(conn, _params) do
     render(conn, :artist, artist: conn.assigns.artist)

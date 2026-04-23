@@ -23,7 +23,7 @@ defmodule MusicBoxWeb.LibraryControllerTest do
              } =
                conn
                |> get(~p"/api/artists")
-               |> json_response(200)
+               |> api_response(200, "ArtistPage")
     end
 
     test "returns artist details", %{conn: conn} do
@@ -34,7 +34,7 @@ defmodule MusicBoxWeb.LibraryControllerTest do
              } =
                conn
                |> get(~p"/api/artists/the-beatles")
-               |> json_response(200)
+               |> api_response(200, "Artist")
     end
 
     test "returns paginated list of albums for given artist", %{conn: conn} do

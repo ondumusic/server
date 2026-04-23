@@ -17,9 +17,11 @@ defmodule TestSeeds do
     [
       %{
         name: "The Beatles",
+        sort_name: "Beatles",
         albums: [
           %{
             name: "With the Beatles",
+            sort_name: "With the Beatles",
             release_year: 1963,
             tracks: [
               %{track: 1, name: "It Won't Be Long", duration: seconds("2:13")},
@@ -89,7 +91,8 @@ defmodule TestSeeds do
     artist =
       Repo.insert!(%Artist{
         name: seed.name,
-        slug: Utils.slugify(seed.name)
+        slug: Utils.slugify(seed.name),
+        sort_name: seed[:sort_name] || seed.name
       })
 
     if albums = Map.get(seed, :albums),
@@ -106,6 +109,7 @@ defmodule TestSeeds do
       Repo.insert!(%Album{
         artist_id: artist.id,
         name: seed.name,
+        sort_name: seed[:sort_name] || seed.name,
         slug: Utils.slugify(seed.name),
         compilation: Map.get(seed, :compilation) == true,
         release_year: seed.release_year
