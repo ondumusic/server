@@ -12,6 +12,7 @@ defmodule MusicBoxWeb.LibraryController do
   operation :artists,
     summary: "List artists",
     tags: ["Artists"],
+    parameters: Schemas.Page.params(),
     responses: [
       ok: {"Artists", "application/json", Schemas.ArtistPage},
       unauthorized: {"Unauthorized", "application/json", Schemas.Error}
@@ -40,9 +41,11 @@ defmodule MusicBoxWeb.LibraryController do
   operation :artist_albums,
     summary: "List albums for a specific artist",
     tags: ["Albums"],
-    parameters: [
-      artist_id: [in: :path, type: Schemas.ArtistId, required: true]
-    ],
+    parameters:
+      Schemas.Page.params() ++
+        [
+          artist_id: [in: :path, type: Schemas.ArtistId, required: true]
+        ],
     responses: [
       ok: {"Albums", "application/json", Schemas.AlbumPage},
       unauthorized: {"Unauthorized", "application/json", Schemas.Error},
@@ -57,6 +60,7 @@ defmodule MusicBoxWeb.LibraryController do
   operation :albums,
     summary: "List albums",
     tags: ["Albums"],
+    parameters: Schemas.Page.params(),
     responses: [
       ok: {"Album", "application/json", Schemas.AlbumPage},
       unauthorized: {"Unauthorized", "application/json", Schemas.Error}
@@ -102,32 +106,34 @@ defmodule MusicBoxWeb.LibraryController do
   operation :tracks,
     summary: "List tracks",
     tags: ["Tracks"],
-    parameters: [
-      artist_id: [in: :query, type: Schemas.ArtistId, required: false],
-      album_id: [in: :query, type: Schemas.AlbumId, required: false],
-      query: [
-        in: :query,
-        type: :string,
-        required: false,
-        description: "A search query to filter tracks by."
-      ],
-      random_seed: [
-        in: :query,
-        type: :integer,
-        required: false,
-        description: "To ensure consistent pagination when using random sort."
-      ],
-      sort_by: [
-        in: :query,
-        description: "Maintain default sorting (artist,album,disc,number) or random",
-        schema: %OpenApiSpex.Schema{
-          type: :string,
-          default: "default",
-          enum: ["default", "random"]
-        },
-        required: false
-      ]
-    ],
+    parameters:
+      Schemas.Page.params() ++
+        [
+          artist_id: [in: :query, type: Schemas.ArtistId, required: false],
+          album_id: [in: :query, type: Schemas.AlbumId, required: false],
+          query: [
+            in: :query,
+            type: :string,
+            required: false,
+            description: "A search query to filter tracks by."
+          ],
+          random_seed: [
+            in: :query,
+            type: :integer,
+            required: false,
+            description: "To ensure consistent pagination when using random sort."
+          ],
+          sort_by: [
+            in: :query,
+            description: "Maintain default sorting (artist,album,disc,number) or random",
+            schema: %OpenApiSpex.Schema{
+              type: :string,
+              default: "default",
+              enum: ["default", "random"]
+            },
+            required: false
+          ]
+        ],
     responses: [
       ok: {"Tracks", "application/json", Schemas.TrackPage},
       unauthorized: {"Unauthorized", "application/json", Schemas.Error}

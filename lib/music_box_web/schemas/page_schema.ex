@@ -42,4 +42,10 @@ defmodule MusicBoxWeb.Schemas.Page do
       ]
     }
   end
+
+  def params do
+    [
+      page: [in: :query, schema: %Schema{type: :integer, minimum: 1, default: 1}]
+    ]
+  end
 end
