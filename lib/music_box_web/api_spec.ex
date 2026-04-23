@@ -1,15 +1,13 @@
 defmodule MusicBoxWeb.ApiSpec do
   @moduledoc false
-  alias MusicBoxWeb.{Endpoint, Router}
+  alias MusicBoxWeb.Router
   alias OpenApiSpex.{Components, Info, OpenApi, Paths, Server, Tag}
   @behaviour OpenApi
 
   @impl OpenApi
   def spec do
     %OpenApi{
-      servers: [
-        Server.from_endpoint(Endpoint)
-      ],
+      servers: [%Server{url: "/api"}],
       info: %Info{
         title: "MusicBox API",
         version: to_string(Application.spec(:my_app, :vsn))
