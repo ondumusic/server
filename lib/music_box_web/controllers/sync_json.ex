@@ -21,7 +21,7 @@ defmodule MusicBoxWeb.SyncJSON do
         ),
       deletions: Enum.map(result.deletions.entries, &deletion(%{entity: &1})),
       playlists: Enum.map(result.playlists.entries, &PlaylistJSON.playlist(%{playlist: &1})),
-      playlist_items:
+      playlistItems:
         Enum.map(result.playlist_items.entries, &PlaylistJSON.playlist_item(%{playlist_item: &1})),
       cursor: cursor,
       complete: not incomplete?

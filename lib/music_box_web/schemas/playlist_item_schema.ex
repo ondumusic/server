@@ -6,7 +6,6 @@ defmodule MusicBoxWeb.Schemas.PlaylistItemId do
     title: "PlaylistItemId",
     type: :string,
     format: :uuid,
-    pattern: ~r/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
     example: "6d3e0561-6007-4e18-b1cb-2dd2d440272a",
     description: "The UUID for a specific PlaylistItem."
   })
