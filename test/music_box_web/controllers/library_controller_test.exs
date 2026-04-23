@@ -126,7 +126,7 @@ defmodule MusicBoxWeb.LibraryControllerTest do
              } =
                conn
                |> get(~p"/api/artists/the-beatles/albums")
-               |> json_response(200)
+               |> api_response(200, "AlbumPage")
     end
 
     test "returns artist albums details ", %{conn: conn} do
@@ -224,7 +224,7 @@ defmodule MusicBoxWeb.LibraryControllerTest do
              } =
                conn
                |> get(~p"/api/artists/the-beatles/albums/with-the-beatles")
-               |> json_response(200)
+               |> api_response(200, "Album")
     end
   end
 
@@ -320,7 +320,7 @@ defmodule MusicBoxWeb.LibraryControllerTest do
              } =
                conn
                |> get(~p"/api/albums")
-               |> json_response(200)
+               |> api_response(200, "AlbumPage")
     end
 
     test "get album details", %{conn: conn} do
@@ -406,7 +406,7 @@ defmodule MusicBoxWeb.LibraryControllerTest do
              } =
                conn
                |> get(~p"/api/albums/#{album.id}")
-               |> json_response(200)
+               |> api_response(200, "Album")
     end
   end
 

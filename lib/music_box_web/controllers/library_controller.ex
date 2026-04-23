@@ -13,7 +13,7 @@ defmodule MusicBoxWeb.LibraryController do
     summary: "List artists",
     tags: ["Artists"],
     responses: [
-      ok: {"Playlists", "application/json", Schemas.ArtistPage},
+      ok: {"Artists", "application/json", Schemas.ArtistPage},
       unauthorized: {"Unauthorized", "application/json", Schemas.Error}
     ]
 
@@ -37,18 +37,63 @@ defmodule MusicBoxWeb.LibraryController do
     render(conn, :artist, artist: conn.assigns.artist)
   end
 
+  operation :artist_albums,
+    summary: "List albums for a specific artist",
+    tags: ["Albums"],
+    parameters: [
+      artist_id: [in: :path, type: Schemas.ArtistId, required: true]
+    ],
+    responses: [
+      ok: {"Albums", "application/json", Schemas.AlbumPage},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
+      not_found: {"Not Found", "application/json", Schemas.Error}
+    ]
+
   def artist_albums(conn, params) do
     page = Albums.paginate_albums_for_artist(conn.assigns.artist, params)
     render(conn, :albums, page: page)
   end
 
+  operation :albums,
+    summary: "List albums",
+    tags: ["Albums"],
+    responses: [
+      ok: {"Album", "application/json", Schemas.AlbumPage},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error}
+    ]
+
   def albums(conn, params) do
     render(conn, :albums, page: Albums.paginate_albums(params))
   end
 
+  operation :album,
+    summary: "Get a specific album",
+    tags: ["Albums"],
+    parameters: [
+      album_id: [in: :path, type: Schemas.AlbumId, required: true]
+    ],
+    responses: [
+      ok: {"Album", "application/json", Schemas.Album},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
+      not_found: {"Not Found", "application/json", Schemas.Error}
+    ]
+
   def album(conn, _params) do
     render(conn, :album, album: conn.assigns.album)
   end
+
+  operation :artist_album,
+    summary: "Get a specific album for a specific artist",
+    tags: ["Albums"],
+    parameters: [
+      artist_id: [in: :path, type: Schemas.ArtistId, required: true],
+      album_id: [in: :path, type: Schemas.AlbumId, required: true]
+    ],
+    responses: [
+      ok: {"Album", "application/json", Schemas.Album},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
+      not_found: {"Not Found", "application/json", Schemas.Error}
+    ]
 
   def artist_album(conn, _params) do
     render(conn, :album, album: conn.assigns.album)

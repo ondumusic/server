@@ -44,7 +44,7 @@ end
 defmodule MusicBoxWeb.Schemas.ArtistPage do
   @moduledoc false
   require OpenApiSpex
-  alias MusicBoxWeb.Schemas.{Page, Artist}
+  alias MusicBoxWeb.Schemas.{Artist, Page}
 
   OpenApiSpex.schema(Page.of(Artist, __subtype: "artist", title: "ArtistPage"))
 end
