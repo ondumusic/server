@@ -99,9 +99,55 @@ defmodule MusicBoxWeb.LibraryController do
     render(conn, :album, album: conn.assigns.album)
   end
 
+  operation :tracks,
+    summary: "List tracks",
+    tags: ["Tracks"],
+    parameters: [
+      artist_id: [in: :query, type: Schemas.ArtistId, required: false],
+      album_id: [in: :query, type: Schemas.AlbumId, required: false],
+      query: [
+        in: :query,
+        type: :string,
+        required: false,
+        description: "A search query to filter tracks by."
+      ],
+      random_seed: [
+        in: :query,
+        type: :integer,
+        required: false,
+        description: "To ensure consistent pagination when using random sort."
+      ],
+      sort_by: [
+        in: :query,
+        description: "Maintain default sorting (artist,album,disc,number) or random",
+        schema: %OpenApiSpex.Schema{
+          type: :string,
+          default: "default",
+          enum: ["default", "random"]
+        },
+        required: false
+      ]
+    ],
+    responses: [
+      ok: {"Tracks", "application/json", Schemas.TrackPage},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error}
+    ]
+
   def tracks(conn, params) do
     render(conn, :tracks, page: Tracks.paginate_tracks(params))
   end
+
+  operation :track,
+    summary: "Get a specific track",
+    tags: ["Tracks"],
+    parameters: [
+      track_id: [in: :path, type: Schemas.TrackId, required: true]
+    ],
+    responses: [
+      ok: {"Track", "application/json", Schemas.Track},
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
+      not_found: {"Not Found", "application/json", Schemas.Error}
+    ]
 
   def track(conn, _params) do
     render(conn, :track, track: conn.assigns.track, album: conn.assigns.track.album)

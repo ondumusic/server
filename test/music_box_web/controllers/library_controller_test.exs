@@ -423,7 +423,7 @@ defmodule MusicBoxWeb.LibraryControllerTest do
              } =
                conn
                |> get(~p"/api/tracks")
-               |> json_response(200)
+               |> api_response(200, "TrackPage")
 
       assert [
                %{
@@ -514,14 +514,14 @@ defmodule MusicBoxWeb.LibraryControllerTest do
              } =
                conn
                |> get(~p"/api/tracks?sort_by=random&random_seed=#{seed1}")
-               |> json_response(200)
+               |> api_response(200, "TrackPage")
 
       assert %{
                "entries" => tracks2
              } =
                conn
                |> get(~p"/api/tracks?sort_by=random&random_seed=#{seed2}")
-               |> json_response(200)
+               |> api_response(200, "TrackPage")
 
       assert tracks != tracks2
       assert length(tracks) == length(tracks2)
@@ -551,7 +551,7 @@ defmodule MusicBoxWeb.LibraryControllerTest do
              } =
                conn
                |> get(~p"/api/tracks?artist_id=#{artist.id}")
-               |> json_response(200)
+               |> api_response(200, "TrackPage")
 
       assert [
                %{
@@ -595,7 +595,7 @@ defmodule MusicBoxWeb.LibraryControllerTest do
              } =
                conn
                |> get(~p"/api/tracks?album_id=#{album.id}")
-               |> json_response(200)
+               |> api_response(200, "TrackPage")
 
       assert [
                %{
@@ -631,7 +631,7 @@ defmodule MusicBoxWeb.LibraryControllerTest do
              } =
                conn
                |> get(~p"/api/tracks?query=post")
-               |> json_response(200)
+               |> api_response(200, "TrackPage")
 
       assert [
                %{
@@ -665,7 +665,7 @@ defmodule MusicBoxWeb.LibraryControllerTest do
              } =
                conn
                |> get(~p"/api/tracks/#{track.id}")
-               |> json_response(200)
+               |> api_response(200, "Track")
     end
   end
 

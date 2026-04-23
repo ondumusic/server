@@ -38,6 +38,10 @@ defmodule MusicBoxWeb.Schemas.Album do
         example: "https://example.com/artwork/123.jpg",
         nullable: true
       },
+      tracks: %Schema{
+        type: :array,
+        items: MusicBoxWeb.Schemas.Track
+      },
       releaseYear: %Schema{type: :integer, example: 2, nullable: true},
       trackCount: %Schema{type: :integer, example: 14},
       insertedAt: %Schema{type: :string, format: :"date-time"}
@@ -64,6 +68,7 @@ defmodule MusicBoxWeb.Schemas.Album do
       :name,
       :sortName,
       :slug,
+      :tracks,
       :artworkUrl,
       :releaseYear,
       :trackCount,
