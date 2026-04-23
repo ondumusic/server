@@ -46,7 +46,7 @@ defmodule MusicBox.Search do
       )
       |> Repo.paginate(params)
 
-    search(query, params, sources, Map.put(results, :artists, items))
+    search(query, params, sources, Map.put(results, :artists, items.entries))
   end
 
   defp search(query, params, [:album | sources], results) do
@@ -67,7 +67,7 @@ defmodule MusicBox.Search do
       )
       |> Repo.paginate(params)
 
-    search(query, params, sources, Map.put(results, :albums, items))
+    search(query, params, sources, Map.put(results, :albums, items.entries))
   end
 
   defp search(query, params, [:track | sources], results) do
@@ -88,7 +88,7 @@ defmodule MusicBox.Search do
       )
       |> Repo.paginate(params)
 
-    search(query, params, sources, Map.put(results, :tracks, items))
+    search(query, params, sources, Map.put(results, :tracks, items.entries))
   end
 
   def parse_query(query) do

@@ -7,17 +7,17 @@ defmodule MusicBoxWeb.SearchJSON do
     %{
       artists:
         Enum.map(
-          result.artists.entries,
+          result.artists,
           &LibraryJSON.artist(%{artist: &1})
         ),
       albums:
         Enum.map(
-          result.albums.entries,
+          result.albums,
           &LibraryJSON.album(%{album: &1, render_tracks: false})
         ),
       tracks:
         Enum.map(
-          result.tracks.entries,
+          result.tracks,
           &LibraryJSON.track(%{track: &1, album: &1.album})
         )
     }

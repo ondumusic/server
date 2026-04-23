@@ -47,7 +47,14 @@ defmodule MusicBox.Cleanup.Worker do
 
   @impl true
   def handle_info(%{topic: "library:sync", event: "completed"}, state) do
-    Cleanup.work_async([:unused, :update_album_counts, :update_track_counts])
+    Cleanup.work_async([
+      :unused,
+      :update_album_counts,
+      :update_track_counts,
+      :sort_names,
+      :update_fts
+    ])
+
     {:noreply, state}
   end
 

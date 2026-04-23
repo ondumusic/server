@@ -8,7 +8,7 @@ defmodule MusicBoxWeb.SearchControllerTest do
       assert %{"tracks" => tracks, "albums" => albums, "artists" => artists} =
                conn
                |> get(~p"/api/search", %{query: "beatles"})
-               |> json_response(200)
+               |> api_response(200, "SearchResults")
 
       assert [
                "The Beatles"
@@ -40,7 +40,7 @@ defmodule MusicBoxWeb.SearchControllerTest do
       assert %{"tracks" => tracks, "albums" => albums, "artists" => artists} =
                conn
                |> get(~p"/api/search", %{query: "beatles beethoven"})
-               |> json_response(200)
+               |> api_response(200, "SearchResults")
 
       assert Enum.empty?(albums)
       assert Enum.empty?(artists)
@@ -54,7 +54,7 @@ defmodule MusicBoxWeb.SearchControllerTest do
       assert %{"tracks" => tracks, "albums" => albums, "artists" => artists} =
                conn
                |> get(~p"/api/search", %{query: "beat post"})
-               |> json_response(200)
+               |> api_response(200, "SearchResults")
 
       assert Enum.empty?(albums)
       assert Enum.empty?(artists)

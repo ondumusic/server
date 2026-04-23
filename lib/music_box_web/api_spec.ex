@@ -19,6 +19,7 @@ defmodule MusicBoxWeb.ApiSpec do
         %Tag{name: "Albums", description: "Album management"},
         %Tag{name: "Tracks", description: "Track management"},
         %Tag{name: "Sync", description: "Sync operations"},
+        %Tag{name: "Search", description: "Search operations"},
         %Tag{name: "Settings", description: "Settings management"},
         %Tag{name: "Playlists", description: "Playlist management"}
       ],

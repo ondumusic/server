@@ -82,8 +82,18 @@ defmodule MusicBoxWeb.Schemas.SyncResponse do
         required: true
       }
     },
-    required: [:__type, :id, :name, :sortName, :slug, :albumCount, :insertedAt]
+    required: [
+      :artists,
+      :albums,
+      :tracks,
+      :playlists,
+      :playlistItems,
+      :deletions,
+      :cursor,
+      :complete
+    ]
   })
 
-  def fields, do: [:__type, :id, :name, :sortName, :slug, :albumCount, :insertedAt]
+  def fields,
+    do: [:artists, :albums, :tracks, :playlists, :playlistItems, :deletions, :cursor, :complete]
 end
