@@ -10,6 +10,70 @@ defmodule MusicBoxWeb.StreamController do
   plug :assign_track
   plug :assign_preset
 
+  operation :transcode,
+    summary: "Transcode a specific track",
+    tags: ["Tracks"],
+    parameters: [
+      async: [
+        in: :query,
+        description:
+          "When set to 1 it will start in background and return a basic JSON confirmation.",
+        schema: %OpenApiSpex.Schema{type: :string, enum: ["1", "0"], default: "0"},
+        required: false,
+        example: "1"
+      ],
+      preset: [
+        in: :query,
+        description: "Which transcoding preset to use",
+        schema: %OpenApiSpex.Schema{
+          type: :string,
+          enum: [
+            "default_opus",
+            "mobile_opus",
+            "default_adts",
+            "mobile_adts",
+            "default_aac",
+            "mobile_aac"
+          ],
+          default: "default_opus"
+        },
+        required: false,
+        example: "default_opus"
+      ]
+    ],
+    responses: [
+      ok: %OpenApiSpex.Response{
+        description: """
+        The response will be a `text/event-stream` that waits until transcoding
+        is completed, and returns the transcoded filesize. When using `async=1`
+        however it will return a basic acknowledgement as `application/json`.
+        """,
+        content: %{
+          "application/json" => %OpenApiSpex.MediaType{
+            schema: %OpenApiSpex.Schema{
+              type: :object,
+              properties: %{
+                ok: %OpenApiSpex.Schema{type: :boolean, example: true}
+              },
+              required: [:ok],
+              example: %{ok: true}
+            }
+          },
+          "text/event-stream" => %OpenApiSpex.MediaType{
+            schema: %OpenApiSpex.Schema{
+              type: :string,
+              description: """
+              SSE stream which eventually returns the transcoded filesize.
+              """,
+              example: "1024"
+            }
+          }
+        }
+      },
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
+      not_found: {"Not Found", "application/json", Schemas.Error}
+    ]
+
   def transcode(conn, %{"async" => "1"}) do
     %{track: %{file: file}, preset: preset} = conn.assigns
     Task.start(fn -> Transcoder.request_chunk(file, preset, 0) end)
@@ -39,6 +103,8 @@ defmodule MusicBoxWeb.StreamController do
     end
   end
 
+  operation :download, false
+
   def download(conn, %{"transcode" => "1"}) do
     %{track: %{file: file} = track, preset: preset} = conn.assigns
 
@@ -54,6 +120,8 @@ defmodule MusicBoxWeb.StreamController do
   end
 
   def download(conn, params), do: stream(conn, params)
+
+  operation :stream, false
 
   def stream(conn, %{"transcode" => "1"}) do
     %{track: track, preset: preset} = conn.assigns

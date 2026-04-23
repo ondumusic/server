@@ -1,6 +1,8 @@
 defmodule MusicBoxWeb.ArtworkController do
   use MusicBoxWeb, :controller
 
+  operation :show, false
+
   def show(conn, %{"filename" => filename}) do
     file_path =
       MusicBox.Config.artwork_path()

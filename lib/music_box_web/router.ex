@@ -43,8 +43,6 @@ defmodule MusicBoxWeb.Router do
     pipe_through [:browser, :api]
 
     get "/artwork/:filename", ArtworkController, :show
-
-    get "/transcode/:track_id", StreamController, :transcode
     get "/download/:track_id", StreamController, :download
     get "/stream/:track_id", StreamController, :stream
   end
@@ -74,6 +72,7 @@ defmodule MusicBoxWeb.Router do
 
     get "/tracks", LibraryController, :tracks
     get "/tracks/:track_id", LibraryController, :track
+    get "/tracks/:track_id/transcode", StreamController, :transcode
 
     get "/playlists", PlaylistController, :playlists
     post "/playlists", PlaylistController, :create_playlist
