@@ -17,7 +17,7 @@ defmodule MusicBoxWeb.AuthControllerTest do
                  username: user.username,
                  password: "testtest123!"
                })
-               |> json_response(200)
+               |> api_response(200, "LoginResponse")
 
       assert %{
                "entries" => [
@@ -30,7 +30,7 @@ defmodule MusicBoxWeb.AuthControllerTest do
                conn
                |> put_req_header("authorization", "Bearer #{session_token}")
                |> get(~p"/api/artists")
-               |> json_response(200)
+               |> api_response(200, "ArtistPage")
     end
 
     test "refuses bad login", %{conn: conn} do
@@ -43,7 +43,7 @@ defmodule MusicBoxWeb.AuthControllerTest do
                  username: "root",
                  password: "hunter2"
                })
-               |> json_response(200)
+               |> api_response(422, "LoginError")
     end
   end
 
@@ -63,24 +63,24 @@ defmodule MusicBoxWeb.AuthControllerTest do
                  username: user.username,
                  password: "testtest123!"
                })
-               |> json_response(200)
+               |> api_response(200, "LoginResponse")
 
       assert conn
              |> put_req_header("authorization", "Bearer #{session_token}")
              |> get(~p"/api/artists")
-             |> json_response(200)
+             |> api_response(200, "ArtistPage")
 
       assert %{"ok" => true} =
                conn
                |> put_req_header("authorization", "Bearer #{session_token}")
                |> delete(~p"/api/auth/session")
-               |> json_response(200)
+               |> api_response(200, "LogoutResponse")
 
       assert_raise MusicBoxWeb.UnauthorizedError, fn ->
         conn
         |> put_req_header("authorization", "Bearer #{session_token}")
         |> get(~p"/api/artists")
-        |> json_response(200)
+        |> api_response(200, "Unauthorized")
       end
     end
   end
@@ -101,7 +101,7 @@ defmodule MusicBoxWeb.AuthControllerTest do
                  password: "testtest123!",
                  passwordConfirmation: "testtest123!"
                })
-               |> json_response(201)
+               |> api_response(201, "SignupResponse")
     end
 
     test "fails on mismatched password", %{conn: conn} do
@@ -122,7 +122,7 @@ defmodule MusicBoxWeb.AuthControllerTest do
                  password: "testtest123!",
                  passwordConfirmation: "!321tsettset"
                })
-               |> json_response(422)
+               |> api_response(422, "SignupError")
     end
 
     test "fails on missing username", %{conn: conn} do
@@ -143,7 +143,7 @@ defmodule MusicBoxWeb.AuthControllerTest do
                  password: "testtest123!",
                  passwordConfirmation: "testtest123!"
                })
-               |> json_response(422)
+               |> api_response(422, "SignupError")
     end
   end
 
@@ -160,14 +160,14 @@ defmodule MusicBoxWeb.AuthControllerTest do
              } =
                conn
                |> get(~p"/api/auth/me")
-               |> json_response(200)
+               |> api_response(200, "User")
     end
 
     test "fails if not logged in", %{} do
       assert_raise MusicBoxWeb.UnauthorizedError, fn ->
         build_conn()
         |> get(~p"/api/auth/me")
-        |> json_response(200)
+        |> api_response(200, "Unauthorized")
       end
     end
   end

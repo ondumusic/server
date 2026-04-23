@@ -55,7 +55,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
              } =
                conn
                |> get(~p"/api/playlists/#{playlist.id}")
-               |> json_response(200)
+               |> api_response(200, "Playlist")
     end
 
     test "returns paginated list of playlist items", %{conn: conn, playlist: playlist} do
@@ -72,7 +72,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
              } =
                conn
                |> get(~p"/api/playlists/#{playlist.id}/items")
-               |> json_response(200)
+               |> api_response(200, "PlaylistItemPage")
     end
 
     test "returns playlist items", %{
@@ -84,7 +84,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
       assert %{"position" => "a"} =
                conn
                |> get(~p"/api/playlists/#{playlist.id}/items/#{item.id}")
-               |> json_response(200)
+               |> api_response(200, "PlaylistItem")
     end
 
     test "creates playlist", %{conn: conn} do
