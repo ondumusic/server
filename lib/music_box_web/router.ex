@@ -83,7 +83,6 @@ defmodule MusicBoxWeb.Router do
     get "/playlists/:playlist_id", PlaylistController, :playlist
     get "/playlists/:playlist_id/items", PlaylistController, :playlist_items
     patch "/playlists/:playlist_id/items", PlaylistController, :update_playlist_items
-    get "/playlists/:playlist_id/items/:playlist_item_id", PlaylistController, :playlist_item
 
     get "/sync", SyncController, :sync
 

@@ -75,18 +75,6 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> api_response(200, "PlaylistItemPage")
     end
 
-    test "returns playlist items", %{
-      conn: conn,
-      playlist: playlist
-    } do
-      item = hd(playlist.items)
-
-      assert %{"position" => "a"} =
-               conn
-               |> get(~p"/api/playlists/#{playlist.id}/items/#{item.id}")
-               |> api_response(200, "PlaylistItem")
-    end
-
     test "creates playlist", %{conn: conn} do
       assert %{"fields" => %{"name" => %{"message" => "can't be blank"}}} =
                conn

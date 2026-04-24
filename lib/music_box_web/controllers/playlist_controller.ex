@@ -7,13 +7,10 @@ defmodule MusicBoxWeb.PlaylistController do
        when action in [
               :playlist,
               :playlist_items,
-              :playlist_item,
               :update_playlist,
               :delete_playlist,
               :update_playlist_items
             ]
-
-  plug :assign_playlist_item when action in [:playlist_item]
 
   tags ["Playlists"]
 
@@ -57,22 +54,6 @@ defmodule MusicBoxWeb.PlaylistController do
   def playlist_items(conn, params) do
     page = Playlists.paginate_playlists_items(conn.assigns.playlist, params)
     render(conn, :playlist_items, page: page)
-  end
-
-  operation :playlist_item,
-    summary: "Get a specific playlist item",
-    parameters: [
-      playlist_id: [in: :path, type: Schemas.PlaylistId, required: true],
-      playlist_item_id: [in: :path, type: Schemas.PlaylistItemId, required: true]
-    ],
-    responses: [
-      ok: {"Playlist Item", "application/json", Schemas.PlaylistItem},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      not_found: {"Not Found", "application/json", Schemas.Error}
-    ]
-
-  def playlist_item(conn, _params) do
-    render(conn, :playlist_item, playlist_item: conn.assigns.playlist_item)
   end
 
   operation :create_playlist,
@@ -180,17 +161,5 @@ defmodule MusicBoxWeb.PlaylistController do
 
     conn
     |> assign(:playlist, playlist)
-  end
-
-  defp assign_playlist_item(conn, _opts) do
-    playlist_item_id = Map.get(conn.params, "playlist_item_id", "")
-
-    playlist_item =
-      if playlist = conn.assigns[:playlist],
-        do: Playlists.get_playlist_item_for_playlist!(playlist, playlist_item_id),
-        else: Playlists.get_playlist_item!(playlist_item_id)
-
-    conn
-    |> assign(:playlist_item, playlist_item)
   end
 end
