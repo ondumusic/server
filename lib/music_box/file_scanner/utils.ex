@@ -27,7 +27,7 @@ defmodule MusicBox.FileScanner.Utils do
     Keyword.get(opts, :strip_prefixes, [])
     |> Enum.map(&String.downcase/1)
     |> Enum.reduce_while(normalised, fn prefix, result ->
-      if String.starts_with?(result, prefix) do
+      if String.starts_with?(result, prefix <> " ") do
         prefix_size = String.length(prefix)
         result = String.slice(result, prefix_size..-1//1) |> String.trim()
         {:halt, result}

@@ -73,9 +73,7 @@ defmodule MusicBox.Cleanup.Worker do
 
   def do_step(:update_album_counts) do
     Repo.transact(fn repo ->
-      # First, set all to 0
-      from(a in Artist, update: [set: [album_count: 0]])
-      |> repo.update_all([])
+      started_at = DateTime.utc_now()
 
       # Then update those that have albums
       subquery =
@@ -84,12 +82,26 @@ defmodule MusicBox.Cleanup.Worker do
           select: %{artist_id: al.artist_id, count: count(al.id)}
         )
 
-      from(a in Artist,
-        join: s in subquery(subquery),
-        on: a.id == s.artist_id,
-        update: [set: [album_count: s.count]]
-      )
-      |> repo.update_all([])
+      {count, _} =
+        from(a in Artist,
+          join: s in subquery(subquery),
+          on: a.id == s.artist_id,
+          update: [set: [album_count: coalesce(s.count, 0)]]
+        )
+        |> repo.update_all([])
+
+      if count > 0 do
+        updated_artist_ids =
+          from(a in Artist,
+            where: a.updated_at >= ^started_at,
+            select: a.id
+          )
+          |> Repo.all()
+
+        MusicBoxWeb.Endpoint.broadcast!("library:sync", "processed", %{
+          artists: updated_artist_ids
+        })
+      end
 
       {:ok, :noop}
     end)
@@ -97,9 +109,7 @@ defmodule MusicBox.Cleanup.Worker do
 
   def do_step(:update_track_counts) do
     Repo.transact(fn repo ->
-      # First, set all to 0
-      from(al in Album, update: [set: [track_count: 0]])
-      |> repo.update_all([])
+      started_at = DateTime.utc_now()
 
       # Then update to get a track count per album
       subquery =
@@ -108,12 +118,24 @@ defmodule MusicBox.Cleanup.Worker do
           select: %{album_id: t.album_id, count: count(t.id)}
         )
 
-      from(al in Album,
-        join: s in subquery(subquery),
-        on: al.id == s.album_id,
-        update: [set: [track_count: s.count]]
-      )
-      |> repo.update_all([])
+      {count, _} =
+        from(al in Album,
+          join: s in subquery(subquery),
+          on: al.id == s.album_id,
+          update: [set: [track_count: coalesce(s.count, 0)]]
+        )
+        |> repo.update_all([])
+
+      if count > 0 do
+        updated_album_ids =
+          from(al in Album,
+            where: al.updated_at >= ^started_at,
+            select: al.id
+          )
+          |> Repo.all()
+
+        MusicBoxWeb.Endpoint.broadcast!("library:sync", "processed", %{albums: updated_album_ids})
+      end
 
       {:ok, :noop}
     end)
@@ -148,6 +170,8 @@ defmodule MusicBox.Cleanup.Worker do
   defp update_sort_names(schema, strip_prefixes) do
     Repo.transact(
       fn repo ->
+        started_at = DateTime.utc_now()
+
         schema
         |> repo.stream()
         |> Stream.each(fn entry ->
@@ -159,6 +183,18 @@ defmodule MusicBox.Cleanup.Worker do
           |> repo.update!()
         end)
         |> Stream.run()
+
+        updated_ids =
+          from(s in schema,
+            where: s.updated_at >= ^started_at,
+            select: s.id
+          )
+          |> Repo.all()
+
+        MusicBoxWeb.Endpoint.broadcast!("library:sync", "processed", %{
+          albums: updated_ids,
+          artists: updated_ids
+        })
 
         {:ok, nil}
       end,
