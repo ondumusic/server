@@ -9,6 +9,7 @@ defmodule MusicBoxWeb.Schemas.UpdateSettingsRequest do
     title: "Settings",
     description: "Application settings",
     type: :object,
+    additionalProperties: false,
     properties: %{
       musicPath: %Schema{type: :string, example: "/music"},
       scanType: %Schema{type: :string, enum: ["full", "quick"]},
@@ -38,6 +39,7 @@ defmodule MusicBoxWeb.Schemas.UpdateSettingsResponse do
   OpenApiSpex.schema(%{
     title: "UpdateSettingsResponse",
     type: :object,
+    additionalProperties: false,
     properties: %{
       ok: %Schema{type: :boolean, example: "true"},
       settings: Settings
@@ -57,6 +59,7 @@ defmodule MusicBoxWeb.Schemas.UpdateSettingsError do
     title: "UpdateSettingsError",
     description: "A response containing validation errors keyed by field name",
     type: :object,
+    additionalProperties: false,
     properties: %{
       ok: %Schema{type: :boolean, example: "false"},
       fields: %Schema{

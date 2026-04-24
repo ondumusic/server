@@ -20,6 +20,7 @@ defmodule MusicBoxWeb.Schemas.PlaylistItem do
     title: "PlaylistItem",
     description: "An item inside a playlist",
     type: :object,
+    additionalProperties: false,
     properties: %{
       __type: %Schema{
         type: :string,

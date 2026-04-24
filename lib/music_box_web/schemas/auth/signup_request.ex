@@ -7,6 +7,7 @@ defmodule MusicBoxWeb.Schemas.SignupRequest do
   OpenApiSpex.schema(%{
     title: "SignupRequest",
     type: :object,
+    additionalProperties: false,
     properties: %{
       username: %Schema{type: :string, minLength: 1},
       password: %Schema{type: :string, minLength: 1},
@@ -27,6 +28,7 @@ defmodule MusicBoxWeb.Schemas.SignupResponse do
     title: "SignupResponse",
     description: "A successful Signup attempt returns currentUser and sessionToken",
     type: :object,
+    additionalProperties: false,
     properties: %{
       ok: %Schema{type: :boolean, example: "true"},
       sessionToken: MusicBoxWeb.Schemas.SessionToken,
@@ -47,7 +49,9 @@ defmodule MusicBoxWeb.Schemas.SignupError do
     title: "SignupError",
     description: "A response containing validation errors keyed by field name",
     type: :object,
+    additionalProperties: false,
     properties: %{
+      ok: %Schema{type: :boolean, example: "false"},
       fields: %Schema{
         type: :object,
         description: "Map of field names to their validation errors",

@@ -19,6 +19,7 @@ defmodule MusicBoxWeb.Schemas.User do
   OpenApiSpex.schema(%{
     title: "User",
     type: :object,
+    additionalProperties: false,
     properties: %{
       id: MusicBoxWeb.Schemas.UserId,
       username: %Schema{type: :string, example: "admin"}
@@ -50,14 +51,3 @@ defmodule MusicBoxWeb.Schemas.PlayToken do
     example: "UGxheVRva2Vu"
   })
 end
-
-# SignupError
-#   ok: false,
-#   fields: json_changeset(changeset)
-
-# LogoutResponse
-#   ok: true
-
-# PlayTokenResponse
-#   ok: true
-#   playToken: PlayToken

@@ -9,6 +9,7 @@ defmodule MusicBoxWeb.Schemas.Page do
     %Schema{
       title: title,
       type: :object,
+      additionalProperties: false,
       properties: %{
         __type: %Schema{
           type: :string,

@@ -8,6 +8,7 @@ defmodule MusicBoxWeb.Schemas.PlayTokenResponse do
     title: "PlayTokenResponse",
     description: "",
     type: :object,
+    additionalProperties: false,
     properties: %{
       ok: %Schema{type: :boolean, example: "true"},
       playToken: MusicBoxWeb.Schemas.PlayToken

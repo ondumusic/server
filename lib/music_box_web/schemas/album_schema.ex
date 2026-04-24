@@ -20,6 +20,7 @@ defmodule MusicBoxWeb.Schemas.Album do
     title: "Album",
     description: "An album",
     type: :object,
+    additionalProperties: false,
     properties: %{
       __type: %Schema{
         type: :string,
@@ -43,6 +44,7 @@ defmodule MusicBoxWeb.Schemas.Album do
       },
       releaseYear: %Schema{type: :integer, example: 2, nullable: true},
       trackCount: %Schema{type: :integer, example: 14},
+      isUnknown: %Schema{type: :boolean, example: "false"},
       insertedAt: %Schema{type: :string, format: :"date-time"}
     },
     required: [
@@ -55,6 +57,7 @@ defmodule MusicBoxWeb.Schemas.Album do
       :artworkUrl,
       :releaseYear,
       :trackCount,
+      :isUnknown,
       :insertedAt
     ]
   })
@@ -71,6 +74,7 @@ defmodule MusicBoxWeb.Schemas.Album do
       :artworkUrl,
       :releaseYear,
       :trackCount,
+      :isUnknown,
       :insertedAt
     ]
 end

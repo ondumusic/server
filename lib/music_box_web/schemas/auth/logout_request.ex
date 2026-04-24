@@ -8,6 +8,7 @@ defmodule MusicBoxWeb.Schemas.LogoutResponse do
     title: "LogoutResponse",
     description: "",
     type: :object,
+    additionalProperties: false,
     properties: %{
       ok: %Schema{type: :boolean, example: "true"}
     },

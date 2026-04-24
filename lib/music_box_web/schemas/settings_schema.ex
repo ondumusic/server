@@ -7,6 +7,7 @@ defmodule MusicBoxWeb.Schemas.Settings do
     title: "Settings",
     description: "Application settings",
     type: :object,
+    additionalProperties: false,
     properties: %{
       musicPath: %Schema{type: :string, example: "/music"},
       scanType: %Schema{type: :string, enum: ["full", "quick"]},

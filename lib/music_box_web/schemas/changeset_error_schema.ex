@@ -7,6 +7,7 @@ defmodule MusicBoxWeb.Schemas.ChangesetError do
     title: "ValidationError",
     description: "A validation error for a single field",
     type: :object,
+    additionalProperties: false,
     properties: %{
       message: %Schema{
         type: :string,

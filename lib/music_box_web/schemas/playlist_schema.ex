@@ -21,6 +21,7 @@ defmodule MusicBoxWeb.Schemas.Playlist do
     title: "Playlist",
     description: "A playlist with tracks",
     type: :object,
+    additionalProperties: false,
     properties: %{
       __type: %Schema{
         type: :string,

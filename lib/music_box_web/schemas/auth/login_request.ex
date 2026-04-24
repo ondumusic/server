@@ -7,6 +7,7 @@ defmodule MusicBoxWeb.Schemas.LoginRequest do
   OpenApiSpex.schema(%{
     title: "LoginRequest",
     type: :object,
+    additionalProperties: false,
     properties: %{
       username: %Schema{type: :string, minLength: 1},
       password: %Schema{type: :string, minLength: 1}
@@ -26,6 +27,7 @@ defmodule MusicBoxWeb.Schemas.LoginResponse do
     title: "LoginResponse",
     description: "A successful login attempt returns currentUser and sessionToken",
     type: :object,
+    additionalProperties: false,
     properties: %{
       ok: %Schema{type: :boolean, example: "true"},
       sessionToken: MusicBoxWeb.Schemas.SessionToken,
@@ -46,7 +48,9 @@ defmodule MusicBoxWeb.Schemas.LoginError do
     title: "LoginError",
     description: "A response containing validation errors keyed by field name",
     type: :object,
+    additionalProperties: false,
     properties: %{
+      ok: %Schema{type: :boolean, example: "false"},
       fields: %Schema{
         type: :object,
         description: "Map of field names to their validation errors",

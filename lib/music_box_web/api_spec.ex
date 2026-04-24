@@ -10,7 +10,15 @@ defmodule MusicBoxWeb.ApiSpec do
       servers: [%Server{url: "/"}],
       info: %Info{
         title: "MusicBox API",
-        version: to_string(Application.spec(:my_app, :vsn))
+        version: to_string(Application.spec(:my_app, :vsn)),
+        description: """
+        ## Authentication
+        All requests require a bearer token in the `Authorization` header,
+        however it is also possible to generate a `playToken` that temporarily
+        lets you access track downloads/streams. This is mostly intended to be
+        used by clients that cannot add the `Authorization` header to their
+        audio player requests (like a native `<audio>` tag in HTML).
+        """
       },
       tags: [
         %Tag{name: "Artists", description: "Artist management"},

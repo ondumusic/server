@@ -7,6 +7,7 @@ defmodule MusicBoxWeb.Schemas.SearchResults do
     title: "SearchResults",
     description: "Returns the top matching artists, albums and tracks.",
     type: :object,
+    additionalProperties: false,
     properties: %{
       artists: %Schema{
         type: :array,

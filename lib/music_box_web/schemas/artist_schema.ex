@@ -20,6 +20,7 @@ defmodule MusicBoxWeb.Schemas.Artist do
     title: "Artist",
     description: "An artist",
     type: :object,
+    additionalProperties: false,
     properties: %{
       __type: %Schema{
         type: :string,

@@ -23,6 +23,7 @@ defmodule MusicBoxWeb.Schemas.SyncDeletion do
     Represents the deletion of an entity.
     """,
     type: :object,
+    additionalProperties: false,
     properties: %{
       entityId: %Schema{type: :string, format: :uuid},
       entityType: %Schema{
@@ -43,6 +44,7 @@ defmodule MusicBoxWeb.Schemas.SyncResponse do
     title: "SyncResponse",
     description: "Contains cursor-paginated results for multiple entities.",
     type: :object,
+    additionalProperties: false,
     properties: %{
       artists: %Schema{
         type: :array,

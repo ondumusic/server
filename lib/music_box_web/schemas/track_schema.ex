@@ -20,6 +20,7 @@ defmodule MusicBoxWeb.Schemas.Track do
     title: "Track",
     description: "A track",
     type: :object,
+    additionalProperties: false,
     properties: %{
       __type: %Schema{
         type: :string,
