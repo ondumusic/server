@@ -13,7 +13,9 @@ defmodule MusicBoxWeb.StreamController do
   operation :transcode,
     summary: "Transcode a specific track",
     tags: ["Tracks"],
+    security: [%{"sessionToken" => []}, %{"playToken" => []}],
     parameters: [
+      track_id: [in: :path, type: Schemas.TrackId, required: true],
       async: [
         in: :query,
         description:
@@ -103,7 +105,59 @@ defmodule MusicBoxWeb.StreamController do
     end
   end
 
-  operation :download, false
+  operation :download,
+    summary: "Download a specific track",
+    tags: ["Tracks"],
+    security: [%{"sessionToken" => []}, %{"playToken" => []}],
+    parameters: [
+      track_id: [in: :path, type: Schemas.TrackId, required: true],
+      transcode: [
+        in: :query,
+        description: "Enable live transcoding for this track.",
+        schema: %OpenApiSpex.Schema{type: :string, enum: ["1", "0"], default: "0"},
+        required: false,
+        example: "1"
+      ],
+      preset: [
+        in: :query,
+        description: "Which transcoding preset to use",
+        schema: %OpenApiSpex.Schema{
+          type: :string,
+          enum: [
+            "default_opus",
+            "mobile_opus",
+            "default_adts",
+            "mobile_adts",
+            "default_aac",
+            "mobile_aac"
+          ],
+          default: "default_opus"
+        },
+        required: false,
+        example: "default_opus"
+      ]
+    ],
+    responses: [
+      ok: %OpenApiSpex.Response{
+        description: "Audio file contents",
+        content: %{
+          "application/octet-stream" => %OpenApiSpex.MediaType{
+            schema: %OpenApiSpex.Schema{
+              type: :string,
+              format: :binary
+            }
+          }
+        },
+        headers: %{
+          "content-type" => %OpenApiSpex.Header{
+            description: "The actual MIME type of the file (e.g. image/png, application/pdf)",
+            schema: %OpenApiSpex.Schema{type: :string}
+          }
+        }
+      },
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
+      not_found: {"Not Found", "application/json", Schemas.Error}
+    ]
 
   def download(conn, %{"transcode" => "1"}) do
     %{track: %{file: file} = track, preset: preset} = conn.assigns
@@ -121,7 +175,59 @@ defmodule MusicBoxWeb.StreamController do
 
   def download(conn, params), do: stream(conn, params)
 
-  operation :stream, false
+  operation :stream,
+    summary: "Stream a specific track",
+    tags: ["Tracks"],
+    security: [%{"sessionToken" => []}, %{"playToken" => []}],
+    parameters: [
+      track_id: [in: :path, type: Schemas.TrackId, required: true],
+      transcode: [
+        in: :query,
+        description: "Enable live transcoding for this track.",
+        schema: %OpenApiSpex.Schema{type: :string, enum: ["1", "0"], default: "0"},
+        required: false,
+        example: "1"
+      ],
+      preset: [
+        in: :query,
+        description: "Which transcoding preset to use",
+        schema: %OpenApiSpex.Schema{
+          type: :string,
+          enum: [
+            "default_opus",
+            "mobile_opus",
+            "default_adts",
+            "mobile_adts",
+            "default_aac",
+            "mobile_aac"
+          ],
+          default: "default_opus"
+        },
+        required: false,
+        example: "default_opus"
+      ]
+    ],
+    responses: [
+      ok: %OpenApiSpex.Response{
+        description: "Audio file contents",
+        content: %{
+          "application/octet-stream" => %OpenApiSpex.MediaType{
+            schema: %OpenApiSpex.Schema{
+              type: :string,
+              format: :binary
+            }
+          }
+        },
+        headers: %{
+          "content-type" => %OpenApiSpex.Header{
+            description: "The actual MIME type of the file (e.g. image/png, application/pdf)",
+            schema: %OpenApiSpex.Schema{type: :string}
+          }
+        }
+      },
+      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
+      not_found: {"Not Found", "application/json", Schemas.Error}
+    ]
 
   def stream(conn, %{"transcode" => "1"}) do
     %{track: track, preset: preset} = conn.assigns

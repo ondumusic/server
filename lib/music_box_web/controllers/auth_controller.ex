@@ -8,6 +8,7 @@ defmodule MusicBoxWeb.AuthController do
   operation :login,
     summary: "Login",
     tags: ["Auth"],
+    security: [],
     request_body: {"Login params", "application/json", Schemas.LoginRequest},
     responses: [
       ok: {"LoginResponse", "application/json", Schemas.LoginResponse},
@@ -48,6 +49,7 @@ defmodule MusicBoxWeb.AuthController do
   operation :signup,
     summary: "Signup",
     tags: ["Auth"],
+    security: [],
     request_body: {"Signup params", "application/json", Schemas.SignupRequest},
     responses: [
       created: {"SignupResponse", "application/json", Schemas.SignupResponse},
