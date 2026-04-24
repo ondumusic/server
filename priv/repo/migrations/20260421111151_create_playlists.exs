@@ -22,7 +22,7 @@ defmodule MusicBox.Repo.Migrations.CreatePlaylists do
     create index(:playlists, [:updated_at, :id], comment: "sync cursor")
 
     create index(:playlist_items, [:playlist_id])
-    create index(:playlist_items, [:playlist_id, :position])
+    create unique_index(:playlist_items, [:playlist_id, :position])
     create index(:playlist_items, [:updated_at, :id], comment: "sync cursor")
   end
 end

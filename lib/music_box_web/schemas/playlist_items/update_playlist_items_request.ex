@@ -123,12 +123,12 @@ defmodule MusicBoxWeb.Schemas.UpdatePlaylistItemsError do
     OpenApiSpex.schema(%{
       title: "AddMoveConflictError",
       type: :object,
-      required: [:error, :itemIds],
+      required: [:error, :positions],
       properties: %{
         error: %Schema{type: :string, enum: ["add_move_conflict"]},
-        itemIds: %Schema{type: :array, items: %Schema{type: :string}}
+        positions: %Schema{type: :array, items: %Schema{type: :string}}
       },
-      example: %{"error" => "add_move_conflict", "itemIds" => ["a1"]}
+      example: %{"error" => "add_move_conflict", "positions" => ["a1"]}
     })
   end
 

@@ -73,10 +73,10 @@ defmodule MusicBoxWeb.PlaylistJSON do
     }
   end
 
-  def batch_error(%{error: {:conflict_positions, ids}}) do
+  def batch_error(%{error: {:conflict_positions, positions}}) do
     %{
       error: "add_move_conflict",
-      itemIds: ids
+      positions: positions
     }
   end
 

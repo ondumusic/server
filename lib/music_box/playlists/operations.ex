@@ -29,7 +29,7 @@ defmodule MusicBox.Playlists.Operations do
           | {:error, {:missing_items, [String.t()]}}
           | {:error, {:missing_tracks, [String.t()]}}
           | {:error, {:conflict_items, [String.t()]}}
-          | {:error, {:conflict_positions, [add_op() | move_op()]}}
+          | {:error, {:conflict_positions, [position()]}}
 
   @spec batch_update(Playlist.t(), t()) :: {:ok, result()} | error()
   def batch_update(playlist, changes) do
@@ -55,7 +55,8 @@ defmodule MusicBox.Playlists.Operations do
          :ok <- validate_positions(adds, moves),
          :ok <- validate_tracks(adds),
          existing_items <- get_existing_items(playlist, combined_ids),
-         :ok <- validate_items(existing_items, combined_ids) do
+         :ok <- validate_items(existing_items, combined_ids),
+         :ok <- validate_unique_positions(playlist, adds, moves) do
       {:ok,
        %{
          adds: adds,
@@ -108,6 +109,28 @@ defmodule MusicBox.Playlists.Operations do
       :ok
     else
       {:error, {:conflict_items, conflict_positions}}
+    end
+  end
+
+  defp validate_unique_positions(playlist, adds, moves) do
+    combined_positions =
+      List.flatten([
+        adds,
+        moves
+      ])
+      |> Enum.map(& &1["position"])
+
+    from(i in PlaylistItem,
+      where: i.playlist_id == ^playlist.id and i.position in ^combined_positions,
+      select: i.position
+    )
+    |> Repo.all()
+    |> case do
+      [] ->
+        :ok
+
+      conflict_positions ->
+        {:error, {:conflict_positions, conflict_positions}}
     end
   end
 

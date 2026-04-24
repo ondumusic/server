@@ -272,6 +272,27 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> api_response(400, "UpdatePlaylistItemsError")
     end
 
+    test "ensures positions are unique", %{conn: conn, playlist: playlist} do
+      track = MusicBox.Tracks.paginate_tracks(%{}).entries |> Enum.find(&(&1.number == 5))
+      position = "a"
+      track_id = track.id
+
+      assert %{
+               "error" => "add_move_conflict",
+               "positions" => ["a"]
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}/items", %{
+                 add: [
+                   %{
+                     position: position,
+                     trackId: track_id
+                   }
+                 ]
+               })
+               |> api_response(400, "UpdatePlaylistItemsError")
+    end
+
     test "full happy path playlist test", %{conn: conn} do
       artist = MusicBox.Artists.get_artist!("the-beatles")
       album = MusicBox.Albums.get_album_for_artist!(artist, "with-the-beatles")
