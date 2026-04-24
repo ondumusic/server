@@ -61,17 +61,14 @@ defmodule MusicBox.FileScanner.Operations do
       DeletionLog
       |> where([d], d.deleted_at >= ^before)
       |> Repo.all()
-      |> Enum.group_by(& &1.entity_type, & &1.entity_id)
 
     # Pubsub expect pluralized keys, deletion log is singular
-    deleted = %{
-      files: Map.get(results, :file, []),
-      tracks: Map.get(results, :track, []),
-      artists: Map.get(results, :artist, []),
-      albums: Map.get(results, :album, [])
-    }
+    deleted =
+      Enum.map(results, fn row ->
+        %{entityType: row.entity_type, entityId: row.entity_id}
+      end)
 
-    if Enum.any?(deleted, fn {_, ids} -> ids != [] end) do
+    if deleted != [] do
       broadcast(MusicBox.PubSub, "library:sync", "deleted", deleted)
     end
   end

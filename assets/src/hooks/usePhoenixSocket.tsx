@@ -49,6 +49,11 @@ export const PhoenixSocketProvider = ({ children }: PropsWithChildren) => {
     // Join the channel to receive all library updates
     const channel = socketRef.current.channel("library:sync", {});
     channel.join();
+    channel.on("deleted", (deletions) => {
+      sync.pushChanges({
+        deletions,
+      });
+    });
     channel.on("processed", (data) => {
       if (dataCallback.current) {
         (dataCallback.current as OnInitialDataCallback)();
