@@ -31,29 +31,22 @@ export class AudioService {
   #endedTimer?: ReturnType<typeof setTimeout>;
   #fadeHandler?: () => void;
   #isFading: boolean = false;
-  #wakeLock?: WakeLockSentinel;
 
   constructor() {
     this.#refreshPlayToken();
-
-    document.addEventListener("visibilitychange", () => {
-      if (this.isPlaying && !this.#wakeLock) {
-        this.#requestWakeLock();
-      }
-    });
   }
 
   destroy() {
     this.stop();
+    this.#eventListeners = new Map();
   }
 
   stop() {
-    this.#releaseWakeLock();
+    this.#stopCrossfade();
     this.#currentTrack = undefined;
-    this.#audioRefs.forEach((ref, trackId) => {
-      this.#audioRefs.delete(trackId);
-      ref.pause();
-    });
+    this.#preloadedTrack = undefined;
+    clearTimeout(this.#endedTimer);
+    this.#cleanupRefs();
   }
 
   on(
@@ -96,8 +89,6 @@ export class AudioService {
       stopPlayback,
     });
 
-    this.#requestWakeLock();
-
     // If we are fading the fade will already start playing the song.
     if (!stopPlayback && this.#isFading) {
       this.#log("ignoring play() because already crossfading to this track");
@@ -119,7 +110,7 @@ export class AudioService {
     const audioRef = this.#getAudioRef(audioTrack);
 
     // If we want to play the same track we can just rewind.
-    if (this.#currentTrack?.id === audioTrack.id) {
+    if (isCurrentTrack) {
       this.scrubTo(0, true);
       return;
     }
@@ -181,7 +172,6 @@ export class AudioService {
     const audioRef = this.#getCurrentAudioRef();
     if (!audioRef) return;
 
-    this.#requestWakeLock();
     audioRef.play();
   }
 
@@ -189,7 +179,6 @@ export class AudioService {
     const audioRef = this.#getCurrentAudioRef();
     if (!audioRef) return;
 
-    this.#releaseWakeLock();
     audioRef.pause();
   }
 
@@ -279,7 +268,7 @@ export class AudioService {
       currentTime: audioRef.currentTime,
       duration,
       progressPercentage,
-      isPlaying: this.isPlaying,
+      isPlaying: !audioRef.paused && !audioRef.ended,
     };
 
     this.#emit("timeupdate", audioEvent);
@@ -319,12 +308,14 @@ export class AudioService {
     const audioRef = this.#getCurrentAudioRef();
     if (!audioRef) return;
 
-    let progressPercentage = (audioRef.currentTime / audioRef.duration) * 100;
+    const duration = Number.isFinite(audioRef.duration) ? audioRef.duration : 0;
+    const currentTime = audioRef.currentTime || 0;
+    let progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
     if (Number.isNaN(progressPercentage)) progressPercentage = 0;
 
     this.#emit("ended", {
-      duration: audioRef.duration,
-      currentTime: audioRef.currentTime,
+      duration,
+      currentTime,
       progressPercentage,
       isPlaying: !audioRef.paused && !audioRef.ended,
     });
@@ -363,7 +354,11 @@ export class AudioService {
 
     // Start next track at 0 volume to avoid pop
     nextRef.volume = 0;
-    nextRef.play();
+    nextRef.play().catch((err) => {
+      this.#log("next track play failed", err);
+      this.#stopCrossfade();
+      this.#emitEnded(); // skip track on failure
+    });
 
     const startTime = performance.now();
     let endedLastTrack = false;
@@ -400,6 +395,8 @@ export class AudioService {
     };
 
     this.#fadeHandler = fade;
+    currentRef.addEventListener("timeupdate", fade);
+    currentRef.addEventListener("ended", fade);
     nextRef.addEventListener("timeupdate", fade);
     nextRef.addEventListener("ended", fade);
   }
@@ -420,13 +417,15 @@ export class AudioService {
 
   #cleanupRefs() {
     const currentRef = this.#getCurrentAudioRef();
+    const toDelete: UUID[] = [];
 
     this.#log("cleanup refs");
     this.#audioRefs.forEach((ref, trackId) => {
       if (ref === currentRef) return;
+      if (trackId === this.#preloadedTrack?.id) return;
 
       this.#log("cleanup ref", trackId);
-      this.#audioRefs.delete(trackId);
+      toDelete.push(trackId);
 
       ref.removeEventListener("timeupdate", this.#emitStateChange);
       ref.removeEventListener("ended", this.#emitStateChange);
@@ -439,25 +438,10 @@ export class AudioService {
       ref.load();
     });
 
+    toDelete.forEach((id) => {
+      this.#audioRefs.delete(id);
+    });
     this.#log("refs remaining:", this.#audioRefs);
-  }
-
-  #releaseWakeLock() {
-    if (!this.#wakeLock) return;
-    this.#log("releasing wake lock");
-    this.#wakeLock.release();
-    this.#wakeLock = undefined;
-  }
-
-  async #requestWakeLock() {
-    if (this.#wakeLock) return;
-
-    try {
-      this.#log("requesting wake lock");
-      this.#wakeLock = await navigator.wakeLock.request("screen");
-    } catch (err) {
-      this.#log("failed to acquire wake lock", err);
-    }
   }
 
   async #refreshPlayToken() {
