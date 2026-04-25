@@ -48,40 +48,33 @@ defmodule MusicBoxWeb.Schemas.SyncResponse do
     properties: %{
       artists: %Schema{
         type: :array,
-        items: MusicBoxWeb.Schemas.Artist,
-        required: true
+        items: MusicBoxWeb.Schemas.Artist
       },
       albums: %Schema{
         type: :array,
-        items: MusicBoxWeb.Schemas.Album,
-        required: true
+        items: MusicBoxWeb.Schemas.FlatAlbum
       },
       tracks: %Schema{
         type: :array,
-        items: MusicBoxWeb.Schemas.Track,
-        required: true
+        items: MusicBoxWeb.Schemas.FlatTrack
       },
       playlists: %Schema{
         type: :array,
-        items: MusicBoxWeb.Schemas.Playlist,
-        required: true
+        items: MusicBoxWeb.Schemas.Playlist
       },
       playlistItems: %Schema{
         type: :array,
-        items: MusicBoxWeb.Schemas.PlaylistItem,
-        required: true
+        items: MusicBoxWeb.Schemas.PlaylistItem
       },
       deletions: %Schema{
         type: :array,
-        items: MusicBoxWeb.Schemas.SyncDeletion,
-        required: true
+        items: MusicBoxWeb.Schemas.SyncDeletion
       },
       cursor: MusicBoxWeb.Schemas.SyncCursor,
       complete: %OpenApiSpex.Schema{
         type: :boolean,
         description: "Indicates whether or not there are more items available to sync.",
-        example: true,
-        required: true
+        example: true
       }
     },
     required: [

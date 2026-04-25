@@ -25,7 +25,7 @@ defmodule MusicBox.Playlists.Operations do
         }
 
   @type error ::
-          {:error, :too_many_operations}
+          {:error, {:too_many_operations, %{count: non_neg_integer(), limit: non_neg_integer()}}}
           | {:error, {:missing_items, [String.t()]}}
           | {:error, {:missing_tracks, [String.t()]}}
           | {:error, {:conflict_items, [String.t()]}}
@@ -68,10 +68,12 @@ defmodule MusicBox.Playlists.Operations do
   end
 
   defp validate_batch_size(adds, moves, removes) do
-    if length(adds) + length(moves) + length(removes) <= @max_batch_operations do
+    count = length(adds) + length(moves) + length(removes)
+
+    if count <= @max_batch_operations do
       :ok
     else
-      {:error, :too_many_operations}
+      {:error, {:too_many_operations, %{count: count, limit: @max_batch_operations}}}
     end
   end
 

@@ -84,7 +84,7 @@ defmodule TestSeeds do
           end
       }
     end
-    |> Enum.each(&insert_artist/1)
+    |> Enum.map(&insert_artist/1)
   end
 
   def insert_artist(seed) do

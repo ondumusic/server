@@ -6,13 +6,19 @@ defmodule MusicBoxWeb.Schemas.PlayTokenResponse do
 
   OpenApiSpex.schema(%{
     title: "PlayTokenResponse",
-    description: "",
+    description:
+      "Returns a new `playToken` and `expiresIn` (in seconds) so the client knows when to get a new one.",
     type: :object,
     additionalProperties: false,
     properties: %{
-      ok: %Schema{type: :boolean, example: "true"},
+      ok: %Schema{type: :boolean, example: true},
+      expiresIn: %Schema{
+        type: :integer,
+        example: 3600,
+        description: "Amount of seconds before this PlayToken will expire."
+      },
       playToken: MusicBoxWeb.Schemas.PlayToken
     },
-    required: [:ok, :playToken]
+    required: [:ok, :expiresIn, :playToken]
   })
 end

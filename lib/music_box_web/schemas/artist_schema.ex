@@ -28,7 +28,7 @@ defmodule MusicBoxWeb.Schemas.Artist do
         default: "artist",
         description: "Entity type"
       },
-      id: MusicBoxWeb.Schemas.PlaylistId,
+      id: MusicBoxWeb.Schemas.ArtistId,
       name: %Schema{type: :string, example: "The Beatles"},
       sortName: %Schema{type: :string, example: "Beatles"},
       slug: %Schema{type: :string, example: "the-beatles"},

@@ -40,7 +40,7 @@ defmodule MusicBoxWeb.SettingsControllerTest do
                }
              } =
                conn
-               |> post(~p"/api/settings", %{
+               |> patch(~p"/api/settings", %{
                  scanType: "full",
                  stripSortPrefixes: []
                })
@@ -55,7 +55,7 @@ defmodule MusicBoxWeb.SettingsControllerTest do
                }
              } =
                conn
-               |> post(~p"/api/settings", %{
+               |> patch(~p"/api/settings", %{
                  musicPath: "/music"
                })
                |> api_response(422, "UpdateSettingsError")
@@ -69,7 +69,7 @@ defmodule MusicBoxWeb.SettingsControllerTest do
                }
              } =
                conn
-               |> post(~p"/api/settings", %{
+               |> patch(~p"/api/settings", %{
                  pollInterval: 1
                })
                |> api_response(422, "UpdateSettingsError")
@@ -83,9 +83,9 @@ defmodule MusicBoxWeb.SettingsControllerTest do
       end
     end
 
-    test "forbidden POST on /api/settings", %{conn: conn} do
+    test "forbidden PATCH on /api/settings", %{conn: conn} do
       assert_raise MusicBoxWeb.UnauthorizedError, fn ->
-        post(conn, "/api/settings", %{
+        patch(conn, "/api/settings", %{
           pollInterval: 10
         })
       end

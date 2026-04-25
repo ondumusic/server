@@ -6,7 +6,7 @@ defmodule MusicBoxWeb.Schemas.UpdateSettingsRequest do
   require OpenApiSpex
 
   OpenApiSpex.schema(%{
-    title: "Settings",
+    title: "UpdateSettingsRequest",
     description: "Application settings",
     type: :object,
     additionalProperties: false,
@@ -22,7 +22,7 @@ defmodule MusicBoxWeb.Schemas.UpdateSettingsRequest do
       pollInterval: %Schema{
         type: :integer,
         example: 60,
-        description: "How many minutes between scanning for files."
+        description: "How many minutes between scanning the library."
       }
     },
     required: []
@@ -41,7 +41,7 @@ defmodule MusicBoxWeb.Schemas.UpdateSettingsResponse do
     type: :object,
     additionalProperties: false,
     properties: %{
-      ok: %Schema{type: :boolean, example: "true"},
+      ok: %Schema{type: :boolean, example: true},
       settings: Settings
     },
     required: [:ok, :settings]
@@ -61,7 +61,7 @@ defmodule MusicBoxWeb.Schemas.UpdateSettingsError do
     type: :object,
     additionalProperties: false,
     properties: %{
-      ok: %Schema{type: :boolean, example: "false"},
+      ok: %Schema{type: :boolean, example: false},
       fields: %Schema{
         type: :object,
         description: "Map of field names to their validation errors",

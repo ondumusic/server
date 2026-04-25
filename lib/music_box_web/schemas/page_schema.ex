@@ -46,7 +46,11 @@ defmodule MusicBoxWeb.Schemas.Page do
 
   def params do
     [
-      page: [in: :query, schema: %Schema{type: :integer, minimum: 1, default: 1}]
+      page: [
+        in: :query,
+        description: "1-indexed page number",
+        schema: %Schema{type: :integer, minimum: 1, default: 1}
+      ]
     ]
   end
 end

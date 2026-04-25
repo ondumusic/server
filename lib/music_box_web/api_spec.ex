@@ -10,7 +10,7 @@ defmodule MusicBoxWeb.ApiSpec do
       servers: [%Server{url: "/"}],
       info: %Info{
         title: "MusicBox API",
-        version: to_string(Application.spec(:my_app, :vsn)),
+        version: to_string(Application.spec(:music_box, :vsn)),
         description: """
         ## Authentication
         All requests require a bearer token in the `Authorization` header,
@@ -21,14 +21,14 @@ defmodule MusicBoxWeb.ApiSpec do
         """
       },
       tags: [
-        %Tag{name: "Artists", description: "Artist management"},
-        %Tag{name: "Albums", description: "Album management"},
-        %Tag{name: "Tracks", description: "Track management"},
-        %Tag{name: "Auth", description: "Auth operations"},
-        %Tag{name: "Sync", description: "Sync operations"},
-        %Tag{name: "Search", description: "Search operations"},
-        %Tag{name: "Settings", description: "Settings management"},
-        %Tag{name: "Playlists", description: "Playlist management"}
+        %Tag{name: "Artists", description: "Browse artists"},
+        %Tag{name: "Albums", description: "Browse albums"},
+        %Tag{name: "Tracks", description: "Browse tracks"},
+        %Tag{name: "Auth", description: "Authentication and session management"},
+        %Tag{name: "Sync", description: "Library synchronization"},
+        %Tag{name: "Search", description: "Search across the library"},
+        %Tag{name: "Settings", description: "Manage library settings"},
+        %Tag{name: "Playlists", description: "Create and manage playlists"}
       ],
       components: %Components{
         securitySchemes: %{

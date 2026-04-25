@@ -19,7 +19,7 @@ defmodule MusicBoxWeb.Schemas.Playlist do
 
   OpenApiSpex.schema(%{
     title: "Playlist",
-    description: "A playlist with tracks",
+    description: "A playlist (items not embedded, fetch separately)",
     type: :object,
     additionalProperties: false,
     properties: %{

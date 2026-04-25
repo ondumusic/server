@@ -62,7 +62,7 @@ defmodule MusicBoxWeb.Router do
     get "/auth/me", AuthController, :current_user
     get "/auth/playtoken", AuthController, :play_token
     get "/settings", SettingsController, :show
-    post "/settings", SettingsController, :update
+    patch "/settings", SettingsController, :update
 
     get "/artists", LibraryController, :artists
     get "/artists/:artist_id", LibraryController, :artist

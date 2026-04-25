@@ -6,11 +6,11 @@ defmodule MusicBoxWeb.Schemas.LogoutResponse do
 
   OpenApiSpex.schema(%{
     title: "LogoutResponse",
-    description: "",
+    description: "Successfully revoked `sessionToken`.",
     type: :object,
     additionalProperties: false,
     properties: %{
-      ok: %Schema{type: :boolean, example: "true"}
+      ok: %Schema{type: :boolean, example: true}
     },
     required: [:ok]
   })

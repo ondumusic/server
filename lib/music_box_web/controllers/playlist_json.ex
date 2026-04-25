@@ -48,26 +48,32 @@ defmodule MusicBoxWeb.PlaylistJSON do
 
   def changeset(%{changeset: changeset}) do
     %{
+      ok: false,
       fields: json_changeset(changeset)
     }
   end
 
   def batch_result(%{changes: changes}) do
     %{
+      ok: true,
       added: Enum.map(changes.added, &playlist_item(%{playlist_item: &1})),
       moved: Enum.map(changes.moved, &playlist_item(%{playlist_item: &1})),
       removed: changes.removed
     }
   end
 
-  def batch_error(%{error: :too_many_operations}) do
+  def batch_error(%{error: {:too_many_operations, details}}) do
     %{
-      error: "too_many_operations"
+      ok: false,
+      error: "too_many_operations",
+      count: details.count,
+      limit: details.limit
     }
   end
 
   def batch_error(%{error: {:conflict_items, ids}}) do
     %{
+      ok: false,
       error: "move_remove_conflict",
       itemIds: ids
     }
@@ -75,6 +81,7 @@ defmodule MusicBoxWeb.PlaylistJSON do
 
   def batch_error(%{error: {:conflict_positions, positions}}) do
     %{
+      ok: false,
       error: "add_move_conflict",
       positions: positions
     }
@@ -82,6 +89,7 @@ defmodule MusicBoxWeb.PlaylistJSON do
 
   def batch_error(%{error: {:missing_items, ids}}) do
     %{
+      ok: false,
       error: "unknown_items",
       itemIds: ids
     }
@@ -89,6 +97,7 @@ defmodule MusicBoxWeb.PlaylistJSON do
 
   def batch_error(%{error: {:missing_tracks, ids}}) do
     %{
+      ok: false,
       error: "unknown_tracks",
       trackIds: ids
     }

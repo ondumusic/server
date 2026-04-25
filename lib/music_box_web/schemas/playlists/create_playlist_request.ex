@@ -5,12 +5,13 @@ defmodule MusicBoxWeb.Schemas.CreatePlaylistRequest do
   require OpenApiSpex
 
   OpenApiSpex.schema(%{
-    title: "Create Playlist Request",
+    title: "CreatePlaylistRequest",
     type: :object,
     properties: %{
       name: %Schema{type: :string, minLength: 1}
     },
-    required: [:name]
+    required: [:name],
+    additionalProperties: false
   })
 end
 
@@ -26,6 +27,7 @@ defmodule MusicBoxWeb.Schemas.CreatePlaylistError do
     description: "A response containing validation errors keyed by field name",
     type: :object,
     properties: %{
+      ok: %Schema{type: :boolean, example: false},
       fields: %Schema{
         type: :object,
         description: "Map of field names to their validation errors",
@@ -35,6 +37,7 @@ defmodule MusicBoxWeb.Schemas.CreatePlaylistError do
         }
       }
     },
-    required: [:fields]
+    required: [:fields],
+    additionalProperties: false
   })
 end

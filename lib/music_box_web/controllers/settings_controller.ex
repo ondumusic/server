@@ -5,11 +5,11 @@ defmodule MusicBoxWeb.SettingsController do
   alias MusicBox.Settings
 
   operation :show,
-    summary: "Get current settings",
+    summary: "Get library settings",
     tags: ["Settings"],
     responses: [
-      ok: {"Settings", "application/json", Schemas.Settings},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error}
+      ok: {"Returns the current library settings.", "application/json", Schemas.Settings},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error}
     ]
 
   def show(conn, _params) do
@@ -18,13 +18,16 @@ defmodule MusicBoxWeb.SettingsController do
   end
 
   operation :update,
-    summary: "Update current settings",
+    summary: "Update library settings",
     tags: ["Settings"],
     request_body: {"Operations", "application/json", Schemas.UpdateSettingsRequest},
     responses: [
-      ok: {"Settings", "application/json", Schemas.UpdateSettingsResponse},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      bad_request: {"Bad Request", "application/json", Schemas.UpdateSettingsError}
+      ok:
+        {"Successfully updated the library settings.", "application/json",
+         Schemas.UpdateSettingsResponse},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
+      unprocessable_entity:
+        {"Validation failed.", "application/json", Schemas.UpdateSettingsError}
     ]
 
   def update(conn, params) do

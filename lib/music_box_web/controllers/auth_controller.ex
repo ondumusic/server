@@ -3,6 +3,7 @@ defmodule MusicBoxWeb.AuthController do
 
   alias MusicBox.Accounts
   alias MusicBox.Sessions
+  alias MusicBoxWeb.PlayToken
   alias MusicBoxWeb.UserAuth
 
   operation :login,
@@ -11,9 +12,9 @@ defmodule MusicBoxWeb.AuthController do
     security: [],
     request_body: {"Login params", "application/json", Schemas.LoginRequest},
     responses: [
-      ok: {"LoginResponse", "application/json", Schemas.LoginResponse},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      unprocessable_entity: {"Validation Error", "application/json", Schemas.LoginError}
+      ok: {"Succesful login attempt.", "application/json", Schemas.LoginResponse},
+      unauthorized: {"Failed to authenticate.", "application/json", Schemas.Error},
+      unprocessable_entity: {"Validation failed.", "application/json", Schemas.LoginError}
     ]
 
   def login(conn, %{"username" => username, "password" => password}) do
@@ -37,8 +38,8 @@ defmodule MusicBoxWeb.AuthController do
     summary: "Get current user",
     tags: ["Auth"],
     responses: [
-      ok: {"CurrentUser", "application/json", Schemas.User},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error}
+      ok: {"The authenticated user's profile.", "application/json", Schemas.User},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error}
     ]
 
   def current_user(conn, _params) do
@@ -48,14 +49,19 @@ defmodule MusicBoxWeb.AuthController do
 
   operation :signup,
     summary: "Signup",
+    description: """
+    This only works if there is no user present yet, during onboarding. For the
+    time being this is designed as a single-user application.
+    """,
     tags: ["Auth"],
     security: [],
     request_body: {"Signup params", "application/json", Schemas.SignupRequest},
     responses: [
-      created: {"SignupResponse", "application/json", Schemas.SignupResponse},
-      conflict: {"Conflict", "application/json", Schemas.Error},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      unprocessable_entity: {"Validation Error", "application/json", Schemas.SignupError}
+      created:
+        {"Successful signup returns `currentUser` and `sessionToken`. ", "application/json",
+         Schemas.SignupResponse},
+      conflict: {"Signup has been disabled.", "application/json", Schemas.Error},
+      unprocessable_entity: {"Validation failed.", "application/json", Schemas.SignupError}
     ]
 
   def signup(conn, params) do
@@ -80,10 +86,12 @@ defmodule MusicBoxWeb.AuthController do
 
   operation :logout,
     summary: "Logout",
+    description: """
+    This only revokes the current `sessionToken` for the logged-in user.
+    """,
     tags: ["Auth"],
     responses: [
-      ok: {"LogoutResponse", "application/json", Schemas.LogoutResponse},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error}
+      ok: {"Revoked the current `sessionToken`.", "application/json", Schemas.LogoutResponse}
     ]
 
   def logout(conn, _params) do
@@ -95,15 +103,26 @@ defmodule MusicBoxWeb.AuthController do
   end
 
   operation :play_token,
-    summary: "Get a playtoken",
+    summary: "Create a PlayToken",
+    description: """
+    PlayTokens only work for streaming audio to allow authentication for audio
+    players where you can't override the request headers. In most cases I would
+    try to stick to regular authentication headers, if possible.
+    """,
     tags: ["Auth"],
     responses: [
-      ok: {"PlayTokenResponse", "application/json", Schemas.PlayTokenResponse},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error}
+      ok:
+        {"Successfully generated a new PlayToken.", "application/json", Schemas.PlayTokenResponse},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error}
     ]
 
   def play_token(conn, _params) do
-    play_token = MusicBoxWeb.PlayToken.create(conn)
-    json(conn, %{ok: true, playToken: play_token})
+    play_token = PlayToken.create(conn)
+
+    json(conn, %{
+      ok: true,
+      expiresIn: PlayToken.max_age(),
+      playToken: play_token
+    })
   end
 end

@@ -29,7 +29,7 @@ defmodule MusicBoxWeb.Schemas.LoginResponse do
     type: :object,
     additionalProperties: false,
     properties: %{
-      ok: %Schema{type: :boolean, example: "true"},
+      ok: %Schema{type: :boolean, example: true},
       sessionToken: MusicBoxWeb.Schemas.SessionToken,
       currentUser: MusicBoxWeb.Schemas.User
     },
@@ -50,7 +50,7 @@ defmodule MusicBoxWeb.Schemas.LoginError do
     type: :object,
     additionalProperties: false,
     properties: %{
-      ok: %Schema{type: :boolean, example: "false"},
+      ok: %Schema{type: :boolean, example: false},
       fields: %Schema{
         type: :object,
         description: "Map of field names to their validation errors",

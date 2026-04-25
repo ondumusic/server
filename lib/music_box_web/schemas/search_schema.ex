@@ -11,18 +11,15 @@ defmodule MusicBoxWeb.Schemas.SearchResults do
     properties: %{
       artists: %Schema{
         type: :array,
-        items: MusicBoxWeb.Schemas.Artist,
-        required: true
+        items: MusicBoxWeb.Schemas.Artist
       },
       albums: %Schema{
         type: :array,
-        items: MusicBoxWeb.Schemas.Album,
-        required: true
+        items: MusicBoxWeb.Schemas.FlatAlbum
       },
       tracks: %Schema{
         type: :array,
-        items: MusicBoxWeb.Schemas.Track,
-        required: true
+        items: MusicBoxWeb.Schemas.Track
       }
     },
     required: [:artists, :albums, :tracks]

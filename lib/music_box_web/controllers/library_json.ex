@@ -33,7 +33,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       pageSize: page.page_size,
       totalEntries: page.total_entries,
       totalPages: page.total_pages,
-      entries: json_map(assigns, [:page, :entries], :album)
+      entries: json_map(assigns, [:page, :entries], :album, include: [:render_album])
     }
   end
 
@@ -75,7 +75,11 @@ defmodule MusicBoxWeb.LibraryJSON do
     }
 
     if assigns[:render_tracks] != false do
-      Map.put(item, :tracks, json_map(assigns, [:album, :tracks], :track, include: [:album]))
+      Map.put(
+        item,
+        :tracks,
+        json_map(assigns, [:album, :tracks], :track, include: [:album, :render_album])
+      )
     else
       item
     end

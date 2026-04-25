@@ -7,11 +7,18 @@ defmodule MusicBoxWeb.SearchController do
     summary: "Search for artists, albums or tracks",
     tags: ["Search"],
     parameters: [
-      query: [in: :query, type: :string, required: true]
+      query: [
+        in: :query,
+        description: "A search term to use across artists, albums and tracks.",
+        type: :string,
+        required: true
+      ]
     ],
     responses: [
-      ok: {"SearchResults", "application/json", Schemas.SearchResults},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error}
+      ok:
+        {"Returns a list of search results (artists, albums, tracks).", "application/json",
+         Schemas.SearchResults},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error}
     ]
 
   def search(conn, %{"query" => query}) do

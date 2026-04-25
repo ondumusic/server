@@ -112,12 +112,9 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
     end
 
     test "deletes playlist", %{conn: conn, playlist: playlist} do
-      assert %{
-               "name" => "Test Playlist"
-             } =
-               conn
-               |> delete(~p"/api/playlists/#{playlist.id}")
-               |> api_response(200, "Playlist")
+      assert conn
+             |> delete(~p"/api/playlists/#{playlist.id}")
+             |> response(204)
 
       assert Repo.aggregate(Playlist, :count) == 0
     end
@@ -132,6 +129,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
       track_id = track.id
 
       assert %{
+               "ok" => true,
                "added" => [
                  %{
                    "position" => ^position,
@@ -159,6 +157,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
       item_id = item.id
 
       assert %{
+               "ok" => true,
                "added" => [],
                "moved" => [
                  %{
@@ -185,6 +184,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
       item_id = item.id
 
       assert %{
+               "ok" => true,
                "added" => [],
                "moved" => [],
                "removed" => [^item_id]
@@ -204,6 +204,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
       item_id = item.id
 
       assert %{
+               "ok" => false,
                "error" => "move_remove_conflict",
                "itemIds" => [^item_id]
              } =
@@ -217,13 +218,14 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                  ],
                  remove: [item_id]
                })
-               |> api_response(400, "UpdatePlaylistItemsError")
+               |> api_response(422, "UpdatePlaylistItemsError")
     end
 
     test "cannot move unknown items", %{conn: conn, playlist: playlist} do
       item_id = Ecto.UUID.generate()
 
       assert %{
+               "ok" => false,
                "error" => "unknown_items",
                "itemIds" => [^item_id]
              } =
@@ -236,13 +238,14 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                    }
                  ]
                })
-               |> api_response(400, "UpdatePlaylistItemsError")
+               |> api_response(422, "UpdatePlaylistItemsError")
     end
 
     test "cannot remove unknown items", %{conn: conn, playlist: playlist} do
       item_id = Ecto.UUID.generate()
 
       assert %{
+               "ok" => false,
                "error" => "unknown_items",
                "itemIds" => [^item_id]
              } =
@@ -250,13 +253,14 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> patch(~p"/api/playlists/#{playlist.id}/items", %{
                  remove: [item_id]
                })
-               |> api_response(400, "UpdatePlaylistItemsError")
+               |> api_response(422, "UpdatePlaylistItemsError")
     end
 
     test "cannot add unknown tracks", %{conn: conn, playlist: playlist} do
       track_id = Ecto.UUID.generate()
 
       assert %{
+               "ok" => false,
                "error" => "unknown_tracks",
                "trackIds" => [^track_id]
              } =
@@ -269,7 +273,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                    }
                  ]
                })
-               |> api_response(400, "UpdatePlaylistItemsError")
+               |> api_response(422, "UpdatePlaylistItemsError")
     end
 
     test "ensures positions are unique", %{conn: conn, playlist: playlist} do
@@ -278,6 +282,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
       track_id = track.id
 
       assert %{
+               "ok" => false,
                "error" => "add_move_conflict",
                "positions" => ["a"]
              } =
@@ -290,7 +295,36 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                    }
                  ]
                })
-               |> api_response(400, "UpdatePlaylistItemsError")
+               |> api_response(422, "UpdatePlaylistItemsError")
+    end
+
+    test "restrict amount of operations per request", %{conn: conn, playlist: playlist} do
+      TestSeeds.generate_artists(100)
+
+      tracks =
+        for page <- 1..6 do
+          MusicBox.Tracks.paginate_tracks(%{page: page}).entries
+        end
+        |> List.flatten()
+        |> Enum.with_index()
+        |> Enum.map(fn {item, i} ->
+          %{
+            position: gen_id(i),
+            trackId: item.id
+          }
+        end)
+
+      assert %{
+               "ok" => false,
+               "error" => "too_many_operations",
+               "limit" => 250,
+               "count" => 300
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}/items", %{
+                 add: tracks
+               })
+               |> api_response(422, "UpdatePlaylistItemsError")
     end
 
     test "full happy path playlist test", %{conn: conn} do
@@ -317,6 +351,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> api_response(201, "Playlist")
 
       assert %{
+               "ok" => true,
                "added" => [
                  %{
                    "id" => item1,
@@ -366,6 +401,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> api_response(200, "UpdatePlaylistItemsResponse")
 
       assert %{
+               "ok" => true,
                "added" => [
                  %{
                    "position" => "e",
@@ -427,5 +463,11 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
         get(conn, "/api/playlists/#{playlist.id}/items")
       end
     end
+  end
+
+  @chars ~c"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+  defp gen_id(i) do
+    base = length(@chars)
+    <<Enum.at(@chars, div(i, base)), Enum.at(@chars, rem(i, base))>>
   end
 end

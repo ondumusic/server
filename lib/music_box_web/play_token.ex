@@ -19,4 +19,6 @@ defmodule MusicBoxWeb.PlayToken do
   def verify(conn, token) do
     Plug.Crypto.verify(conn.secret_key_base, @signing_salt, token, max_age: @max_age)
   end
+
+  def max_age, do: @max_age
 end

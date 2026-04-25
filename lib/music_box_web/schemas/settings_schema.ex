@@ -20,7 +20,7 @@ defmodule MusicBoxWeb.Schemas.Settings do
       pollInterval: %Schema{
         type: :integer,
         example: 60,
-        description: "How many minutes between scanning for files."
+        description: "How many minutes between scanning the library."
       }
     },
     required: [:musicPath, :scanType, :stripSortPrefixes, :pollInterval]

@@ -3,7 +3,7 @@ import { auth } from "../services/auth";
 import type { Page } from "../types";
 import { ClientError } from "./errors";
 
-type RequestMethod = "GET" | "POST";
+type RequestMethod = "GET" | "POST" | "PATCH";
 type RequestBody<T> = BodyInit | undefined | T;
 type RequestHeaders = { [key: string]: string };
 
@@ -59,6 +59,14 @@ class Client {
     opts: RequestOptions = {},
   ): Promise<Res> {
     return this.#request<Req, Res>("POST", path, body, opts);
+  }
+
+  async patch<Req, Res>(
+    path: string,
+    body: RequestBody<Req>,
+    opts: RequestOptions = {},
+  ): Promise<Res> {
+    return this.#request<Req, Res>("PATCH", path, body, opts);
   }
 
   async #request<Req, Res>(

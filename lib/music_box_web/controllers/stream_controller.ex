@@ -19,7 +19,7 @@ defmodule MusicBoxWeb.StreamController do
       async: [
         in: :query,
         description:
-          "When set to 1 it will start in background and return a basic JSON confirmation.",
+          "When set to 1 it will start in background and return a basic JSON confirmation, there is no notification or anything indicating completion.",
         schema: %OpenApiSpex.Schema{type: :string, enum: ["1", "0"], default: "0"},
         required: false,
         example: "1"
@@ -72,8 +72,8 @@ defmodule MusicBoxWeb.StreamController do
           }
         }
       },
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      not_found: {"Not Found", "application/json", Schemas.Error}
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
+      not_found: {"Track not found.", "application/json", Schemas.Error}
     ]
 
   def transcode(conn, %{"async" => "1"}) do
@@ -135,11 +135,18 @@ defmodule MusicBoxWeb.StreamController do
         },
         required: false,
         example: "default_opus"
+      ],
+      range: [
+        in: :header,
+        description:
+          "Byte range to return, e.g. `bytes=0-1023` for the first 1024 bytes, or `bytes=1024-` for everything from byte 1024 onward. When present, the server responds with 206 Partial Content instead of 200.",
+        required: false,
+        example: "bytes=0-1023"
       ]
     ],
     responses: [
       ok: %OpenApiSpex.Response{
-        description: "Audio file contents",
+        description: "Returns the file contents for the given track.",
         content: %{
           "application/octet-stream" => %OpenApiSpex.MediaType{
             schema: %OpenApiSpex.Schema{
@@ -150,13 +157,31 @@ defmodule MusicBoxWeb.StreamController do
         },
         headers: %{
           "content-type" => %OpenApiSpex.Header{
-            description: "The actual MIME type of the file (e.g. image/png, application/pdf)",
+            description: "The actual MIME type of the file (e.g. audio/mp3)",
             schema: %OpenApiSpex.Schema{type: :string}
           }
         }
       },
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      not_found: {"Not Found", "application/json", Schemas.Error}
+      partial_content: %OpenApiSpex.Response{
+        description:
+          "Returns partial file contents of the given track according to the Range request.",
+        content: %{
+          "application/octet-stream" => %OpenApiSpex.MediaType{
+            schema: %OpenApiSpex.Schema{
+              type: :string,
+              format: :binary
+            }
+          }
+        },
+        headers: %{
+          "content-type" => %OpenApiSpex.Header{
+            description: "The actual MIME type of the file (e.g. audio/mp3)",
+            schema: %OpenApiSpex.Schema{type: :string}
+          }
+        }
+      },
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
+      not_found: {"Track not found.", "application/json", Schemas.Error}
     ]
 
   def download(conn, %{"transcode" => "1"}) do
@@ -205,11 +230,18 @@ defmodule MusicBoxWeb.StreamController do
         },
         required: false,
         example: "default_opus"
+      ],
+      range: [
+        in: :header,
+        description:
+          "Byte range to return, e.g. `bytes=0-1023` for the first 1024 bytes, or `bytes=1024-` for everything from byte 1024 onward. When present, the server responds with 206 Partial Content instead of 200.",
+        required: false,
+        example: "bytes=0-1023"
       ]
     ],
     responses: [
       ok: %OpenApiSpex.Response{
-        description: "Audio file contents",
+        description: "Returns the file contents for the given track.",
         content: %{
           "application/octet-stream" => %OpenApiSpex.MediaType{
             schema: %OpenApiSpex.Schema{
@@ -220,13 +252,31 @@ defmodule MusicBoxWeb.StreamController do
         },
         headers: %{
           "content-type" => %OpenApiSpex.Header{
-            description: "The actual MIME type of the file (e.g. image/png, application/pdf)",
+            description: "The actual MIME type of the file (e.g. audio/mp3)",
             schema: %OpenApiSpex.Schema{type: :string}
           }
         }
       },
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      not_found: {"Not Found", "application/json", Schemas.Error}
+      partial_content: %OpenApiSpex.Response{
+        description:
+          "Returns partial file contents of the given track according to the Range request.",
+        content: %{
+          "application/octet-stream" => %OpenApiSpex.MediaType{
+            schema: %OpenApiSpex.Schema{
+              type: :string,
+              format: :binary
+            }
+          }
+        },
+        headers: %{
+          "content-type" => %OpenApiSpex.Header{
+            description: "The actual MIME type of the file (e.g. audio/mp3)",
+            schema: %OpenApiSpex.Schema{type: :string}
+          }
+        }
+      },
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
+      not_found: {"Track not found.", "application/json", Schemas.Error}
     ]
 
   def stream(conn, %{"transcode" => "1"}) do

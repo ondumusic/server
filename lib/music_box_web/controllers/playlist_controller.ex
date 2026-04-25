@@ -16,9 +16,10 @@ defmodule MusicBoxWeb.PlaylistController do
 
   operation :playlists,
     summary: "List playlists",
+    parameters: Schemas.Page.params(),
     responses: [
-      ok: {"Playlists", "application/json", Schemas.PlaylistPage},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error}
+      ok: {"Returns a paginated list of playlists", "application/json", Schemas.PlaylistPage},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error}
     ]
 
   def playlists(conn, params) do
@@ -32,8 +33,8 @@ defmodule MusicBoxWeb.PlaylistController do
     ],
     responses: [
       ok: {"Playlist", "application/json", Schemas.Playlist},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      not_found: {"Not Found", "application/json", Schemas.Error}
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
+      not_found: {"Playlist not found.", "application/json", Schemas.Error}
     ]
 
   def playlist(conn, _params) do
@@ -46,9 +47,11 @@ defmodule MusicBoxWeb.PlaylistController do
       playlist_id: [in: :path, type: Schemas.PlaylistId, required: true]
     ],
     responses: [
-      ok: {"Playlist Items", "application/json", Schemas.PlaylistItemPage},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      not_found: {"Not Found", "application/json", Schemas.Error}
+      ok:
+        {"Returns a list of items for the given playlist.", "application/json",
+         Schemas.PlaylistItemPage},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
+      not_found: {"Playlist not found.", "application/json", Schemas.Error}
     ]
 
   def playlist_items(conn, params) do
@@ -60,9 +63,10 @@ defmodule MusicBoxWeb.PlaylistController do
     summary: "Create playlist",
     request_body: {"Playlist params", "application/json", Schemas.CreatePlaylistRequest},
     responses: [
-      created: {"Playlist", "application/json", Schemas.Playlist},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      unprocessable_entity: {"Validation Error", "application/json", Schemas.CreatePlaylistError}
+      created: {"Successfully created a new playlist.", "application/json", Schemas.Playlist},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
+      unprocessable_entity:
+        {"Validation failed.", "application/json", Schemas.CreatePlaylistError}
     ]
 
   def create_playlist(conn, params) do
@@ -86,10 +90,11 @@ defmodule MusicBoxWeb.PlaylistController do
     ],
     request_body: {"Playlist params", "application/json", Schemas.UpdatePlaylistRequest},
     responses: [
-      ok: {"Playlist", "application/json", Schemas.Playlist},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      not_found: {"Not Found", "application/json", Schemas.Error},
-      unprocessable_entity: {"Validation Error", "application/json", Schemas.UpdatePlaylistError}
+      ok: {"Successfully updated the playlist.", "application/json", Schemas.Playlist},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
+      not_found: {"Playlist not found.", "application/json", Schemas.Error},
+      unprocessable_entity:
+        {"Validation failed.", "application/json", Schemas.UpdatePlaylistError}
     ]
 
   def update_playlist(conn, params) do
@@ -111,17 +116,17 @@ defmodule MusicBoxWeb.PlaylistController do
       playlist_id: [in: :path, type: Schemas.PlaylistId, required: true]
     ],
     responses: [
-      ok: {"Playlist", "application/json", Schemas.Playlist},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      not_found: {"Not Found", "application/json", Schemas.Error},
-      unprocessable_entity: {"Validation Error", "application/json", Schemas.DeletePlaylistError}
+      no_content: %OpenApiSpex.Response{
+        description: "Successfully deleted the playlist."
+      },
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
+      not_found: {"Playlist not found.", "application/json", Schemas.Error}
     ]
 
   def delete_playlist(conn, _params) do
     case Playlists.delete_playlist(conn.assigns.playlist) do
-      {:ok, playlist} ->
-        conn
-        |> render(:playlist, playlist: playlist)
+      {:ok, _playlist} ->
+        send_resp(conn, :no_content, "")
 
       {:error, changeset} ->
         conn
@@ -137,10 +142,13 @@ defmodule MusicBoxWeb.PlaylistController do
     ],
     request_body: {"Operations", "application/json", Schemas.UpdatePlaylistItemsRequest},
     responses: [
-      ok: {"Playlist", "application/json", Schemas.UpdatePlaylistItemsResponse},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      not_found: {"Not Found", "application/json", Schemas.Error},
-      bad_request: {"Bad Request", "application/json", Schemas.UpdatePlaylistItemsError}
+      ok:
+        {"Successfully updated the playlist items.", "application/json",
+         Schemas.UpdatePlaylistItemsResponse},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
+      not_found: {"Playlist not found.", "application/json", Schemas.Error},
+      unprocessable_entity:
+        {"Validation failed.", "application/json", Schemas.UpdatePlaylistItemsError}
     ]
 
   def update_playlist_items(conn, params) do
@@ -150,7 +158,7 @@ defmodule MusicBoxWeb.PlaylistController do
 
       {:error, error} ->
         conn
-        |> put_status(:bad_request)
+        |> put_status(:unprocessable_entity)
         |> render(:batch_error, error: error)
     end
   end

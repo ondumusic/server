@@ -23,6 +23,6 @@ type SettingsResult =
 
 export const settingApi = {
   updateSettings(settings: Settings, opts?: RequestOptions) {
-    return client.post<Settings, SettingsResult>("/settings", settings, opts);
+    return client.patch<Settings, SettingsResult>("/settings", settings, opts);
   },
 };

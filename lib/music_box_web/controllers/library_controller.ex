@@ -14,8 +14,8 @@ defmodule MusicBoxWeb.LibraryController do
     tags: ["Artists"],
     parameters: Schemas.Page.params(),
     responses: [
-      ok: {"Artists", "application/json", Schemas.ArtistPage},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error}
+      ok: {"A paginated list of artists.", "application/json", Schemas.ArtistPage},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error}
     ]
 
   def artists(conn, params) do
@@ -29,9 +29,9 @@ defmodule MusicBoxWeb.LibraryController do
       artist_id: [in: :path, type: Schemas.ArtistId, required: true]
     ],
     responses: [
-      ok: {"Artist", "application/json", Schemas.Artist},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      not_found: {"Not Found", "application/json", Schemas.Error}
+      ok: {"Returns the requested Artist.", "application/json", Schemas.Artist},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
+      not_found: {"Artist not found.", "application/json", Schemas.Error}
     ]
 
   def artist(conn, _params) do
@@ -47,14 +47,16 @@ defmodule MusicBoxWeb.LibraryController do
           artist_id: [in: :path, type: Schemas.ArtistId, required: true]
         ],
     responses: [
-      ok: {"Albums", "application/json", Schemas.AlbumPage},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      not_found: {"Not Found", "application/json", Schemas.Error}
+      ok:
+        {"Returns a paginated list of albums for the given artist.", "application/json",
+         Schemas.AlbumPage},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
+      not_found: {"Artist not found.", "application/json", Schemas.Error}
     ]
 
   def artist_albums(conn, params) do
     page = Albums.paginate_albums_for_artist(conn.assigns.artist, params)
-    render(conn, :albums, page: page)
+    render(conn, :albums, page: page, render_album: false)
   end
 
   operation :albums,
@@ -62,12 +64,12 @@ defmodule MusicBoxWeb.LibraryController do
     tags: ["Albums"],
     parameters: Schemas.Page.params(),
     responses: [
-      ok: {"Album", "application/json", Schemas.AlbumPage},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error}
+      ok: {"Returns a paginated list of albums.", "application/json", Schemas.AlbumPage},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error}
     ]
 
   def albums(conn, params) do
-    render(conn, :albums, page: Albums.paginate_albums(params))
+    render(conn, :albums, page: Albums.paginate_albums(params), render_album: false)
   end
 
   operation :album,
@@ -77,13 +79,13 @@ defmodule MusicBoxWeb.LibraryController do
       album_id: [in: :path, type: Schemas.AlbumId, required: true]
     ],
     responses: [
-      ok: {"Album", "application/json", Schemas.Album},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      not_found: {"Not Found", "application/json", Schemas.Error}
+      ok: {"Returns the requested `Album`.", "application/json", Schemas.Album},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
+      not_found: {"Album not found", "application/json", Schemas.Error}
     ]
 
   def album(conn, _params) do
-    render(conn, :album, album: conn.assigns.album)
+    render(conn, :album, album: conn.assigns.album, render_album: false)
   end
 
   operation :artist_album,
@@ -94,17 +96,28 @@ defmodule MusicBoxWeb.LibraryController do
       album_id: [in: :path, type: Schemas.AlbumId, required: true]
     ],
     responses: [
-      ok: {"Album", "application/json", Schemas.Album},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      not_found: {"Not Found", "application/json", Schemas.Error}
+      ok: {"Returns the requested `Album`.", "application/json", Schemas.Album},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
+      not_found: {"Album not found.", "application/json", Schemas.Error}
     ]
 
   def artist_album(conn, _params) do
-    render(conn, :album, album: conn.assigns.album)
+    render(conn, :album, album: conn.assigns.album, render_album: false)
   end
 
   operation :tracks,
     summary: "List tracks",
+    description: """
+    Lists tracks with optional filtering and pagination.
+
+    ## Random sort and pagination
+
+    When `sort_by=random`, the server uses the provided `random_seed` to
+    maintain consistent ordering across paginated requests. This should be a
+    non-negative integer.
+
+    For `sort_by=default` (or omitted), `random_seed` is ignored.
+    """,
     tags: ["Tracks"],
     parameters:
       Schemas.Page.params() ++
@@ -117,26 +130,33 @@ defmodule MusicBoxWeb.LibraryController do
             required: false,
             description: "A search query to filter tracks by."
           ],
-          random_seed: [
-            in: :query,
-            type: :integer,
-            required: false,
-            description: "To ensure consistent pagination when using random sort."
-          ],
           sort_by: [
             in: :query,
-            description: "Maintain default sorting (artist,album,disc,number) or random",
+            description: """
+            Sort order for results.
+
+            - `default`: sort by artist, album, disc, then track number.
+            - `random`: randomized order, stable across pages when `random_seed` is reused.
+            """,
             schema: %OpenApiSpex.Schema{
               type: :string,
               default: "default",
               enum: ["default", "random"]
             },
             required: false
+          ],
+          random_seed: [
+            in: :query,
+            type: :integer,
+            required: false,
+            description: """
+            Seed for randomized sorting. Required when `sort_by=random`.
+            """
           ]
         ],
     responses: [
-      ok: {"Tracks", "application/json", Schemas.TrackPage},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error}
+      ok: {"Returns a paginated list of tracks.", "application/json", Schemas.TrackPage},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error}
     ]
 
   def tracks(conn, params) do
@@ -150,9 +170,9 @@ defmodule MusicBoxWeb.LibraryController do
       track_id: [in: :path, type: Schemas.TrackId, required: true]
     ],
     responses: [
-      ok: {"Track", "application/json", Schemas.Track},
-      unauthorized: {"Unauthorized", "application/json", Schemas.Error},
-      not_found: {"Not Found", "application/json", Schemas.Error}
+      ok: {"Returns the requested track.", "application/json", Schemas.Track},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
+      not_found: {"Track not found", "application/json", Schemas.Error}
     ]
 
   def track(conn, _params) do
