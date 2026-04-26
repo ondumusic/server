@@ -270,6 +270,8 @@ defmodule MusicBox.Playlists.Operations do
   end
 
   defp update_playlist_track_count(playlist) do
+    started_at = DateTime.utc_now()
+
     subquery =
       from(pi in PlaylistItem,
         where: pi.playlist_id == ^playlist.id,
@@ -280,7 +282,7 @@ defmodule MusicBox.Playlists.Operations do
       left_join: s in subquery(subquery),
       on: p.id == s.playlist_id,
       where: p.id == ^playlist.id,
-      update: [set: [track_count: coalesce(s.count, 0)]]
+      update: [set: [track_count: coalesce(s.count, 0), updated_at: ^started_at]]
     )
     |> Repo.update_all([])
   end

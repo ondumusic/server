@@ -80,7 +80,7 @@ defmodule MusicBox.Cleanup.Worker do
         from(a in Artist,
           left_join: s in subquery(subquery),
           on: a.id == s.artist_id,
-          update: [set: [album_count: coalesce(s.count, 0)]]
+          update: [set: [album_count: coalesce(s.count, 0), updated_at: ^started_at]]
         )
         |> repo.update_all([])
 
@@ -116,7 +116,7 @@ defmodule MusicBox.Cleanup.Worker do
         from(al in Album,
           left_join: s in subquery(subquery),
           on: al.id == s.album_id,
-          update: [set: [track_count: coalesce(s.count, 0)]]
+          update: [set: [track_count: coalesce(s.count, 0), updated_at: ^started_at]]
         )
         |> repo.update_all([])
 
@@ -150,7 +150,7 @@ defmodule MusicBox.Cleanup.Worker do
         from(p in Playlist,
           left_join: s in subquery(subquery),
           on: p.id == s.playlist_id,
-          update: [set: [track_count: coalesce(s.count, 0)]]
+          update: [set: [track_count: coalesce(s.count, 0), updated_at: ^started_at]]
         )
         |> repo.update_all([])
 

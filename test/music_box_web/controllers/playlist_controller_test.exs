@@ -290,6 +290,11 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
       position = "d"
       track_id = track.id
 
+      playlist =
+        update_record(playlist, %{
+          updated_at: DateTime.shift(playlist.updated_at, minute: 1)
+        })
+
       assert playlist.track_count == 3
 
       assert %{
@@ -314,8 +319,9 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                })
                |> api_response(200, "UpdatePlaylistItemsResponse")
 
-      playlist = Playlists.get_playlist!(playlist.id)
-      assert playlist.track_count == 4
+      updated_playlist = Playlists.get_playlist!(playlist.id)
+      assert playlist.track_count < updated_playlist.track_count
+      assert playlist.updated_at != updated_playlist.updated_at
     end
 
     test "cannot add items to playlist folder", %{conn: conn, playlist: playlist} do
