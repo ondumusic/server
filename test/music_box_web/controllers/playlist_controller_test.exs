@@ -38,7 +38,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                "pageSize" => 100,
                "entries" => [
                  %{
-                   "trackCount" => 0,
+                   "trackCount" => 3,
                    "name" => "Test Playlist"
                  }
                ]
@@ -50,7 +50,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
 
     test "returns playlist details", %{conn: conn, playlist: playlist} do
       assert %{
-               "trackCount" => 0,
+               "trackCount" => 3,
                "name" => "Test Playlist"
              } =
                conn
@@ -128,6 +128,8 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
       position = "d"
       track_id = track.id
 
+      assert playlist.track_count == 3
+
       assert %{
                "ok" => true,
                "added" => [
@@ -149,6 +151,9 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                  ]
                })
                |> api_response(200, "UpdatePlaylistItemsResponse")
+
+      playlist = Playlists.get_playlist!(playlist.id)
+      assert playlist.track_count == 4
     end
 
     test "can move items in playlist", %{conn: conn, playlist: playlist} do

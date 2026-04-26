@@ -174,15 +174,22 @@ defmodule TestSeeds do
       insert_playlist_item(playlist, item)
     end)
 
-    Repo.preload(playlist, [:items], force: true)
+    Playlist
+    |> Repo.get(playlist.id)
+    |> Repo.preload([:items])
   end
 
   def insert_playlist_item(playlist, seed) do
-    Repo.insert!(%PlaylistItem{
-      playlist_id: seed[:playlist_id] || playlist.id,
-      position: seed.position,
-      track_id: seed.track_id
-    })
+    item =
+      Repo.insert!(%PlaylistItem{
+        playlist_id: seed[:playlist_id] || playlist.id,
+        position: seed.position,
+        track_id: seed.track_id
+      })
+
+    Cleanup.Worker.do_step(:update_playlist_counts)
+
+    item
   end
 
   def seconds(duration) do

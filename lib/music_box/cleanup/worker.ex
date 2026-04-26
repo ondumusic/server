@@ -7,6 +7,7 @@ defmodule MusicBox.Cleanup.Worker do
   alias MusicBox.Artists.Artist
   alias MusicBox.Cleanup
   alias MusicBox.FileScanner.Utils
+  alias MusicBox.Playlists.{Playlist, PlaylistItem}
   alias MusicBox.Repo
   alias MusicBox.Settings
   alias MusicBox.Tracks.Track
@@ -47,14 +48,7 @@ defmodule MusicBox.Cleanup.Worker do
 
   @impl true
   def handle_info(%{topic: "library:sync", event: "completed"}, state) do
-    Cleanup.work_async([
-      :unused,
-      :update_album_counts,
-      :update_track_counts,
-      :sort_names,
-      :update_fts
-    ])
-
+    Cleanup.work_async(:all)
     {:noreply, state}
   end
 
@@ -84,7 +78,7 @@ defmodule MusicBox.Cleanup.Worker do
 
       {count, _} =
         from(a in Artist,
-          join: s in subquery(subquery),
+          left_join: s in subquery(subquery),
           on: a.id == s.artist_id,
           update: [set: [album_count: coalesce(s.count, 0)]]
         )
@@ -120,7 +114,7 @@ defmodule MusicBox.Cleanup.Worker do
 
       {count, _} =
         from(al in Album,
-          join: s in subquery(subquery),
+          left_join: s in subquery(subquery),
           on: al.id == s.album_id,
           update: [set: [track_count: coalesce(s.count, 0)]]
         )
@@ -135,6 +129,42 @@ defmodule MusicBox.Cleanup.Worker do
           |> Repo.all()
 
         MusicBoxWeb.Endpoint.broadcast!("library:sync", "processed", %{albums: updated_album_ids})
+      end
+
+      {:ok, :noop}
+    end)
+  end
+
+  def do_step(:update_playlist_counts) do
+    Repo.transact(fn repo ->
+      started_at = DateTime.utc_now()
+
+      # Then update to get a item count per playlist
+      subquery =
+        from(pi in PlaylistItem,
+          group_by: pi.playlist_id,
+          select: %{playlist_id: pi.playlist_id, count: count(pi.id)}
+        )
+
+      {count, _} =
+        from(p in Playlist,
+          left_join: s in subquery(subquery),
+          on: p.id == s.playlist_id,
+          update: [set: [track_count: coalesce(s.count, 0)]]
+        )
+        |> repo.update_all([])
+
+      if count > 0 do
+        updated_playlist_ids =
+          from(p in Playlist,
+            where: p.updated_at >= ^started_at,
+            select: p.id
+          )
+          |> Repo.all()
+
+        MusicBoxWeb.Endpoint.broadcast!("library:sync", "processed", %{
+          playlists: updated_playlist_ids
+        })
       end
 
       {:ok, :noop}

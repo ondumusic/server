@@ -256,12 +256,30 @@ defmodule MusicBox.Playlists.Operations do
         results
       end
 
+    update_playlist_track_count(playlist)
+
     {:ok,
      %{
        added: added || [],
        moved: moved || [],
        removed: removed || []
      }}
+  end
+
+  defp update_playlist_track_count(playlist) do
+    subquery =
+      from(pi in PlaylistItem,
+        where: pi.playlist_id == ^playlist.id,
+        select: %{playlist_id: pi.playlist_id, count: count(pi.id)}
+      )
+
+    from(p in Playlist,
+      left_join: s in subquery(subquery),
+      on: p.id == s.playlist_id,
+      where: p.id == ^playlist.id,
+      update: [set: [track_count: coalesce(s.count, 0)]]
+    )
+    |> Repo.update_all([])
   end
 
   defp find_duplicates(list) do
