@@ -16,7 +16,11 @@ defmodule MusicBoxWeb.PlaylistController do
 
   operation :playlists,
     summary: "List playlists",
-    parameters: Schemas.Page.params(),
+    parameters:
+      Schemas.Page.params() ++
+        [
+          parent_id: [in: :query, type: Schemas.PlaylistId, required: false]
+        ],
     responses: [
       ok: {"Returns a paginated list of playlists", "application/json", Schemas.PlaylistPage},
       unauthorized: {"Invalid authentication.", "application/json", Schemas.Error}

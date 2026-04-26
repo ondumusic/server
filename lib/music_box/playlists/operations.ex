@@ -30,8 +30,11 @@ defmodule MusicBox.Playlists.Operations do
           | {:error, {:missing_tracks, [String.t()]}}
           | {:error, {:conflict_items, [String.t()]}}
           | {:error, {:conflict_positions, [position()]}}
+          | {:error, :playlist_is_folder}
 
   @spec batch_update(Playlist.t(), t()) :: {:ok, result()} | error()
+  def batch_update(%{is_folder: true}, _changes), do: {:error, :playlist_is_folder}
+
   def batch_update(playlist, changes) do
     case validate(playlist, changes) do
       {:ok, validated} -> execute(playlist, validated)

@@ -8,7 +8,16 @@ defmodule MusicBox.Playlists do
 
   @spec paginate_playlists(map()) :: Repo.page(Playlist)
   def paginate_playlists(params) do
-    Playlist.preloaded()
+    parent_id = Map.get(params, "parent_id") || Map.get(params, :parent_id)
+
+    query = Playlist.preloaded()
+
+    query =
+      if parent_id,
+        do: where(query, [playlist: p], p.parent_id == ^parent_id),
+        else: where(query, [playlist: p], is_nil(p.parent_id))
+
+    query
     |> order_by([playlist: p], asc: p.name)
     |> Repo.paginate(params, default_limit: 100)
   end

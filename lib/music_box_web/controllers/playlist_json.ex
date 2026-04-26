@@ -30,6 +30,8 @@ defmodule MusicBoxWeb.PlaylistJSON do
       __type: "playlist",
       id: playlist.id,
       name: playlist.name,
+      isFolder: playlist.is_folder,
+      parentId: playlist.parent_id,
       trackCount: playlist.track_count,
       insertedAt: playlist.inserted_at
     }
@@ -59,6 +61,13 @@ defmodule MusicBoxWeb.PlaylistJSON do
       added: Enum.map(changes.added, &playlist_item(%{playlist_item: &1})),
       moved: Enum.map(changes.moved, &playlist_item(%{playlist_item: &1})),
       removed: changes.removed
+    }
+  end
+
+  def batch_error(%{error: :playlist_is_folder}) do
+    %{
+      ok: false,
+      error: "playlist_is_folder"
     }
   end
 

@@ -48,6 +48,88 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> api_response(200, "PlaylistPage")
     end
 
+    test "returns paginated list of playlists (excludes children)", %{conn: conn} do
+      {:ok, folder} =
+        Playlists.create_playlist(%{
+          name: "Folder 1",
+          is_folder: true
+        })
+
+      {:ok, _subfolder} =
+        Playlists.create_playlist(%{
+          name: "Subfolder 1",
+          parent_id: folder.id,
+          is_folder: true
+        })
+
+      {:ok, _subplaylist} =
+        Playlists.create_playlist(%{
+          name: "Subplaylist 1",
+          parent_id: folder.id
+        })
+
+      assert %{
+               "pageNumber" => 1,
+               "totalPages" => 1,
+               "totalEntries" => 2,
+               "pageSize" => 100,
+               "entries" => [
+                 %{
+                   "trackCount" => 0,
+                   "name" => "Folder 1"
+                 },
+                 %{
+                   "trackCount" => 3,
+                   "name" => "Test Playlist"
+                 }
+               ]
+             } =
+               conn
+               |> get(~p"/api/playlists")
+               |> api_response(200, "PlaylistPage")
+    end
+
+    test "returns paginated list of playlists for given parent_id", %{conn: conn} do
+      {:ok, folder} =
+        Playlists.create_playlist(%{
+          name: "Folder 1",
+          is_folder: true
+        })
+
+      {:ok, _subfolder} =
+        Playlists.create_playlist(%{
+          name: "Subfolder 1",
+          parent_id: folder.id,
+          is_folder: true
+        })
+
+      {:ok, _subplaylist} =
+        Playlists.create_playlist(%{
+          name: "Subplaylist 1",
+          parent_id: folder.id
+        })
+
+      assert %{
+               "pageNumber" => 1,
+               "totalPages" => 1,
+               "totalEntries" => 2,
+               "pageSize" => 100,
+               "entries" => [
+                 %{
+                   "trackCount" => 0,
+                   "name" => "Subfolder 1"
+                 },
+                 %{
+                   "trackCount" => 0,
+                   "name" => "Subplaylist 1"
+                 }
+               ]
+             } =
+               conn
+               |> get(~p"/api/playlists?parent_id=#{folder.id}")
+               |> api_response(200, "PlaylistPage")
+    end
+
     test "returns playlist details", %{conn: conn, playlist: playlist} do
       assert %{
                "trackCount" => 3,
@@ -93,6 +175,60 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> api_response(201, "Playlist")
     end
 
+    test "creates playlist folder", %{conn: conn} do
+      assert %{
+               "id" => moods_id,
+               "name" => "Moods",
+               "isFolder" => true,
+               "trackCount" => 0
+             } =
+               conn
+               |> post(~p"/api/playlists", %{
+                 name: "Moods",
+                 isFolder: true
+               })
+               |> api_response(201, "Playlist")
+
+      assert %{
+               "name" => "Happy Songs",
+               "isFolder" => false,
+               "parentId" => ^moods_id
+             } =
+               conn
+               |> post(~p"/api/playlists", %{
+                 name: "Happy Songs",
+                 parentId: moods_id
+               })
+               |> api_response(201, "Playlist")
+    end
+
+    test "creates playlist sub folder", %{conn: conn} do
+      assert %{
+               "id" => moods_id,
+               "name" => "Moods",
+               "isFolder" => true
+             } =
+               conn
+               |> post(~p"/api/playlists", %{
+                 name: "Moods",
+                 isFolder: true
+               })
+               |> api_response(201, "Playlist")
+
+      assert %{
+               "name" => "Chill",
+               "isFolder" => true,
+               "parentId" => ^moods_id
+             } =
+               conn
+               |> post(~p"/api/playlists", %{
+                 name: "Chill",
+                 isFolder: true,
+                 parentId: moods_id
+               })
+               |> api_response(201, "Playlist")
+    end
+
     test "updates playlist", %{conn: conn, playlist: playlist} do
       assert %{"fields" => %{"name" => %{"message" => "can't be blank"}}} =
                conn
@@ -109,6 +245,32 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                  name: "My New Faves"
                })
                |> api_response(200, "Playlist")
+    end
+
+    test "cannot update playlist isFolder", %{conn: conn, playlist: playlist} do
+      assert %{
+               "fields" => %{
+                 "isFolder" => %{"message" => "cannot change existing playlist into folder"}
+               }
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}", %{
+                 isFolder: true
+               })
+               |> api_response(422, "UpdatePlaylistError")
+    end
+
+    test "cannot use non-folder playlist as parent folder", %{conn: conn, playlist: playlist} do
+      assert %{
+               "fields" => %{
+                 "parentId" => %{"message" => "is not a folder"}
+               }
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}", %{
+                 parentId: playlist.id
+               })
+               |> api_response(422, "UpdatePlaylistError")
     end
 
     test "deletes playlist", %{conn: conn, playlist: playlist} do
@@ -154,6 +316,29 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
 
       playlist = Playlists.get_playlist!(playlist.id)
       assert playlist.track_count == 4
+    end
+
+    test "cannot add items to playlist folder", %{conn: conn, playlist: playlist} do
+      playlist = update_record(playlist, %{is_folder: true})
+
+      track = MusicBox.Tracks.paginate_tracks(%{}).entries |> Enum.find(&(&1.number == 5))
+      position = "d"
+      track_id = track.id
+
+      assert %{
+               "ok" => false,
+               "error" => "playlist_is_folder"
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}/items", %{
+                 add: [
+                   %{
+                     position: position,
+                     trackId: track_id
+                   }
+                 ]
+               })
+               |> api_response(422, "UpdatePlaylistItemsError")
     end
 
     test "can move items in playlist", %{conn: conn, playlist: playlist} do

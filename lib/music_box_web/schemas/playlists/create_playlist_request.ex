@@ -1,5 +1,6 @@
 defmodule MusicBoxWeb.Schemas.CreatePlaylistRequest do
   @moduledoc false
+  alias MusicBoxWeb.Schemas.PlaylistId
   alias OpenApiSpex.Schema
 
   require OpenApiSpex
@@ -8,7 +9,9 @@ defmodule MusicBoxWeb.Schemas.CreatePlaylistRequest do
     title: "CreatePlaylistRequest",
     type: :object,
     properties: %{
-      name: %Schema{type: :string, minLength: 1}
+      name: %Schema{type: :string, minLength: 1},
+      isFolder: %Schema{type: :boolean, default: false},
+      parentId: PlaylistId
     },
     required: [:name],
     additionalProperties: false

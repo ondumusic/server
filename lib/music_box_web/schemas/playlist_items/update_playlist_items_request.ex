@@ -90,6 +90,23 @@ defmodule MusicBoxWeb.Schemas.UpdatePlaylistItemsError do
   @moduledoc false
   alias OpenApiSpex.Schema
 
+  defmodule PlaylistIsFolder do
+    require OpenApiSpex
+    @moduledoc false
+
+    OpenApiSpex.schema(%{
+      title: "PlaylistIsFolderError",
+      type: :object,
+      required: [:error],
+      properties: %{
+        ok: %Schema{type: :boolean, example: false},
+        error: %Schema{type: :string, enum: ["playlist_is_folder"]}
+      },
+      example: %{"error" => "playlist_is_folder"},
+      additionalProperties: false
+    })
+  end
+
   defmodule TooManyOperations do
     require OpenApiSpex
     @moduledoc false
@@ -187,6 +204,7 @@ defmodule MusicBoxWeb.Schemas.UpdatePlaylistItemsError do
     title: "UpdatePlaylistItemsError",
     description: "Error response returned. The shape depends on `error`.",
     oneOf: [
+      PlaylistIsFolder,
       TooManyOperations,
       MoveRemoveConflict,
       AddMoveConflict,
@@ -196,6 +214,7 @@ defmodule MusicBoxWeb.Schemas.UpdatePlaylistItemsError do
     discriminator: %OpenApiSpex.Discriminator{
       propertyName: "error",
       mapping: %{
+        "playlist_is_folder" => "#/components/schemas/PlaylistIsFolder",
         "too_many_operations" => "#/components/schemas/TooManyOperationsError",
         "move_remove_conflict" => "#/components/schemas/MoveRemoveConflictError",
         "add_move_conflict" => "#/components/schemas/AddMoveConflictError",

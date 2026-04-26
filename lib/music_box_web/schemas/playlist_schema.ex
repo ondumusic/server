@@ -14,6 +14,7 @@ end
 
 defmodule MusicBoxWeb.Schemas.Playlist do
   @moduledoc false
+  alias MusicBoxWeb.Schemas.PlaylistId
   alias OpenApiSpex.Schema
   require OpenApiSpex
 
@@ -29,15 +30,26 @@ defmodule MusicBoxWeb.Schemas.Playlist do
         default: "playlist",
         description: "Entity type"
       },
-      id: MusicBoxWeb.Schemas.PlaylistId,
+      id: PlaylistId,
       name: %Schema{type: :string, example: "My Favourite Tracks"},
-      trackCount: %Schema{type: :integer, example: 42},
+      isFolder: %Schema{type: :boolean, example: false},
+      parentId: %Schema{
+        allOf: [PlaylistId],
+        nullable: true,
+        description: "The parent playlist id (if applicable)"
+      },
+      trackCount: %Schema{
+        type: :integer,
+        example: 42,
+        description:
+          "This contains the amount of tracks inside this playlist. If it is a folder it will always be 0."
+      },
       insertedAt: %Schema{type: :string, format: :"date-time"}
     },
-    required: [:__type, :id, :name, :trackCount, :insertedAt]
+    required: [:__type, :id, :name, :isFolder, :parentId, :trackCount, :insertedAt]
   })
 
-  def fields, do: [:__type, :id, :name, :trackCount, :insertedAt]
+  def fields, do: [:__type, :id, :name, :isFolder, :parentId, :trackCount, :insertedAt]
 end
 
 defmodule MusicBoxWeb.Schemas.PlaylistPage do

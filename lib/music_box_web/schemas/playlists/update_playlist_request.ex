@@ -8,9 +8,10 @@ defmodule MusicBoxWeb.Schemas.UpdatePlaylistRequest do
     title: "UpdatePlaylistRequest",
     type: :object,
     properties: %{
-      name: %Schema{type: :string, minLength: 1}
+      name: %Schema{type: :string, minLength: 1},
+      parentId: MusicBoxWeb.Schemas.PlaylistId
     },
-    required: [:name],
+    required: [],
     additionalProperties: false
   })
 end
