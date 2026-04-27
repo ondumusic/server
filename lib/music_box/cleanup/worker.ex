@@ -80,6 +80,7 @@ defmodule MusicBox.Cleanup.Worker do
         from(a in Artist,
           left_join: s in subquery(subquery),
           on: a.id == s.artist_id,
+          where: a.album_count != coalesce(s.count, 0) or is_nil(a.album_count),
           update: [set: [album_count: coalesce(s.count, 0), updated_at: ^started_at]]
         )
         |> repo.update_all([])
@@ -116,6 +117,7 @@ defmodule MusicBox.Cleanup.Worker do
         from(al in Album,
           left_join: s in subquery(subquery),
           on: al.id == s.album_id,
+          where: al.track_count != coalesce(s.count, 0) or is_nil(al.track_count),
           update: [set: [track_count: coalesce(s.count, 0), updated_at: ^started_at]]
         )
         |> repo.update_all([])
@@ -150,6 +152,7 @@ defmodule MusicBox.Cleanup.Worker do
         from(p in Playlist,
           left_join: s in subquery(subquery),
           on: p.id == s.playlist_id,
+          where: p.track_count != coalesce(s.count, 0) or is_nil(p.track_count),
           update: [set: [track_count: coalesce(s.count, 0), updated_at: ^started_at]]
         )
         |> repo.update_all([])
@@ -178,21 +181,15 @@ defmodule MusicBox.Cleanup.Worker do
   end
 
   defp cleanup_unused_albums do
-    known_albums_query = from(t in Track, select: t.album_id, group_by: t.album_id)
-
     from(al in Album,
-      where: al.id not in subquery(known_albums_query)
+      where: al.track_count == 0
     )
     |> Repo.delete_all()
   end
 
   defp cleanup_unused_artists do
-    known_artists_query =
-      from(t in Track, select: t.artist_id, group_by: t.artist_id)
-      |> union_all(^from(al in Album, select: al.artist_id, group_by: al.artist_id))
-
     from(a in Artist,
-      where: a.id not in subquery(known_artists_query)
+      where: a.album_count == 0
     )
     |> Repo.delete_all()
   end

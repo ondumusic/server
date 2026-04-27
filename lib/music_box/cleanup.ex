@@ -4,12 +4,12 @@ defmodule MusicBox.Cleanup do
   alias __MODULE__.Worker
 
   @steps ~w(
-    sort_names
-    unused
     update_album_counts
     update_track_counts
     update_playlist_counts
     update_fts
+    unused
+    sort_names
   )a
 
   def work_async(steps \\ :all) do
