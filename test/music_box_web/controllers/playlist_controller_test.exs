@@ -2,29 +2,32 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
   use MusicBoxWeb.ConnCase, async: false
 
   alias MusicBox.Playlists
-  alias MusicBox.Playlists.Playlist
+  alias MusicBox.Playlists.{Playlist, PlaylistItem}
 
-  setup do
-    tracks = MusicBox.Tracks.paginate_tracks(%{}).entries
-
-    items =
-      tracks
-      |> Enum.filter(&(&1.number in [4, 8, 9]))
-      |> Enum.zip(["c", "b", "a"])
-      |> Enum.map(fn {track, position} ->
-        %{
-          position: position,
-          track_id: track.id
-        }
-      end)
-
+  setup tags do
     playlist =
-      TestSeeds.insert_playlist(%{
-        name: "Test Playlist",
-        items: items
-      })
+      unless tags[:skip_playlist] do
+        tracks = MusicBox.Tracks.paginate_tracks(%{}).entries
+
+        items =
+          tracks
+          |> Enum.filter(&(&1.number in [4, 8, 9]))
+          |> Enum.zip(["c", "b", "a"])
+          |> Enum.map(fn {track, position} ->
+            %{
+              position: position,
+              track_id: track.id
+            }
+          end)
+
+        TestSeeds.insert_playlist(%{
+          name: "Test Playlist",
+          items: items
+        })
+      end
 
     [playlist: playlist]
+    |> Enum.reject(fn {_k, v} -> is_nil(v) end)
   end
 
   describe "playlists" do
@@ -279,6 +282,52 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
              |> response(204)
 
       assert Repo.aggregate(Playlist, :count) == 0
+    end
+
+    @tag :skip_playlist
+    test "deletes playlist folder (and contents)", %{conn: conn} do
+      assert %{
+               "id" => moods_id,
+               "name" => "Moods",
+               "isFolder" => true
+             } =
+               conn
+               |> post(~p"/api/playlists", %{
+                 name: "Moods",
+                 isFolder: true
+               })
+               |> api_response(201, "Playlist")
+
+      assert %{
+               "id" => chill_id,
+               "name" => "Chill",
+               "isFolder" => true,
+               "parentId" => ^moods_id
+             } =
+               conn
+               |> post(~p"/api/playlists", %{
+                 name: "Chill",
+                 isFolder: true,
+                 parentId: moods_id
+               })
+               |> api_response(201, "Playlist")
+
+      [track | _tracks] = MusicBox.Tracks.paginate_tracks(%{}).entries
+      playlist = Playlists.get_playlist!(chill_id)
+
+      Playlists.update_playlist_items(playlist, %{
+        add: [
+          %{track_id: track.id, position: "a"}
+        ]
+      })
+
+      assert conn
+             |> delete(~p"/api/playlists/#{moods_id}")
+             |> response(204)
+
+      # Should only contain the default created one
+      assert Repo.aggregate(Playlist, :count) == 0
+      assert Repo.aggregate(PlaylistItem, :count) == 0
     end
   end
 
