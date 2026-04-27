@@ -5,8 +5,9 @@ defmodule MusicBoxWeb.LibraryChannel do
 
   alias MusicBox.Albums.Album
   alias MusicBox.Artists.Artist
+  alias MusicBox.Playlists.Playlist
   alias MusicBox.Repo
-  alias MusicBoxWeb.LibraryJSON
+  alias MusicBoxWeb.{LibraryJSON, PlaylistJSON}
 
   import Ecto.Query
 
@@ -22,6 +23,7 @@ defmodule MusicBoxWeb.LibraryChannel do
       |> Enum.map(fn
         {:artists = k, artist_ids} -> {k, fetch_artists(artist_ids)}
         {:albums = k, album_ids} -> {k, fetch_albums(album_ids)}
+        {:playlists = k, playlist_ids} -> {k, fetch_playlists(playlist_ids)}
       end)
       |> Map.new()
 
@@ -44,5 +46,13 @@ defmodule MusicBoxWeb.LibraryChannel do
     )
     |> Repo.all()
     |> Enum.map(&LibraryJSON.album(%{album: &1}))
+  end
+
+  defp fetch_playlists(ids) do
+    from(p in Playlist.preloaded(),
+      where: p.id in ^ids
+    )
+    |> Repo.all()
+    |> Enum.map(&PlaylistJSON.playlist(%{playlist: &1}))
   end
 end

@@ -278,13 +278,21 @@ defmodule MusicBox.Playlists.Operations do
         select: %{playlist_id: pi.playlist_id, count: count(pi.id)}
       )
 
-    from(p in Playlist,
-      left_join: s in subquery(subquery),
-      on: p.id == s.playlist_id,
-      where: p.id == ^playlist.id,
-      update: [set: [track_count: coalesce(s.count, 0), updated_at: ^started_at]]
-    )
-    |> Repo.update_all([])
+    {count, _} =
+      from(p in Playlist,
+        left_join: s in subquery(subquery),
+        on: p.id == s.playlist_id,
+        where: p.id == ^playlist.id,
+        where: p.track_count != coalesce(s.count, 0) or is_nil(p.track_count),
+        update: [set: [track_count: coalesce(s.count, 0), updated_at: ^started_at]]
+      )
+      |> Repo.update_all([])
+
+    if count > 0 do
+      MusicBoxWeb.Endpoint.broadcast!("library:sync", "processed", %{
+        playlists: [playlist.id]
+      })
+    end
   end
 
   defp find_duplicates(list) do
