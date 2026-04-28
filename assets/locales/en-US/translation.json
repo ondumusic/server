@@ -64,6 +64,7 @@
       "replaceText": "This will replace the current track and queue."
     },
     "noTrack": {
+      "artistName": "No Artist",
       "trackName": "No Track"
     }
   },

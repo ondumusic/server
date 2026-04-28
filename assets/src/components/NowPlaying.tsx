@@ -72,7 +72,7 @@ export function NowPlaying() {
           onLoad={(e) => updateAccentColor(e.target as HTMLImageElement)}
         />
       ) : (
-        <div className="w-20 aspect-square bg-linear-to-br from-stone-50 to-stone-200 lg:rounded-md lg:w-full lg:shadow-md lg:mb-4"></div>
+        <div className="w-20 aspect-square bg-linear-to-tl from-mist-600 to-mist-700 lg:rounded-md lg:w-full lg:shadow-md lg:mb-4"></div>
       )}
 
       <div className="text-left w-[calc(100%-120px)] lg:w-full lg:text-center overflow-hidden pt-2 lg:pt-0 mb-4">
@@ -86,7 +86,14 @@ export function NowPlaying() {
           }
         />
         <div className="font-normal text-xs lg:text-sm text-white/50">
-          <Marquee text={artistAlbum.join(" - ")} />
+          <Marquee
+            text={
+              artistAlbum.join(" - ") ||
+              i18next.t("player.noTrack.artistName", {
+                defaultValue: "No Artist",
+              })
+            }
+          />
         </div>
       </div>
 

@@ -41,7 +41,7 @@ const PlaybackControls = ({
 
   return (
     <div className="flex justify-center items-center lg:w-full lg:pt-6 lg:px-2 flex-shrink-0">
-      <div className="flex flex-shrink-0 text-white gap-4">
+      <div className="flex flex-shrink-0 text-white gap-2">
         <button
           type="button"
           className="hidden lg:grid place-items-center disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-full w-12 h-12 cursor-pointer"
@@ -70,14 +70,14 @@ const PlaybackControls = ({
         >
           {isPlaying ? (
             <PauseIcon
-              className="size-8"
+              className="size-6"
               title={t("button.pauseCurrentTrack", {
                 defaultValue: "Pause Current Track",
               })}
             />
           ) : (
             <PlayIcon
-              className="size-8"
+              className="size-6"
               title={t("button.playCurrentTrack", {
                 defaultValue: "Play Current Track",
               })}
@@ -110,7 +110,7 @@ const PlaybackControls = ({
 
       <button
         type="button"
-        className="hidden lg:block absolute cursor-pointer right-6 text-white"
+        className="hidden lg:block absolute cursor-pointer right-4 text-white"
         onClick={() => setIsPanelOpen(!isPanelOpen)}
       >
         <PanelCloseIcon
