@@ -182,9 +182,9 @@ export function UpNext({
         className={classNames([
           "flex px-2 py-1 justify-between gap-4 text-sm",
           state.isDragging && "opacity-50",
-          !state.isSelected && "text-accent-600 w-full",
+          !state.isSelected && "text-white w-full",
           state.isSelected &&
-            "text-white bg-accent-400 [.selectable-list:focus_&]:bg-accent-500",
+            "text-white bg-white/30 [.selectable-list:focus_&]:bg-white/30",
           state.isSelected && "rounded-t-md rounded-b-md",
           state.isSelected &&
             "[[aria-selected=true]+[aria-selected=true]_&]:rounded-t-none",
@@ -197,7 +197,7 @@ export function UpNext({
           <span
             className={classNames([
               "line-clamp-1",
-              state.isSelected ? "text-white" : "text-accent-400",
+              state.isSelected ? "text-white" : "text-white/50",
             ])}
           >
             {item.track.artistName}
@@ -227,7 +227,7 @@ export function UpNext({
         <div
           role="none"
           className={classNames([
-            "block h-full text-center py-8 text-sm text-accent-400",
+            "block h-full text-center py-8 text-sm text-white/50",
             listItems.length !== 0 && "hidden",
           ])}
           onDragOver={onDragOver}
@@ -242,12 +242,12 @@ export function UpNext({
             listItems.length === 0 && "hidden",
           ])}
         >
-          <strong className="font-semibold text-md">
+          <strong className="font-semibold text-md text-white">
             <Trans i18nKey="upNext.title">Up Next</Trans>
           </strong>
           <button
             type="button"
-            className="text-sm text-accent-400"
+            className="text-sm text-white/50"
             onClick={() => clearNextTracks()}
           >
             <Trans i18nKey="button.clearUpNext">Clear</Trans>
@@ -260,6 +260,7 @@ export function UpNext({
             multiple
             allowDrag
             allowDropFrom={allowDropFrom}
+            dropTargetClass="bg-white/80"
             items={listItems}
             selectedIds={selectedTrackIds}
             onChange={onChange}

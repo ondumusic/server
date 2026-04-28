@@ -1,16 +1,15 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-accent-50 transition-colors duration-400">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#4b585b" />
     <title>MusicBox</title>
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
     <script defer type="module" phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
     </script>
   </head>
-  <body class="bg-accent-50 transition-colors duration-400 overflow-hidden">
+  <body class="bg-black overflow-hidden">
     {@inner_content}
 
     <script :if={assigns[:hydrate]} type="text/javascript">

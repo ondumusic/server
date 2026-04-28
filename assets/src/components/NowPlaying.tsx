@@ -77,7 +77,7 @@ export function NowPlaying() {
 
       <div className="text-left w-[calc(100%-120px)] lg:w-full lg:text-center overflow-hidden pt-2 lg:pt-0 mb-4">
         <Marquee
-          className="transition-colors duration-400 text-accent-600 text-sm lg:text-lg font-medium"
+          className="transition-colors duration-400 text-white text-sm lg:text-lg font-medium"
           text={
             trackName ||
             i18next.t("player.noTrack.trackName", {
@@ -85,21 +85,21 @@ export function NowPlaying() {
             })
           }
         />
-        <div className="font-normal text-xs lg:text-sm text-accent-400">
+        <div className="font-normal text-xs lg:text-sm text-white/50">
           <Marquee text={artistAlbum.join(" - ")} />
         </div>
       </div>
 
       <div className="absolute bottom-4 left-22 right-2 lg:static group/timeline">
-        <div className="flex justify-between items-end tabular-nums transition-colors duration-400 text-accent-400 text-xs mb-0.5 lg:mb-2">
+        <div className="flex justify-between items-end tabular-nums transition-colors duration-200 text-white/50 group-hover/timeline:text-white text-xs mb-0.5 lg:mb-2">
           <span>{formatDuration(currentTime)}</span>
           <span>{formatDuration(duration)}</span>
         </div>
 
         <div className="relative">
-          <div className="absolute z-[10] top-0 lg:top-auto lg:bottom-0 left-0 right-0 bg-accent-300/40 h-1 rounded-lg overflow-hidden">
+          <div className="absolute z-[10] top-0 lg:top-auto lg:bottom-0 left-0 right-0 bg-white/30 h-1 rounded-lg overflow-hidden">
             <div
-              className="h-1 lg:rounded-tr-lg lg:rounded-br-lg bg-accent-400"
+              className="h-1 lg:rounded-tr-lg lg:rounded-br-lg bg-white"
               style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>
@@ -119,7 +119,7 @@ export function NowPlaying() {
                 lg:[&::-webkit-slider-thumb]:translate-y-[4px]
                 [&::-webkit-slider-thumb]:translate-x-[-1px]
                 [&::-webkit-slider-thumb]:bg-transparent
-                group-hover/timeline:[&::-webkit-slider-thumb]:bg-accent-600
+                group-hover/timeline:[&::-webkit-slider-thumb]:bg-white
                 group-hover/timeline:[&::-webkit-slider-thumb]:shadow-xl
               "
             value={currentTime}

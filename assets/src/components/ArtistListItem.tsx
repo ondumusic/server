@@ -12,12 +12,13 @@ export const ArtistListItem = memo(({ artist, isSelected = false }: Props) => {
   return (
     <li
       className={classNames([
-        "px-4 whitespace-nowrap items-center flex gap-2",
+        "mx-2 px-4 rounded-md whitespace-nowrap items-center flex gap-2",
+        "text-sm",
         isSelected &&
-          "bg-accent-400 [.selectable-list:focus_&]:bg-accent-500 text-white",
+          "bg-sidebar-inactive-bg text-sidebar-inactive-fg [.selectable-list:focus_&]:bg-sidebar-active-bg [.selectable-list:focus_&]:text-sidebar-active-fg",
       ])}
     >
-      <Marquee className="py-3" delay={500} text={artist.name} />
+      <Marquee className="py-2.5" delay={500} text={artist.name} />
     </li>
   );
 });

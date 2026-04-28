@@ -4,26 +4,50 @@
 
 @layer base {
   :root {
-    --accent-50: var(--color-stone-50);
-    --accent-100: var(--color-stone-100);
-    --accent-200: var(--color-stone-200);
-    --accent-300: var(--color-stone-300);
-    --accent-400: var(--color-stone-400);
-    --accent-500: var(--color-stone-500);
-    --accent-600: var(--color-stone-600);
-    --accent-700: var(--color-stone-700);
-    --accent-800: var(--color-stone-800);
-    --accent-900: var(--color-stone-900);
-    --accent-950: var(--color-stone-950);
+    --accent-50: var(--color-indigo-50);
+    --accent-100: var(--color-indigo-100);
+    --accent-200: var(--color-indigo-200);
+    --accent-300: var(--color-indigo-300);
+    --accent-400: var(--color-indigo-400);
+    --accent-500: var(--color-indigo-500);
+    --accent-600: var(--color-indigo-600);
+    --accent-700: var(--color-indigo-700);
+    --accent-800: var(--color-indigo-800);
+    --accent-900: var(--color-indigo-900);
+    --accent-950: var(--color-indigo-950);
 
     --text-base: var(--color-black);
     --text-selected: var(--color-black);
 
-    --panel-bg: var(--color-white);
-    --panel-fg: var(--color-zinc-800);
+    --dialog-bg: var(--color-white);
+    --dialog-fg: var(--color-black);
+
+    --panel-fg: rgba(0, 0, 0, 0.9);
+    --panel-fg-muted: rgba(0, 0, 0, 0.45);
+    --panel-fg-hint: rgba(0, 0, 0, 0.3);
+    --panel-fg-divider: rgba(0, 0, 0, 0.1);
+    --panel-bg: rgba(255, 255, 255, 0.75);
+    --panel-border: rgba(255, 255, 255, 0.8);
+
+    --sidebar-fg: var(--panel-fg);
+    --sidebar-bg: rgba(255, 255, 255, 0.65);
+    --sidebar-active-bg: rgba(255, 255, 255, 0.7);
+    --sidebar-active-fg: var(--color-black);
+    --sidebar-inactive-bg: rgba(20, 20, 20, 0.15);
+    --sidebar-inactive-fg: var(--color-black);
+    --sidebar-divider: rgba(255, 255, 255, 0.5);
+    --sidebar-divider-hover: rgba(255, 255, 255, 0.35);
+    --sidebar-divider-active: rgba(0, 0, 0, 0.25);
+
     --label-fg: var(--color-zinc-800);
     --error-fg: var(--color-rose-600);
     --muted-fg: var(--color-stone-400);
+
+    /*
+     * NOTE: This is linked to the hardcoded `theme-color` meta tag.
+     * So if changing this, change that too.
+     */
+    --gradient-tint: var(--color-mist-600);
   }
 }
 
@@ -43,11 +67,37 @@
   --color-base: var(--text-base);
   --color-selected: var(--text-selected);
 
-  --color-panel-bg: var(--panel-bg);
+  --color-dialog-bg: var(--dialog-bg);
+  --color-dialog-fg: var(--dialog-fg);
+
   --color-panel-fg: var(--panel-fg);
-  --color-label: var(--label-fg);
+  --color-panel-fg-muted: var(--panel-fg-muted);
+  --color-panel-fg-hint: var(--panel-fg-hint);
+  --color-panel-fg-divider: var(--panel-fg-divider);
+  --color-panel-bg: var(--panel-bg);
+  --color-panel-border: var(--panel-border);
+
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-active-bg: var(--sidebar-active-bg);
+  --color-sidebar-active-fg: var(--sidebar-active-fg);
+  --color-sidebar-inactive-bg: var(--sidebar-inactive-bg);
+  --color-sidebar-inactive-fg: var(--sidebar-inactive-fg);
+  --color-sidebar-divider: var(--sidebar-divider);
+  --color-sidebar-divider-hover: var(--sidebar-divider-hover);
+  --color-sidebar-divider-active: var(--sidebar-divider-active);
+
+  --color-label: var(--color-panel-fg);
   --color-error: var(--error-fg);
-  --color-muted: var(--muted-fg);
+  --color-muted: var(--color-panel-fg-muted);
+}
+
+body {
+  background-image: linear-gradient(
+    to bottom,
+    var(--gradient-tint) 0%,
+    color-mix(in srgb, var(--gradient-tint) 60%, transparent) 60%,
+    color-mix(in srgb, var(--gradient-tint) 30%, transparent) 100%
+  );
 }
 
 dialog {

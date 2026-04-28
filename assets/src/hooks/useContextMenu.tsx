@@ -188,7 +188,7 @@ export function ContextMenu({
     <dialog
       ref={menuRef}
       className={classNames([
-        "fixed bg-accent-50 text-selected transition-colors rounded-lg shadow-2xl border border-accent-200/50 py-1 min-w-48 max-w-64 z-50",
+        "fixed bg-stone-100 text-selected transition-colors rounded-lg shadow-2xl border border-stone-200/50 py-1 min-w-48 max-w-64 z-50",
         "transition-opacity duration-75 dialog-contextmenu p-1 space-y-0.5",
         !isVisible && "invisible",
       ])}
@@ -206,7 +206,7 @@ export function ContextMenu({
             return (
               <div
                 key={item.key}
-                className="my-1 h-[1px] mx-4 overflow-hidden bg-accent-200"
+                className="my-1 h-[1px] mx-4 overflow-hidden bg-stone-200"
               ></div>
             );
 
@@ -225,7 +225,7 @@ export function ContextMenu({
                 className={classNames([
                   "w-full px-4 py-2 text-left flex text-sm items-center gap-3 rounded-md",
                   "outline-none text-selected transition-colors cursor-pointer",
-                  focusedIndex === menuItemIndex && "bg-accent-200",
+                  focusedIndex === menuItemIndex && "bg-blue-400 text-white",
                 ])}
               >
                 <span className="block overflow-hidden text-ellipsis whitespace-nowrap">

@@ -31,9 +31,11 @@ type BaseProps<T> = {
   multiple: boolean;
   defaultFocusId?: string;
   defaultFocusType?: ScrollLogicalPosition;
+  dropTargetClass?: string;
   itemHeight?: "auto" | number | ((item: T) => number);
   scrollOverscan?: number;
   paddingBottom?: number;
+  paddingTop?: number;
   resetScrollOnItemsChange?: boolean;
   onChange: (selectedIds: Set<string>) => void;
   onDelete?: (selectedIds: Set<string>) => void;
@@ -68,6 +70,7 @@ export function SelectableList<T>({
   renderItem,
   defaultFocusId,
   defaultFocusType = "nearest",
+  dropTargetClass = "bg-blue-500",
   resetScrollOnItemsChange = false,
   multiple: allowMultiple,
   allowDrag = false,
@@ -75,6 +78,7 @@ export function SelectableList<T>({
   itemHeight = "auto",
   scrollOverscan = 10,
   paddingBottom = 0,
+  paddingTop = 0,
 }: PropsWithChildren<BaseProps<T> & DragProps>) {
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollBlockType, setScrollBlockType] = useState<
@@ -218,8 +222,9 @@ export function SelectableList<T>({
     const offsets: number[] = [0];
     let totalHeight = 0;
 
-    // Add padding bottom to height
+    // Add padding bottom and top to height
     totalHeight += paddingBottom;
+    totalHeight += paddingTop;
 
     for (let i = 0; i < items.length; i++) {
       totalHeight += getItemHeight(items[i]);
@@ -229,7 +234,7 @@ export function SelectableList<T>({
     }
 
     return { totalHeight, offsets };
-  }, [items, getItemHeight, paddingBottom]);
+  }, [items, getItemHeight, paddingBottom, paddingTop]);
 
   // Find the first visible item
   const startIndex = useMemo(() => {
@@ -579,7 +584,7 @@ export function SelectableList<T>({
       "rounded-md",
       "font-light",
       "text-white",
-      "bg-accent-500",
+      "bg-blue-500",
       "shadow-lg",
       "text-sm",
     );
@@ -729,7 +734,11 @@ export function SelectableList<T>({
       <div className="relative" style={{ height: totalHeight }}>
         <div
           className="will-change-transform"
-          style={{ paddingBottom, transform: `translateY(${scrollOffsetY}px)` }}
+          style={{
+            paddingBottom,
+            paddingTop,
+            transform: `translateY(${scrollOffsetY}px)`,
+          }}
         >
           {visibleItems.map((item, visibleIndex) => {
             const index = startIndex + visibleIndex;
@@ -791,7 +800,9 @@ export function SelectableList<T>({
                 className="relative"
               >
                 {showDropTargetLine && (
-                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-accent-500 z-10"></div>
+                  <div
+                    className={`absolute top-0 left-0 right-0 h-0.5 ${dropTargetClass} z-10`}
+                  ></div>
                 )}
                 {renderItem(item as T, { isSelected, isDragging, isFocused })}
               </div>
@@ -799,7 +810,9 @@ export function SelectableList<T>({
           })}
           {dropAtIndex === items.length && (
             <div className="relative h-0 overflow-visible">
-              <div className="absolute bottom-0.5 left-0 right-0 h-0.5 bg-accent-500 z-10"></div>
+              <div
+                className={`absolute bottom-0.5 left-0 right-0 h-0.5 ${dropTargetClass} z-10`}
+              ></div>
             </div>
           )}
         </div>

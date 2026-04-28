@@ -116,6 +116,8 @@ export function ArtistList({
     <SelectableList<Artist>
       multiple={false}
       items={listItems}
+      paddingTop={10}
+      paddingBottom={10}
       defaultFocusId={currentArtist?.id}
       onTypeMatch={onTypeMatch}
       defaultFocusType="center"

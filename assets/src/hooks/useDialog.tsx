@@ -87,7 +87,7 @@ function Dialog({
       ref={dialogRef}
       className={classNames([
         "self-center justify-self-center outline-none",
-        "rounded-md shadow-2xl bg-panel-bg text-panel-fg",
+        "rounded-md shadow-2xl bg-dialog-bg text-dialog-fg",
         "max-w-md dialog-modal",
       ])}
     >

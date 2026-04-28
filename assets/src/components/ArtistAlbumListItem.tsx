@@ -62,14 +62,14 @@ export const ArtistAlbumListItem = memo(
     switch (item.type) {
       case "artist":
         return (
-          <header className="mt-18 md:mt-4 lg:mt-8 @md:pb-4 @md:border-b border-stone-300">
+          <header className="mt-18 md:mt-4 lg:mt-8 @md:pb-4 @md:border-b border-panel-fg-divider">
             <h1
               className="font-semibold text-4xl lg:text-2xl line-clamp-1"
               title={item.artist.name}
             >
               {item.artist.name}
             </h1>
-            <span className="text-sm text-stone-400">
+            <span className="text-sm text-panel-fg-muted">
               <Trans i18nKey="artist.albumCount" count={item.artist.albumCount}>
                 {{ count: item.artist.albumCount }} albums
               </Trans>
@@ -109,7 +109,7 @@ export const ArtistAlbumListItem = memo(
             </div>
 
             <div className="pt-1 @md:pl-44 @xl:pl-60 w-full">
-              <div className="pb-2 mb-2 min-h-20 @md:min-h-auto @md:border-b border-stone-200">
+              <div className="pb-2 mb-2 min-h-20 @md:min-h-auto @md:border-b border-panel-fg-divider">
                 <strong
                   className="text-lg font-semibold mb-0.5 line-clamp-1"
                   title={item.album.name}
@@ -118,11 +118,11 @@ export const ArtistAlbumListItem = memo(
                 </strong>
                 <div className="flex flex-col @md:flex-row @md:gap-2">
                   {item.album.releaseYear && (
-                    <span className="text-stone-400 text-sm">
+                    <span className="text-panel-fg-muted text-sm">
                       {item.album.releaseYear}
                     </span>
                   )}
-                  <span className="text-stone-400 text-sm">
+                  <span className="text-panel-fg-muted text-sm">
                     <Trans
                       i18nKey="album.trackCount"
                       count={item.album.tracks.length}
@@ -169,14 +169,14 @@ export const ArtistAlbumListItem = memo(
                 "border-b",
                 item.lastTrackOnDisc || isSelected
                   ? "border-transparent"
-                  : "border-gray-200",
+                  : "border-panel-fg-divider",
               ])}
             >
               <span
                 className={classNames([
                   "w-4 @md:w-6 flex-shrink-0 font-light text-right tabular-nums",
                   "group-hover/track:hidden",
-                  !isSelected && "text-stone-400",
+                  !isSelected && "text-panel-fg-muted",
                   isPlaying && "hidden",
                 ])}
               >
@@ -229,7 +229,7 @@ export const ArtistAlbumListItem = memo(
                   <div
                     className={classNames([
                       "w-full line-clamp-1",
-                      !isSelected && "text-stone-400",
+                      !isSelected && "text-panel-fg-muted",
                     ])}
                     title={item.track.artistName}
                   >
@@ -241,7 +241,7 @@ export const ArtistAlbumListItem = memo(
               <span
                 className={classNames([
                   "ml-auto font-light flex-shrink-0 tabular-nums",
-                  !isSelected && "text-stone-400",
+                  !isSelected && "text-panel-fg-muted",
                 ])}
               >
                 {formatDuration(item.track.duration)}

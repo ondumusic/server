@@ -40,11 +40,11 @@ const PlaybackControls = ({
   }, [addTimeObserver]);
 
   return (
-    <div className="flex justify-center items-center lg:w-full lg:pt-2 lg:px-2 flex-shrink-0">
-      <div className="flex flex-shrink-0 text-accent-500">
+    <div className="flex justify-center items-center lg:w-full lg:pt-6 lg:px-2 flex-shrink-0">
+      <div className="flex flex-shrink-0 text-white gap-4">
         <button
           type="button"
-          className="hidden lg:block disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md cursor-pointer"
+          className="hidden lg:grid place-items-center disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-full w-12 h-12 cursor-pointer"
           onClick={() => {
             if (hasPrevTrack && currentTime <= 2) prevTrack();
             else scrubTo(0, true);
@@ -59,7 +59,7 @@ const PlaybackControls = ({
         </button>
         <button
           type="button"
-          className="absolute lg:static right-0 top-0 lg:top-3 z-[200] disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md cursor-pointer"
+          className="absolute lg:static grid place-items-center right-0 top-0 lg:top-3 z-[200] disabled:opacity-20 active:opacity-80 p-2 rounded-full w-12 h-12 cursor-pointer bg-white text-black"
           onClick={() => {
             if (currentTrack) {
               setIsPlaying(!isPlaying);
@@ -87,7 +87,7 @@ const PlaybackControls = ({
         <button
           type="button"
           disabled={!hasNextTrack}
-          className="hidden lg:block disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-md cursor-pointer"
+          className="hidden lg:grid place-items-center disabled:opacity-20 hover:bg-white/10 active:opacity-80 p-2 rounded-full w-12 h-12 cursor-pointer"
           onClick={() => nextTrack()}
         >
           <NextIcon
@@ -99,7 +99,7 @@ const PlaybackControls = ({
 
       <button
         type="button"
-        className="hidden lg:block absolute cursor-pointer left-6 text-accent-500"
+        className="hidden lg:block absolute cursor-pointer left-6 text-white"
         onClick={() => setShowUpNext(!showUpNext)}
       >
         <UpNextIcon
@@ -110,7 +110,7 @@ const PlaybackControls = ({
 
       <button
         type="button"
-        className="hidden lg:block absolute cursor-pointer right-6 text-accent-500"
+        className="hidden lg:block absolute cursor-pointer right-6 text-white"
         onClick={() => setIsPanelOpen(!isPanelOpen)}
       >
         <PanelCloseIcon

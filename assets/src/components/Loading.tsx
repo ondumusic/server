@@ -3,7 +3,7 @@ import { Trans } from "react-i18next";
 
 export function Loading({ children }: PropsWithChildren) {
   return (
-    <div className="w-full h-full content-center text-accent-500/50">
+    <div className="w-full h-full content-center text-white/80">
       <svg width="60" height="20" viewBox="0 0 120 30" className="mx-auto">
         <title>
           <Trans i18nKey="loading.text">Loading</Trans>

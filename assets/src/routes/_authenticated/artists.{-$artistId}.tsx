@@ -9,6 +9,7 @@ import {
 import { ArtistList } from "../../components/ArtistList";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import type { UUID } from "../../types";
+import { classNames } from "../../utils/classNames";
 
 export const Route = createFileRoute("/_authenticated/artists/{-$artistId}")({
   component: Artists,
@@ -35,13 +36,18 @@ function Artists() {
       orientation="horizontal"
     >
       <Panel id="left" defaultSize="30%" minSize="17%" maxSize="40%">
-        <div className="h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-accent-50/40">
+        <div
+          className={classNames([
+            "h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+            "bg-sidebar-bg backdrop-blur-2xl backdrop-saturate-150",
+          ])}
+        >
           <ArtistList artistId={artistId} />
         </div>
       </Panel>
-      <Separator className="w-[1px] bg-accent-200 [&[data-separator='hover']]:bg-accent-300 [&[data-separator='active']]:bg-accent-300 focus:outline-none focus:bg-accent-400" />
+      <Separator className="w-[1px] bg-sidebar-divider [&[data-separator='hover']]:bg-sidebar-divider-hover [&[data-separator='active']]:bg-sidebar-divider-active focus:outline-none focus:bg-sidebar-divider-active" />
       <Panel id="right" minSize="60%">
-        <div className="@container h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="@container h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-panel-bg backdrop-blur-2xl backdrop-saturate-150">
           <Outlet />
         </div>
       </Panel>
