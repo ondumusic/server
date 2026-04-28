@@ -303,14 +303,14 @@ export function SelectableList<T>({
     if (scrollBlockType === "center") {
       scrollTo = itemTop - scrollHeight / 2 + height / 2;
     } else if (scrollBlockType === "start") {
-      scrollTo = itemTop;
+      scrollTo = paddingTop + itemTop;
     } else if (scrollBlockType === "nearest") {
       if (itemTop < viewportTop) {
         // Item is above viewport - scroll up to show it at top
-        scrollTo = itemTop;
+        scrollTo = itemTop - paddingTop - paddingBottom;
       } else {
         // Item is below viewport - scroll down to show it at bottom
-        scrollTo = itemBottom - scrollHeight;
+        scrollTo = paddingBottom + paddingTop + itemBottom - scrollHeight;
       }
     }
 
@@ -329,6 +329,8 @@ export function SelectableList<T>({
     scrollBlockType,
     getItemHeight,
     scrollHeight,
+    paddingTop,
+    paddingBottom,
   ]);
 
   // Reset scroll when items change
