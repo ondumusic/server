@@ -1,5 +1,6 @@
 import { memo, useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { AnimatedWaveform } from "../components/icons/AnimatedWaveform";
 import { PlayIcon } from "../components/icons/PlayIcon";
 import type { ListItem as DefaultListItem } from "../components/SelectableList";
 import type { Album, Artist, Disc, Track } from "../types";
@@ -188,16 +189,29 @@ export const ArtistAlbumListItem = memo(
                   !isPlaying ? "hidden" : "flex",
                 ])}
               >
-                <PlayIcon
-                  className={classNames([
-                    "size-3 text-accent-500",
-                    isSelected && "text-white",
-                  ])}
-                  title={t("button.playSelectedTrack", {
-                    defaultValue: "Play {{ trackName }}",
-                    trackName: item.track.name,
-                  })}
-                />
+                {isPlaying ? (
+                  <AnimatedWaveform
+                    className={classNames([
+                      "size-3 text-accent-500",
+                      isSelected && "text-white",
+                    ])}
+                    title={t("button.playSelectedTrack", {
+                      defaultValue: "Play {{ trackName }}",
+                      trackName: item.track.name,
+                    })}
+                  />
+                ) : (
+                  <PlayIcon
+                    className={classNames([
+                      "size-3 text-accent-500",
+                      isSelected && "text-white",
+                    ])}
+                    title={t("button.playSelectedTrack", {
+                      defaultValue: "Play {{ trackName }}",
+                      trackName: item.track.name,
+                    })}
+                  />
+                )}
               </div>
 
               <div>
