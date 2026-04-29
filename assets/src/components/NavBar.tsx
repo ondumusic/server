@@ -1,4 +1,4 @@
-import { useMatches, useNavigate } from "@tanstack/react-router";
+import { useMatches, useNavigate, useRouter } from "@tanstack/react-router";
 import {
   useCallback,
   useEffect,
@@ -16,20 +16,26 @@ declare module "@tanstack/react-router" {
   }
 }
 
-type NavItem = { id: ViewId; label: string };
+type NavItem = { id: ViewId; href: string; label: string };
 
 const items: NavItem[] = [
-  { id: "artists", label: "Artists" },
-  { id: "albums", label: "Albums" },
-  { id: "playlists", label: "Playlists" },
-  { id: "settings", label: "Settings" },
+  { id: "artists", href: "/artists", label: "Artists" },
+  { id: "albums", href: "/albums", label: "Albums" },
+  { id: "playlists", href: "/playlists", label: "Playlists" },
+  { id: "settings", href: "/settings", label: "Settings" },
 ];
 
 type Rect = { x: number; width: number };
 
+// Remember last routes (e.g. if you switch between artist view to album view
+// it would be nice to preserve the params like current artist)
+const lastVisited = new Map<ViewId, string>();
+
 export function NavBar() {
   const navigate = useNavigate();
   const matches = useMatches();
+  const router = useRouter();
+
   const active =
     matches
       .map((m) => m.staticData?.view)
@@ -52,6 +58,19 @@ export function NavBar() {
     const er = el.getBoundingClientRect();
     return { x: er.left - cr.left, width: er.width };
   }, []);
+
+  useEffect(() => {
+    return router.subscribe("onResolved", ({ toLocation }) => {
+      const match = router.state.matches
+        .map((m) => m.staticData?.view)
+        .filter((v): v is ViewId => Boolean(v))
+        .pop();
+
+      if (match) {
+        lastVisited.set(match, toLocation.pathname + toLocation.searchStr);
+      }
+    });
+  }, [router]);
 
   useLayoutEffect(() => {
     const rect = measure(active);
@@ -125,6 +144,7 @@ export function NavBar() {
 
       {items.map((item) => {
         const isActive = active === item.id;
+        const targetHref = lastVisited.get(item.id) ?? item.href;
 
         return (
           <button
@@ -135,7 +155,7 @@ export function NavBar() {
             ref={(el) => {
               itemRefs.current[item.id] = el;
             }}
-            onClick={() => navigate({ to: `/${item.id}` })}
+            onClick={() => navigate({ to: targetHref })}
             onMouseEnter={() => setHovered(item.id)}
             className="relative z-10 rounded-md px-4 py-1.5 text-sm cursor-pointer"
           >
