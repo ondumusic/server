@@ -2,6 +2,7 @@ import {
   createFileRoute,
   Link,
   Navigate,
+  notFound,
   useRouter,
 } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -28,7 +29,9 @@ export const Route = createFileRoute(
 )({
   async loader({ params: { artistId } }: { params: { artistId?: UUID } }) {
     if (!artistId) return;
-    return await queryArtist(artistId);
+    const artist = await queryArtist(artistId);
+    if (!artist) throw notFound();
+    return artist;
   },
   staticData: { view: "artists" as const },
   component: Artists,
