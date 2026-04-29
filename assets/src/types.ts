@@ -54,7 +54,7 @@ export interface Album {
 export namespace Album {
   export type Indexes = {
     by_slug: string;
-    by_artistId: string;
+    by_artistId: UUID;
     by_missingData: "YES" | "NO";
   };
   export type Joins = {
@@ -115,7 +115,7 @@ export interface Playlist {
 
 export namespace Playlist {
   export type Indexes = {
-    by_parentId: string;
+    by_parentId: UUID;
     by_missingData: "YES" | "NO";
   };
   export type Joins = {
@@ -138,7 +138,7 @@ export interface PlaylistItem {
 
 export namespace PlaylistItem {
   export type Indexes = {
-    by_playlistId: string;
+    by_playlistId: UUID;
     by_missingData: "YES" | "NO";
   };
   export type Joins = {

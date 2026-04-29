@@ -1,4 +1,11 @@
-import type { Album, Artist, Track, UUID } from "../types";
+import type {
+  Album,
+  Artist,
+  Playlist,
+  PlaylistItem,
+  Track,
+  UUID,
+} from "../types";
 import { isUUID } from "../utils/isUUID";
 import { useStoreQuery, useStoreRecord } from "./hooks";
 import { repo } from "./repo";
@@ -123,3 +130,39 @@ export function useTracks(filters: TrackFilters) {
 export const queryTracksByIds = (trackIds: UUID[]) => {
   return repo.getMany<Track>("tracks", trackIds);
 };
+
+// List Playlists
+export const queryPlaylists = (parentId?: UUID) => {
+  let query: Query<Playlist> = {
+    sortBy: [
+      ["isFolder", "asc"],
+      ["name", "asc"],
+    ],
+  };
+
+  if (parentId) {
+    query = { ...query, whereIndex: ["by_parentId", "=", parentId] };
+  }
+
+  return repo.query<Playlist>("playlists", query);
+};
+
+export function usePlaylists(parentId?: UUID) {
+  return useStoreQuery<Playlist>("playlists", () => queryPlaylists(parentId));
+}
+
+// List Playlist Items
+export const queryPlaylistsItems = (playlistId: UUID) => {
+  const query: Query<PlaylistItem> = {
+    whereIndex: ["by_playlistId", "=", playlistId],
+    sortBy: [["position", "asc"]],
+  };
+
+  return repo.query<PlaylistItem>("playlists", query);
+};
+
+export function usePlaylistItems(playlistId: UUID) {
+  return useStoreQuery<PlaylistItem>("playlists", () =>
+    queryPlaylistsItems(playlistId),
+  );
+}
