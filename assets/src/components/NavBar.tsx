@@ -21,8 +21,8 @@ type NavItem = { id: ViewId; label: string };
 const items: NavItem[] = [
   { id: "artists", label: "Artists" },
   { id: "albums", label: "Albums" },
-  // { id: "playlists", label: "Playlists" },
-  // { id: "settings", label: "Settings" }
+  { id: "playlists", label: "Playlists" },
+  { id: "settings", label: "Settings" },
 ];
 
 type Rect = { x: number; width: number };

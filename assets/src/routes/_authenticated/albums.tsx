@@ -8,6 +8,7 @@ export const Route = createFileRoute("/_authenticated/albums")({
 function Albums() {
   return (
     <div className="w-full h-full bg-panel-bg backdrop-blur-2xl backdrop-saturate-150">
+      Albums: Coming Soon
       <Outlet />
     </div>
   );
