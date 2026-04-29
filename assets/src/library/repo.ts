@@ -239,6 +239,7 @@ export class Repo {
 export const repo = new Repo("musicbox", {
   1: (db) => {
     const tracks = db.createObjectStore("tracks", { keyPath: "id" });
+    tracks.createIndex("by_missingData", "missingData", { unique: false });
     tracks.createIndex("by_artistId", "artistId", { unique: false });
     tracks.createIndex("by_albumId", "albumId", { unique: false });
     tracks.createIndex("by_albumArtistId", "albumArtistId", { unique: false });
@@ -247,10 +248,12 @@ export const repo = new Repo("musicbox", {
     });
 
     const artists = db.createObjectStore("artists", { keyPath: "id" });
+    artists.createIndex("by_missingData", "missingData", { unique: false });
     artists.createIndex("by_slug", "slug", { unique: true });
     artists.createIndex("filter_albumCount", "albumCount", { unique: false });
 
     const albums = db.createObjectStore("albums", { keyPath: "id" });
+    albums.createIndex("by_missingData", "missingData", { unique: false });
     albums.createIndex("by_artistId", "artistId", { unique: false });
     albums.createIndex("by_slug", "slug", { unique: false }); // slugs are only unique artist_slug+album_slug
 

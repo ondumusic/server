@@ -62,6 +62,7 @@ class SyncClient {
     try {
       await this.#fetch(cursor);
       this.#setLastSyncedAt(new Date());
+      this.#updateMissingData();
     } finally {
       this.#syncing = false;
     }
@@ -150,6 +151,20 @@ class SyncClient {
         urls,
       });
     }
+  }
+
+  async #updateMissingData() {
+    const albums = await repo.query<Album>("albums", {
+      whereIndex: ["by_missingData", "=", "YES"],
+    });
+
+    const tracks = await repo.query<Track>("tracks", {
+      whereIndex: ["by_missingData", "=", "YES"],
+    });
+
+    // Transforms should fetch missing data already.
+    await repo.putMany<Album>("albums", await transforms.albums(albums));
+    await repo.putMany<Track>("tracks", await transforms.tracks(tracks));
   }
 
   async getLastSyncedAt() {

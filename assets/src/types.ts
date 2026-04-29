@@ -31,6 +31,7 @@ export namespace Artist {
   export type Indexes = {
     by_slug: string;
     filter_albumCount: number;
+    by_missingData: "YES" | "NO";
   };
 }
 
@@ -54,6 +55,7 @@ export namespace Album {
   export type Indexes = {
     by_slug: string;
     by_artistId: string;
+    by_missingData: "YES" | "NO";
   };
   export type Joins = {
     artist: One<Artist>;
@@ -89,6 +91,7 @@ export namespace Track {
     by_artistId: UUID;
     by_albumId: UUID;
     by_albumArtistId: UUID;
+    by_missingData: "YES" | "NO";
   };
   export type Joins = {
     albumId: One<Album>;

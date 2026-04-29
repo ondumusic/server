@@ -14,6 +14,7 @@ export const transforms = {
 
         // TMP VALUES:
         __type: "artist" as const,
+        missingData: "NO",
       };
     });
   },
@@ -40,6 +41,8 @@ export const transforms = {
         // TMP VALUES:
         __type: "album" as const,
         tracks: [],
+        missingData: !artist ? "YES" : "NO",
+
         // biome-ignore lint/style/noNonNullAssertion: suppress temporary hack
         artist: artist!,
       };
@@ -81,6 +84,7 @@ export const transforms = {
 
         // TMP VALUES:
         __type: "track" as const,
+        missingData: !artist || !album ? "YES" : "NO",
 
         // biome-ignore lint/style/noNonNullAssertion: suppress temporary hack
         artist: artist!,
