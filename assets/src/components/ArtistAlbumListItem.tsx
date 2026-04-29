@@ -86,7 +86,7 @@ export const ArtistAlbumListItem = memo(
                   <img
                     src={item.album.artworkUrl}
                     alt=""
-                    className="w-full object-cover object-center"
+                    className="w-full aspect-square object-cover object-center"
                   />
                 )}
               </div>

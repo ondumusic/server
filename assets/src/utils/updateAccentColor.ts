@@ -70,7 +70,7 @@ function setBackgroundColor(rgbStr: string): void {
 function tick(now: number): void {
   if (lastTime === null) lastTime = now;
   // Clamp dt so a tab-switch doesn't cause a huge jump.
-  const dt = Math.min((now - lastTime) / 1000, 1 / 30);
+  const dt = Math.min((now - lastTime) / 600, 1 / 30);
   lastTime = now;
 
   let settled = true;

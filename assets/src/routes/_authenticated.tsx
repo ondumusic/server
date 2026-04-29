@@ -6,6 +6,7 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import { useState } from "react";
+import { NavBar } from "../components/NavBar";
 import { Panel } from "../components/Panel";
 import { Player } from "../components/Player";
 import { useQueue } from "../hooks/useQueue";
@@ -60,7 +61,7 @@ function Authenticated() {
 
       <div
         className={classNames([
-          "flex-shrink-1 relative lg:w-[calc(100%-336px)] 2xl:w-300 h-[calc(100%-80px)] lg:h-full lg:p-4 xl:p-6 lg:pl-0 xl:pl-0",
+          "flex-shrink-1 relative lg:w-[calc(100%-336px)] 2xl:w-300 h-[calc(100%-80px)] lg:h-full lg:p-4 xl:p-6 xl:py-6 lg:pl-0 xl:pl-0",
           "flex justify-center items-center flex-col",
           "transition-all duration-300 ease-in-out",
           "will-change-[left]",
@@ -69,6 +70,7 @@ function Authenticated() {
             : "-translate-y-full lg:translate-y-0 lg:translate-x-full opacity-0 scale-90",
         ])}
       >
+        <NavBar />
         <Panel main>
           <Outlet />
         </Panel>

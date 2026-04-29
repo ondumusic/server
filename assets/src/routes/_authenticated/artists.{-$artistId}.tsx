@@ -12,6 +12,7 @@ import type { UUID } from "../../types";
 import { classNames } from "../../utils/classNames";
 
 export const Route = createFileRoute("/_authenticated/artists/{-$artistId}")({
+  staticData: { view: "artists" as const },
   component: Artists,
 });
 

@@ -10,11 +10,11 @@ export function Panel({
   return (
     <div
       className={classNames([
-        "flex mx-auto overflow-hidden text-panel-fg",
+        "flex flex-col mx-auto overflow-hidden text-panel-fg",
         "border border-panel-border",
         main && "h-full w-full lg:shadow-lg lg:rounded-md",
         !main &&
-          "max-w-md p-6 backdrop-blur-2xl backdrop-saturate-150 bg-panel-bg flex-col shadow-lg rounded-md",
+          "max-w-md p-6 backdrop-blur-2xl backdrop-saturate-150 bg-panel-bg shadow-lg rounded-md",
       ])}
     >
       {children}

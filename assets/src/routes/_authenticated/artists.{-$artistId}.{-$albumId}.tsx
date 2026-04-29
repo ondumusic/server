@@ -30,6 +30,7 @@ export const Route = createFileRoute(
     if (!artistId) return;
     return await queryArtist(artistId);
   },
+  staticData: { view: "artists" as const },
   component: Artists,
   notFoundComponent: () => <Navigate to="/artists" />,
 });

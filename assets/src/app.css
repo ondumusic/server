@@ -29,6 +29,11 @@
     --panel-bg: rgba(255, 255, 255, 0.75);
     --panel-border: rgba(255, 255, 255, 0.8);
 
+    --navbar-bg: var(--panel-bg);
+    --navbar-fg: var(--color-black);
+    --navbar-hover-bg: rgba(255, 255, 255, 0.3);
+    --navbar-active-bg: rgba(255, 255, 255, 0.7);
+
     --sidebar-fg: var(--panel-fg);
     --sidebar-bg: rgba(255, 255, 255, 0.65);
     --sidebar-active-bg: rgba(255, 255, 255, 0.7);
@@ -38,6 +43,35 @@
     --sidebar-divider: rgba(255, 255, 255, 0.5);
     --sidebar-divider-hover: rgba(255, 255, 255, 0.35);
     --sidebar-divider-active: rgba(0, 0, 0, 0.25);
+
+    /*
+    --dialog-bg: var(--color-black);
+    --dialog-fg: var(--color-white);
+
+    --panel-fg: rgba(255, 255, 255, 0.8);
+    --panel-fg-muted: rgba(255, 255, 255, 0.45);
+    --panel-fg-hint: rgba(255, 255, 255, 0.3);
+    --panel-fg-divider: rgba(255, 255, 255, 0.1);
+    --panel-bg: rgba(20, 20, 20, 0.75);
+    --panel-border: rgba(255, 255, 255, 0.15);
+    --panel-header-bg: rgba(20, 20, 20, 0.75);
+    --panel-header-border: rgba(255, 255, 255, 0.2);
+
+    --navbar-bg: var(--panel-bg);
+    --navbar-fg: var(--color-white);
+    --navbar-hover-bg: rgba(0, 0, 0, 0.4);
+    --navbar-active-bg: rgba(255, 255, 255, 0.15);
+
+    --sidebar-fg: var(--panel-fg);
+    --sidebar-bg: rgba(20, 20, 20, 0.5);
+    --sidebar-active-bg: rgba(255, 255, 255, 0.15);
+    --sidebar-active-fg: var(--color-white);
+    --sidebar-inactive-bg: rgba(0, 0, 0, 0.4);
+    --sidebar-inactive-fg: var(--color-white);
+    --sidebar-divider: rgba(255, 255, 255, 0.1);
+    --sidebar-divider-hover: rgba(255, 255, 255, 0.2);
+    --sidebar-divider-active: rgba(255, 255, 255, 0.35);
+    /**/
 
     --label-fg: var(--color-zinc-800);
     --error-fg: var(--color-rose-600);
@@ -77,7 +111,13 @@
   --color-panel-bg: var(--panel-bg);
   --color-panel-border: var(--panel-border);
 
+  --color-navbar-bg: var(--navbar-bg);
+  --color-navbar-fg: var(--navbar-fg);
+  --color-navbar-hover-bg: var(--navbar-hover-bg);
+  --color-navbar-active-bg: var(--navbar-active-bg);
+
   --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-fg: var(--sidebar-fg);
   --color-sidebar-active-bg: var(--sidebar-active-bg);
   --color-sidebar-active-fg: var(--sidebar-active-fg);
   --color-sidebar-inactive-bg: var(--sidebar-inactive-bg);
