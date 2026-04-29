@@ -257,6 +257,18 @@ export const repo = new Repo("musicbox", {
     albums.createIndex("by_artistId", "artistId", { unique: false });
     albums.createIndex("by_slug", "slug", { unique: false }); // slugs are only unique artist_slug+album_slug
 
+    const playlists = db.createObjectStore("playlists", { keyPath: "id" });
+    playlists.createIndex("by_missingData", "missingData", { unique: false });
+    playlists.createIndex("by_parentId", "parentId", { unique: false });
+
+    const playlistItems = db.createObjectStore("playlistItems", {
+      keyPath: "id",
+    });
+    playlistItems.createIndex("by_missingData", "missingData", {
+      unique: false,
+    });
+    playlistItems.createIndex("by_playlistId", "playlistId", { unique: false });
+
     // Keeps track of cursor et al.
     db.createObjectStore("meta", { keyPath: "key" });
   },

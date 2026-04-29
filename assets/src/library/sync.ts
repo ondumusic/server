@@ -1,5 +1,5 @@
 import { ClientError, client } from "../api";
-import type { Album, Artist, Track } from "../types";
+import type { Album, Artist, Playlist, PlaylistItem, Track } from "../types";
 import { notifyChanges } from "./events";
 import { repo } from "./repo";
 import { transforms } from "./transforms";
@@ -18,6 +18,8 @@ interface SyncResponse {
   artists: Artist[];
   albums: Album[];
   tracks: Track[];
+  playlists: Playlist[];
+  playlistItems: PlaylistItem[];
   deletions: SyncDeletion[];
   cursor: string;
   complete: boolean;
@@ -27,6 +29,8 @@ export interface SyncProgress {
   artists: number;
   albums: number;
   tracks: number;
+  playlists: number;
+  playlistItems: number;
 }
 
 type SyncProgressObserver = (progress: SyncProgress) => void;
@@ -37,6 +41,8 @@ class SyncClient {
     artists: 0,
     albums: 0,
     tracks: 0,
+    playlists: 0,
+    playlistItems: 0,
   };
   #observers: Set<SyncProgressObserver> = new Set();
 
@@ -72,17 +78,29 @@ class SyncClient {
     artists = [],
     albums = [],
     tracks = [],
+    playlists = [],
+    playlistItems = [],
     deletions = [],
   }: {
     artists?: Artist[];
     albums?: Album[];
     tracks?: Track[];
+    playlists?: Playlist[];
+    playlistItems?: PlaylistItem[];
     deletions?: SyncDeletion[];
   }) {
     // Process upserts
     await repo.putMany<Artist>("artists", await transforms.artists(artists));
     await repo.putMany<Album>("albums", await transforms.albums(albums));
     await repo.putMany<Track>("tracks", await transforms.tracks(tracks));
+    await repo.putMany<Playlist>(
+      "playlists",
+      await transforms.playlists(playlists),
+    );
+    await repo.putMany<PlaylistItem>(
+      "playlistItems",
+      await transforms.playlistItems(playlistItems),
+    );
 
     // Process deletions
     const deletedEntitities = Map.groupBy(deletions, (e) => e.entityType);
@@ -98,15 +116,29 @@ class SyncClient {
       "tracks",
       deletedEntitities.get("track")?.map((d) => d.entityId) ?? [],
     );
+    await repo.deleteMany(
+      "playlists",
+      deletedEntitities.get("playlist")?.map((d) => d.entityId) ?? [],
+    );
+    await repo.deleteMany(
+      "playlistItems",
+      deletedEntitities.get("playlistItem")?.map((d) => d.entityId) ?? [],
+    );
 
     // Check which stores changed and notify events
     const changedStores = new Set<string>();
     if (artists.length) changedStores.add("artists");
     if (albums.length) changedStores.add("albums");
     if (tracks.length) changedStores.add("tracks");
+    if (playlists.length) changedStores.add("playlists");
+    if (playlistItems.length) changedStores.add("playlistItems");
     if (deletedEntitities.get("artist")?.length) changedStores.add("artists");
     if (deletedEntitities.get("album")?.length) changedStores.add("albums");
     if (deletedEntitities.get("track")?.length) changedStores.add("tracks");
+    if (deletedEntitities.get("playlist")?.length)
+      changedStores.add("playlists");
+    if (deletedEntitities.get("playlistItem")?.length)
+      changedStores.add("playlistItems");
     if (changedStores.size > 0) notifyChanges([...changedStores]);
 
     this.#emitProgress();
@@ -162,9 +194,25 @@ class SyncClient {
       whereIndex: ["by_missingData", "=", "YES"],
     });
 
+    const playlists = await repo.query<Playlist>("playlists", {
+      whereIndex: ["by_missingData", "=", "YES"],
+    });
+
+    const playlistItems = await repo.query<PlaylistItem>("playlistItems", {
+      whereIndex: ["by_missingData", "=", "YES"],
+    });
+
     // Transforms should fetch missing data already.
     await repo.putMany<Album>("albums", await transforms.albums(albums));
     await repo.putMany<Track>("tracks", await transforms.tracks(tracks));
+    await repo.putMany<Playlist>(
+      "playlists",
+      await transforms.playlists(playlists),
+    );
+    await repo.putMany<PlaylistItem>(
+      "playlistItems",
+      await transforms.playlistItems(playlistItems),
+    );
   }
 
   async getLastSyncedAt() {
@@ -193,6 +241,8 @@ class SyncClient {
       artists: 0,
       albums: 0,
       tracks: 0,
+      playlists: 0,
+      playlistItems: 0,
     };
   }
 
@@ -201,11 +251,15 @@ class SyncClient {
       await repo.count("artists"),
       await repo.count("albums"),
       await repo.count("tracks"),
+      await repo.count("playlists"),
+      await repo.count("playlistItems"),
     ]);
 
     this.#progress.artists = counts[0];
     this.#progress.albums = counts[1];
     this.#progress.tracks = counts[2];
+    this.#progress.playlists = counts[3];
+    this.#progress.playlistItems = counts[4];
 
     this.#observers.forEach((callback) => {
       callback({ ...this.#progress });

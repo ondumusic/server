@@ -1,4 +1,4 @@
-import type { Album, Artist, Track } from "../types";
+import type { Album, Artist, Playlist, PlaylistItem, Track } from "../types";
 import { repo } from "./repo";
 
 export const transforms = {
@@ -88,6 +88,26 @@ export const transforms = {
 
         // biome-ignore lint/style/noNonNullAssertion: suppress temporary hack
         artist: artist!,
+      };
+    });
+  },
+
+  async playlists(playlists: Playlist[]) {
+    return playlists.map((playlist) => {
+      return {
+        ...playlist,
+        __type: "playlist" as const,
+        missingData: "NO",
+      };
+    });
+  },
+
+  async playlistItems(playlistItems: PlaylistItem[]) {
+    return playlistItems.map((playlistItem) => {
+      return {
+        ...playlistItem,
+        __type: "playlistItem" as const,
+        missingData: "NO",
       };
     });
   },

@@ -103,6 +103,50 @@ export interface Disc {
   tracks: Track[];
 }
 
+export interface Playlist {
+  __type: "playlist";
+  id: UUID;
+  parentId: UUID;
+  name: string;
+  isFolder: boolean;
+  trackCount: number;
+  insertedAt?: Date | string | number;
+}
+
+export namespace Playlist {
+  export type Indexes = {
+    by_parentId: string;
+    by_missingData: "YES" | "NO";
+  };
+  export type Joins = {
+    parent: One<Playlist>;
+    items: Many<PlaylistItem>;
+  };
+}
+
+export interface PlaylistItem {
+  __type: "playlistItem";
+  id: UUID;
+  playlistId: UUID;
+  name: string;
+  position: string;
+  trackId: UUID;
+  isFolder: boolean;
+  trackCount: number;
+  insertedAt?: Date | string | number;
+}
+
+export namespace PlaylistItem {
+  export type Indexes = {
+    by_playlistId: string;
+    by_missingData: "YES" | "NO";
+  };
+  export type Joins = {
+    playlist: One<Playlist>;
+    track: One<Track>;
+  };
+}
+
 export interface Page<T> {
   __type: "page";
   __subtype: "artist" | "album" | "track";
@@ -124,10 +168,18 @@ export type IndexesOf<T> = T extends Artist
     ? Album.Indexes
     : T extends Track
       ? Track.Indexes
-      : never;
+      : T extends Playlist
+        ? Playlist.Indexes
+        : T extends PlaylistItem
+          ? PlaylistItem.Indexes
+          : never;
 
 export type JoinsOf<T> = T extends Album
   ? Album.Joins
   : T extends Track
     ? Track.Joins
-    : never;
+    : T extends Playlist
+      ? Playlist.Joins
+      : T extends PlaylistItem
+        ? PlaylistItem.Joins
+        : never;
