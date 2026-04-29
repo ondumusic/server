@@ -71,17 +71,19 @@ defmodule MusicBox.Cleanup.Worker do
 
       # Then update those that have albums
       subquery =
-        from(al in Album,
-          group_by: al.artist_id,
-          select: %{artist_id: al.artist_id, count: count(al.id)}
+        from(a in Artist,
+          left_join: al in Album,
+          on: al.artist_id == a.id,
+          group_by: a.id,
+          select: %{artist_id: a.id, count: count(al.id)}
         )
 
       {count, _} =
         from(a in Artist,
-          left_join: s in subquery(subquery),
+          join: s in subquery(subquery),
           on: a.id == s.artist_id,
-          where: a.album_count != coalesce(s.count, 0) or is_nil(a.album_count),
-          update: [set: [album_count: coalesce(s.count, 0), updated_at: ^started_at]]
+          where: a.album_count != s.count or is_nil(a.album_count),
+          update: [set: [album_count: s.count, updated_at: ^started_at]]
         )
         |> repo.update_all([])
 
@@ -108,17 +110,19 @@ defmodule MusicBox.Cleanup.Worker do
 
       # Then update to get a track count per album
       subquery =
-        from(t in Track,
-          group_by: t.album_id,
-          select: %{album_id: t.album_id, count: count(t.id)}
+        from(al in Album,
+          left_join: t in Track,
+          on: t.album_id == al.id,
+          group_by: al.id,
+          select: %{album_id: al.id, count: count(t.id)}
         )
 
       {count, _} =
         from(al in Album,
-          left_join: s in subquery(subquery),
+          join: s in subquery(subquery),
           on: al.id == s.album_id,
-          where: al.track_count != coalesce(s.count, 0) or is_nil(al.track_count),
-          update: [set: [track_count: coalesce(s.count, 0), updated_at: ^started_at]]
+          where: al.track_count != s.count or is_nil(al.track_count),
+          update: [set: [track_count: s.count, updated_at: ^started_at]]
         )
         |> repo.update_all([])
 
@@ -143,17 +147,19 @@ defmodule MusicBox.Cleanup.Worker do
 
       # Then update to get a item count per playlist
       subquery =
-        from(pi in PlaylistItem,
-          group_by: pi.playlist_id,
-          select: %{playlist_id: pi.playlist_id, count: count(pi.id)}
+        from(p in Playlist,
+          left_join: pi in PlaylistItem,
+          on: pi.playlist_id == p.id,
+          group_by: p.id,
+          select: %{playlist_id: p.id, count: count(pi.id)}
         )
 
       {count, _} =
         from(p in Playlist,
-          left_join: s in subquery(subquery),
+          join: s in subquery(subquery),
           on: p.id == s.playlist_id,
-          where: p.track_count != coalesce(s.count, 0) or is_nil(p.track_count),
-          update: [set: [track_count: coalesce(s.count, 0), updated_at: ^started_at]]
+          where: p.track_count != s.count or is_nil(p.track_count),
+          update: [set: [track_count: s.count, updated_at: ^started_at]]
         )
         |> repo.update_all([])
 
@@ -181,21 +187,18 @@ defmodule MusicBox.Cleanup.Worker do
   end
 
   defp cleanup_unused_albums do
-    known_albums_query = from(t in Track, select: t.album_id, group_by: t.album_id)
-
     from(al in Album,
-      where: al.id not in subquery(known_albums_query)
+      as: :album,
+      where: not exists(from t in Track, where: t.album_id == parent_as(:album).id)
     )
     |> Repo.delete_all()
   end
 
   defp cleanup_unused_artists do
-    known_artists_query =
-      from(t in Track, select: t.artist_id, group_by: t.artist_id)
-      |> union_all(^from(al in Album, select: al.artist_id, group_by: al.artist_id))
-
     from(a in Artist,
-      where: a.id not in subquery(known_artists_query)
+      as: :artist,
+      where: not exists(from t in Track, where: t.artist_id == parent_as(:artist).id),
+      where: not exists(from al in Album, where: al.artist_id == parent_as(:artist).id)
     )
     |> Repo.delete_all()
   end
