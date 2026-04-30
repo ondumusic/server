@@ -1,4 +1,4 @@
-import type { IndexesOf, JoinsOf, UUID } from "../../types";
+import type { IndexesOf, JoinsOf } from "../../types";
 
 type SingleValueOp = "=" | "!=" | ">" | ">=" | "<" | "<=";
 type RangeOp = "between" | "betweenExclusive";
@@ -27,9 +27,7 @@ export type Query<T> = {
   join?: {
     // Only keys of T that appear in T's Joins map are joinable.
     // The callback returns a Query of the joined entity.
-    [K in keyof JoinsOf<T>]?: (
-      ids: Set<UUID>,
-    ) => JoinQuery<EntityOf<JoinsOf<T>[K]>>;
+    [K in keyof JoinsOf<T>]?: (ids: T[]) => JoinQuery<EntityOf<JoinsOf<T>[K]>>;
   };
   sortBy?: SortField<T> | SortField<T>[];
   sortDir?: "asc" | "desc";
@@ -38,7 +36,8 @@ export type Query<T> = {
 export type JoinQuery<T> = Query<T> & {
   store: string;
   cardinality: "one" | "many";
-  foreignKey: keyof T & string;
+  foreignKey?: string;
+  references?: string;
 };
 
 export type Comparable = number | string | Date;

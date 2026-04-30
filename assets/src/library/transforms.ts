@@ -97,6 +97,7 @@ export const transforms = {
       return {
         ...playlist,
         __type: "playlist" as const,
+        hasParent: playlist.parentId ? ("YES" as const) : ("NO" as const),
         missingData: "NO",
       };
     });

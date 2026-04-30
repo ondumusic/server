@@ -109,12 +109,14 @@ export interface Playlist {
   parentId: UUID;
   name: string;
   isFolder: boolean;
+  hasParent: "YES" | "NO";
   trackCount: number;
   insertedAt?: Date | string | number;
 }
 
 export namespace Playlist {
   export type Indexes = {
+    by_hasParent: "YES" | "NO";
     by_parentId: UUID;
     by_missingData: "YES" | "NO";
   };
@@ -131,6 +133,7 @@ export interface PlaylistItem {
   name: string;
   position: string;
   trackId: UUID;
+  track?: Track;
   isFolder: boolean;
   trackCount: number;
   insertedAt?: Date | string | number;

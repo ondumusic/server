@@ -30,19 +30,23 @@ export const queryArtistAlbums = async (artistId: UUID) => {
     sortDir: "desc",
     sortBy: "releaseYear",
     join: {
-      tracks: (albumIds: Set<UUID>): JoinQuery<Track> => ({
-        store: "tracks",
-        foreignKey: "albumId",
-        cardinality: "many",
-        whereIndex: ["by_albumArtistId", "=", artistId],
-        having: {
-          albumId: (albumId: UUID) => albumIds.has(albumId),
-        },
-        sortBy: [
-          ["disc", "asc"],
-          ["number", "asc"],
-        ],
-      }),
+      tracks: (albums: Album[]): JoinQuery<Track> => {
+        const albumIds = new Set(albums.map((album) => album.id));
+
+        return {
+          store: "tracks",
+          references: "albumId",
+          cardinality: "many",
+          whereIndex: ["by_albumArtistId", "=", artistId],
+          having: {
+            albumId: (albumId: UUID) => albumIds.has(albumId),
+          },
+          sortBy: [
+            ["disc", "asc"],
+            ["number", "asc"],
+          ],
+        };
+      },
     },
   });
 };
@@ -88,10 +92,40 @@ export function useAlbum(albumId: UUID | undefined) {
 interface TrackFilters {
   artistId?: UUID;
   albumId?: UUID;
+  playlistId?: UUID;
   random?: boolean;
 }
 
 export const queryTracks = (filters: TrackFilters) => {
+  if (filters.playlistId) {
+    const query: Query<PlaylistItem> = {
+      whereIndex: ["by_playlistId", "=", filters.playlistId],
+      sortBy: filters.random === true ? "random" : [["position", "asc"]],
+      join: {
+        track: (playlistItems: PlaylistItem[]): JoinQuery<Track> => {
+          const trackIds = new Set(playlistItems.map((item) => item.trackId));
+
+          return {
+            store: "tracks",
+            foreignKey: "trackId",
+            cardinality: "one",
+            having: {
+              id: (trackId: UUID) => trackIds.has(trackId),
+            },
+          };
+        },
+      },
+    };
+
+    return repo
+      .query<PlaylistItem>("playlistItems", query)
+      .then((playlistItems) => {
+        return playlistItems
+          .map((item) => item.track)
+          .filter((track) => track !== null);
+      }) as Promise<Track[]>;
+  }
+
   let query: Query<Track> = {
     sortBy:
       filters.random === true
@@ -134,8 +168,11 @@ export const queryTracksByIds = (trackIds: UUID[]) => {
 // List Playlists
 export const queryPlaylists = (parentId?: UUID) => {
   let query: Query<Playlist> = {
+    having: {
+      hasParent: ["=", "NO"],
+    },
     sortBy: [
-      ["isFolder", "asc"],
+      ["isFolder", "desc"],
       ["name", "asc"],
     ],
   };
@@ -158,11 +195,11 @@ export const queryPlaylistsItems = (playlistId: UUID) => {
     sortBy: [["position", "asc"]],
   };
 
-  return repo.query<PlaylistItem>("playlists", query);
+  return repo.query<PlaylistItem>("playlistItems", query);
 };
 
 export function usePlaylistItems(playlistId: UUID) {
-  return useStoreQuery<PlaylistItem>("playlists", () =>
+  return useStoreQuery<PlaylistItem>("playlistItems", () =>
     queryPlaylistsItems(playlistId),
   );
 }

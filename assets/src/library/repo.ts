@@ -259,6 +259,7 @@ export const repo = new Repo("musicbox", {
 
     const playlists = db.createObjectStore("playlists", { keyPath: "id" });
     playlists.createIndex("by_missingData", "missingData", { unique: false });
+    playlists.createIndex("by_hasParent", "hasParent", { unique: false });
     playlists.createIndex("by_parentId", "parentId", { unique: false });
 
     const playlistItems = db.createObjectStore("playlistItems", {
