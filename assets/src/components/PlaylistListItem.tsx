@@ -1,12 +1,16 @@
-import { memo } from "react";
+import { memo, useEffect, useRef } from "react";
 import { PlaylistFolderIcon } from "../components/icons/PlaylistFolderIcon";
 import { PlaylistIcon } from "../components/icons/PlaylistIcon";
 import { Marquee } from "../components/Marquee";
+import i18next from "../i18next";
 import type { Playlist } from "../types";
 import { classNames } from "../utils/classNames";
 
 export type ListItem = Playlist & {
   indentLevel: number;
+  editing?: boolean;
+  onConfirm?: (value: string) => void;
+  onCancel?: () => void;
 };
 
 interface Props {
@@ -16,6 +20,14 @@ interface Props {
 
 export const PlaylistListItem = memo(
   ({ playlist, isSelected = false }: Props) => {
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+      if (playlist.editing) {
+        inputRef.current?.focus();
+      }
+    }, [playlist]);
+
     return (
       <li
         className={classNames([
@@ -38,7 +50,46 @@ export const PlaylistListItem = memo(
         ) : (
           <PlaylistIcon title={playlist.name} className="size-5" />
         )}
-        <Marquee className="py-2.5" delay={500} text={playlist.name} />
+
+        {playlist.editing === true ? (
+          <input
+            ref={inputRef}
+            type="text"
+            className="inline-block text-sm bg-transparent border-0 p-0 py-2.5 outline-0 ring-0 h-auto appearance-none w-full"
+            placeholder={i18next.t("placeholders.newPlaylist", {
+              defaultValue: "Untitled",
+            })}
+            onBlur={(e) => {
+              const input = e.target as HTMLInputElement;
+
+              if (playlist.onConfirm) {
+                playlist.onConfirm(input.value);
+              }
+            }}
+            onKeyDown={(e: React.KeyboardEvent) => {
+              e.stopPropagation();
+              const input = e.target as HTMLInputElement;
+
+              if (e.key === "Escape") {
+                if (playlist.onCancel) {
+                  playlist.onCancel();
+                }
+              } else if (e.key === "Enter") {
+                if (playlist.onConfirm) {
+                  playlist.onConfirm(input.value);
+                }
+              }
+
+              return e;
+            }}
+            onKeyPress={(e: React.KeyboardEvent) => {
+              e.stopPropagation();
+              return e;
+            }}
+          />
+        ) : (
+          <Marquee className="py-2.5" delay={500} text={playlist.name} />
+        )}
       </li>
     );
   },

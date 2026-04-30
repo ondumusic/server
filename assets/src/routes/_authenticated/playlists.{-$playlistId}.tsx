@@ -6,9 +6,7 @@ import {
   useDefaultLayout,
 } from "react-resizable-panels";
 import { PlaylistList } from "../../components/PlaylistList";
-import { useContextMenu } from "../../hooks/useContextMenu";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
-import i18next from "../../i18next";
 import type { UUID } from "../../types";
 import { classNames } from "../../utils/classNames";
 
@@ -25,7 +23,6 @@ type Params = {
 
 function Playlists() {
   const { playlistId } = Route.useParams() as Params;
-  const { createContextMenu } = useContextMenu();
 
   const allowPanels = useMediaQuery("(width >= 48rem)");
   const { defaultLayout, onLayoutChange } = useDefaultLayout({
@@ -47,34 +44,6 @@ function Playlists() {
             "h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
             "bg-sidebar-bg backdrop-blur-2xl backdrop-saturate-150",
           ])}
-          onContextMenu={createContextMenu<HTMLDivElement>(() => {
-            return [
-              {
-                type: "item",
-                key: "create_playlist",
-                label: i18next.t("contextMenu.createPlaylist", {
-                  defaultValue: "Create Playlist",
-                }),
-                onClick: async () => {
-                  alert("Lets create playlist");
-                  // if (!(await userConfirmQueueReplace())) return;
-                  // populateUpNext({ playlistId: playlist.id });
-                },
-              },
-              {
-                type: "item",
-                key: "create_folder",
-                label: i18next.t("contextMenu.createPlaylistFolder", {
-                  defaultValue: "Create Folder",
-                }),
-                onClick: async () => {
-                  alert("Lets create folder");
-                  // if (!(await userConfirmQueueReplace())) return;
-                  // populateUpNext({ playlistId: playlist.id });
-                },
-              },
-            ];
-          })}
         >
           <PlaylistList playlistId={playlistId} />
         </div>

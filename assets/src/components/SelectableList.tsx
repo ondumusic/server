@@ -702,6 +702,13 @@ export function SelectableList<T>({
       onKeyPress={handleKeyPress}
       role="listbox"
       aria-multiselectable={allowMultiple}
+      onContextMenu={
+        onContextMenu
+          ? createContextMenu<HTMLDivElement>(() => {
+              return onContextMenu(new Set([]));
+            })
+          : undefined
+      }
     >
       {itemHeight === "auto" &&
         items.length > 0 &&

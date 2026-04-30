@@ -27,6 +27,11 @@ function isPlaylist(playlist: Playlist, playlistId: string): boolean {
   return playlist.id === playlistId;
 }
 
+interface PendingPlaylist {
+  parentId?: UUID;
+  isFolder?: boolean;
+}
+
 export function PlaylistList({
   playlistId,
 }: PropsWithChildren<{
@@ -39,6 +44,9 @@ export function PlaylistList({
     includeAll: true,
   });
   const [openFolders, setOpenFolders] = useState<Set<UUID>>(new Set());
+  const [creatingPlaylist, setCreatingPlaylist] = useState<
+    PendingPlaylist | false
+  >(false);
 
   // Pre-open folders if the playlistId from route params is available
   useEffect(() => {
@@ -68,17 +76,55 @@ export function PlaylistList({
     // Recursive to apply correct indenting levels
     const buildTree = (parentId: UUID | null, indentLevel: number) => {
       const children = byParent.get(parentId ?? null) ?? [];
-      return children.flatMap((playlist: Playlist) => {
+      const tree = children.flatMap((playlist: Playlist) => {
         const node = { ...playlist, indentLevel };
         if (playlist.isFolder && openFolders.has(playlist.id)) {
           return [node, ...buildTree(playlist.id, indentLevel + 1)];
         }
         return [node];
       });
+
+      if (creatingPlaylist === false) return tree;
+
+      if (
+        (!creatingPlaylist?.parentId && !parentId) ||
+        creatingPlaylist?.parentId === parentId
+      ) {
+        tree.push({
+          id: "new",
+          editing: true,
+          indentLevel,
+          isFolder: creatingPlaylist.isFolder === true,
+          name: "",
+          onCancel: () => {
+            setCreatingPlaylist(false);
+          },
+          onConfirm: async (name: string) => {
+            const newPlaylist = await playlistApi.createPlaylist({
+              name,
+              isFolder: creatingPlaylist.isFolder === true,
+              parentId: creatingPlaylist.parentId,
+            });
+
+            setCreatingPlaylist(false);
+
+            await sync.pushChanges({
+              playlists: [newPlaylist],
+            });
+
+            navigate({
+              to: `/playlists/${newPlaylist.id}`,
+              params: { playlistId: newPlaylist.id },
+            });
+          },
+        });
+      }
+
+      return tree;
     };
 
     return buildTree(null, 0);
-  }, [allItems, openFolders]);
+  }, [allItems, creatingPlaylist, openFolders, navigate]);
 
   const onTypeMatch = useCallback((item: Playlist, query: string) => {
     const matcher = new RegExp(`^${query.replace(/\s+/g, "")}`, "iu");
@@ -115,10 +161,41 @@ export function PlaylistList({
 
   const onContextMenu = useCallback(
     (selectedIds: Set<string>): ContextMenuItem[] => {
+      const createPlaylist = {
+        type: "item",
+        key: "create_playlist",
+        label: i18next.t("contextMenu.createPlaylist", {
+          defaultValue: "Create Playlist",
+        }),
+        onClick: async () => {
+          setCreatingPlaylist({
+            isFolder: false,
+          });
+        },
+      };
+
+      const createFolder = {
+        type: "item",
+        key: "create_folder",
+        label: i18next.t("contextMenu.createPlaylistFolder", {
+          defaultValue: "Create Folder",
+        }),
+        onClick: async () => {
+          setCreatingPlaylist({
+            isFolder: true,
+          });
+        },
+      };
+
+      if (selectedIds.size === 0) {
+        return [createPlaylist, createFolder];
+      }
+
       const playlist = listItems.find((playlist) =>
         selectedIds.has(playlist.id),
       );
       if (!playlist) return [];
+      if (playlist.id === "new") return [];
 
       const deletePlaylist = {
         type: "item",
@@ -151,7 +228,37 @@ export function PlaylistList({
         },
       };
 
-      if (playlist.isFolder) return [deletePlaylist];
+      if (playlist.isFolder) {
+        return [
+          {
+            ...createPlaylist,
+            onClick: async () => {
+              openFolders.add(playlist.id);
+              setOpenFolders(new Set([...openFolders]));
+              setCreatingPlaylist({
+                isFolder: false,
+                parentId: playlist.id,
+              });
+            },
+          },
+          {
+            ...createFolder,
+            onClick: async () => {
+              openFolders.add(playlist.id);
+              setOpenFolders(new Set([...openFolders]));
+              setCreatingPlaylist({
+                isFolder: true,
+                parentId: playlist.id,
+              });
+            },
+          },
+          {
+            type: "divider",
+            key: "destructive",
+          },
+          deletePlaylist,
+        ];
+      }
 
       return [
         {
@@ -185,7 +292,13 @@ export function PlaylistList({
         deletePlaylist,
       ];
     },
-    [listItems, userConfirmQueueReplace, promptConfirm, populateUpNext],
+    [
+      listItems,
+      userConfirmQueueReplace,
+      promptConfirm,
+      populateUpNext,
+      openFolders,
+    ],
   );
 
   const onDoubleClick = useCallback(
