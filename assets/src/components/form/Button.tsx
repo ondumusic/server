@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from "react";
 import { classNames } from "../../utils/classNames";
 
-type ButtonStyle = "primary" | "secondary";
+type ButtonStyle = "primary" | "secondary" | "danger";
 
 interface Colors {
   button: string;
@@ -15,6 +15,12 @@ const styleColors = (style?: ButtonStyle): Colors => {
         button:
           "bg-zinc-900 hover:bg-zinc-700 text-white active:text-white/80 disabled:text-white/80 disabled:bg-zinc-900/50",
         link: "text-zinc-800 hover:text-zinc-700 active:text-black disabled:text-zinc-400",
+      };
+    case "danger":
+      return {
+        button:
+          "bg-rose-900 hover:bg-rose-700 text-white active:text-white/80 disabled:text-white/80 disabled:bg-rose-900/50",
+        link: "text-rose-800 hover:text-rose-700 active:text-black disabled:text-rose-400",
       };
     default:
       return {

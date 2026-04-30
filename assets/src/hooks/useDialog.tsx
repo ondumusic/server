@@ -15,6 +15,7 @@ type DialogResult = boolean | null;
 interface DialogConfig {
   title?: string;
   message: string;
+  danger?: boolean;
   confirmMessage?: string;
   when?: () => boolean;
 }
@@ -102,13 +103,22 @@ function Dialog({
 
         <div className="flex flex-row-reverse gap-2 justify-start items-center">
           <div>
-            <Button type="button" onClick={handleConfirm}>
+            <Button
+              type="button"
+              style={config.danger === true ? "danger" : "primary"}
+              onClick={handleConfirm}
+            >
               {config.confirmMessage}
             </Button>
           </div>
           {type === "confirm" && (config as PromptConfig).cancelMessage && (
             <div>
-              <Button type="button" link onClick={handleCancel}>
+              <Button
+                type="button"
+                style="secondary"
+                link
+                onClick={handleCancel}
+              >
                 {(config as PromptConfig).cancelMessage}
               </Button>
             </div>
@@ -127,7 +137,7 @@ export function DialogProvider({ children }: PropsWithChildren) {
   });
 
   const showAlert = (config: AlertConfig) => {
-    if (!config.when?.()) {
+    if (config.when && !config.when?.()) {
       return new Promise<DialogResult>((resolve) => resolve(true));
     }
 
@@ -142,7 +152,7 @@ export function DialogProvider({ children }: PropsWithChildren) {
   };
 
   const promptConfirm = (config: PromptConfig) => {
-    if (!config.when?.()) {
+    if (config.when && !config.when?.()) {
       return new Promise<DialogResult>((resolve) => resolve(true));
     }
 

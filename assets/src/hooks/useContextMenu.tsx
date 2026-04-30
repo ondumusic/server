@@ -26,6 +26,7 @@ export type ContextMenuItem =
       type: string;
       key: string;
       label: string;
+      danger?: boolean;
       onClick(): void;
     };
 
@@ -224,8 +225,14 @@ export function ContextMenu({
                 }}
                 className={classNames([
                   "w-full px-4 py-2 text-left flex text-sm items-center gap-3 rounded-md",
-                  "outline-none text-selected transition-colors cursor-pointer",
-                  focusedIndex === menuItemIndex && "bg-blue-400 text-white",
+                  "outline-none transition-colors cursor-pointer",
+                  item.danger === true ? "text-error" : "text-selected",
+                  focusedIndex === menuItemIndex &&
+                    item.danger === true &&
+                    "bg-error text-white",
+                  focusedIndex === menuItemIndex &&
+                    item.danger !== true &&
+                    "bg-blue-400 text-white",
                 ])}
               >
                 <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
@@ -251,6 +258,7 @@ export function ContextMenuProvider({ children }: PropsWithChildren) {
   ): MouseEventHandler<T> {
     return (e: ReactMouseEvent<T>) => {
       e.preventDefault();
+      e.stopPropagation();
 
       let newItems: ContextMenuItem[] = [];
       if (typeof itemsOrFunction === "function") {

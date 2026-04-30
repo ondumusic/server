@@ -1,5 +1,11 @@
 import { useNavigate } from "@tanstack/react-router";
-import { type PropsWithChildren, useCallback, useMemo, useState } from "react";
+import {
+  type PropsWithChildren,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Loading } from "../components/Loading";
 import {
   type ListItem,
@@ -9,6 +15,8 @@ import {
   type ListItemState,
   SelectableList,
 } from "../components/SelectableList";
+import type { ContextMenuItem } from "../hooks/useContextMenu";
+import { useDialog } from "../hooks/useDialog";
 import { usePlayer } from "../hooks/usePlayer";
 import i18next from "../i18next";
 import { usePlaylists } from "../library";
@@ -18,8 +26,6 @@ function isPlaylist(playlist: Playlist, playlistId: string): boolean {
   return playlist.id === playlistId;
 }
 
-// https://claude.ai/chat/3cd47d5e-1bb8-4f4d-8889-df5aba58583d
-
 export function PlaylistList({
   playlistId,
 }: PropsWithChildren<{
@@ -27,10 +33,27 @@ export function PlaylistList({
 }>) {
   const navigate = useNavigate();
   const { populateUpNext, userConfirmQueueReplace } = usePlayer();
+  const { promptConfirm } = useDialog();
   const { data: allItems, loading: isLoading } = usePlaylists({
     includeAll: true,
   });
   const [openFolders, setOpenFolders] = useState<Set<UUID>>(new Set());
+
+  // Pre-open folders if the playlistId from route params is available
+  useEffect(() => {
+    if (!playlistId || allItems.length === 0) return;
+
+    const byId = new Map(allItems.map((item) => [item.id, item]));
+    let current = byId.get(playlistId);
+    const ancestors = new Set<UUID>();
+
+    while (current?.parentId) {
+      ancestors.add(current.parentId);
+      current = byId.get(current.parentId);
+    }
+
+    setOpenFolders((prev) => new Set<UUID>([...prev, ...ancestors]));
+  }, [allItems, playlistId]);
 
   // Render a "file tree" type view
   const listItems = useMemo((): ListItem[] => {
@@ -90,12 +113,41 @@ export function PlaylistList({
   );
 
   const onContextMenu = useCallback(
-    (selectedIds: Set<string>) => {
+    (selectedIds: Set<string>): ContextMenuItem[] => {
       const playlist = listItems.find((playlist) =>
         selectedIds.has(playlist.id),
       );
       if (!playlist) return [];
-      if (playlist.isFolder) return [];
+
+      const deletePlaylist = {
+        type: "item",
+        key: "delete_playlist",
+        danger: true,
+        label: i18next.t("contextMenu.deletePlaylist", {
+          defaultValue: 'Delete "{{ playlist }}"',
+          playlist: playlist.name,
+        }),
+        onClick: async () => {
+          const allowed = await promptConfirm({
+            danger: true,
+            message: i18next.t("player.confirmDeletePlaylist", {
+              defaultValue: "This will permanently delete this playlist",
+            }),
+            confirmMessage: i18next.t("playlist.confirmDelete.ok", {
+              defaultValue: "OK",
+            }),
+            cancelMessage: i18next.t("playlist.confirmDelete.cancel", {
+              defaultValue: "Cancel",
+            }),
+          });
+          if (!allowed) return;
+          alert(
+            "TODO: DELETE PLAYLIST (and children, and openFolders and etc.)",
+          );
+        },
+      };
+
+      if (playlist.isFolder) return [deletePlaylist];
 
       return [
         {
@@ -122,9 +174,14 @@ export function PlaylistList({
             populateUpNext({ playlistId: playlist.id, random: true });
           },
         },
+        {
+          type: "divider",
+          key: "destructive",
+        },
+        deletePlaylist,
       ];
     },
-    [listItems, userConfirmQueueReplace, populateUpNext],
+    [listItems, userConfirmQueueReplace, promptConfirm, populateUpNext],
   );
 
   const onDoubleClick = useCallback(
