@@ -21,14 +21,19 @@
     "showUpNext": "Up Next"
   },
   "contextMenu": {
+    "createPlaylist": "Create Playlist",
+    "createPlaylistFolder": "Create Folder",
+    "deletePlaylist": "Delete \"{{ playlist }}\"",
     "playAfter_one": "Play After",
     "playAfter_other": "Play After",
     "playArtist": "Play \"{{ artist }}\"",
     "playNext_one": "Play Next",
     "playNext_other": "Play Next",
+    "playPlaylist": "Play \"{{ playlist }}\"",
     "shuffleAlbum_one": "Shuffle Album",
     "shuffleAlbum_other": "Shuffle Album",
-    "shuffleArtist": "Shuffle \"{{ artist }}\""
+    "shuffleArtist": "Shuffle \"{{ artist }}\"",
+    "shufflePlaylist": "Shuffle \"{{ playlist }}\""
   },
   "emptyView": {
     "noResults": "No Results"
@@ -57,7 +62,11 @@
   "onboarding": {
     "firstLoadWait": "Finding your music..."
   },
+  "placeholders": {
+    "newPlaylist": "Untitled"
+  },
   "player": {
+    "confirmDeletePlaylist": "This will permanently delete this playlist",
     "confirmQueue": {
       "cancel": "Cancel",
       "ok": "OK",
@@ -66,6 +75,12 @@
     "noTrack": {
       "artistName": "No Artist",
       "trackName": "No Track"
+    }
+  },
+  "playlist": {
+    "confirmDelete": {
+      "cancel": "Cancel",
+      "ok": "OK"
     }
   },
   "pollInterval": {
@@ -113,13 +128,13 @@
     "title": "Setup your Account"
   },
   "sync": {
-    "artists_one": "{{count}} artist",
-    "artists_other": "{{count}} artists",
     "albums_one": "{{count}} album",
     "albums_other": "{{count}} albums",
+    "artists_one": "{{count}} artist",
+    "artists_other": "{{count}} artists",
+    "progressText": "$t(sync.artists, {\"count\": {{artistCount}} }), $t(sync.albums, {\"count\": {{albumCount}} }), $t(sync.tracks, {\"count\": {{trackCount}} })",
     "tracks_one": "{{count}} track",
-    "tracks_other": "{{count}} tracks",
-    "progressText": "$t(sync.artists, {\"count\": {{artistCount}} }), $t(sync.albums, {\"count\": {{albumCount}} }), $t(sync.tracks, {\"count\": {{trackCount}} })"
+    "tracks_other": "{{count}} tracks"
   },
   "upNext": {
     "emptyView": "No upcoming tracks.",
