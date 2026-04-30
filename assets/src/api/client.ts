@@ -3,7 +3,7 @@ import { auth } from "../services/auth";
 import type { Page } from "../types";
 import { ClientError } from "./errors";
 
-type RequestMethod = "GET" | "POST" | "PATCH";
+type RequestMethod = "GET" | "POST" | "PATCH" | "DELETE";
 type RequestBody<T> = BodyInit | undefined | T;
 type RequestHeaders = { [key: string]: string };
 
@@ -69,6 +69,13 @@ class Client {
     return this.#request<Req, Res>("PATCH", path, body, opts);
   }
 
+  async delete<Req, Res>(
+    path: string,
+    opts: RequestOptions = {},
+  ): Promise<Res> {
+    return this.#request<Req, Res>("DELETE", path, undefined, opts);
+  }
+
   async #request<Req, Res>(
     method: RequestMethod,
     path: string,
@@ -111,6 +118,10 @@ class Client {
 
       if (response.status === 404) {
         throw notFound();
+      }
+
+      if (response.status === 204) {
+        return { ok: true } as Res;
       }
 
       return (await response.json()) as Res;

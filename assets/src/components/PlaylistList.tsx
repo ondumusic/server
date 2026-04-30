@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { playlistApi } from "../api";
 import { Loading } from "../components/Loading";
 import {
   type ListItem,
@@ -19,7 +20,7 @@ import type { ContextMenuItem } from "../hooks/useContextMenu";
 import { useDialog } from "../hooks/useDialog";
 import { usePlayer } from "../hooks/usePlayer";
 import i18next from "../i18next";
-import { usePlaylists } from "../library";
+import { sync, usePlaylists } from "../library";
 import type { Playlist, UUID } from "../types";
 
 function isPlaylist(playlist: Playlist, playlistId: string): boolean {
@@ -141,9 +142,12 @@ export function PlaylistList({
             }),
           });
           if (!allowed) return;
-          alert(
-            "TODO: DELETE PLAYLIST (and children, and openFolders and etc.)",
-          );
+
+          const response = await playlistApi.deletePlaylist(playlist.id);
+          if (!response.ok) return;
+          // TODO: Maybe could be optimistic? But then need to take all
+          // children into account too if deleting from repo.
+          await sync.startSync();
         },
       };
 
