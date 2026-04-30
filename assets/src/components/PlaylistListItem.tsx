@@ -21,12 +21,15 @@ interface Props {
 export const PlaylistListItem = memo(
   ({ playlist, isSelected = false }: Props) => {
     const inputRef = useRef<HTMLInputElement>(null);
-
     useEffect(() => {
       if (playlist.editing) {
         inputRef.current?.focus();
       }
     }, [playlist]);
+
+    const placeholder = i18next.t("placeholders.newPlaylist", {
+      defaultValue: "Untitled",
+    });
 
     return (
       <li
@@ -56,14 +59,13 @@ export const PlaylistListItem = memo(
             ref={inputRef}
             type="text"
             className="inline-block text-sm bg-transparent border-0 p-0 py-2.5 outline-0 ring-0 h-auto appearance-none w-full"
-            placeholder={i18next.t("placeholders.newPlaylist", {
-              defaultValue: "Untitled",
-            })}
+            placeholder={placeholder}
             onBlur={(e) => {
               const input = e.target as HTMLInputElement;
 
               if (playlist.onConfirm) {
-                playlist.onConfirm(input.value);
+                const text = input.value.trim() || placeholder;
+                playlist.onConfirm(text);
               }
             }}
             onKeyDown={(e: React.KeyboardEvent) => {
@@ -76,7 +78,8 @@ export const PlaylistListItem = memo(
                 }
               } else if (e.key === "Enter") {
                 if (playlist.onConfirm) {
-                  playlist.onConfirm(input.value);
+                  const text = input.value.trim() || placeholder;
+                  playlist.onConfirm(text);
                 }
               }
 

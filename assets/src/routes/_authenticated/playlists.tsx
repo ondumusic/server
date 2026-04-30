@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useParams } from "@tanstack/react-router";
 import {
   Group,
   Panel,
@@ -10,9 +10,7 @@ import { useMediaQuery } from "../../hooks/useMediaQuery";
 import type { UUID } from "../../types";
 import { classNames } from "../../utils/classNames";
 
-export const Route = createFileRoute(
-  "/_authenticated/playlists/{-$playlistId}",
-)({
+export const Route = createFileRoute("/_authenticated/playlists")({
   staticData: { view: "playlists" as const },
   component: Playlists,
 });
@@ -22,7 +20,11 @@ type Params = {
 };
 
 function Playlists() {
-  const { playlistId } = Route.useParams() as Params;
+  const routeParams = useParams({
+    from: "/_authenticated/playlists/$playlistId",
+    shouldThrow: false,
+  }) as Params;
+  const playlistId = routeParams?.playlistId;
 
   const allowPanels = useMediaQuery("(width >= 48rem)");
   const { defaultLayout, onLayoutChange } = useDefaultLayout({
