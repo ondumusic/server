@@ -5,8 +5,12 @@ import { Marquee } from "../components/Marquee";
 import type { Playlist } from "../types";
 import { classNames } from "../utils/classNames";
 
+export type ListItem = Playlist & {
+  indentLevel: number;
+};
+
 interface Props {
-  playlist: Playlist;
+  playlist: ListItem;
   isSelected: boolean;
 }
 
@@ -21,6 +25,14 @@ export const PlaylistListItem = memo(
             "bg-sidebar-inactive-bg text-sidebar-inactive-fg [.selectable-list:focus_&]:bg-sidebar-active-bg [.selectable-list:focus_&]:shadow-sm [.selectable-list:focus_&]:text-sidebar-active-fg",
         ])}
       >
+        {playlist.indentLevel > 0 && (
+          <div
+            style={{
+              marginRight: playlist.indentLevel * 18,
+            }}
+          ></div>
+        )}
+
         {playlist.isFolder ? (
           <PlaylistFolderIcon title={playlist.name} className="size-5" />
         ) : (

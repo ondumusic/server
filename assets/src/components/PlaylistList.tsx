@@ -1,7 +1,10 @@
 import { useNavigate } from "@tanstack/react-router";
-import { type PropsWithChildren, useCallback } from "react";
+import { type PropsWithChildren, useCallback, useMemo, useState } from "react";
 import { Loading } from "../components/Loading";
-import { PlaylistListItem } from "../components/PlaylistListItem";
+import {
+  type ListItem,
+  PlaylistListItem,
+} from "../components/PlaylistListItem";
 import {
   type ListItemState,
   SelectableList,
@@ -24,7 +27,34 @@ export function PlaylistList({
 }>) {
   const navigate = useNavigate();
   const { populateUpNext, userConfirmQueueReplace } = usePlayer();
-  const { data: listItems, loading: isLoading } = usePlaylists();
+  const { data: allItems, loading: isLoading } = usePlaylists({
+    includeAll: true,
+  });
+  const [openFolders, setOpenFolders] = useState<Set<UUID>>(new Set());
+
+  // Render a "file tree" type view
+  const listItems = useMemo((): ListItem[] => {
+    const byParent = new Map();
+    for (const playlist of allItems) {
+      const key = playlist.parentId ?? null;
+      if (!byParent.has(key)) byParent.set(key, []);
+      byParent.get(key).push(playlist);
+    }
+
+    // Recursive to apply correct indenting levels
+    const buildTree = (parentId: UUID | null, indentLevel: number) => {
+      const children = byParent.get(parentId ?? null) ?? [];
+      return children.flatMap((playlist: Playlist) => {
+        const node = { ...playlist, indentLevel };
+        if (playlist.isFolder && openFolders.has(playlist.id)) {
+          return [node, ...buildTree(playlist.id, indentLevel + 1)];
+        }
+        return [node];
+      });
+    };
+
+    return buildTree(null, 0);
+  }, [allItems, openFolders]);
 
   const onTypeMatch = useCallback((item: Playlist, query: string) => {
     const matcher = new RegExp(`^${query.replace(/\s+/g, "")}`, "iu");
@@ -42,13 +72,21 @@ export function PlaylistList({
         selectedIds.has(playlist.id),
       );
       if (!playlist) return;
-      if (playlist.isFolder) return;
+      if (playlist.isFolder) {
+        if (!openFolders.has(playlist.id)) {
+          openFolders.add(playlist.id);
+          setOpenFolders(new Set([...openFolders]));
+        } else {
+          openFolders.delete(playlist.id);
+          setOpenFolders(new Set([...openFolders]));
+        }
+      }
       navigate({
         to: `/playlists/${playlist.id}`,
         params: { playlistId: playlist.id },
       });
     },
-    [listItems, navigate],
+    [listItems, openFolders, navigate],
   );
 
   const onContextMenu = useCallback(
@@ -111,7 +149,7 @@ export function PlaylistList({
   );
 
   const renderItem = useCallback(
-    (playlist: Playlist, state: ListItemState) => (
+    (playlist: ListItem, state: ListItemState) => (
       <PlaylistListItem isSelected={state.isSelected} playlist={playlist} />
     ),
     [],
@@ -124,7 +162,7 @@ export function PlaylistList({
     : undefined;
 
   return (
-    <SelectableList<Playlist>
+    <SelectableList<ListItem>
       multiple={false}
       items={listItems}
       paddingTop={10}

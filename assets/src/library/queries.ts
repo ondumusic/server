@@ -166,16 +166,28 @@ export const queryTracksByIds = (trackIds: UUID[]) => {
 };
 
 // List Playlists
-export const queryPlaylists = (parentId?: UUID) => {
+export const queryPlaylists = ({
+  includeAll = false,
+  parentId,
+}: {
+  includeAll?: boolean;
+  parentId?: UUID;
+}) => {
   let query: Query<Playlist> = {
-    having: {
-      hasParent: ["=", "NO"],
-    },
     sortBy: [
       ["isFolder", "desc"],
       ["name", "asc"],
     ],
   };
+
+  if (!includeAll) {
+    query = {
+      ...query,
+      having: {
+        hasParent: ["=", "NO"],
+      },
+    };
+  }
 
   if (parentId) {
     query = { ...query, whereIndex: ["by_parentId", "=", parentId] };
@@ -184,8 +196,8 @@ export const queryPlaylists = (parentId?: UUID) => {
   return repo.query<Playlist>("playlists", query);
 };
 
-export function usePlaylists(parentId?: UUID) {
-  return useStoreQuery<Playlist>("playlists", () => queryPlaylists(parentId));
+export function usePlaylists(query = {}) {
+  return useStoreQuery<Playlist>("playlists", () => queryPlaylists(query));
 }
 
 // List Playlist Items
