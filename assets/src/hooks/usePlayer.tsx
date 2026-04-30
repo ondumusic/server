@@ -14,6 +14,7 @@ import type { Track, UUID } from "../types";
 interface PopulateInput {
   artistId?: UUID;
   albumId?: UUID;
+  playlistId?: UUID;
   random?: boolean;
 }
 
@@ -60,8 +61,18 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   );
 
   const populateUpNext = useCallback(
-    async ({ artistId, albumId, random = false }: PopulateInput) => {
-      const tracks = await queryTracks({ artistId, albumId, random });
+    async ({
+      artistId,
+      albumId,
+      playlistId,
+      random = false,
+    }: PopulateInput) => {
+      const tracks = await queryTracks({
+        artistId,
+        albumId,
+        playlistId,
+        random,
+      });
       replaceQueue(tracks);
     },
     [replaceQueue],

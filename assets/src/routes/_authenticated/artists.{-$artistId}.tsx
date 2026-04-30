@@ -25,7 +25,7 @@ function Artists() {
   const { artistId } = Route.useParams() as Params;
 
   const { defaultLayout, onLayoutChange } = useDefaultLayout({
-    groupId: "artistPage",
+    groupId: "panelSplitView",
     storage: localStorage,
   });
 
