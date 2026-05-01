@@ -130,12 +130,9 @@ export interface PlaylistItem {
   __type: "playlistItem";
   id: UUID;
   playlistId: UUID;
-  name: string;
   position: string;
   trackId: UUID;
   track?: Track;
-  isFolder: boolean;
-  trackCount: number;
   insertedAt?: Date | string | number;
 }
 

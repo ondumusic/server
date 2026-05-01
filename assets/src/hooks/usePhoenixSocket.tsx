@@ -64,7 +64,8 @@ export const PhoenixSocketProvider = ({ children }: PropsWithChildren) => {
       sync.pushChanges({
         artists: data.artists,
         albums: data.albums,
-        tracks: data.albums.flatMap((album: Album) => album.tracks),
+        tracks: data.albums?.flatMap((album: Album) => album.tracks),
+        playlists: data.playlists,
       });
     });
   }, [isLoggedIn]);

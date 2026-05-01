@@ -41,7 +41,6 @@ export const executeJoins = async <T extends { id: UUID }>(
       cardinality,
       subRows,
     ] of joinResults) {
-      console.log(subRows[0], references, item, foreignKey);
       const matches = subRows.filter(
         (sr) => sr[references] === enriched[foreignKey],
       );

@@ -205,13 +205,44 @@ export const queryPlaylistsItems = (playlistId: UUID) => {
   const query: Query<PlaylistItem> = {
     whereIndex: ["by_playlistId", "=", playlistId],
     sortBy: [["position", "asc"]],
+    join: {
+      track: (playlistItems: PlaylistItem[]): JoinQuery<Track> => {
+        const trackIds = new Set(playlistItems.map((item) => item.trackId));
+
+        return {
+          store: "tracks",
+          foreignKey: "trackId",
+          cardinality: "one",
+          having: {
+            id: (trackId: UUID) => trackIds.has(trackId),
+          },
+        };
+      },
+    },
   };
 
   return repo.query<PlaylistItem>("playlistItems", query);
 };
 
 export function usePlaylistItems(playlistId: UUID) {
-  return useStoreQuery<PlaylistItem>("playlistItems", () =>
-    queryPlaylistsItems(playlistId),
+  return useStoreQuery<PlaylistItem>(
+    "playlistItems",
+    () => queryPlaylistsItems(playlistId),
+    [playlistId],
+  );
+}
+
+// Playlist details
+export const queryPlaylist = (playlistId: UUID) =>
+  repo.get<Playlist>("playlists", playlistId);
+
+export function usePlaylist(playlistId: UUID | undefined) {
+  return useStoreRecord<Playlist>(
+    "playlists",
+    () => queryPlaylist(playlistId as UUID),
+    [playlistId],
+    {
+      enabled: !!playlistId,
+    },
   );
 }
