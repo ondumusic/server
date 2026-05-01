@@ -24,6 +24,7 @@ export const PlaylistListItem = memo(
     useEffect(() => {
       if (playlist.editing) {
         inputRef.current?.focus();
+        inputRef.current?.select();
       }
     }, [playlist]);
 
@@ -60,6 +61,7 @@ export const PlaylistListItem = memo(
             type="text"
             className="inline-block text-sm bg-transparent border-0 p-0 py-2.5 outline-0 ring-0 h-auto appearance-none w-full"
             placeholder={placeholder}
+            defaultValue={playlist.name}
             onBlur={(e) => {
               const input = e.target as HTMLInputElement;
 

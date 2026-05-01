@@ -44,6 +44,7 @@ export function PlaylistList({
     includeAll: true,
   });
   const [openFolders, setOpenFolders] = useState<Set<UUID>>(new Set());
+  const [renamingPlaylist, setRenamingPlaylist] = useState<UUID | false>(false);
   const [creatingPlaylist, setCreatingPlaylist] = useState<
     PendingPlaylist | false
   >(false);
@@ -77,7 +78,35 @@ export function PlaylistList({
     const buildTree = (parentId: UUID | null, indentLevel: number) => {
       const children = byParent.get(parentId ?? null) ?? [];
       const tree = children.flatMap((playlist: Playlist) => {
-        const node = { ...playlist, indentLevel };
+        let node = {
+          ...playlist,
+          editing: renamingPlaylist === playlist.id,
+          indentLevel,
+        } as ListItem;
+
+        if (node.editing) {
+          node = {
+            ...node,
+            onCancel: () => {
+              setRenamingPlaylist(false);
+            },
+            onConfirm: async (name: string) => {
+              const updatedPlaylist = await playlistApi.updatePlaylist(
+                playlist.id,
+                {
+                  name,
+                },
+              );
+
+              await sync.pushChanges({
+                playlists: [updatedPlaylist],
+              });
+
+              setRenamingPlaylist(false);
+            },
+          };
+        }
+
         if (playlist.isFolder && openFolders.has(playlist.id)) {
           return [node, ...buildTree(playlist.id, indentLevel + 1)];
         }
@@ -124,7 +153,7 @@ export function PlaylistList({
     };
 
     return buildTree(null, 0);
-  }, [allItems, creatingPlaylist, openFolders, navigate]);
+  }, [allItems, creatingPlaylist, renamingPlaylist, openFolders, navigate]);
 
   const onTypeMatch = useCallback((item: Playlist, query: string) => {
     const matcher = new RegExp(`^${query.replace(/\s+/g, "")}`, "iu");
@@ -183,8 +212,14 @@ export function PlaylistList({
       // TODO: Maybe could be optimistic? But then need to take all
       // children into account too if deleting from repo.
       await sync.startSync();
+
+      // After deleting the current item no long exists so we can navigate
+      // away from it.
+      navigate({
+        to: `/playlists`,
+      });
     },
-    [promptConfirm],
+    [promptConfirm, navigate],
   );
 
   const onContextMenu = useCallback(
@@ -224,6 +259,17 @@ export function PlaylistList({
       );
       if (!playlist) return [];
       if (playlist.id === "new") return [];
+
+      const renamePlaylist = {
+        type: "item",
+        key: "rename_playlist",
+        label: i18next.t("contextMenu.renamePlaylist", {
+          defaultValue: "Rename",
+        }),
+        onClick: async () => {
+          setRenamingPlaylist(playlist.id);
+        },
+      };
 
       const deletePlaylist = {
         type: "item",
@@ -299,6 +345,7 @@ export function PlaylistList({
           type: "divider",
           key: "destructive",
         },
+        renamePlaylist,
         deletePlaylist,
       ];
     },

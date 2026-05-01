@@ -36,7 +36,6 @@ function PlaylistsDetail() {
     enqueueAndPlay,
     // enqueueNext,
     // enqueueAfter,
-    // populateUpNext,
     userConfirmQueueReplace,
   } = usePlayer();
 

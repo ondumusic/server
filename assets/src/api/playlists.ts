@@ -7,6 +7,11 @@ interface CreatePlaylistRequest {
   isFolder?: boolean;
 }
 
+interface UpdatePlaylistRequest {
+  name: string;
+  parentId?: UUID;
+}
+
 interface DeletePlaylistResponse {
   ok: boolean;
 }
@@ -40,6 +45,18 @@ export const playlistApi = {
   createPlaylist(params: CreatePlaylistRequest, opts?: RequestOptions) {
     return client.post<CreatePlaylistRequest, Playlist>(
       "/playlists",
+      params,
+      opts,
+    );
+  },
+
+  updatePlaylist(
+    playlistId: UUID,
+    params: UpdatePlaylistRequest,
+    opts?: RequestOptions,
+  ) {
+    return client.patch<UpdatePlaylistRequest, Playlist>(
+      `/playlists/${playlistId}`,
       params,
       opts,
     );
