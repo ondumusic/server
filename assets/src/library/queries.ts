@@ -216,6 +216,20 @@ export const queryPlaylistsItems = (playlistId: UUID) => {
           having: {
             id: (trackId: UUID) => trackIds.has(trackId),
           },
+          join: {
+            album: (tracks: Track[]): JoinQuery<Album> => {
+              const albumIds = new Set(tracks.map((item) => item.albumId));
+
+              return {
+                store: "albums",
+                foreignKey: "albumId",
+                cardinality: "one",
+                having: {
+                  id: (albumId: UUID) => albumIds.has(albumId),
+                },
+              };
+            },
+          },
         };
       },
     },

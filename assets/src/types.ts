@@ -79,6 +79,7 @@ export interface Track {
 
   artistName?: string;
   artistSortName?: string;
+  album?: Album;
   albumName?: string;
   albumArtistName?: string;
   albumArtistSortName?: string;
@@ -94,7 +95,7 @@ export namespace Track {
     by_missingData: "YES" | "NO";
   };
   export type Joins = {
-    albumId: One<Album>;
+    album: One<Album>;
   };
 }
 
