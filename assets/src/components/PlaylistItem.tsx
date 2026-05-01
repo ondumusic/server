@@ -75,7 +75,7 @@ export const PlaylistItem = memo(({ item, isSelected }: Props) => {
 
           <span
             className={classNames([
-              "w-4 @md:w-6 flex-shrink-0 font-light text-right tabular-nums",
+              "hidden w-4 @md:w-6 flex-shrink-0 font-light text-right tabular-nums",
               !isSelected && "text-panel-fg-muted",
             ])}
           >

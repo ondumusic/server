@@ -159,6 +159,34 @@ export function PlaylistList({
     [listItems, openFolders, navigate],
   );
 
+  const onDelete = useCallback(
+    async (selectedIds: Set<string>) => {
+      if (selectedIds.size !== 1) return;
+      const playlistId = Array.from(selectedIds)[0];
+
+      const allowed = await promptConfirm({
+        danger: true,
+        message: i18next.t("player.confirmDeletePlaylist", {
+          defaultValue: "This will permanently delete this playlist",
+        }),
+        confirmMessage: i18next.t("playlist.confirmDelete.ok", {
+          defaultValue: "OK",
+        }),
+        cancelMessage: i18next.t("playlist.confirmDelete.cancel", {
+          defaultValue: "Cancel",
+        }),
+      });
+      if (!allowed) return;
+
+      const response = await playlistApi.deletePlaylist(playlistId);
+      if (!response.ok) return;
+      // TODO: Maybe could be optimistic? But then need to take all
+      // children into account too if deleting from repo.
+      await sync.startSync();
+    },
+    [promptConfirm],
+  );
+
   const onContextMenu = useCallback(
     (selectedIds: Set<string>): ContextMenuItem[] => {
       const createPlaylist = {
@@ -206,25 +234,7 @@ export function PlaylistList({
           playlist: playlist.name,
         }),
         onClick: async () => {
-          const allowed = await promptConfirm({
-            danger: true,
-            message: i18next.t("player.confirmDeletePlaylist", {
-              defaultValue: "This will permanently delete this playlist",
-            }),
-            confirmMessage: i18next.t("playlist.confirmDelete.ok", {
-              defaultValue: "OK",
-            }),
-            cancelMessage: i18next.t("playlist.confirmDelete.cancel", {
-              defaultValue: "Cancel",
-            }),
-          });
-          if (!allowed) return;
-
-          const response = await playlistApi.deletePlaylist(playlist.id);
-          if (!response.ok) return;
-          // TODO: Maybe could be optimistic? But then need to take all
-          // children into account too if deleting from repo.
-          await sync.startSync();
+          await onDelete(new Set([playlist.id]));
         },
       };
 
@@ -292,13 +302,7 @@ export function PlaylistList({
         deletePlaylist,
       ];
     },
-    [
-      listItems,
-      userConfirmQueueReplace,
-      promptConfirm,
-      populateUpNext,
-      openFolders,
-    ],
+    [listItems, userConfirmQueueReplace, populateUpNext, onDelete, openFolders],
   );
 
   const onDoubleClick = useCallback(
@@ -349,6 +353,7 @@ export function PlaylistList({
       }
       onContextMenu={onContextMenu}
       onChange={onChange}
+      onDelete={onDelete}
       onSubmit={onSubmit}
       onDoubleClick={onDoubleClick}
       renderItem={renderItem}
