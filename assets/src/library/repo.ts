@@ -199,12 +199,18 @@ export class Repo {
   async teardown() {
     const db = await this.instance;
     if (!db) return;
+    db.close();
 
     this.#instance = undefined;
     return new Promise<void>((resolve, reject) => {
       const req = indexedDB.deleteDatabase(this.#name);
       req.onsuccess = () => resolve();
       req.onerror = () => reject(req.error);
+      req.onblocked = () => {
+        console.warn(
+          "Failed to delete indexedDB, blocked by other connection.",
+        );
+      };
     });
   }
 
