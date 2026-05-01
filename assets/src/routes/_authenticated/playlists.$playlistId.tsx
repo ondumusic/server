@@ -6,6 +6,7 @@ import {
   type ListItemState,
   SelectableList,
 } from "../../components/SelectableList";
+import { usePlayer } from "../../hooks/usePlayer";
 import { usePlaylistMutations } from "../../hooks/usePlaylistMutations";
 import { queryTracksByIds, usePlaylist, usePlaylistItems } from "../../library";
 import type { Track, UUID } from "../../types";
@@ -31,6 +32,13 @@ function PlaylistsDetail() {
     playlistId,
     items,
   );
+  const {
+    enqueueAndPlay,
+    // enqueueNext,
+    // enqueueAfter,
+    // populateUpNext,
+    userConfirmQueueReplace,
+  } = usePlayer();
 
   const currentItems = useMemo(
     () => applyPending(items, pending),
@@ -46,6 +54,41 @@ function PlaylistsDetail() {
       />
     );
   }, []);
+
+  const onSubmit = useCallback(
+    async (selectedIds: Set<string>) => {
+      if (!(await userConfirmQueueReplace())) return;
+
+      const selectedTracks = currentItems
+        .filter((item) => selectedIds.has(item.id))
+        .map((item) => item.track as Track);
+
+      if (selectedTracks.length === 1) {
+        const selectedTrack = selectedTracks[0];
+
+        // The default behaviour we want is to add all tracks from the same
+        // playlist to the queue and start playback at the selected track.
+        const playlistTracks = currentItems.map((item) => item.track as Track);
+        enqueueAndPlay(playlistTracks, selectedTrack);
+      } else {
+        enqueueAndPlay(selectedTracks);
+      }
+    },
+    [currentItems, enqueueAndPlay, userConfirmQueueReplace],
+  );
+
+  const onDoubleClick = useCallback(
+    async (item: ListItem) => {
+      if (item.type !== "track") return;
+      if (!(await userConfirmQueueReplace())) return;
+
+      // The default behaviour we want is to add all tracks from the same
+      // playlist to the queue and start playback at the selected track.
+      const playlistTracks = currentItems.map((item) => item.track as Track);
+      enqueueAndPlay(playlistTracks, item.track);
+    },
+    [currentItems, enqueueAndPlay, userConfirmQueueReplace],
+  );
 
   const onChange = useCallback((selectedIds: Set<UUID>) => {
     setSelectedItemIds(selectedIds);
@@ -84,19 +127,25 @@ function PlaylistsDetail() {
   const listItems = useMemo(() => {
     let results: ListItem[] = [];
     if (currentItems?.length) {
-      results = currentItems.map((item, i) => ({
-        id: item.id,
-        number: i + 1,
-        type: "track",
-        position: item.position,
-        track: item.track as Track,
-      }));
+      const trackCount = currentItems.length;
+
+      results = currentItems.map((item, trackIndex) => {
+        return {
+          id: item.id,
+          number: trackIndex + 1,
+          type: "track",
+          position: item.position,
+          track: item.track as Track,
+          lastTrack: trackIndex === trackCount - 1,
+        };
+      });
     }
 
     if (playlist) {
       results.unshift({
         id: "playlistHeader",
         type: "playlist",
+        selectable: false,
         playlist,
       });
     }
@@ -119,15 +168,15 @@ function PlaylistsDetail() {
         multiple
         allowDrag
         allowDropFrom={["playlist", "upNext"]}
-        dropTargetClass="bg-red-500"
+        dropTargetClass="bg-blue-500"
         items={listItems}
         selectedIds={selectedItemIds}
         onChange={onChange}
         onDelete={onDelete}
         onDrop={onDrop}
-        // onSubmit={onSubmit}
+        onSubmit={onSubmit}
         // onContextMenu={onContextMenu}
-        // onDoubleClick={onDoubleClick}
+        onDoubleClick={onDoubleClick}
         renderItem={renderItem}
       />
     </div>
