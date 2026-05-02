@@ -425,22 +425,40 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
     end
 
     test "can remove items from playlist", %{conn: conn, playlist: playlist} do
-      item = List.first(playlist.items)
-      item_id = item.id
+      [item1, item2, item3] = playlist.items
+      item1_id = item1.id
+      item2_id = item2.id
+      item3_id = item3.id
 
       assert %{
                "ok" => true,
                "added" => [],
                "moved" => [],
-               "removed" => [^item_id]
+               "removed" => [^item1_id]
              } =
                conn
                |> patch(~p"/api/playlists/#{playlist.id}/items", %{
-                 remove: [item_id]
+                 remove: [item1_id]
                })
                |> api_response(200, "UpdatePlaylistItemsResponse")
 
       assert %{entries: [_a, _b]} = Playlists.paginate_playlists_items(playlist, %{})
+      assert Playlists.get_playlist!(playlist.id).track_count == 2
+
+      assert %{
+               "ok" => true,
+               "added" => [],
+               "moved" => [],
+               "removed" => [^item3_id, ^item2_id]
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}/items", %{
+                 remove: [item2_id, item3_id]
+               })
+               |> api_response(200, "UpdatePlaylistItemsResponse")
+
+      assert %{entries: []} = Playlists.paginate_playlists_items(playlist, %{})
+      assert Playlists.get_playlist!(playlist.id).track_count == 0
     end
 
     test "cannot move and remove same item in playlist", %{conn: conn, playlist: playlist} do

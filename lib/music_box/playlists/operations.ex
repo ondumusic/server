@@ -275,7 +275,7 @@ defmodule MusicBox.Playlists.Operations do
     subquery =
       from(pi in PlaylistItem,
         where: pi.playlist_id == ^playlist.id,
-        select: %{playlist_id: pi.playlist_id, count: count(pi.id)}
+        select: %{playlist_id: coalesce(pi.playlist_id, ^playlist.id), count: count(pi.id)}
       )
 
     {count, _} =
