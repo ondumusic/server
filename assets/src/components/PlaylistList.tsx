@@ -171,21 +171,12 @@ export function PlaylistList({
         selectedIds.has(playlist.id),
       );
       if (!playlist) return;
-      if (playlist.isFolder) {
-        if (!openFolders.has(playlist.id)) {
-          openFolders.add(playlist.id);
-          setOpenFolders(new Set([...openFolders]));
-        } else {
-          openFolders.delete(playlist.id);
-          setOpenFolders(new Set([...openFolders]));
-        }
-      }
       navigate({
         to: `/playlists/${playlist.id}`,
         params: { playlistId: playlist.id },
       });
     },
-    [listItems, openFolders, navigate],
+    [listItems, navigate],
   );
 
   const onDelete = useCallback(
@@ -354,11 +345,20 @@ export function PlaylistList({
 
   const onDoubleClick = useCallback(
     async (playlist: Playlist) => {
-      if (playlist.isFolder) return;
+      if (playlist.isFolder) {
+        if (!openFolders.has(playlist.id)) {
+          openFolders.add(playlist.id);
+          setOpenFolders(new Set([...openFolders]));
+        } else {
+          openFolders.delete(playlist.id);
+          setOpenFolders(new Set([...openFolders]));
+        }
+      }
+
       if (!(await userConfirmQueueReplace())) return;
       populateUpNext({ playlistId: playlist.id });
     },
-    [userConfirmQueueReplace, populateUpNext],
+    [userConfirmQueueReplace, openFolders, populateUpNext],
   );
 
   const onSubmit = useCallback(
@@ -398,6 +398,18 @@ export function PlaylistList({
       selectedIds={
         currentPlaylist ? new Set([currentPlaylist.id]) : new Set([])
       }
+      keyBindings={{
+        ArrowRight: ({ focusedItem }) => {
+          if (!focusedItem?.isFolder) return;
+          openFolders.add(focusedItem.id);
+          setOpenFolders(new Set([...openFolders]));
+        },
+        ArrowLeft: ({ focusedItem }) => {
+          if (!focusedItem?.isFolder) return;
+          openFolders.delete(focusedItem.id);
+          setOpenFolders(new Set([...openFolders]));
+        },
+      }}
       onContextMenu={onContextMenu}
       onChange={onChange}
       onDelete={onDelete}

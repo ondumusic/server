@@ -12,6 +12,7 @@ import {
 import { isMacOS } from "../constants/isMacOS";
 import { type ContextMenuItem, useContextMenu } from "../hooks/useContextMenu";
 import i18next from "../i18next";
+import { classNames } from "../utils/classNames";
 
 export interface ListItemState {
   isSelected: boolean;
@@ -25,6 +26,12 @@ export interface ListItem {
   selectable?: boolean;
 }
 
+export type KeyContext<T> = {
+  focusedItem: T | null;
+  focusedIndex: number;
+  selectedIds: Set<string>;
+};
+
 type BaseProps<T> = {
   items: ListItem[];
   selectedIds: Set<string>;
@@ -37,6 +44,7 @@ type BaseProps<T> = {
   paddingBottom?: number;
   paddingTop?: number;
   resetScrollOnItemsChange?: boolean;
+  keyBindings?: Record<string, (ctx: KeyContext<T>) => void>;
   onChange: (selectedIds: Set<string>) => void;
   onDelete?: (selectedIds: Set<string>) => void;
   onSubmit?: (selectedIds: Set<string>) => void;
@@ -73,6 +81,7 @@ export function SelectableList<T>({
   dropTargetClass = "bg-blue-500",
   resetScrollOnItemsChange = false,
   multiple: allowMultiple,
+  keyBindings = {},
   allowDrag = false,
   allowDropFrom = [],
   itemHeight = "auto",
@@ -105,6 +114,12 @@ export function SelectableList<T>({
   const [measuredHeights, setMeasuredHeights] = useState<Map<string, number>>(
     new Map(),
   );
+
+  // Determine the first selectable index
+  const firstSelectableIndex = useMemo(() => {
+    const i = items.findIndex((item) => item.selectable !== false);
+    return i === -1 ? items.length : i;
+  }, [items]);
 
   // Get a list of unique item types
   const uniqueItemTypes = useMemo(() => {
@@ -218,23 +233,16 @@ export function SelectableList<T>({
   }, [items, itemHeight, measuredHeights]);
 
   // Calculate total height and offsets
-  const { totalHeight, offsets } = useMemo(() => {
+  const { totalItemsHeight, offsets } = useMemo(() => {
     const offsets: number[] = [0];
-    let totalHeight = 0;
-
-    // Add padding bottom and top to height
-    totalHeight += paddingBottom;
-    totalHeight += paddingTop;
-
+    let acc = 0;
     for (let i = 0; i < items.length; i++) {
-      totalHeight += getItemHeight(items[i]);
-      if (i < items.length - 1) {
-        offsets.push(totalHeight);
-      }
+      acc += getItemHeight(items[i]);
+      if (i < items.length - 1) offsets.push(acc);
     }
-
-    return { totalHeight, offsets };
-  }, [items, getItemHeight, paddingBottom, paddingTop]);
+    return { totalItemsHeight: acc, offsets };
+  }, [items, getItemHeight]);
+  const totalHeight = totalItemsHeight + paddingTop + paddingBottom;
 
   // Find the first visible item
   const startIndex = useMemo(() => {
@@ -541,6 +549,17 @@ export function SelectableList<T>({
       }
       return;
     }
+
+    // Process custom keybindings last
+    const hasModifier = e.ctrlKey || e.metaKey || e.shiftKey || e.altKey;
+    if (keyBindings[e.key] && !hasModifier) {
+      e.preventDefault();
+      keyBindings[e.key]({
+        focusedItem: focusedIndex >= 0 ? (items[focusedIndex] as T) : null,
+        focusedIndex,
+        selectedIds,
+      });
+    }
   };
 
   const handleDragStart = (index: number, e: DragEvent) => {
@@ -566,6 +585,9 @@ export function SelectableList<T>({
 
     // Store this so we can update item states
     setDraggingIds(new Set(currentSelection));
+
+    // Pre-seed dropAtIndex to current item
+    setDropAtIndex(index);
 
     // Configure the dragging dataTransfer
     e.dataTransfer.effectAllowed = "move";
@@ -600,7 +622,7 @@ export function SelectableList<T>({
     e.dataTransfer.setDragImage(dragImage, 0, 30);
 
     // If we delete it immediately it fails to become a drag image.
-    requestAnimationFrame(() => document.body.removeChild(dragImage));
+    setTimeout(() => document.body.removeChild(dragImage), 0);
   };
 
   const handleDragEnd = () => {
@@ -621,14 +643,17 @@ export function SelectableList<T>({
     const mouseY = e.clientY - rect.top + scrollTop;
 
     // Quick checks
-
-    if (offsets.length === 0) return items.length;
-    if (mouseY < offsets[0]) return 0;
+    if (offsets.length === 0 || mouseY < offsets[0]) {
+      setDropAtIndex(0);
+      return items.length;
+    }
     if (
       mouseY >
       offsets[offsets.length - 1] + getItemHeight(items[offsets.length - 1])
-    )
-      return items.length;
+    ) {
+      setDropAtIndex(items.length);
+      return;
+    }
 
     // Default dropIndex is at end of list.
     let dropIndex = items.length;
@@ -653,28 +678,36 @@ export function SelectableList<T>({
       }
     }
 
-    setDropAtIndex(dropIndex);
+    setDropAtIndex(Math.max(dropIndex, firstSelectableIndex));
   };
 
   const handleDragLeave = (e: DragEvent) => {
-    // We have to make sure it is actually leaving the list element.
     const rect = listRef.current?.getBoundingClientRect();
-    if (
-      rect &&
-      (e.clientX < rect.left ||
-        e.clientX > rect.right ||
-        e.clientY < rect.top ||
-        e.clientY > rect.bottom)
-    ) {
-      setDropAtIndex(null);
+    if (!rect) return;
+
+    const outsideHorizontally = e.clientX < rect.left || e.clientX > rect.right;
+    const aboveTop = e.clientY < rect.top;
+    const belowBottom = e.clientY > rect.bottom;
+
+    if (!outsideHorizontally && !aboveTop && !belowBottom) {
+      return; // still inside, ignore
     }
+
+    // if (belowBottom && !outsideHorizontally) {
+    //   setDropAtIndex(items.length);
+    // } else if (aboveTop && !outsideHorizontally) {
+    //   setDropAtIndex(firstSelectableIndex);
+    // } else {
+    setDropAtIndex(null);
+    // }
   };
 
   const handleDrop = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const insertAtIndex = dropAtIndex !== null ? dropAtIndex : items.length;
+    let insertAtIndex = dropAtIndex !== null ? dropAtIndex : items.length;
+    insertAtIndex = Math.max(insertAtIndex, firstSelectableIndex);
 
     setDropAtIndex(null);
 
@@ -696,12 +729,15 @@ export function SelectableList<T>({
   return (
     <div
       ref={listRef}
-      className="focus:outline-none select-none selectable-list h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="focus:outline-none select-none selectable-list relative h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       tabIndex={0}
       onKeyDown={handleKeyDown}
       onKeyPress={handleKeyPress}
       role="listbox"
       aria-multiselectable={allowMultiple}
+      onDragOver={allowDrop ? handleDragOver : undefined}
+      onDragLeave={allowDrop ? handleDragLeave : undefined}
+      onDrop={allowDrop ? handleDrop : undefined}
       onContextMenu={
         onContextMenu
           ? createContextMenu<HTMLDivElement>(() => {
@@ -755,7 +791,6 @@ export function SelectableList<T>({
             const isDragging = draggingIds.has(item.id);
             const isFocused = index === focusedIndex;
             const selectable = item.selectable !== false;
-            const showDropTargetLine = dropAtIndex === index;
 
             return (
               // biome-ignore lint/a11y/useFocusableInteractive: arrow keys used for navigation
@@ -773,9 +808,6 @@ export function SelectableList<T>({
                   allowDrag ? (e) => handleDragStart(index, e) : undefined
                 }
                 onDragEnd={allowDrag ? handleDragEnd : undefined}
-                onDragOver={allowDrop ? handleDragOver : undefined}
-                onDragLeave={allowDrop ? handleDragLeave : undefined}
-                onDrop={allowDrop ? handleDrop : undefined}
                 onContextMenu={
                   onContextMenu
                     ? createContextMenu<HTMLDivElement>(() => {
@@ -808,24 +840,26 @@ export function SelectableList<T>({
                 aria-disabled={!selectable}
                 className="relative"
               >
-                {showDropTargetLine && (
-                  <div
-                    className={`absolute top-0 left-0 right-0 h-0.5 ${dropTargetClass} z-10`}
-                  ></div>
-                )}
                 {renderItem(item as T, { isSelected, isDragging, isFocused })}
               </div>
             );
           })}
-          {dropAtIndex === items.length && (
-            <div className="relative h-0 overflow-visible">
-              <div
-                className={`absolute bottom-0.5 left-0 right-0 h-0.5 ${dropTargetClass} z-10`}
-              ></div>
-            </div>
-          )}
         </div>
       </div>
+      {dropAtIndex !== null && (
+        <div
+          className={classNames([
+            "absolute left-0 right-0 h-0.5 z-10 pointer-events-none",
+            dropTargetClass,
+          ])}
+          style={{
+            top:
+              dropAtIndex >= items.length
+                ? totalHeight - paddingBottom
+                : offsets[dropAtIndex],
+          }}
+        />
+      )}
     </div>
   );
 }

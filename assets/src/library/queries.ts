@@ -260,3 +260,16 @@ export function usePlaylist(playlistId: UUID | undefined) {
     },
   );
 }
+
+export const queryPlaylistItemsByIds = async (playlistItemIds: UUID[]) => {
+  const items = await repo.getMany<PlaylistItem>(
+    "playlistItems",
+    playlistItemIds,
+  );
+  const trackIds = new Set(items.map((item) => item.trackId));
+  const tracks = await queryTracksByIds(Array.from(trackIds));
+  return items.map((item) => ({
+    ...item,
+    track: tracks.find((track) => track.id === item.trackId),
+  }));
+};

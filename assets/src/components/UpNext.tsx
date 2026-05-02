@@ -14,7 +14,7 @@ import {
   SelectableList,
 } from "../components/SelectableList";
 import { useQueue } from "../hooks/useQueue";
-import { queryTracksByIds } from "../library";
+import { queryPlaylistItemsByIds, queryTracksByIds } from "../library";
 import type { Track } from "../types";
 import { classNames } from "../utils/classNames";
 import { formatDuration } from "../utils/formatDuration";
@@ -45,7 +45,10 @@ export function UpNext({
     rearrangeQueue,
   } = useQueue();
 
-  const allowDropFrom = useMemo(() => ["upNext", "albumTracks"], []);
+  const allowDropFrom = useMemo(
+    () => ["upNext", "albumTracks", "playlist"],
+    [],
+  );
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -104,11 +107,17 @@ export function UpNext({
       e.stopPropagation();
 
       try {
-        const { itemIds } = JSON.parse(
+        const { sourceListId, itemIds } = JSON.parse(
           e.dataTransfer.getData("application/json"),
         );
 
-        queryTracksByIds(Array.from(itemIds)).then(addQueueAfter);
+        if (sourceListId === "playlist") {
+          queryPlaylistItemsByIds(Array.from(itemIds))
+            .then((items) => items.map((item) => item.track as Track))
+            .then(addQueueAfter);
+        } else {
+          queryTracksByIds(Array.from(itemIds)).then(addQueueAfter);
+        }
       } catch (_error) {
         return;
       }
@@ -156,6 +165,12 @@ export function UpNext({
           new Set(currentIndexes),
           currentTrackIndex + 1 + insertAtIndex,
         );
+      } else if (sourceListId === "playlist") {
+        queryPlaylistItemsByIds(Array.from(itemIds))
+          .then((items) => items.map((item) => item.track as Track))
+          .then((newTracks) => {
+            addQueueAtIndex(newTracks, currentTrackIndex + 1 + insertAtIndex);
+          });
       } else {
         queryTracksByIds(Array.from(itemIds)).then((newTracks) => {
           // The visible Up Next is not the full queue so the indexes
@@ -261,6 +276,7 @@ export function UpNext({
             allowDrag
             allowDropFrom={allowDropFrom}
             dropTargetClass="bg-white/80"
+            paddingBottom={20}
             items={listItems}
             selectedIds={selectedTrackIds}
             onChange={onChange}
