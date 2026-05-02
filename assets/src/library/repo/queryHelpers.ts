@@ -27,17 +27,17 @@ export type Query<T> = {
   join?: {
     // Only keys of T that appear in T's Joins map are joinable.
     // The callback returns a Query of the joined entity.
-    [K in keyof JoinsOf<T>]?: (ids: T[]) => JoinQuery<EntityOf<JoinsOf<T>[K]>>;
+    [K in keyof JoinsOf<T>]?: (ids: T[]) => JoinQuery<EntityOf<JoinsOf<T>[K]>, T>;
   };
   sortBy?: SortField<T> | SortField<T>[];
   sortDir?: "asc" | "desc";
 };
 
-export type JoinQuery<T> = Query<T> & {
+export type JoinQuery<T, P> = Query<T> & {
   store: string;
   cardinality: "one" | "many";
-  foreignKey?: string;
-  references?: string;
+  foreignKey?: keyof P & string;
+  references?: keyof T & string;
 };
 
 export type Comparable = number | string | Date;

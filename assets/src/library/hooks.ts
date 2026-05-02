@@ -11,7 +11,7 @@ export function useStoreQuery<T>(
   deps: unknown[] = [],
   opts: Options = {},
 ) {
-  const [data, setData] = useState<T[]>([]);
+  const [data, setData] = useState<T[] | undefined>(undefined);
   const [error, setError] = useState<unknown>(null);
   const enabledRef = useRef(opts.enabled !== false);
   enabledRef.current = opts.enabled !== false;
@@ -46,7 +46,7 @@ export function useStoreQuery<T>(
   }, [depKey, load]);
 
   return {
-    data,
+    data: data ?? [],
     error,
     loading: data === undefined && error === null,
   };
@@ -58,7 +58,7 @@ export function useStoreRecord<T>(
   deps: unknown[] = [],
   opts: Options = {},
 ) {
-  const [data, setData] = useState<T | undefined>(undefined);
+  const [data, setData] = useState<T | null | undefined>(undefined);
   const [error, setError] = useState<unknown>(null);
   const queryRef = useRef(queryFn);
   queryRef.current = queryFn;
@@ -71,7 +71,7 @@ export function useStoreRecord<T>(
 
     try {
       const results = await queryRef.current();
-      setData(results);
+      setData(results ?? null);
       setError(null);
     } catch (err) {
       console.error("Query failed:", err);

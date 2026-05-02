@@ -6,12 +6,12 @@ export const executeJoins = async <T extends { id: UUID }>(
   repo: Repo,
   results: T[],
   join: {
-    [K in keyof JoinsOf<T>]?: (ids: T[]) => JoinQuery<EntityOf<JoinsOf<T>[K]>>;
+    [K in keyof JoinsOf<T>]?: (ids: T[]) => JoinQuery<EntityOf<JoinsOf<T>[K]>, T>;
   },
 ) => {
   const joinEntries = Object.entries(join) as [
     string,
-    (items: T[]) => JoinQuery<unknown>,
+    (items: T[]) => JoinQuery<unknown, unknown>,
   ][];
 
   const joinResults = await Promise.all(

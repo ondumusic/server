@@ -30,7 +30,7 @@ export const queryArtistAlbums = async (artistId: UUID) => {
     sortDir: "desc",
     sortBy: "releaseYear",
     join: {
-      tracks: (albums: Album[]): JoinQuery<Track> => {
+      tracks: (albums: Album[]): JoinQuery<Track, Album> => {
         const albumIds = new Set(albums.map((album) => album.id));
 
         return {
@@ -102,7 +102,7 @@ export const queryTracks = (filters: TrackFilters) => {
       whereIndex: ["by_playlistId", "=", filters.playlistId],
       sortBy: filters.random === true ? "random" : [["position", "asc"]],
       join: {
-        track: (playlistItems: PlaylistItem[]): JoinQuery<Track> => {
+        track: (playlistItems: PlaylistItem[]): JoinQuery<Track, PlaylistItem> => {
           const trackIds = new Set(playlistItems.map((item) => item.trackId));
 
           return {
@@ -206,7 +206,7 @@ export const queryPlaylistsItems = (playlistId: UUID) => {
     whereIndex: ["by_playlistId", "=", playlistId],
     sortBy: [["position", "asc"]],
     join: {
-      track: (playlistItems: PlaylistItem[]): JoinQuery<Track> => {
+      track: (playlistItems: PlaylistItem[]): JoinQuery<Track, PlaylistItem> => {
         const trackIds = new Set(playlistItems.map((item) => item.trackId));
 
         return {
@@ -217,7 +217,7 @@ export const queryPlaylistsItems = (playlistId: UUID) => {
             id: (trackId: UUID) => trackIds.has(trackId),
           },
           join: {
-            album: (tracks: Track[]): JoinQuery<Album> => {
+            album: (tracks: Track[]): JoinQuery<Album, Track> => {
               const albumIds = new Set(tracks.map((item) => item.albumId));
 
               return {
