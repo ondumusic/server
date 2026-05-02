@@ -368,9 +368,21 @@ export function PlaylistList({
         selectedIds.has(playlist.id),
       );
       if (!playlist) return;
+
+      if (playlist.isFolder) {
+        if (!openFolders.has(playlist.id)) {
+          openFolders.add(playlist.id);
+          setOpenFolders(new Set([...openFolders]));
+        } else {
+          openFolders.delete(playlist.id);
+          setOpenFolders(new Set([...openFolders]));
+        }
+        return;
+      }
+
       populateUpNext({ playlistId: playlist.id });
     },
-    [listItems, userConfirmQueueReplace, populateUpNext],
+    [listItems, userConfirmQueueReplace, populateUpNext, openFolders],
   );
 
   const renderItem = useCallback(
