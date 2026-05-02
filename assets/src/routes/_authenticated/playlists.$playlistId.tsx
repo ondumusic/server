@@ -6,8 +6,10 @@ import {
   type ListItemState,
   SelectableList,
 } from "../../components/SelectableList";
+import type { ContextMenuItem } from "../../hooks/useContextMenu";
 import { usePlayer } from "../../hooks/usePlayer";
 import { usePlaylistMutations } from "../../hooks/usePlaylistMutations";
+import i18next from "../../i18next";
 import { queryTracksByIds, usePlaylist, usePlaylistItems } from "../../library";
 import type { Track, UUID } from "../../types";
 import { applyPending } from "../../utils/playlistPositions";
@@ -32,12 +34,8 @@ function PlaylistsDetail() {
     playlistId,
     items,
   );
-  const {
-    enqueueAndPlay,
-    // enqueueNext,
-    // enqueueAfter,
-    userConfirmQueueReplace,
-  } = usePlayer();
+  const { enqueueAndPlay, enqueueNext, enqueueAfter, userConfirmQueueReplace } =
+    usePlayer();
 
   const currentItems = useMemo(
     () => applyPending(items, pending),
@@ -123,6 +121,61 @@ function PlaylistsDetail() {
     [addTracks, reorder],
   );
 
+  const onContextMenu = useCallback(
+    (selectedIds: Set<string>): ContextMenuItem[] => {
+      if (selectedIds.size === 0) {
+        return [];
+      }
+
+      const tracks = currentItems
+        .filter((item) => selectedIds.has(item.id))
+        .map((item) => item.track as Track);
+      if (!tracks) return [];
+
+      return [
+        {
+          type: "item",
+          key: "play_next",
+          label: i18next.t("contextMenu.playNext", {
+            defaultValue: "Play Next",
+            count: tracks.length,
+          }),
+          onClick() {
+            enqueueNext(tracks);
+          },
+        },
+        {
+          type: "item",
+          key: "play_after",
+          label: i18next.t("contextMenu.playAfter", {
+            defaultValue: "Play After",
+            count: tracks.length,
+          }),
+          onClick() {
+            enqueueAfter(tracks);
+          },
+        },
+        {
+          type: "divider",
+          key: "destructive",
+        },
+        {
+          type: "item",
+          key: "remove",
+          danger: true,
+          label: i18next.t("contextMenu.removeTracks", {
+            defaultValue: "Remove {{ count }} tracks",
+            count: tracks.length,
+          }),
+          onClick() {
+            onDelete(selectedIds);
+          },
+        },
+      ];
+    },
+    [currentItems, onDelete, enqueueNext, enqueueAfter],
+  );
+
   const listItems = useMemo(() => {
     let results: ListItem[] = [];
     if (currentItems?.length) {
@@ -174,7 +227,7 @@ function PlaylistsDetail() {
         onDelete={onDelete}
         onDrop={onDrop}
         onSubmit={onSubmit}
-        // onContextMenu={onContextMenu}
+        onContextMenu={onContextMenu}
         onDoubleClick={onDoubleClick}
         renderItem={renderItem}
       />
