@@ -194,7 +194,7 @@ export class Repo {
 
     // Fire all requests synchronously, then await all at once
     const requests = keys.map((key) => this.#result<T>(target.get(key)));
-    return Promise.all(requests);
+    return Promise.all(requests).then((results) => results.filter((r) => !!r));
   }
 
   async count(store: string) {
