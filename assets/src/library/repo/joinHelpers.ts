@@ -1,47 +1,52 @@
-import type { JoinsOf, UUID } from "../../types";
+import type { UUID } from "../../types";
 import type { Repo } from "../repo";
-import type { EntityOf, JoinQuery } from "./queryHelpers";
+import type { JoinDescriptor, Query } from "./queryHelpers";
 
-export const executeJoins = async <T extends { id: UUID }>(
+export const executeJoins = async <T>(
   repo: Repo,
   results: T[],
-  join: {
-    [K in keyof JoinsOf<T>]?: (ids: T[]) => JoinQuery<EntityOf<JoinsOf<T>[K]>, T>;
-  },
+  joins: NonNullable<Query<T>["join"]>,
+  tx: IDBTransaction,
 ) => {
-  const joinEntries = Object.entries(join) as [
+  const entries = Object.entries(joins) as [
     string,
-    (items: T[]) => JoinQuery<unknown, unknown>,
+    JoinDescriptor<unknown, T>,
   ][];
 
   const joinResults = await Promise.all(
-    joinEntries.map(async ([field, buildQuery]) => {
-      const {
-        store,
-        references = "id",
-        foreignKey = "id",
-        cardinality,
-        ...subquery
-      } = buildQuery(results);
-      const items = (await repo.query(store, subquery)) as Record<
-        string,
-        unknown
-      >[];
+    entries.map(async ([field, descriptor]) => {
+      const query: Query<unknown> = {
+        ...descriptor.query(results),
+        join: descriptor.join,
+      };
 
-      return [field, foreignKey, references, cardinality, items] as const;
+      const items = (await repo.query(
+        descriptor.store,
+        query as Query<{ id: UUID }>,
+        tx,
+      )) as Record<string, unknown>[];
+
+      return [
+        field,
+        descriptor.foreignKey ?? "id",
+        descriptor.references ?? "id",
+        descriptor.cardinality,
+        items,
+      ] as const;
     }),
   );
 
   return results.map((item) => {
-    const enriched: Record<string, unknown> = { ...item };
+    const enriched = { ...item } as Record<string, unknown>;
+
     for (const [
       field,
       foreignKey,
       references,
       cardinality,
-      subRows,
+      rows,
     ] of joinResults) {
-      const matches = subRows.filter(
+      const matches = rows.filter(
         (sr) => sr[references] === enriched[foreignKey],
       );
       enriched[field] = cardinality === "one" ? (matches[0] ?? null) : matches;

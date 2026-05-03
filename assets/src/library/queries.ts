@@ -9,7 +9,7 @@ import type {
 import { isUUID } from "../utils/isUUID";
 import { useStoreQuery, useStoreRecord } from "./hooks";
 import { repo } from "./repo";
-import type { JoinQuery, Query } from "./repo/queryHelpers";
+import type { Query } from "./repo/queryHelpers";
 
 // List Artists
 export const queryArtists = () =>
@@ -30,22 +30,24 @@ export const queryArtistAlbums = async (artistId: UUID) => {
     sortDir: "desc",
     sortBy: "releaseYear",
     join: {
-      tracks: (albums: Album[]): JoinQuery<Track, Album> => {
-        const albumIds = new Set(albums.map((album) => album.id));
+      tracks: {
+        store: "tracks",
+        references: "albumId",
+        cardinality: "many",
+        query: (albums: Album[]): Omit<Query<Track>, "store"> => {
+          const albumIds = new Set(albums.map((album) => album.id));
 
-        return {
-          store: "tracks",
-          references: "albumId",
-          cardinality: "many",
-          whereIndex: ["by_albumArtistId", "=", artistId],
-          having: {
-            albumId: (albumId: UUID) => albumIds.has(albumId),
-          },
-          sortBy: [
-            ["disc", "asc"],
-            ["number", "asc"],
-          ],
-        };
+          return {
+            whereIndex: ["by_albumArtistId", "=", artistId],
+            having: {
+              albumId: (albumId: UUID) => albumIds.has(albumId),
+            },
+            sortBy: [
+              ["disc", "asc"],
+              ["number", "asc"],
+            ],
+          };
+        },
       },
     },
   });
@@ -102,17 +104,18 @@ export const queryTracks = (filters: TrackFilters) => {
       whereIndex: ["by_playlistId", "=", filters.playlistId],
       sortBy: filters.random === true ? "random" : [["position", "asc"]],
       join: {
-        track: (playlistItems: PlaylistItem[]): JoinQuery<Track, PlaylistItem> => {
-          const trackIds = new Set(playlistItems.map((item) => item.trackId));
-
-          return {
-            store: "tracks",
-            foreignKey: "trackId",
-            cardinality: "one",
-            having: {
-              id: (trackId: UUID) => trackIds.has(trackId),
-            },
-          };
+        track: {
+          store: "tracks",
+          foreignKey: "trackId",
+          cardinality: "one",
+          query: (
+            playlistItems: PlaylistItem[],
+          ): Omit<Query<Track>, "join"> => {
+            const trackIds = new Set(playlistItems.map((item) => item.trackId));
+            return {
+              whereIndex: ["id", "in", Array.from(trackIds)],
+            };
+          },
         },
       },
     };
@@ -201,36 +204,34 @@ export function usePlaylists(query = {}) {
 }
 
 // List Playlist Items
-export const queryPlaylistsItems = (playlistId: UUID) => {
+export const queryPlaylistsItems = async (playlistId: UUID) => {
   const query: Query<PlaylistItem> = {
     whereIndex: ["by_playlistId", "=", playlistId],
     sortBy: [["position", "asc"]],
     join: {
-      track: (playlistItems: PlaylistItem[]): JoinQuery<Track, PlaylistItem> => {
-        const trackIds = new Set(playlistItems.map((item) => item.trackId));
-
-        return {
-          store: "tracks",
-          foreignKey: "trackId",
-          cardinality: "one",
-          having: {
-            id: (trackId: UUID) => trackIds.has(trackId),
-          },
-          join: {
-            album: (tracks: Track[]): JoinQuery<Album, Track> => {
-              const albumIds = new Set(tracks.map((item) => item.albumId));
-
+      track: {
+        store: "tracks",
+        foreignKey: "trackId",
+        cardinality: "one",
+        query: (playlistItems: PlaylistItem[]): Omit<Query<Track>, "join"> => {
+          const trackIds = new Set(playlistItems.map((item) => item.trackId));
+          return {
+            whereIndex: ["id", "in", Array.from(trackIds)],
+          };
+        },
+        join: {
+          album: {
+            store: "albums",
+            foreignKey: "albumId",
+            cardinality: "one",
+            query: (tracks: Track[]): Omit<Query<Album>, "join"> => {
+              const albumIds = new Set(tracks.map((track) => track.albumId));
               return {
-                store: "albums",
-                foreignKey: "albumId",
-                cardinality: "one",
-                having: {
-                  id: (albumId: UUID) => albumIds.has(albumId),
-                },
+                whereIndex: ["id", "in", Array.from(albumIds)],
               };
             },
           },
-        };
+        },
       },
     },
   };

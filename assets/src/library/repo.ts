@@ -2,9 +2,12 @@ import type { UUID } from "../types";
 import { executeJoins } from "./repo/joinHelpers";
 import {
   applyOp,
+  collectStores,
   opToRange,
   type Query,
   type QueryOperation,
+  type RangeQuery,
+  usesIdRange,
 } from "./repo/queryHelpers";
 import { executeSort } from "./repo/sortHelpers";
 
@@ -84,77 +87,114 @@ export class Repo {
     return this.#result<T[]>(target.getAll(query));
   }
 
-  async query<T>(
+  async query<T extends { id: UUID }>(
     store: string,
-    { whereIndex, having, join, sortBy, sortDir = "asc" }: Query<T>,
+    query: Query<T>,
+    transaction?: IDBTransaction,
   ): Promise<T[]> {
     const db = await this.instance;
-    const tx = db.transaction(store, "readonly");
 
-    let target: IDBObjectStore | IDBIndex = tx.objectStore(store);
-    let keyRange = null;
-    if (whereIndex) {
-      const [indexName, op, ...args] = whereIndex as [
+    // Get all stores in this query (so including from joins etc.)
+    const stores = collectStores(store, query);
+
+    // If we are already inside a transaction we can use that instead of
+    // creating a new one.
+    const tx = transaction ?? db.transaction(stores, "readonly");
+    const objectStore = tx.objectStore(store);
+    const keyPath = objectStore.keyPath;
+
+    // For a simple "id" in [...] we can just run getMany.
+    if (
+      usesIdRange(query as Omit<Query<T>, "join">, keyPath as string | string[])
+    ) {
+      const keys = (query.whereIndex as [string, "in", UUID[]])[2];
+      const rows = await this.getMany<T>(store, keys, tx);
+      if (!query.join) return rows;
+      return executeJoins(this, rows, query.join, tx);
+    }
+
+    // It's not simple, let's figure out how to get our data.
+    let target: IDBObjectStore | IDBIndex = objectStore;
+    let rangeQuery: RangeQuery = { kind: "range", range: null };
+
+    // whereIndex can do a simple index based lookup, neat!
+    if (query.whereIndex) {
+      const [indexName, op, ...args] = query.whereIndex as [
         string,
         QueryOperation,
         ...unknown[],
       ];
-      target = target.index(indexName);
-      keyRange = opToRange(op, ...args);
+      if (objectStore.keyPath !== indexName) {
+        target = objectStore.index(indexName);
+      }
+      rangeQuery = opToRange(op, ...args);
     }
 
-    const filters: Array<(r: T) => boolean> = Object.entries(having || {}).map(
-      ([field, condition]) => {
-        if (typeof condition === "function") {
-          return (r: T) => condition((r as Record<string, unknown>)[field]);
-        }
-
-        const [op, ...args] = condition as [QueryOperation, ...unknown[]];
-        return (r: T) =>
-          applyOp((r as Record<string, unknown>)[field], op, ...args);
-      },
-    );
-
-    return new Promise((resolve, reject) => {
-      const req = target.getAll(keyRange);
-      req.onsuccess = () => {
-        let results = req.result;
-
-        if (filters.length) {
-          results = results.filter((r) => filters.every((fn) => fn(r)));
-        }
-
-        // Sort in JS if we want anything other than default behaviour.
-        if (sortBy) {
-          executeSort(results, sortBy, sortDir);
-        }
-
-        // If there are no joins we are done.
-        if (!join) {
-          return resolve(results);
-        }
-
-        // Execute the joins
-        executeJoins(this, results, join).then(resolve).catch(reject);
-      };
-      req.onerror = () => reject(req.error);
+    // Convert `having` filters to in-memory filters
+    const filters: Array<(r: T) => boolean> = Object.entries(
+      query.having || {},
+    ).map(([field, condition]) => {
+      if (typeof condition === "function") {
+        return (r: T) => condition((r as Record<string, unknown>)[field]);
+      }
+      const [op, ...args] = condition as [QueryOperation, ...unknown[]];
+      return (r: T) =>
+        applyOp((r as Record<string, unknown>)[field], op, ...args);
     });
+
+    // Fetch function that actually gets the data from IndexedDB
+    const fetchResults = (): Promise<T[]> => {
+      if (rangeQuery.kind === "in") {
+        // For "in" range requests with 0 keys we don't need to do much.
+        if (rangeQuery.keys.length === 0) return Promise.resolve([]);
+
+        // For "in" range queries that don't use the primary key we will do
+        // a getAll using IDBKeyRange and then flatten results.
+        return Promise.all(
+          rangeQuery.keys.map((key) =>
+            this.#result<T[]>(target.getAll(IDBKeyRange.only(key))),
+          ),
+        ).then((chunks) => chunks.flat());
+      }
+
+      // If it's not an "in" range query we will get everything,
+      // ideally it is still using an index but not guaranteed.
+      return this.#result<T[]>(target.getAll(rangeQuery.range));
+    };
+
+    let results = await fetchResults();
+
+    // If we have any "having" filters we apply them now.
+    if (filters.length) {
+      results = results.filter((r) => filters.every((fn) => fn(r)));
+    }
+
+    // If we have custom sorting rules we apply them now.
+    if (query.sortBy) {
+      executeSort(results, query.sortBy, query.sortDir ?? "asc");
+    }
+
+    // If there are no joins we're done
+    if (!query.join) return results;
+
+    // Otherwise it's time to execute the joins on these results.
+    return executeJoins(this, results, query.join, tx);
   }
 
-  async getMany<T>(store: string, keys: UUID[]): Promise<T[]> {
+  async getMany<T>(
+    store: string,
+    keys: UUID[],
+    transaction?: IDBTransaction,
+  ): Promise<T[]> {
     if (!keys.length) return [];
 
     const db = await this.instance;
-    const tx = db.transaction(store, "readonly");
+    const tx = transaction ?? db.transaction(store, "readonly");
     const target = tx.objectStore(store);
-    const results = [];
 
-    for (const key of keys) {
-      const result = await this.#result<T>(target.get(key));
-      if (result) results.push(result);
-    }
-
-    return results;
+    // Fire all requests synchronously, then await all at once
+    const requests = keys.map((key) => this.#result<T>(target.get(key)));
+    return Promise.all(requests);
   }
 
   async count(store: string) {
