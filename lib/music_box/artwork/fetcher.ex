@@ -22,7 +22,8 @@ defmodule MusicBox.Artwork.Fetcher do
     with {:ok, file} <- File.open(path, [:write, :binary, :raw]),
          :ok <- IO.binwrite(file, bytes),
          :ok <- File.close(file),
-         {:ok, %{size: size}} when size > 0 <- File.stat(path) do
+         {:ok, %{size: size}} when size > 0 <- File.stat(path),
+         true <- File.exists?(path) do
       {:ok, path}
     else
       {:ok, %{size: 0}} ->

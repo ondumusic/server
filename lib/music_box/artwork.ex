@@ -68,8 +68,14 @@ defmodule MusicBox.Artwork do
   end
 
   defp update_album(album, params) do
-    if path = Map.get(params, :path),
-      do: Tool.resize_artwork(%{album: album, path: path})
+    params =
+      with %{path: path} when is_binary(path) <- params,
+           :ok <- Tool.resize_artwork(%{album: album, path: path}) do
+        params
+      else
+        # Resizing failed so we should not store this path.
+        _ -> Map.delete(params, :path)
+      end
 
     Albums.update_artwork(
       album,
