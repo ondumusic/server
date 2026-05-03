@@ -10,8 +10,31 @@ interface PrewarmMessage {
 const CACHE_NAME = "artwork-v1";
 const PREWARM_CONCURRENCY = 3;
 
+let cachePromise: Promise<Cache>;
+const getCache = () => {
+  if (!cachePromise) cachePromise = caches.open(CACHE_NAME);
+  return cachePromise;
+};
+
 function isArtworkRequest(url: URL): boolean {
   return url.pathname.startsWith("/artwork/");
+}
+
+async function handleArtwork(req: Request, event: FetchEvent) {
+  const cache = await getCache();
+  const cached = await cache.match(req);
+  if (cached) return cached;
+
+  try {
+    const res = await fetch(req);
+    if (res.ok) {
+      // Don't block the response on cache write
+      event.waitUntil(cache.put(req, res.clone()));
+    }
+    return res;
+  } catch {
+    return Response.error();
+  }
 }
 
 self.addEventListener("install", () => {
@@ -37,23 +60,10 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
 
   const url = new URL(req.url);
-  if (!isArtworkRequest(url)) return;
-
-  event.respondWith(
-    (async () => {
-      const cache = await caches.open(CACHE_NAME);
-      const cached = await cache.match(req);
-      if (cached) return cached;
-
-      try {
-        const res = await fetch(req);
-        if (res.ok) cache.put(req, res.clone());
-        return res;
-      } catch {
-        return Response.error();
-      }
-    })(),
-  );
+  if (isArtworkRequest(url)) {
+    event.respondWith(handleArtwork(req, event));
+    return;
+  }
 });
 
 self.addEventListener("message", (event: ExtendableMessageEvent) => {
@@ -64,7 +74,7 @@ self.addEventListener("message", (event: ExtendableMessageEvent) => {
 });
 
 async function prewarm(urls: string[]): Promise<void> {
-  const cache = await caches.open(CACHE_NAME);
+  const cache = await getCache();
   const queue = [...urls];
 
   const worker = async (): Promise<void> => {
