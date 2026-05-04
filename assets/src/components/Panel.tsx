@@ -5,8 +5,8 @@ import {
   Separator,
   useDefaultLayout,
 } from "react-resizable-panels";
-import { useMediaQuery } from "../../hooks/useMediaQuery";
-import { classNames } from "../../utils/classNames";
+import { useMediaQuery } from "../hooks/useMediaQuery";
+import { classNames } from "../utils/classNames";
 
 export function Panel({
   children,
@@ -66,7 +66,7 @@ export function Panel({
           </ResizablePanel>
         </Group>
       ) : (
-        <div className="@container w-full h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="@container w-full h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-panel-bg backdrop-blur-2xl backdrop-saturate-150">
           {mobileShowSidebar && hasSidebar ? renderSidebar() : children}
         </div>
       )}

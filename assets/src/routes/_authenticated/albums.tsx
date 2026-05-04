@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { Panel } from "../../components/Panel";
 
 export const Route = createFileRoute("/_authenticated/albums")({
   staticData: { view: "albums" as const },
@@ -7,9 +8,9 @@ export const Route = createFileRoute("/_authenticated/albums")({
 
 function Albums() {
   return (
-    <div className="w-full h-full bg-panel-bg backdrop-blur-2xl backdrop-saturate-150">
+    <Panel>
       Albums: Coming Soon
       <Outlet />
-    </div>
+    </Panel>
   );
 }

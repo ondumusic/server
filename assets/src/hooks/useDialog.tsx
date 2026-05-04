@@ -1,46 +1,41 @@
 import {
   createContext,
   type PropsWithChildren,
+  useCallback,
   useContext,
-  useEffect,
-  useRef,
   useState,
 } from "react";
-import { Button } from "../components/form/Button";
-import { classNames } from "../utils/classNames";
 
-type DialogType = "alert" | "confirm";
-type DialogResult = boolean | null;
-
-interface DialogConfig {
-  title?: string;
-  message: string;
-  danger?: boolean;
-  confirmMessage?: string;
-  when?: () => boolean;
-}
-
-type AlertConfig = DialogConfig;
-
-type PromptConfig = DialogConfig & {
-  cancelMessage?: string;
-};
+import {
+  type AlertConfig,
+  type CloseHandler,
+  type CustomConfig,
+  Dialog,
+  type DialogResult,
+  type PromptConfig,
+} from "../components/Dialog";
 
 interface DialogContextValue {
   showAlert(config: AlertConfig): Promise<DialogResult>;
   promptConfirm(config: PromptConfig): Promise<DialogResult>;
+  showDialog(config: CustomConfig): Promise<DialogResult>;
 }
 
+type OpenDialog =
+  | { type: "alert"; config: AlertConfig }
+  | { type: "confirm"; config: PromptConfig }
+  | { type: "custom"; config: CustomConfig };
+
 interface DialogState {
-  type: DialogType;
-  config: AlertConfig | PromptConfig | null;
-  isOpen: boolean;
-  resolve?: (value: DialogResult) => void;
+  open: OpenDialog | null;
+  resolve?: CloseHandler;
 }
 
 const DialogContext = createContext<DialogContextValue>({
   showAlert: (_config: AlertConfig) => new Promise((resolve) => resolve(false)),
   promptConfirm: (_config: PromptConfig) =>
+    new Promise((resolve) => resolve(null)),
+  showDialog: (_config: CustomConfig) =>
     new Promise((resolve) => resolve(null)),
 });
 
@@ -48,131 +43,60 @@ export function useDialog() {
   return useContext(DialogContext);
 }
 
-function Dialog({
-  type,
-  config,
-  onClose,
-}: PropsWithChildren<{
-  type: DialogType;
-  config: AlertConfig | PromptConfig;
-  onClose: (result: DialogResult) => void;
-}>) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
-  const handleCancel = () => {
-    onClose(false);
-  };
-
-  const handleConfirm = () => {
-    onClose(true);
-  };
-
-  // Show the dialog modal immediately
-  useEffect(() => {
-    const dialogEl = dialogRef.current;
-    if (!dialogEl) return;
-    dialogEl.showModal();
-
-    const handleDismiss = () => {
-      onClose(type === "alert" ? false : null);
-    };
-
-    dialogEl.addEventListener("cancel", handleDismiss);
-    return () => {
-      dialogEl.removeEventListener("cancel", handleDismiss);
-    };
-  }, [onClose, type]);
-
-  return (
-    <dialog
-      ref={dialogRef}
-      className={classNames([
-        "self-center justify-self-center outline-none",
-        "rounded-md shadow-2xl bg-dialog-bg text-dialog-fg",
-        "max-w-md dialog-modal",
-      ])}
-    >
-      <div className="p-6 space-y-8">
-        {config.title && (
-          <h4 className="text-xl font-semibold pb-1 border-b border-stone-300">
-            {config.title}
-          </h4>
-        )}
-
-        <p>{config.message}</p>
-
-        <div className="flex flex-row-reverse gap-2 justify-start items-center">
-          <div>
-            <Button
-              type="button"
-              style={config.danger === true ? "danger" : "primary"}
-              onClick={handleConfirm}
-            >
-              {config.confirmMessage}
-            </Button>
-          </div>
-          {type === "confirm" && (config as PromptConfig).cancelMessage && (
-            <div>
-              <Button
-                type="button"
-                style="secondary"
-                link
-                onClick={handleCancel}
-              >
-                {(config as PromptConfig).cancelMessage}
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-    </dialog>
-  );
-}
-
 export function DialogProvider({ children }: PropsWithChildren) {
   const [dialog, setDialog] = useState<DialogState>({
-    type: "alert",
-    config: null,
-    isOpen: false,
+    open: null,
   });
 
-  const showAlert = (config: AlertConfig) => {
+  const showAlert = useCallback((config: AlertConfig) => {
     if (config.when && !config.when?.()) {
       return new Promise<DialogResult>((resolve) => resolve(true));
     }
 
     return new Promise<DialogResult>((resolve) => {
       setDialog({
-        type: "alert",
-        isOpen: true,
-        config,
+        open: {
+          type: "alert",
+          config,
+        },
         resolve,
       });
     });
-  };
+  }, []);
 
-  const promptConfirm = (config: PromptConfig) => {
+  const promptConfirm = useCallback((config: PromptConfig) => {
     if (config.when && !config.when?.()) {
       return new Promise<DialogResult>((resolve) => resolve(true));
     }
 
     return new Promise<DialogResult>((resolve) => {
       setDialog({
-        type: "confirm",
-        isOpen: true,
-        config,
+        open: {
+          type: "confirm",
+          config,
+        },
         resolve,
       });
     });
-  };
+  }, []);
+
+  const showDialog = useCallback((config: CustomConfig) => {
+    return new Promise<DialogResult>((resolve) => {
+      setDialog({
+        open: {
+          type: "custom",
+          config,
+        },
+        resolve,
+      });
+    });
+  }, []);
 
   const handleClose = (result: DialogResult) => {
     if (dialog.resolve) dialog.resolve(result);
 
     setDialog({
-      type: "alert",
-      config: null,
-      isOpen: false,
+      open: null,
     });
   };
 
@@ -180,17 +104,12 @@ export function DialogProvider({ children }: PropsWithChildren) {
     <DialogContext.Provider
       value={{
         showAlert,
+        showDialog,
         promptConfirm,
       }}
     >
       {children}
-      {dialog.isOpen && dialog.config && (
-        <Dialog
-          type={dialog.type}
-          config={dialog.config}
-          onClose={handleClose}
-        />
-      )}
+      {dialog.open && <Dialog {...dialog.open} onClose={handleClose} />}
     </DialogContext.Provider>
   );
 }

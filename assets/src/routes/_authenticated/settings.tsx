@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { Panel } from "../../components/Panel";
 import { repo } from "../../library";
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -8,7 +9,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 function Settings() {
   return (
-    <div className="w-full h-full bg-panel-bg backdrop-blur-2xl backdrop-saturate-150">
+    <Panel>
       Settings: Coming Soon
       <hr />
       <h3 className="font-bold">debug options</h3>
@@ -20,6 +21,6 @@ function Settings() {
         delete local indexeddb and refresh
       </button>
       <Outlet />
-    </div>
+    </Panel>
   );
 }

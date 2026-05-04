@@ -41,7 +41,7 @@ function Authenticated() {
   }
 
   return (
-    <div className="flex flex-col-reverse lg:flex-row lg:justify-center relative h-full">
+    <div className="flex flex-col-reverse lg:flex-row lg:justify-center lg:items-center relative h-full">
       <div
         className={classNames([
           "flex-shrink-0 relative lg:w-84 h-20 lg:h-full left-0 overflow-hidden lg:py-6 xl:py-8 lg:px-4 xl:py-6",
@@ -60,7 +60,7 @@ function Authenticated() {
 
       <div
         className={classNames([
-          "flex-shrink-1 relative lg:w-[calc(100%-336px)] 2xl:w-300 h-[calc(100%-80px)] lg:h-full lg:p-4 xl:p-6 xl:py-6 lg:pl-0 xl:pl-0",
+          "flex-shrink-1 relative lg:w-[calc(100%-336px)] 2xl:w-300 max-h-240 h-[calc(100%-80px)] lg:h-full lg:p-4 xl:p-6 xl:py-6 lg:pl-0 xl:pl-0",
           "flex justify-center items-center flex-col",
           "transition-all duration-300 ease-in-out",
           "will-change-[left]",
