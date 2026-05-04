@@ -1,5 +1,6 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
+import { EmptyView } from "../../components/EmptyView";
 import { Loading } from "../../components/Loading";
 import { type ListItem, PlaylistItem } from "../../components/PlaylistItem";
 import {
@@ -9,6 +10,7 @@ import {
 import type { ContextMenuItem } from "../../hooks/useContextMenu";
 import { usePlayer } from "../../hooks/usePlayer";
 import { usePlaylistMutations } from "../../hooks/usePlaylistMutations";
+import { useQueue } from "../../hooks/useQueue";
 import i18next from "../../i18next";
 import { queryTracksByIds, usePlaylist, usePlaylistItems } from "../../library";
 import type { Track, UUID } from "../../types";
@@ -37,20 +39,30 @@ function PlaylistsDetail() {
   const { enqueueAndPlay, enqueueNext, enqueueAfter, userConfirmQueueReplace } =
     usePlayer();
 
+  const { currentTrack } = useQueue();
   const currentItems = useMemo(
     () => applyPending(items, pending),
     [items, pending],
   );
 
-  const renderItem = useCallback((item: ListItem, state: ListItemState) => {
-    return (
-      <PlaylistItem
-        item={item}
-        isDragging={state.isDragging}
-        isSelected={state.isSelected}
-      />
-    );
-  }, []);
+  const renderItem = useCallback(
+    (item: ListItem, state: ListItemState) => {
+      let isPlaying = false;
+      if (item.type === "track") {
+        isPlaying = item.track?.id === currentTrack?.id;
+      }
+
+      return (
+        <PlaylistItem
+          item={item}
+          isDragging={state.isDragging}
+          isPlaying={isPlaying}
+          isSelected={state.isSelected}
+        />
+      );
+    },
+    [currentTrack],
+  );
 
   const onSubmit = useCallback(
     async (selectedIds: Set<string>) => {
@@ -194,10 +206,16 @@ function PlaylistsDetail() {
     }
 
     if (playlist) {
+      const totalDuration = currentItems.reduce(
+        (total, item) => total + (item?.track?.duration ?? 0),
+        0,
+      );
+
       results.unshift({
         id: "playlistHeader",
         type: "playlist",
         selectable: false,
+        totalDuration,
         playlist,
       });
     }
@@ -209,12 +227,18 @@ function PlaylistsDetail() {
     return <Loading />;
   }
 
-  if (playlistId === "asd") {
+  if (!playlist) {
     return <Navigate to="/playlists" />;
   }
 
+  if (playlist.isFolder) {
+    // PlaylistFolderIcon
+    // import { PlaylistFolderIcon } from "../../components/icons/PlaylistFolderIcon";
+    return <EmptyView message={playlist.name} />;
+  }
+
   return (
-    <div className="h-full mx-4 lg:mx-8">
+    <div className="relative h-full mx-4 lg:mx-8">
       <SelectableList<ListItem>
         id="playlist"
         multiple
@@ -231,6 +255,16 @@ function PlaylistsDetail() {
         onDoubleClick={onDoubleClick}
         renderItem={renderItem}
       />
+
+      {currentItems.length === 0 && (
+        <div className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none">
+          <EmptyView
+            message={i18next.t("playlist.emptyPlaylist", {
+              defaultValue: "There are no tracks in this playlist yet.",
+            })}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -140,7 +141,8 @@ export function SelectableList<T>({
 
       let height: number = 0;
       if (itemHeight === "auto") {
-        height = measuredHeights.get(item.type ?? "default") ?? 0;
+        const type = item.type ?? "default";
+        height = measuredHeights.get(type) ?? 40;
       } else if (typeof itemHeight === "number") {
         height = itemHeight;
       } else if (typeof itemHeight === "function") {
@@ -199,38 +201,47 @@ export function SelectableList<T>({
     return () => observer.disconnect();
   }, []);
 
+  // Measure on on first render already
+  useLayoutEffect(() => {
+    if (!listRef.current) return;
+    const elements = listRef.current.querySelectorAll("[data-type]");
+    const handled = new Set();
+    elements.forEach((el) => {
+      const type = el.getAttribute("data-type");
+      if (type) {
+        if (handled.has(type)) return;
+        measuredHeights.set(type, el.getBoundingClientRect().height);
+        handled.add(type);
+      }
+    });
+  }, [measuredHeights]);
+
   // Automatically determine item height for every type
   // biome-ignore lint/correctness/useExhaustiveDependencies(items): suppress dependency items as changing it might change size too
   useEffect(() => {
     if (itemHeight !== "auto") return;
 
     const observer = new ResizeObserver((entries) => {
-      const updatedHeights = new Map(measuredHeights);
-      let hasChanges = false;
-
-      entries.forEach((entry) => {
-        const typeKey = entry.target.getAttribute("data-type");
-        if (typeKey) {
+      setMeasuredHeights((prev) => {
+        let next: Map<string, number> | null = null;
+        entries.forEach((entry) => {
+          const typeKey = entry.target.getAttribute("data-type");
+          if (!typeKey) return;
           const measured = entry.contentRect.height;
-          const current = updatedHeights.get(typeKey);
-          if (measured > 0 && measured !== current) {
-            updatedHeights.set(typeKey, measured);
-            hasChanges = true;
+          if (measured > 0 && measured !== prev.get(typeKey)) {
+            if (!next) next = new Map(prev);
+            next.set(typeKey, measured);
           }
-        }
+        });
+        return next ?? prev;
       });
-
-      if (hasChanges) {
-        setMeasuredHeights(updatedHeights);
-      }
     });
 
     measureRefs.current.forEach((element) => {
       observer.observe(element);
     });
-
     return () => observer.disconnect();
-  }, [items, itemHeight, measuredHeights]);
+  }, [items, itemHeight]);
 
   // Calculate total height and offsets
   const { totalItemsHeight, offsets } = useMemo(() => {
@@ -778,11 +789,10 @@ export function SelectableList<T>({
 
       <div className="relative" style={{ height: totalHeight }}>
         <div
-          className="will-change-transform"
           style={{
             paddingBottom,
             paddingTop,
-            transform: `translateY(${scrollOffsetY}px)`,
+            transform: `translate3d(0, ${scrollOffsetY}px, 0)`,
           }}
         >
           {visibleItems.map((item, visibleIndex) => {

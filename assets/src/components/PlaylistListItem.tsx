@@ -49,11 +49,13 @@ export const PlaylistListItem = memo(
           ></div>
         )}
 
-        {playlist.isFolder ? (
-          <PlaylistFolderIcon title={playlist.name} className="size-5" />
-        ) : (
-          <PlaylistIcon title={playlist.name} className="size-5" />
-        )}
+        <div className="flex-shrink-0">
+          {playlist.isFolder ? (
+            <PlaylistFolderIcon title={playlist.name} className="size-5" />
+          ) : (
+            <PlaylistIcon title={playlist.name} className="size-5" />
+          )}
+        </div>
 
         {playlist.editing === true ? (
           <input

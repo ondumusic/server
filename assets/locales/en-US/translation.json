@@ -24,12 +24,15 @@
     "createPlaylist": "Create Playlist",
     "createPlaylistFolder": "Create Folder",
     "deletePlaylist": "Delete \"{{ playlist }}\"",
-    "playAfter_one": "Play After",
-    "playAfter_other": "Play After",
+    "playAfter_one": "Add To Queue",
+    "playAfter_other": "Add To Queue",
     "playArtist": "Play \"{{ artist }}\"",
     "playNext_one": "Play Next",
     "playNext_other": "Play Next",
     "playPlaylist": "Play \"{{ playlist }}\"",
+    "removeTracks_one": "Remove {{ count }} track",
+    "removeTracks_other": "Remove {{ count }} tracks",
+    "renamePlaylist": "Rename",
     "shuffleAlbum_one": "Shuffle Album",
     "shuffleAlbum_other": "Shuffle Album",
     "shuffleArtist": "Shuffle \"{{ artist }}\"",
@@ -81,7 +84,10 @@
     "confirmDelete": {
       "cancel": "Cancel",
       "ok": "OK"
-    }
+    },
+    "emptyPlaylist": "There are no tracks in this playlist yet.",
+    "trackCount_one": "{{count}} track, {{duration}}",
+    "trackCount_other": "{{count}} tracks, {{duration}}"
   },
   "pollInterval": {
     "10min": "Every 10 minutes",

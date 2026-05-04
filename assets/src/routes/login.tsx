@@ -63,8 +63,14 @@ function Login() {
 
   return (
     <div className="h-full content-center">
-      <Panel>
-        <Panel.Header title={t("loginForm.title", { defaultValue: "Login" })} />
+      <Panel size="small">
+        <header className="text-center">
+          <div>
+            <h1 className="text-2xl font-semibold leading-8 text-panel-fg">
+              <Trans i18nKey="loginForm.title">Login</Trans>
+            </h1>
+          </div>
+        </header>
 
         <form action={form.action} className="mt-10 space-y-8">
           <Input<LoginFields>

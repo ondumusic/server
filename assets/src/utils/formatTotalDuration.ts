@@ -1,11 +1,19 @@
 import i18next from "../i18next";
 import type { Track } from "../types";
 
-export function formatTotalDuration(tracks: Track[]): string {
-  const totalDuration = tracks.reduce(
-    (total, { duration }) => total + duration,
-    0,
-  );
+export function formatTotalDuration(
+  tracksOrTotalDuration: Track[] | number,
+): string {
+  let totalDuration = 0;
+  if (typeof tracksOrTotalDuration === "number")
+    totalDuration = tracksOrTotalDuration;
+  if (Array.isArray(tracksOrTotalDuration)) {
+    totalDuration = tracksOrTotalDuration.reduce(
+      (total, { duration }) => total + duration,
+      0,
+    );
+  }
+
   const hours = Math.floor(totalDuration / 3600);
   const minutes = Math.floor((totalDuration % 3600) / 60);
   if (hours === 0) {

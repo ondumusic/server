@@ -7,7 +7,6 @@ import {
 } from "@tanstack/react-router";
 import { useState } from "react";
 import { NavBar } from "../components/NavBar";
-import { Panel } from "../components/Panel";
 import { Player } from "../components/Player";
 import { useQueue } from "../hooks/useQueue";
 import { auth } from "../services/auth";
@@ -71,9 +70,7 @@ function Authenticated() {
         ])}
       >
         <NavBar />
-        <Panel main>
-          <Outlet />
-        </Panel>
+        <Outlet />
       </div>
     </div>
   );

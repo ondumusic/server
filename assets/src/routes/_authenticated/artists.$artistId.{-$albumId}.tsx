@@ -25,7 +25,7 @@ import type { Album, Track, UUID } from "../../types";
 import { splitTracksByDisc } from "../../utils/splitTracksByDisc";
 
 export const Route = createFileRoute(
-  "/_authenticated/artists/{-$artistId}/{-$albumId}",
+  "/_authenticated/artists/$artistId/{-$albumId}",
 )({
   async loader({ params: { artistId } }: { params: { artistId?: UUID } }) {
     if (!artistId) return;

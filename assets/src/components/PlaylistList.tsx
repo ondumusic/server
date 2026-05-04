@@ -353,6 +353,7 @@ export function PlaylistList({
           openFolders.delete(playlist.id);
           setOpenFolders(new Set([...openFolders]));
         }
+        return;
       }
 
       if (!(await userConfirmQueueReplace())) return;
@@ -363,7 +364,6 @@ export function PlaylistList({
 
   const onSubmit = useCallback(
     async (selectedIds: Set<string>) => {
-      if (!(await userConfirmQueueReplace())) return;
       const playlist = listItems.find((playlist) =>
         selectedIds.has(playlist.id),
       );
@@ -380,6 +380,7 @@ export function PlaylistList({
         return;
       }
 
+      if (!(await userConfirmQueueReplace())) return;
       populateUpNext({ playlistId: playlist.id });
     },
     [listItems, userConfirmQueueReplace, populateUpNext, openFolders],
