@@ -23,6 +23,7 @@
   "contextMenu": {
     "addToPlaylist_one": "Add To Playlist...",
     "addToPlaylist_other": "Add To Playlist...",
+    "addToRecentPlaylist": "Add To {{ playlistName }}",
     "createPlaylist": "Create Playlist",
     "createPlaylistFolder": "Create Folder",
     "deletePlaylist": "Delete \"{{ playlist }}\"",

@@ -1,27 +1,33 @@
 import { useCallback, useState } from "react";
 import { PlaylistList } from "../components/PlaylistList";
 import { useDialog } from "../hooks/useDialog";
-import type { UUID } from "../types";
+import type { Playlist } from "../types";
 
-type Result = {
-  playlistId: UUID;
+const getMostRecentPlaylist = (): Playlist | null => {
+  try {
+    const json = localStorage.getItem("mostRecentPlaylist");
+    if (!json) return null;
+    return JSON.parse(json) as Playlist;
+  } catch (_err) {
+    return null;
+  }
 };
 
 const PlaylistPicker = ({
   onClose,
 }: {
-  onClose: (result: Result | false) => void;
+  onClose: (result: Playlist | false) => void;
 }) => {
-  const [playlistId, setPlaylistId] = useState<string>();
+  const [selectedPlaylist, selectPlaylist] = useState<Playlist | null>(
+    getMostRecentPlaylist(),
+  );
 
   return (
     <div className="bg-gray-200 flex flex-col max-h-100">
       <PlaylistList
-        playlistId={playlistId}
-        onChange={(playlist) => setPlaylistId(playlist.id)}
-        onSubmit={(playlist) => {
-          onClose({ playlistId: playlist.id });
-        }}
+        playlistId={selectedPlaylist?.id}
+        onChange={(playlist) => selectPlaylist(playlist)}
+        onSubmit={(playlist) => onClose(playlist)}
       />
 
       <div className="flex flex-shrink-0 gap-2 p-2 text-md font-medium">
@@ -35,7 +41,7 @@ const PlaylistPicker = ({
         <button
           className="w-full rounded-md cursor-pointer py-2 px-6 text-md font-medium text-accent-500 bg-sidebar-active-bg shadow-sm focus:border-0 focus:ring-0 focus:outline-0"
           type="button"
-          onClick={() => onClose(playlistId ? { playlistId } : false)}
+          onClick={() => onClose(selectedPlaylist ?? false)}
         >
           Confirm
         </button>
@@ -52,10 +58,18 @@ export function usePlaylistPicker() {
   }, [closeDialog]);
 
   const showPlaylistPicker = useCallback(async () => {
-    const result = await showDialog<Result>({ renderDialog });
+    const result = await showDialog<Playlist>({ renderDialog });
     if (typeof result === "boolean") return result;
-    return result?.playlistId;
+    if (!result) return;
+    localStorage.setItem(
+      "mostRecentPlaylist",
+      JSON.stringify({
+        id: result.id,
+        name: result.name,
+      }),
+    );
+    return result.id;
   }, [showDialog, renderDialog]);
 
-  return { showPlaylistPicker };
+  return { showPlaylistPicker, getMostRecentPlaylist };
 }

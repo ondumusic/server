@@ -68,7 +68,7 @@ function getTracksById(items: ListItem[], ids: Set<string>): Track[] {
 function Artists() {
   const { artistId, albumId } = Route.useParams() as Params;
   const router = useRouter();
-  const { showPlaylistPicker } = usePlaylistPicker();
+  const { showPlaylistPicker, getMostRecentPlaylist } = usePlaylistPicker();
   const isPopNavigation = router.history.location.state?.isBackForward;
   const {
     enqueueAndPlay,
@@ -242,11 +242,45 @@ function Artists() {
   const onContextMenu = useCallback(
     (selectedIds: Set<string>) => {
       const [firstId] = selectedIds;
+      const recentPlaylist = getMostRecentPlaylist();
 
       // The context menu for an album works differently.
       const maybeAlbumItem = listItems.find((item) => item.id === firstId);
       if (maybeAlbumItem && maybeAlbumItem.type === "album") {
         const album = maybeAlbumItem.album;
+
+        const albumPlaylistActions = [
+          {
+            type: "item",
+            key: "add_to_playlist",
+            label: i18next.t("contextMenu.addToPlaylist", {
+              defaultValue: "Add To Playlist...",
+              count: album.tracks.length,
+            }),
+            onClick: async () => {
+              const playlistId = await showPlaylistPicker();
+              if (!playlistId) return;
+              await appendTracksToPlaylist(playlistId as UUID, album.tracks);
+            },
+          },
+        ];
+
+        if (recentPlaylist) {
+          albumPlaylistActions.unshift({
+            type: "item",
+            key: "add_to_recent_playlist",
+            label: i18next.t("contextMenu.addToRecentPlaylist", {
+              defaultValue: "Add To {{ playlistName }}",
+              playlistName: recentPlaylist.name,
+            }),
+            onClick: async () => {
+              await appendTracksToPlaylist(
+                recentPlaylist.id as UUID,
+                album.tracks,
+              );
+            },
+          });
+        }
 
         return [
           {
@@ -283,11 +317,49 @@ function Artists() {
               populateUpNext({ albumId: album.id, random: true });
             },
           },
+          {
+            type: "divider" as const,
+            key: "playlist_actions",
+          },
+          ...albumPlaylistActions,
         ];
       }
 
       const selectedTracks = getTracksById(listItems, selectedIds);
       if (selectedTracks.length === 0) return [];
+
+      const playlistActions = [
+        {
+          type: "item",
+          key: "add_to_playlist",
+          label: i18next.t("contextMenu.addToPlaylist", {
+            defaultValue: "Add To Playlist...",
+            count: selectedTracks.length,
+          }),
+          onClick: async () => {
+            const playlistId = await showPlaylistPicker();
+            if (!playlistId) return;
+            await appendTracksToPlaylist(playlistId as UUID, selectedTracks);
+          },
+        },
+      ];
+
+      if (recentPlaylist) {
+        playlistActions.unshift({
+          type: "item",
+          key: "add_to_recent_playlist",
+          label: i18next.t("contextMenu.addToRecentPlaylist", {
+            defaultValue: "Add To {{ playlistName }}",
+            playlistName: recentPlaylist.name,
+          }),
+          onClick: async () => {
+            await appendTracksToPlaylist(
+              recentPlaylist.id as UUID,
+              selectedTracks,
+            );
+          },
+        });
+      }
 
       return [
         {
@@ -316,19 +388,7 @@ function Artists() {
           type: "divider" as const,
           key: "playlist_actions",
         },
-        {
-          type: "item",
-          key: "add_to_playlist",
-          label: i18next.t("contextMenu.addToPlaylist", {
-            defaultValue: "Add To Playlist...",
-            count: selectedTracks.length,
-          }),
-          onClick: async () => {
-            const playlistId = await showPlaylistPicker();
-            if (!playlistId) return;
-            await appendTracksToPlaylist(playlistId as UUID, selectedTracks);
-          },
-        },
+        ...playlistActions,
       ];
     },
     [
@@ -338,6 +398,7 @@ function Artists() {
       populateUpNext,
       userConfirmQueueReplace,
       showPlaylistPicker,
+      getMostRecentPlaylist,
     ],
   );
 
