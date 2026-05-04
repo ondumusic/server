@@ -26,7 +26,7 @@ export type PromptConfig = DialogConfig & {
 };
 
 export type CustomConfig = {
-  renderDialog: (dismiss: CloseHandler) => ReactNode;
+  renderDialog: () => ReactNode;
 };
 
 type Props = PropsWithChildren<
@@ -84,7 +84,7 @@ export function Dialog({ type, config, onClose }: Props) {
       ])}
     >
       {type === "custom" ? (
-        <div>{config.renderDialog(onClose)}</div>
+        <div>{config.renderDialog()}</div>
       ) : (
         <div className="p-6 space-y-8">
           {config.title && (

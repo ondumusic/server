@@ -1,4 +1,3 @@
-import { useNavigate } from "@tanstack/react-router";
 import {
   type PropsWithChildren,
   useCallback,
@@ -17,7 +16,6 @@ import {
   SelectableList,
 } from "../components/SelectableList";
 import type { ContextMenuItem } from "../hooks/useContextMenu";
-import { useDialog } from "../hooks/useDialog";
 import { usePlayer } from "../hooks/usePlayer";
 import i18next from "../i18next";
 import { sync, usePlaylists } from "../library";
@@ -34,12 +32,18 @@ interface PendingPlaylist {
 
 export function PlaylistList({
   playlistId,
+  onCreate,
+  onChange,
+  onDelete,
+  onSubmit,
 }: PropsWithChildren<{
   playlistId?: UUID;
+  onCreate?: (playlist: Playlist) => void;
+  onChange?: (playlist: Playlist) => void;
+  onDelete?: (playlist: Playlist) => void;
+  onSubmit?: (playlist: Playlist) => void;
 }>) {
-  const navigate = useNavigate();
   const { populateUpNext, userConfirmQueueReplace } = usePlayer();
-  const { promptConfirm } = useDialog();
   const { data: allItems, loading: isLoading } = usePlaylists({
     includeAll: true,
   });
@@ -141,10 +145,9 @@ export function PlaylistList({
               playlists: [newPlaylist],
             });
 
-            navigate({
-              to: `/playlists/${newPlaylist.id}`,
-              params: { playlistId: newPlaylist.id },
-            });
+            if (typeof onCreate === "function") {
+              onCreate(newPlaylist);
+            }
           },
         });
       }
@@ -153,7 +156,7 @@ export function PlaylistList({
     };
 
     return buildTree(null, 0);
-  }, [allItems, creatingPlaylist, renamingPlaylist, openFolders, navigate]);
+  }, [allItems, creatingPlaylist, renamingPlaylist, openFolders, onCreate]);
 
   const onTypeMatch = useCallback((item: Playlist, query: string) => {
     const matcher = new RegExp(`^${query.replace(/\s+/g, "")}`, "iu");
@@ -165,55 +168,34 @@ export function PlaylistList({
     return name.match(matcher) !== null;
   }, []);
 
-  const onChange = useCallback(
+  const handleChange = useCallback(
     (selectedIds: Set<string>) => {
       const playlist = listItems.find((playlist) =>
         selectedIds.has(playlist.id),
       );
       if (!playlist) return;
-      navigate({
-        to: `/playlists/${playlist.id}`,
-        params: { playlistId: playlist.id },
-      });
+
+      if (typeof onChange === "function") {
+        onChange(playlist);
+      }
     },
-    [listItems, navigate],
+    [listItems, onChange],
   );
 
-  const onDelete = useCallback(
+  const handleDelete = useCallback(
     async (selectedIds: Set<string>) => {
       if (selectedIds.size !== 1) return;
-      const playlistId = Array.from(selectedIds)[0];
+      const playlist = listItems.find((p) => selectedIds.has(p.id));
+      if (!playlist) return;
 
-      const allowed = await promptConfirm({
-        danger: true,
-        message: i18next.t("player.confirmDeletePlaylist", {
-          defaultValue: "This will permanently delete this playlist",
-        }),
-        confirmMessage: i18next.t("playlist.confirmDelete.ok", {
-          defaultValue: "OK",
-        }),
-        cancelMessage: i18next.t("playlist.confirmDelete.cancel", {
-          defaultValue: "Cancel",
-        }),
-      });
-      if (!allowed) return;
-
-      const response = await playlistApi.deletePlaylist(playlistId);
-      if (!response.ok) return;
-      // TODO: Maybe could be optimistic? But then need to take all
-      // children into account too if deleting from repo.
-      await sync.startSync();
-
-      // After deleting the current item no long exists so we can navigate
-      // away from it.
-      navigate({
-        to: `/playlists`,
-      });
+      if (typeof onDelete === "function") {
+        onDelete(playlist);
+      }
     },
-    [promptConfirm, navigate],
+    [listItems, onDelete],
   );
 
-  const onContextMenu = useCallback(
+  const handleContextMenu = useCallback(
     (selectedIds: Set<string>): ContextMenuItem[] => {
       const createPlaylist = {
         type: "item",
@@ -271,7 +253,7 @@ export function PlaylistList({
           playlist: playlist.name,
         }),
         onClick: async () => {
-          await onDelete(new Set([playlist.id]));
+          await handleDelete(new Set([playlist.id]));
         },
       };
 
@@ -340,10 +322,16 @@ export function PlaylistList({
         deletePlaylist,
       ];
     },
-    [listItems, userConfirmQueueReplace, populateUpNext, onDelete, openFolders],
+    [
+      listItems,
+      userConfirmQueueReplace,
+      populateUpNext,
+      handleDelete,
+      openFolders,
+    ],
   );
 
-  const onDoubleClick = useCallback(
+  const handleDoubleClick = useCallback(
     async (playlist: Playlist) => {
       if (playlist.isFolder) {
         if (!openFolders.has(playlist.id)) {
@@ -356,34 +344,22 @@ export function PlaylistList({
         return;
       }
 
-      if (!(await userConfirmQueueReplace())) return;
-      populateUpNext({ playlistId: playlist.id });
+      if (typeof onSubmit === "function") {
+        onSubmit(playlist);
+      }
     },
-    [userConfirmQueueReplace, openFolders, populateUpNext],
+    [openFolders, onSubmit],
   );
 
-  const onSubmit = useCallback(
+  const handleSubmit = useCallback(
     async (selectedIds: Set<string>) => {
       const playlist = listItems.find((playlist) =>
         selectedIds.has(playlist.id),
       );
       if (!playlist) return;
-
-      if (playlist.isFolder) {
-        if (!openFolders.has(playlist.id)) {
-          openFolders.add(playlist.id);
-          setOpenFolders(new Set([...openFolders]));
-        } else {
-          openFolders.delete(playlist.id);
-          setOpenFolders(new Set([...openFolders]));
-        }
-        return;
-      }
-
-      if (!(await userConfirmQueueReplace())) return;
-      populateUpNext({ playlistId: playlist.id });
+      handleDoubleClick(playlist);
     },
-    [listItems, userConfirmQueueReplace, populateUpNext, openFolders],
+    [listItems, handleDoubleClick],
   );
 
   const renderItem = useCallback(
@@ -423,11 +399,11 @@ export function PlaylistList({
           setOpenFolders(new Set([...openFolders]));
         },
       }}
-      onContextMenu={onContextMenu}
-      onChange={onChange}
-      onDelete={onDelete}
-      onSubmit={onSubmit}
-      onDoubleClick={onDoubleClick}
+      onContextMenu={handleContextMenu}
+      onChange={handleChange}
+      onDelete={handleDelete}
+      onSubmit={handleSubmit}
+      onDoubleClick={handleDoubleClick}
       renderItem={renderItem}
     />
   );

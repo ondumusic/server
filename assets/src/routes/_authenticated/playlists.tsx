@@ -1,9 +1,18 @@
-import { createFileRoute, Outlet, useParams } from "@tanstack/react-router";
-import { useCallback, useEffect } from "react";
+import {
+  createFileRoute,
+  Outlet,
+  useNavigate,
+  useParams,
+} from "@tanstack/react-router";
+import { useCallback } from "react";
+import { playlistApi } from "../../api";
 import { Panel } from "../../components/Panel";
 import { PlaylistList } from "../../components/PlaylistList";
-import { usePlaylistPicker } from "../../hooks/usePlaylistPicker";
-import type { UUID } from "../../types";
+import { useDialog } from "../../hooks/useDialog";
+import { usePlayer } from "../../hooks/usePlayer";
+import i18next from "../../i18next";
+import { sync } from "../../library";
+import type { Playlist, UUID } from "../../types";
 
 export const Route = createFileRoute("/_authenticated/playlists")({
   staticData: { view: "playlists" as const },
@@ -15,23 +24,85 @@ type Params = {
 };
 
 function Playlists() {
+  const navigate = useNavigate();
+  const { promptConfirm } = useDialog();
+  const { populateUpNext, userConfirmQueueReplace } = usePlayer();
   const routeParams = useParams({
     from: "/_authenticated/playlists/$playlistId",
     shouldThrow: false,
   }) as Params;
   const playlistId = routeParams?.playlistId;
 
-  const { showPlaylistPicker } = usePlaylistPicker();
+  const handleSubmit = useCallback(
+    async (playlist: Playlist) => {
+      if (!(await userConfirmQueueReplace())) return;
+      populateUpNext({ playlistId: playlist.id });
+    },
+    [userConfirmQueueReplace, populateUpNext],
+  );
 
-  useEffect(() => {
-    showPlaylistPicker().then((playlistId) => {
-      console.log(playlistId);
-    });
-  }, [showPlaylistPicker]);
+  const handleChange = useCallback(
+    async (playlist: Playlist) => {
+      navigate({
+        to: `/playlists/${playlist.id}`,
+        params: { playlistId: playlist.id },
+      });
+    },
+    [navigate],
+  );
+
+  const handleCreate = useCallback(
+    async (playlist: Playlist) => {
+      navigate({
+        to: `/playlists/${playlist.id}`,
+        params: { playlistId: playlist.id },
+      });
+    },
+    [navigate],
+  );
+
+  const handleDelete = useCallback(
+    async (playlist: Playlist) => {
+      const allowed = await promptConfirm({
+        danger: true,
+        message: i18next.t("player.confirmDeletePlaylist", {
+          defaultValue: "This will permanently delete this playlist",
+        }),
+        confirmMessage: i18next.t("playlist.confirmDelete.ok", {
+          defaultValue: "OK",
+        }),
+        cancelMessage: i18next.t("playlist.confirmDelete.cancel", {
+          defaultValue: "Cancel",
+        }),
+      });
+      if (!allowed) return;
+
+      const response = await playlistApi.deletePlaylist(playlist.id);
+      if (!response.ok) return;
+      // TODO: Maybe could be optimistic? But then need to take all
+      // children into account too if deleting from repo.
+      await sync.startSync();
+
+      // After deleting the current item no long exists so we can navigate
+      // away from it.
+      navigate({
+        to: `/playlists`,
+      });
+    },
+    [promptConfirm, navigate],
+  );
 
   const renderSidebar = useCallback(() => {
-    return <PlaylistList playlistId={playlistId} />;
-  }, [playlistId]);
+    return (
+      <PlaylistList
+        playlistId={playlistId}
+        onCreate={handleCreate}
+        onChange={handleChange}
+        onDelete={handleDelete}
+        onSubmit={handleSubmit}
+      />
+    );
+  }, [playlistId, handleCreate, handleChange, handleDelete, handleSubmit]);
 
   return (
     <Panel renderSidebar={renderSidebar} mobileShowSidebar={!playlistId}>

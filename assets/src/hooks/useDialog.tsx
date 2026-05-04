@@ -18,7 +18,8 @@ import {
 interface DialogContextValue {
   showAlert(config: AlertConfig): Promise<DialogResult>;
   promptConfirm(config: PromptConfig): Promise<DialogResult>;
-  showDialog(config: CustomConfig): Promise<DialogResult>;
+  showDialog<T>(config: CustomConfig): Promise<DialogResult | T>;
+  closeDialog<T>(result: DialogResult | T): void;
 }
 
 type OpenDialog =
@@ -37,6 +38,7 @@ const DialogContext = createContext<DialogContextValue>({
     new Promise((resolve) => resolve(null)),
   showDialog: (_config: CustomConfig) =>
     new Promise((resolve) => resolve(null)),
+  closeDialog: (_result: DialogResult) => null,
 });
 
 export function useDialog() {
@@ -92,13 +94,20 @@ export function DialogProvider({ children }: PropsWithChildren) {
     });
   }, []);
 
-  const handleClose = (result: DialogResult) => {
-    if (dialog.resolve) dialog.resolve(result);
+  const handleClose = useCallback((result: DialogResult) => {
+    setDialog((prev) => {
+      if (prev.resolve) prev.resolve(result);
 
-    setDialog({
-      open: null,
+      return {
+        open: null,
+      };
     });
-  };
+  }, []);
+
+  const closeDialog = useCallback(
+    (result: DialogResult) => handleClose(result),
+    [handleClose],
+  );
 
   return (
     <DialogContext.Provider
@@ -106,6 +115,7 @@ export function DialogProvider({ children }: PropsWithChildren) {
         showAlert,
         showDialog,
         promptConfirm,
+        closeDialog,
       }}
     >
       {children}
