@@ -18,10 +18,12 @@ import {
   SelectableList,
 } from "../../components/SelectableList";
 import { usePlayer } from "../../hooks/usePlayer";
+import { usePlaylistPicker } from "../../hooks/usePlaylistPicker";
 import { useQueue } from "../../hooks/useQueue";
 import i18next from "../../i18next";
 import { queryArtist, useArtistAlbums } from "../../library";
 import type { Album, Track, UUID } from "../../types";
+import { appendTracksToPlaylist } from "../../utils/appendTracksToPlaylist";
 import { splitTracksByDisc } from "../../utils/splitTracksByDisc";
 
 export const Route = createFileRoute(
@@ -66,6 +68,7 @@ function getTracksById(items: ListItem[], ids: Set<string>): Track[] {
 function Artists() {
   const { artistId, albumId } = Route.useParams() as Params;
   const router = useRouter();
+  const { showPlaylistPicker } = usePlaylistPicker();
   const isPopNavigation = router.history.location.state?.isBackForward;
   const {
     enqueueAndPlay,
@@ -261,7 +264,7 @@ function Artists() {
             type: "item",
             key: "play_after",
             label: i18next.t("contextMenu.playAfter", {
-              defaultValue: "Play After",
+              defaultValue: "Add To Queue",
               count: album.tracks.length,
             }),
             onClick() {
@@ -302,11 +305,28 @@ function Artists() {
           type: "item",
           key: "play_after",
           label: i18next.t("contextMenu.playAfter", {
-            defaultValue: "Play After",
+            defaultValue: "Add To Queue",
             count: selectedTracks.length,
           }),
           onClick() {
             enqueueAfter(selectedTracks);
+          },
+        },
+        {
+          type: "divider" as const,
+          key: "playlist_actions",
+        },
+        {
+          type: "item",
+          key: "add_to_playlist",
+          label: i18next.t("contextMenu.addToPlaylist", {
+            defaultValue: "Add To Playlist...",
+            count: selectedTracks.length,
+          }),
+          onClick: async () => {
+            const playlistId = await showPlaylistPicker();
+            if (!playlistId) return;
+            await appendTracksToPlaylist(playlistId as UUID, selectedTracks);
           },
         },
       ];
@@ -317,6 +337,7 @@ function Artists() {
       enqueueAfter,
       populateUpNext,
       userConfirmQueueReplace,
+      showPlaylistPicker,
     ],
   );
 

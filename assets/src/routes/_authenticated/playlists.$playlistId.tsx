@@ -160,7 +160,7 @@ function PlaylistsDetail() {
           type: "item",
           key: "play_after",
           label: i18next.t("contextMenu.playAfter", {
-            defaultValue: "Play After",
+            defaultValue: "Add To Queue",
             count: tracks.length,
           }),
           onClick() {

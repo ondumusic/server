@@ -21,6 +21,8 @@
     "showUpNext": "Up Next"
   },
   "contextMenu": {
+    "addToPlaylist_one": "Add To Playlist...",
+    "addToPlaylist_other": "Add To Playlist...",
     "createPlaylist": "Create Playlist",
     "createPlaylistFolder": "Create Folder",
     "deletePlaylist": "Delete \"{{ playlist }}\"",
