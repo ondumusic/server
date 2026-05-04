@@ -470,7 +470,6 @@ export function SelectableList<T>({
 
     // Deselect all
     if (e.key === "Escape") {
-      e.preventDefault();
       onChange(new Set());
 
       if (onTypeMatch) {
