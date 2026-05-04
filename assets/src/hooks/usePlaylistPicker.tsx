@@ -15,18 +15,16 @@ const PlaylistPicker = ({
   const [playlistId, setPlaylistId] = useState<string>();
 
   return (
-    <div className="bg-gray-300">
-      <div className="bg-sidebar-bg max-h-100 overflow-auto">
-        <PlaylistList
-          playlistId={playlistId}
-          onChange={(playlist) => setPlaylistId(playlist.id)}
-          onSubmit={(playlist) => {
-            onClose({ playlistId: playlist.id });
-          }}
-        />
-      </div>
+    <div className="bg-gray-200 flex flex-col max-h-100">
+      <PlaylistList
+        playlistId={playlistId}
+        onChange={(playlist) => setPlaylistId(playlist.id)}
+        onSubmit={(playlist) => {
+          onClose({ playlistId: playlist.id });
+        }}
+      />
 
-      <div className="flex gap-2 p-2 text-md font-medium bg-sidebar-bg">
+      <div className="flex flex-shrink-0 gap-2 p-2 text-md font-medium">
         <button
           className="w-full rounded-md cursor-pointer py-2 px-6 text-md font-medium bg-sidebar-active-bg shadow-sm text-sidebar-active-fg focus:border-0 focus:ring-0 focus:outline-0"
           type="button"

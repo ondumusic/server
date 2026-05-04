@@ -1,4 +1,3 @@
-import { useNavigate } from "@tanstack/react-router";
 import { type PropsWithChildren, useCallback } from "react";
 import { ArtistListItem } from "../components/ArtistListItem";
 import { Loading } from "../components/Loading";
@@ -17,14 +16,17 @@ function isArtist(artist: Artist, artistId: string): boolean {
 
 export function ArtistList({
   artistId,
+  onChange,
+  onSubmit,
 }: PropsWithChildren<{
   artistId?: UUID;
+  onChange?: (artist: Artist) => void;
+  onSubmit?: (artist: Artist) => void;
 }>) {
-  const navigate = useNavigate();
   const { populateUpNext, userConfirmQueueReplace } = usePlayer();
   const { data: listItems, loading: isLoading } = useArtists();
 
-  const onTypeMatch = useCallback((item: Artist, query: string) => {
+  const handleTypeMatch = useCallback((item: Artist, query: string) => {
     const matcher = new RegExp(`^${query.replace(/\s+/g, "")}`, "iu");
     const name = item.name
       .normalize("NFD")
@@ -34,19 +36,19 @@ export function ArtistList({
     return name.match(matcher) !== null;
   }, []);
 
-  const onChange = useCallback(
+  const handleChange = useCallback(
     (selectedIds: Set<string>) => {
       const artist = listItems.find((artist) => selectedIds.has(artist.id));
-      if (artist)
-        navigate({
-          to: `/artists/${artist.slug}`,
-          params: { artistId: artist.id },
-        });
+      if (!artist) return;
+
+      if (typeof onChange === "function") {
+        onChange(artist);
+      }
     },
-    [listItems, navigate],
+    [listItems, onChange],
   );
 
-  const onContextMenu = useCallback(
+  const handleContextMenu = useCallback(
     (selectedIds: Set<string>) => {
       const artist = listItems.find((artist) => selectedIds.has(artist.id));
       if (!artist) return [];
@@ -81,22 +83,22 @@ export function ArtistList({
     [listItems, userConfirmQueueReplace, populateUpNext],
   );
 
-  const onDoubleClick = useCallback(
+  const handleDoubleClick = useCallback(
     async (artist: Artist) => {
-      if (!(await userConfirmQueueReplace())) return;
-      populateUpNext({ artistId: artist.id });
+      if (typeof onSubmit === "function") {
+        onSubmit(artist);
+      }
     },
-    [userConfirmQueueReplace, populateUpNext],
+    [onSubmit],
   );
 
-  const onSubmit = useCallback(
+  const handleSubmit = useCallback(
     async (selectedIds: Set<string>) => {
-      if (!(await userConfirmQueueReplace())) return;
       const artist = listItems.find((artist) => selectedIds.has(artist.id));
       if (!artist) return;
-      populateUpNext({ artistId: artist.id });
+      handleDoubleClick(artist);
     },
-    [listItems, userConfirmQueueReplace, populateUpNext],
+    [listItems, handleDoubleClick],
   );
 
   const renderItem = useCallback(
@@ -119,13 +121,13 @@ export function ArtistList({
       paddingTop={10}
       paddingBottom={10}
       defaultFocusId={currentArtist?.id}
-      onTypeMatch={onTypeMatch}
+      onTypeMatch={handleTypeMatch}
       defaultFocusType="center"
       selectedIds={currentArtist ? new Set([currentArtist.id]) : new Set([])}
-      onContextMenu={onContextMenu}
-      onChange={onChange}
-      onSubmit={onSubmit}
-      onDoubleClick={onDoubleClick}
+      onContextMenu={handleContextMenu}
+      onChange={handleChange}
+      onSubmit={handleSubmit}
+      onDoubleClick={handleDoubleClick}
       renderItem={renderItem}
     />
   );
