@@ -282,6 +282,7 @@ export function Playlists({
             type: "divider",
             key: "destructive",
           },
+          renamePlaylist,
           deletePlaylist,
         ];
       }

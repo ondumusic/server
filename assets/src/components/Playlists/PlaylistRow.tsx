@@ -22,8 +22,10 @@ export const PlaylistRow = memo(({ playlist, isSelected = false }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (playlist.editing) {
-      inputRef.current?.focus();
-      inputRef.current?.select();
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      });
     }
   }, [playlist]);
 

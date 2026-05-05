@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { Trans } from "react-i18next";
+import { classNames } from "../../utils/classNames";
 import { formatTotalDuration } from "../../utils/formatTotalDuration";
 import type { HeaderItem } from "./types";
 
@@ -13,7 +14,12 @@ export const PlaylistHeaderRow = memo(({ item }: Props) => {
       <h1 className="font-semibold text-4xl lg:text-2xl line-clamp-1">
         {item.playlist.name}
       </h1>
-      <span className="text-sm text-panel-fg-muted">
+      <span
+        className={classNames([
+          "text-sm text-panel-fg-muted",
+          item.playlist.trackCount === 0 && "hidden",
+        ])}
+      >
         <Trans
           i18nKey="playlist.trackCount"
           count={item.playlist.trackCount}

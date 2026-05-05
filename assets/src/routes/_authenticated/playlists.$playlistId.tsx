@@ -1,5 +1,6 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { EmptyView } from "../../components/EmptyView";
+import { PlaylistFolderIcon } from "../../components/icons/PlaylistFolderIcon";
 import { Loading } from "../../components/Loading";
 import { Playlist } from "../../components/Playlist";
 import i18next from "../../i18next";
@@ -29,7 +30,12 @@ function PlaylistDetail() {
   }
 
   if (playlist.isFolder) {
-    return <EmptyView message={playlist.name} />;
+    return (
+      <div className="flex flex-col h-full place-items-center justify-center text-muted">
+        <PlaylistFolderIcon title={playlist.name} className="size-6 mb-2" />
+        <p className="text-sm">{playlist.name}</p>
+      </div>
+    );
   }
 
   return (
@@ -37,7 +43,7 @@ function PlaylistDetail() {
       <Playlist playlist={playlist} items={items} />
 
       {items.length === 0 && (
-        <div className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none">
+        <div className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none text-muted">
           <EmptyView
             message={i18next.t("playlist.emptyPlaylist", {
               defaultValue: "There are no tracks in this playlist yet.",
