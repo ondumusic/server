@@ -7,8 +7,16 @@ import {
 } from "react";
 import type { Track } from "../types";
 
+export type QueueItem = {
+  track: Track;
+  meta?: {
+    [key: string]: string;
+  };
+};
+
 export interface QueueContext {
-  queue: Track[];
+  queue: QueueItem[];
+  currentItem?: QueueItem;
   currentTrack?: Track;
   currentTrackIndex: number;
   hasPrevTrack: boolean;
@@ -17,11 +25,11 @@ export interface QueueContext {
   nextTrack(): void;
   getNextTrack(): Track | undefined;
   skipToTrackIndex(trackIndex: number): void;
-  addQueueNext(tracks: Track[]): void;
-  addQueueAfter(tracks: Track[]): void;
-  addQueueAtIndex(tracks: Track[], index: number): void;
+  addQueueNext(items: QueueItem[]): void;
+  addQueueAfter(items: QueueItem[]): void;
+  addQueueAtIndex(items: QueueItem[], index: number): void;
   rearrangeQueue(indexes: Set<number>, index: number): void;
-  replaceQueue(tracks: Track[], startWithTrack?: Track): void;
+  replaceQueue(items: QueueItem[], startWithTrack?: Track): void;
   removeFromQueue(trackIndexes: number[]): void;
   clearNextTracks(): void;
   clearQueue(): void;
@@ -29,6 +37,7 @@ export interface QueueContext {
 
 const QueueContext = createContext<QueueContext>({
   queue: [],
+  currentItem: undefined,
   currentTrack: undefined,
   currentTrackIndex: -1,
   hasPrevTrack: false,
@@ -37,10 +46,10 @@ const QueueContext = createContext<QueueContext>({
   nextTrack: () => {},
   getNextTrack: () => undefined,
   skipToTrackIndex: (_trackIndex) => {},
-  addQueueNext: (_tracks) => {},
-  addQueueAfter: (_tracks) => {},
-  addQueueAtIndex: (_tracks, _index) => {},
-  replaceQueue: (_tracks, _startWithTrack?) => {},
+  addQueueNext: (_items) => {},
+  addQueueAfter: (_items) => {},
+  addQueueAtIndex: (_items, _index) => {},
+  replaceQueue: (_items, _startWithTrack?) => {},
   rearrangeQueue: (_indexes, _index) => {},
   removeFromQueue: (_trackIndex) => {},
   clearNextTracks: () => {},
@@ -52,14 +61,16 @@ export function useQueue() {
 }
 
 export const QueueProvider = ({ children }: PropsWithChildren) => {
-  const [queue, setQueue] = useState<Track[]>([]);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
   const [queueIndex, setQueueIndex] = useState(-1);
-  const currentTrack = queue[queueIndex] ?? undefined;
+  const currentItem = queue[queueIndex] ?? undefined;
+  const currentTrack = queue[queueIndex]?.track ?? undefined;
   const hasNextTrack = queueIndex < queue.length - 1;
   const hasPrevTrack = queueIndex > 0;
 
   const value = {
     queue,
+    currentItem,
     currentTrack,
     currentTrackIndex: queueIndex,
     hasPrevTrack,
@@ -70,7 +81,7 @@ export const QueueProvider = ({ children }: PropsWithChildren) => {
         return;
       }
 
-      return queue[nextTrackIndex];
+      return queue[nextTrackIndex].track;
     }, [queueIndex, queue]),
     prevTrack: useCallback(() => {
       const prevTrackIndex = Math.max(-1, queueIndex - 1);
@@ -88,9 +99,9 @@ export const QueueProvider = ({ children }: PropsWithChildren) => {
       setQueueIndex(trackIndex);
     }, []),
     addQueueNext: useCallback(
-      (tracks: Track[]) => {
+      (items: QueueItem[]) => {
         const updatedQueue = [...queue];
-        updatedQueue.splice(queueIndex + 1, 0, ...tracks);
+        updatedQueue.splice(queueIndex + 1, 0, ...items);
         setQueue(updatedQueue);
 
         // Set queue index to 0 if the queue was empty previously,
@@ -102,8 +113,8 @@ export const QueueProvider = ({ children }: PropsWithChildren) => {
       [queue, queueIndex],
     ),
     addQueueAfter: useCallback(
-      (tracks: Track[]) => {
-        setQueue((currentQueue) => currentQueue.concat(tracks));
+      (items: QueueItem[]) => {
+        setQueue((currentQueue) => currentQueue.concat(items));
 
         // Set queue index to 0 if the queue was empty previously,
         // indicating that the current track is the 1st track of the new queue.
@@ -114,9 +125,9 @@ export const QueueProvider = ({ children }: PropsWithChildren) => {
       [queue],
     ),
     addQueueAtIndex: useCallback(
-      (tracks: Track[], index: number) => {
+      (items: QueueItem[], index: number) => {
         const updatedQueue = [...queue];
-        updatedQueue.splice(index, 0, ...tracks);
+        updatedQueue.splice(index, 0, ...items);
         setQueue(updatedQueue);
 
         // Set queue index to 0 if the queue was empty previously,
@@ -127,16 +138,18 @@ export const QueueProvider = ({ children }: PropsWithChildren) => {
       },
       [queue],
     ),
-    replaceQueue: useCallback((tracks: Track[], startWithTrack?: Track) => {
-      let startIndex = tracks.findIndex(({ id }) => id === startWithTrack?.id);
-      startIndex = Math.max(Math.min(tracks.length - 1, startIndex), 0);
-      setQueue(tracks);
+    replaceQueue: useCallback((items: QueueItem[], startWithTrack?: Track) => {
+      let startIndex = items.findIndex(
+        ({ track: { id } }) => id === startWithTrack?.id,
+      );
+      startIndex = Math.max(Math.min(items.length - 1, startIndex), 0);
+      setQueue(items);
       setQueueIndex(startIndex);
     }, []),
     rearrangeQueue: useCallback(
       (indexes: Set<number>, index: number) => {
-        const selected: Track[] = [],
-          remaining: Track[] = [];
+        const selected: QueueItem[] = [],
+          remaining: QueueItem[] = [];
 
         queue.forEach((item, i) => {
           if (indexes.has(i)) {

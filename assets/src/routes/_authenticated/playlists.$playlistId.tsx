@@ -77,10 +77,12 @@ function PlaylistsDetail() {
 
         // The default behaviour we want is to add all tracks from the same
         // playlist to the queue and start playback at the selected track.
-        const playlistTracks = currentItems.map((item) => item.track as Track);
+        const playlistTracks = currentItems.map((item) => ({
+          track: item.track as Track,
+        }));
         enqueueAndPlay(playlistTracks, selectedTrack);
       } else {
-        enqueueAndPlay(selectedTracks);
+        enqueueAndPlay(selectedTracks.map((track) => ({ track })));
       }
     },
     [currentItems, enqueueAndPlay, userConfirmQueueReplace],
@@ -93,7 +95,9 @@ function PlaylistsDetail() {
 
       // The default behaviour we want is to add all tracks from the same
       // playlist to the queue and start playback at the selected track.
-      const playlistTracks = currentItems.map((item) => item.track as Track);
+      const playlistTracks = currentItems.map((item) => ({
+        track: item.track as Track,
+      }));
       enqueueAndPlay(playlistTracks, item.track);
     },
     [currentItems, enqueueAndPlay, userConfirmQueueReplace],
@@ -153,7 +157,7 @@ function PlaylistsDetail() {
             count: tracks.length,
           }),
           onClick() {
-            enqueueNext(tracks);
+            enqueueNext(tracks.map((track) => ({ track })));
           },
         },
         {
@@ -164,7 +168,7 @@ function PlaylistsDetail() {
             count: tracks.length,
           }),
           onClick() {
-            enqueueAfter(tracks);
+            enqueueAfter(tracks.map((track) => ({ track })));
           },
         },
         {

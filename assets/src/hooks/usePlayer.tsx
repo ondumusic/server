@@ -6,7 +6,7 @@ import {
 } from "react";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useDialog } from "../hooks/useDialog";
-import { useQueue } from "../hooks/useQueue";
+import { type QueueItem, useQueue } from "../hooks/useQueue";
 import i18next from "../i18next";
 import { queryTracks } from "../library";
 import type { Track, UUID } from "../types";
@@ -20,17 +20,17 @@ interface PopulateInput {
 
 export interface PlayerContext {
   // Queue management
-  enqueueAndPlay(tracks: Track[], startWithTrack?: Track): void;
-  enqueueNext(tracks: Track[]): void;
-  enqueueAfter(tracks: Track[]): void;
+  enqueueAndPlay(items: QueueItem[], startWithTrack?: Track): void;
+  enqueueNext(items: QueueItem[]): void;
+  enqueueAfter(items: QueueItem[]): void;
   populateUpNext(input: PopulateInput): void;
   userConfirmQueueReplace(): Promise<boolean>;
 }
 
 const PlayerContext = createContext<PlayerContext>({
-  enqueueAndPlay: (_tracks, _startWithTrack?) => {},
-  enqueueNext: (_tracks) => {},
-  enqueueAfter: (_tracks) => {},
+  enqueueAndPlay: (_items, _startWithTrack?) => {},
+  enqueueNext: (_items) => {},
+  enqueueAfter: (_items) => {},
   populateUpNext: (_input) => {},
   userConfirmQueueReplace: () => new Promise((resolve) => resolve(true)),
 });
@@ -51,10 +51,10 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const { promptConfirm } = useDialog();
 
   const enqueueAfter = useCallback(
-    (tracks: Track[]) => {
-      if (tracks.length === 0) return;
+    (items: QueueItem[]) => {
+      if (items.length === 0) return;
 
-      addQueueAfter(tracks);
+      addQueueAfter(items);
       if (!isPlaying && !currentTrack) setIsPlaying(true);
     },
     [setIsPlaying, isPlaying, currentTrack, addQueueAfter],
@@ -73,17 +73,17 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
         playlistId,
         random,
       });
-      replaceQueue(tracks);
+      replaceQueue(tracks.map((track) => ({ track })));
     },
     [replaceQueue],
   );
 
   const value = {
     enqueueAndPlay: useCallback(
-      (tracks: Track[], startWithTrack?: Track) => {
-        if (tracks.length === 0) return;
+      (items: QueueItem[], startWithTrack?: Track) => {
+        if (items.length === 0) return;
 
-        replaceQueue(tracks, startWithTrack);
+        replaceQueue(items, startWithTrack);
         if (!isPlaying) setIsPlaying(true);
 
         // If the user wants to play the current track from the beginning again
@@ -95,10 +95,10 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
       [setIsPlaying, isPlaying, currentTrack, replaceQueue, scrubTo],
     ),
     enqueueNext: useCallback(
-      (tracks: Track[]) => {
-        if (tracks.length === 0) return;
+      (items: QueueItem[]) => {
+        if (items.length === 0) return;
 
-        addQueueNext(tracks);
+        addQueueNext(items);
         if (!isPlaying && !currentTrack) setIsPlaying(true);
       },
       [setIsPlaying, isPlaying, currentTrack, addQueueNext],

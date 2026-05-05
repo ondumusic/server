@@ -190,10 +190,12 @@ function Artists() {
       if (item.type !== "album") return;
       if (!(await userConfirmQueueReplace())) return;
 
-      const albumTracks = data.flatMap((album) => {
-        if (album.id !== item.album.id) return [];
-        return album.tracks;
-      });
+      const albumTracks = data
+        .flatMap((album) => {
+          if (album.id !== item.album.id) return [];
+          return album.tracks;
+        })
+        .map((track) => ({ track }));
 
       enqueueAndPlay(albumTracks);
     },
@@ -209,14 +211,16 @@ function Artists() {
 
         // The default behaviour we want is to add all tracks from the same
         // album to the queue and start playback at the selected track.
-        const albumTracks = data.flatMap((album) => {
-          if (album.id !== selectedTrack.albumId) return [];
-          return album.tracks;
-        });
+        const albumTracks = data
+          .flatMap((album) => {
+            if (album.id !== selectedTrack.albumId) return [];
+            return album.tracks;
+          })
+          .map((track) => ({ track }));
 
         enqueueAndPlay(albumTracks, selectedTrack);
       } else {
-        enqueueAndPlay(selectedTracks);
+        enqueueAndPlay(selectedTracks.map((track) => ({ track })));
       }
     },
     [listItems, data, enqueueAndPlay, userConfirmQueueReplace],
@@ -229,10 +233,12 @@ function Artists() {
 
       // The default behaviour we want is to add all tracks from the same
       // album to the queue and start playback at the selected track.
-      const albumTracks = data.flatMap((album) => {
-        if (album.id !== item.track.albumId) return [];
-        return album.tracks;
-      });
+      const albumTracks = data
+        .flatMap((album) => {
+          if (album.id !== item.track.albumId) return [];
+          return album.tracks;
+        })
+        .map((track) => ({ track }));
 
       enqueueAndPlay(albumTracks, item.track);
     },
@@ -291,7 +297,7 @@ function Artists() {
               count: album.tracks.length,
             }),
             onClick() {
-              enqueueNext(album.tracks);
+              enqueueNext(album.tracks.map((track) => ({ track })));
             },
           },
           {
@@ -302,7 +308,7 @@ function Artists() {
               count: album.tracks.length,
             }),
             onClick() {
-              enqueueAfter(album.tracks);
+              enqueueAfter(album.tracks.map((track) => ({ track })));
             },
           },
           {
@@ -370,7 +376,7 @@ function Artists() {
             count: selectedTracks.length,
           }),
           onClick() {
-            enqueueNext(selectedTracks);
+            enqueueNext(selectedTracks.map((track) => ({ track })));
           },
         },
         {
@@ -381,7 +387,7 @@ function Artists() {
             count: selectedTracks.length,
           }),
           onClick() {
-            enqueueAfter(selectedTracks);
+            enqueueAfter(selectedTracks.map((track) => ({ track })));
           },
         },
         {

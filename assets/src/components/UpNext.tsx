@@ -9,20 +9,23 @@ import {
 } from "react";
 import { Trans } from "react-i18next";
 import {
-  type ListItem,
   type ListItemState,
   SelectableList,
 } from "../components/SelectableList";
-import { useQueue } from "../hooks/useQueue";
+import { type QueueItem, useQueue } from "../hooks/useQueue";
 import { queryPlaylistItemsByIds, queryTracksByIds } from "../library";
 import type { Track } from "../types";
 import { classNames } from "../utils/classNames";
 import { formatDuration } from "../utils/formatDuration";
 
-type QueueItem = ListItem & {
-  track: Track;
-  trackIndex: number;
+type ListItem = QueueItem & {
+  id: string;
+  position: number;
 };
+
+const trackToQueueItem = (track: Track) => ({
+  track,
+});
 
 export function UpNext({
   isVisible,
@@ -77,22 +80,20 @@ export function UpNext({
     return () => observer.disconnect();
   }, []);
 
-  const listItems: QueueItem[] = useMemo(() => {
+  const listItems: ListItem[] = useMemo(() => {
     return (
       queue
-        .map(
-          (track, trackIndex): QueueItem => ({
-            // We need unique IDs for SelectableList, however we also support
-            // having the same track multiple times. So we include the trackIndex
-            // as part of the ID.
-            id: [track.id, trackIndex].join("/"),
-            trackIndex,
-            track,
-          }),
-        )
+        .map((item, position) => ({
+          ...item,
+          position,
+          // We need unique IDs for SelectableList, however we also support
+          // having the same track multiple times. So we include the trackIndex
+          // as part of the ID.
+          id: [item.track.id, position].join("/"),
+        }))
         // We only want to display upcoming items from the queue, as the rest
         // is considered "history".
-        .filter((item) => item.trackIndex > currentTrackIndex)
+        .filter((item) => item.position > currentTrackIndex)
     );
   }, [queue, currentTrackIndex]);
 
@@ -113,10 +114,14 @@ export function UpNext({
 
         if (sourceListId === "playlist") {
           queryPlaylistItemsByIds(Array.from(itemIds))
-            .then((items) => items.map((item) => item.track as Track))
+            .then((items) =>
+              items.map((item) => ({ track: item.track as Track })),
+            )
             .then(addQueueAfter);
         } else {
-          queryTracksByIds(Array.from(itemIds)).then(addQueueAfter);
+          queryTracksByIds(Array.from(itemIds))
+            .then((tracks) => tracks.map(trackToQueueItem))
+            .then(addQueueAfter);
         }
       } catch (_error) {
         return;
@@ -132,8 +137,10 @@ export function UpNext({
 
   const onDelete = useCallback(
     (itemIds: Set<string>) => {
-      const selectedItems = listItems.filter((item) => itemIds.has(item.id));
-      const trackIndexes = selectedItems.map((item) => item.trackIndex);
+      const selectedItems = listItems.filter((item) =>
+        itemIds.has(item.track.id),
+      );
+      const trackIndexes = selectedItems.map((item) => item.position);
       if (trackIndexes.length !== 0) {
         removeFromQueue(trackIndexes);
       }
@@ -167,32 +174,36 @@ export function UpNext({
         );
       } else if (sourceListId === "playlist") {
         queryPlaylistItemsByIds(Array.from(itemIds))
-          .then((items) => items.map((item) => item.track as Track))
+          .then((items) =>
+            items.map((item) => ({ track: item.track as Track })),
+          )
           .then((newTracks) => {
             addQueueAtIndex(newTracks, currentTrackIndex + 1 + insertAtIndex);
           });
       } else {
-        queryTracksByIds(Array.from(itemIds)).then((newTracks) => {
-          // The visible Up Next is not the full queue so the indexes
-          // don't match, luckily we can fix that problem using the
-          // currentTrackIndex + 1 and voila.
-          addQueueAtIndex(newTracks, currentTrackIndex + 1 + insertAtIndex);
-        });
+        queryTracksByIds(Array.from(itemIds))
+          .then((tracks) => tracks.map(trackToQueueItem))
+          .then((queueItems) => {
+            // The visible Up Next is not the full queue so the indexes
+            // don't match, luckily we can fix that problem using the
+            // currentTrackIndex + 1 and voila.
+            addQueueAtIndex(queueItems, currentTrackIndex + 1 + insertAtIndex);
+          });
       }
     },
     [addQueueAtIndex, currentTrackIndex, rearrangeQueue],
   );
 
   const onDoubleClick = useCallback(
-    (item: QueueItem) => {
-      skipToTrackIndex(item.trackIndex);
+    (item: ListItem) => {
+      skipToTrackIndex(item.position);
       setSelectedTrackIds(new Set([]));
     },
     [skipToTrackIndex],
   );
 
   const renderItem = useCallback(
-    (item: QueueItem, state: ListItemState) => (
+    (item: ListItem, state: ListItemState) => (
       <div
         className={classNames([
           "flex px-2 py-1 justify-between gap-4 text-sm",
@@ -270,7 +281,7 @@ export function UpNext({
         </div>
 
         <div className="min-h-0 w-full text-left">
-          <SelectableList<QueueItem>
+          <SelectableList<ListItem>
             id="upNext"
             multiple
             allowDrag
