@@ -40,6 +40,7 @@ export interface Album {
   id: UUID;
   artistId: UUID;
   name: string;
+  sortName: string;
   slug: string;
   releaseYear: number;
   tracks: Track[];

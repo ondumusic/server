@@ -76,6 +76,19 @@ export function useArtist(idOrSlug: UUID | string) {
   ]);
 }
 
+// List Albums
+export const queryAlbums = () =>
+  repo.query<Album>("albums", {
+    sortBy: [
+      ["artistSortName", "asc"],
+      ["sortName", "asc"],
+    ],
+  });
+
+export function useAlbums() {
+  return useStoreQuery<Album>("albums", queryAlbums);
+}
+
 // Album details
 export const queryAlbum = (albumId: UUID) => repo.get<Album>("albums", albumId);
 

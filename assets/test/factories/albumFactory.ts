@@ -24,6 +24,7 @@ export const albumFactory = Factory.define<Album, {}, Album, AlbumParams>(
       __type: "album",
       id: albumId,
       name,
+      sortName: name,
       slug: faker.helpers.slugify(name.toLowerCase().replace(/\./g, "")),
       artistId: artist.id,
       releaseYear: faker.date

@@ -28,6 +28,7 @@ export const transforms = {
       return {
         id: album.id,
         name: album.name,
+        sortName: album.sortName,
         slug: album.slug,
         releaseYear: album.releaseYear,
         isUnknown: album.isUnknown,
