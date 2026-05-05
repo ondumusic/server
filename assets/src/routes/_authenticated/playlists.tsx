@@ -10,6 +10,7 @@ import { Panel } from "../../components/Panel";
 import { Playlists } from "../../components/Playlists";
 import { useDialog } from "../../hooks/useDialog";
 import { usePlayer } from "../../hooks/usePlayer";
+import { maybeResetPlaylistPicker } from "../../hooks/usePlaylistPicker";
 import i18next from "../../i18next";
 import { sync } from "../../library";
 import type { Playlist, UUID } from "../../types";
@@ -79,6 +80,9 @@ function PlaylistsLayout() {
 
       const response = await playlistApi.deletePlaylist(playlist.id);
       if (!response.ok) return;
+
+      maybeResetPlaylistPicker(playlist.id);
+
       // TODO: Maybe could be optimistic? But then need to take all
       // children into account too if deleting from repo.
       await sync.startSync();

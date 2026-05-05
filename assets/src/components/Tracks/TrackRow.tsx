@@ -91,7 +91,7 @@ export function TrackRow({
 
         {showAlbumArtwork && track?.album?.artworkUrl ? (
           <div
-            className="w-8 h-8 overflow-hidden bg-contain bg-center lg:rounded-sm overflow-hidden lg:shadow-sm "
+            className="w-8 h-8 overflow-hidden bg-contain bg-center lg:rounded-sm overflow-hidden lg:shadow-sm flex-shrink-0"
             style={{
               backgroundImage: `url(${track?.album?.artworkUrl})`,
             }}
@@ -99,7 +99,7 @@ export function TrackRow({
         ) : (
           <div
             className={classNames([
-              "w-8 h-8 overflow-hidden bg-linear-to-br from-stone-50 to-stone-200 lg:rounded-sm lg:shadow-sm",
+              "w-8 h-8 overflow-hidden bg-linear-to-br from-stone-50 to-stone-200 lg:rounded-sm lg:shadow-sm flex-shrink-0",
               !showAlbumArtwork && "hidden",
             ])}
           ></div>

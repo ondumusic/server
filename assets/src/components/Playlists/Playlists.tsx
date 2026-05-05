@@ -13,6 +13,7 @@ import {
 } from "../../components/SelectableList";
 import type { ContextMenuItem } from "../../hooks/useContextMenu";
 import { usePlayer } from "../../hooks/usePlayer";
+import { maybeResetPlaylistPicker } from "../../hooks/usePlaylistPicker";
 import i18next from "../../i18next";
 import { sync, usePlaylists } from "../../library";
 import type { Playlist, UUID } from "../../types";
@@ -97,6 +98,11 @@ export function Playlists({
                 {
                   name,
                 },
+              );
+
+              maybeResetPlaylistPicker(
+                updatedPlaylist.id,
+                updatedPlaylist.name,
               );
 
               await sync.pushChanges({

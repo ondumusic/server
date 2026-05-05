@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Playlists } from "../components/Playlists";
 import { useDialog } from "../hooks/useDialog";
-import type { Playlist } from "../types";
+import type { Playlist, UUID } from "../types";
 
 const getMostRecentPlaylist = (): Playlist | null => {
   try {
@@ -10,6 +10,24 @@ const getMostRecentPlaylist = (): Playlist | null => {
     return JSON.parse(json) as Playlist;
   } catch (_err) {
     return null;
+  }
+};
+
+export const maybeResetPlaylistPicker = (playlistId: UUID, name?: string) => {
+  const recentPlaylist = getMostRecentPlaylist();
+  if (recentPlaylist?.id !== playlistId) return;
+
+  // Update name or delete from history
+  if (name) {
+    localStorage.setItem(
+      "mostRecentPlaylist",
+      JSON.stringify({
+        id: playlistId,
+        name,
+      }),
+    );
+  } else {
+    localStorage.removeItem("mostRecentPlaylist");
   }
 };
 
