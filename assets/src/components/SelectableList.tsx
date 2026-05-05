@@ -102,6 +102,7 @@ export function SelectableList<T>({
   const [draggingIds, setDraggingIds] = useState<Set<string>>(new Set());
   const [dropAtIndex, setDropAtIndex] = useState<number | null>(null);
   const allowDrop = allowDropFrom.length !== 0;
+  const showCopyCursorRef = useRef<boolean>(false);
 
   // Type matching
   const [typeMatch, setTypeMatch] = useState<string | null>(null);
@@ -205,16 +206,34 @@ export function SelectableList<T>({
   useLayoutEffect(() => {
     if (!listRef.current) return;
     const elements = listRef.current.querySelectorAll("[data-type]");
-    const handled = new Set();
+    const handled = new Set<string>();
+    const updates = new Map<string, number>();
+
     elements.forEach((el) => {
       const type = el.getAttribute("data-type");
-      if (type) {
-        if (handled.has(type)) return;
-        measuredHeights.set(type, el.getBoundingClientRect().height);
-        handled.add(type);
+      if (type && !handled.has(type)) {
+        const height = el.getBoundingClientRect().height;
+        if (height > 0) {
+          updates.set(type, height);
+          handled.add(type);
+        }
       }
     });
-  }, [measuredHeights]);
+
+    if (updates.size > 0) {
+      setMeasuredHeights((prev) => {
+        let changed = false;
+        const next = new Map(prev);
+        updates.forEach((height, type) => {
+          if (next.get(type) !== height) {
+            next.set(type, height);
+            changed = true;
+          }
+        });
+        return changed ? next : prev;
+      });
+    }
+  }, []); // run once on mount; ResizeObserver handles subsequent changes
 
   // Automatically determine item height for every type
   // biome-ignore lint/correctness/useExhaustiveDependencies(items): suppress dependency items as changing it might change size too
@@ -389,6 +408,17 @@ export function SelectableList<T>({
       }
     };
   }, []);
+
+  // Global drag/drop state
+  useEffect(() => {
+    if (!allowDrop) return;
+    const handleGlobalDragEnd = () => {
+      setDropAtIndex(null);
+      showCopyCursorRef.current = false;
+    };
+    window.addEventListener("dragend", handleGlobalDragEnd);
+    return () => window.removeEventListener("dragend", handleGlobalDragEnd);
+  }, [allowDrop]);
 
   const handleItemClick = (index: number, e: ReactMouseEvent) => {
     const item = items[index];
@@ -572,6 +602,16 @@ export function SelectableList<T>({
     }
   };
 
+  const handleDragEnter = (e: DragEvent) => {
+    const fromOtherList = e.dataTransfer.types.some(
+      (t) =>
+        t.startsWith("application/x-list-") &&
+        t !== `application/x-list-${listId?.toLowerCase()}`,
+    );
+
+    showCopyCursorRef.current = fromOtherList;
+  };
+
   const handleDragStart = (index: number, e: DragEvent) => {
     const item = items[index];
     if (item.selectable === false) {
@@ -601,6 +641,11 @@ export function SelectableList<T>({
 
     // Configure the dragging dataTransfer
     e.dataTransfer.effectAllowed = "move";
+    // This hacky custom type is to understand where we are draggong from in dragOver
+    e.dataTransfer.setData(
+      `application/x-list-${listId?.toLowerCase()}`,
+      JSON.stringify(true),
+    );
     e.dataTransfer.setData(
       "application/json",
       JSON.stringify({
@@ -646,6 +691,8 @@ export function SelectableList<T>({
 
     e.preventDefault();
     e.stopPropagation();
+
+    e.dataTransfer.dropEffect = showCopyCursorRef.current ? "copy" : "move";
 
     // Calculate relative mouseY so we can compare it with offsets/item heights.
     const rect = listRef.current?.getBoundingClientRect();
@@ -745,6 +792,7 @@ export function SelectableList<T>({
       onKeyPress={handleKeyPress}
       role="listbox"
       aria-multiselectable={allowMultiple}
+      onDragEnter={allowDrop ? handleDragEnter : undefined}
       onDragOver={allowDrop ? handleDragOver : undefined}
       onDragLeave={allowDrop ? handleDragLeave : undefined}
       onDrop={allowDrop ? handleDrop : undefined}

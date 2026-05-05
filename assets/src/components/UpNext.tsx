@@ -100,6 +100,7 @@ export function UpNext({
   const handleDragOver = useCallback((e: DragEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
   }, []);
 
   const handleDropEmpty = useCallback(

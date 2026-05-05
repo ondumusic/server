@@ -147,7 +147,10 @@ export function Playlist({ playlist, items }: Props) {
           });
 
           queryTracksByIds(trackIds).then((tracks) =>
-            addTracks(tracks, insertAtIndex),
+            // insertAtIndex assumes the current item is already in the list
+            // so we need to do -1 to make it appear in the right spot when
+            // adding to Playlist from upNext
+            addTracks(tracks, Math.max(0, insertAtIndex - 1)),
           );
           //.catch(showErrorToast);
         } else {
