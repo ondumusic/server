@@ -29,7 +29,7 @@ export interface QueueContext {
   addQueueAfter(items: QueueItem[]): void;
   addQueueAtIndex(items: QueueItem[], index: number): void;
   rearrangeQueue(indexes: Set<number>, index: number): void;
-  replaceQueue(items: QueueItem[], startWithTrack?: Track): void;
+  replaceQueue(items: QueueItem[], startWithItem?: QueueItem): void;
   removeFromQueue(trackIndexes: number[]): void;
   clearNextTracks(): void;
   clearQueue(): void;
@@ -49,7 +49,7 @@ const QueueContext = createContext<QueueContext>({
   addQueueNext: (_items) => {},
   addQueueAfter: (_items) => {},
   addQueueAtIndex: (_items, _index) => {},
-  replaceQueue: (_items, _startWithTrack?) => {},
+  replaceQueue: (_items, _startWithItem?) => {},
   rearrangeQueue: (_indexes, _index) => {},
   removeFromQueue: (_trackIndex) => {},
   clearNextTracks: () => {},
@@ -138,14 +138,15 @@ export const QueueProvider = ({ children }: PropsWithChildren) => {
       },
       [queue],
     ),
-    replaceQueue: useCallback((items: QueueItem[], startWithTrack?: Track) => {
-      let startIndex = items.findIndex(
-        ({ track: { id } }) => id === startWithTrack?.id,
-      );
-      startIndex = Math.max(Math.min(items.length - 1, startIndex), 0);
-      setQueue(items);
-      setQueueIndex(startIndex);
-    }, []),
+    replaceQueue: useCallback(
+      (items: QueueItem[], startWithItem?: QueueItem) => {
+        let startIndex = startWithItem ? items.indexOf(startWithItem) : 0;
+        startIndex = Math.max(Math.min(items.length - 1, startIndex), 0);
+        setQueue(items);
+        setQueueIndex(startIndex);
+      },
+      [],
+    ),
     rearrangeQueue: useCallback(
       (indexes: Set<number>, index: number) => {
         const selected: QueueItem[] = [],

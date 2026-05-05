@@ -39,7 +39,7 @@ function PlaylistsDetail() {
   const { enqueueAndPlay, enqueueNext, enqueueAfter, userConfirmQueueReplace } =
     usePlayer();
 
-  const { currentTrack } = useQueue();
+  const { currentItem } = useQueue();
   const currentItems = useMemo(
     () => applyPending(items, pending),
     [items, pending],
@@ -49,7 +49,7 @@ function PlaylistsDetail() {
     (item: ListItem, state: ListItemState) => {
       let isPlaying = false;
       if (item.type === "track") {
-        isPlaying = item.track?.id === currentTrack?.id;
+        isPlaying = item.item.id === currentItem?.meta?.playlistItemId;
       }
 
       return (
@@ -61,28 +61,41 @@ function PlaylistsDetail() {
         />
       );
     },
-    [currentTrack],
+    [currentItem],
   );
 
   const onSubmit = useCallback(
     async (selectedIds: Set<string>) => {
       if (!(await userConfirmQueueReplace())) return;
 
-      const selectedTracks = currentItems
+      const selectedItems = currentItems
         .filter((item) => selectedIds.has(item.id))
-        .map((item) => item.track as Track);
+        .map((item) => ({
+          track: item.track as Track,
+          meta: {
+            playlistItemId: item.id,
+          },
+        }));
 
-      if (selectedTracks.length === 1) {
-        const selectedTrack = selectedTracks[0];
+      if (selectedItems.length === 1) {
+        const item = selectedItems[0];
 
         // The default behaviour we want is to add all tracks from the same
         // playlist to the queue and start playback at the selected track.
-        const playlistTracks = currentItems.map((item) => ({
+        const queueItems = currentItems.map((item) => ({
           track: item.track as Track,
+          meta: {
+            playlistItemId: item.id,
+          },
         }));
-        enqueueAndPlay(playlistTracks, selectedTrack);
+
+        const startWithItem = queueItems.find((queueItem) => {
+          return queueItem.meta.playlistItemId === item.meta.playlistItemId;
+        });
+
+        enqueueAndPlay(queueItems, startWithItem);
       } else {
-        enqueueAndPlay(selectedTracks.map((track) => ({ track })));
+        enqueueAndPlay(selectedItems);
       }
     },
     [currentItems, enqueueAndPlay, userConfirmQueueReplace],
@@ -95,10 +108,18 @@ function PlaylistsDetail() {
 
       // The default behaviour we want is to add all tracks from the same
       // playlist to the queue and start playback at the selected track.
-      const playlistTracks = currentItems.map((item) => ({
+      const queueItems = currentItems.map((item) => ({
         track: item.track as Track,
+        meta: {
+          playlistItemId: item.id,
+        },
       }));
-      enqueueAndPlay(playlistTracks, item.track);
+
+      const startWithItem = queueItems.find((queueItem) => {
+        return queueItem.meta.playlistItemId === item.item.id;
+      });
+
+      enqueueAndPlay(queueItems, startWithItem);
     },
     [currentItems, enqueueAndPlay, userConfirmQueueReplace],
   );
@@ -143,10 +164,15 @@ function PlaylistsDetail() {
         return [];
       }
 
-      const tracks = currentItems
+      const queueItems = currentItems
         .filter((item) => selectedIds.has(item.id))
-        .map((item) => item.track as Track);
-      if (!tracks) return [];
+        .map((item) => ({
+          track: item.track as Track,
+          meta: {
+            playlistItemId: item.id,
+          },
+        }));
+      if (!queueItems) return [];
 
       return [
         {
@@ -154,10 +180,10 @@ function PlaylistsDetail() {
           key: "play_next",
           label: i18next.t("contextMenu.playNext", {
             defaultValue: "Play Next",
-            count: tracks.length,
+            count: queueItems.length,
           }),
           onClick() {
-            enqueueNext(tracks.map((track) => ({ track })));
+            enqueueNext(queueItems);
           },
         },
         {
@@ -165,10 +191,10 @@ function PlaylistsDetail() {
           key: "play_after",
           label: i18next.t("contextMenu.playAfter", {
             defaultValue: "Add To Queue",
-            count: tracks.length,
+            count: queueItems.length,
           }),
           onClick() {
-            enqueueAfter(tracks.map((track) => ({ track })));
+            enqueueAfter(queueItems);
           },
         },
         {
@@ -181,7 +207,7 @@ function PlaylistsDetail() {
           danger: true,
           label: i18next.t("contextMenu.removeTracks", {
             defaultValue: "Remove {{ count }} tracks",
-            count: tracks.length,
+            count: queueItems.length,
           }),
           onClick() {
             onDelete(selectedIds);
@@ -202,6 +228,7 @@ function PlaylistsDetail() {
           id: item.id,
           number: trackIndex + 1,
           type: "track",
+          item,
           position: item.position,
           track: item.track as Track,
           lastTrack: trackIndex === trackCount - 1,

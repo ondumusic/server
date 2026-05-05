@@ -94,41 +94,10 @@ export function useAlbum(albumId: UUID | undefined) {
 interface TrackFilters {
   artistId?: UUID;
   albumId?: UUID;
-  playlistId?: UUID;
   random?: boolean;
 }
 
 export const queryTracks = (filters: TrackFilters) => {
-  if (filters.playlistId) {
-    const query: Query<PlaylistItem> = {
-      whereIndex: ["by_playlistId", "=", filters.playlistId],
-      sortBy: filters.random === true ? "random" : [["position", "asc"]],
-      join: {
-        track: {
-          store: "tracks",
-          foreignKey: "trackId",
-          cardinality: "one",
-          query: (
-            playlistItems: PlaylistItem[],
-          ): Omit<Query<Track>, "join"> => {
-            const trackIds = new Set(playlistItems.map((item) => item.trackId));
-            return {
-              whereIndex: ["id", "in", Array.from(trackIds)],
-            };
-          },
-        },
-      },
-    };
-
-    return repo
-      .query<PlaylistItem>("playlistItems", query)
-      .then((playlistItems) => {
-        return playlistItems
-          .map((item) => item.track)
-          .filter((track) => track !== null);
-      }) as Promise<Track[]>;
-  }
-
   let query: Query<Track> = {
     sortBy:
       filters.random === true
@@ -204,10 +173,13 @@ export function usePlaylists(query = {}) {
 }
 
 // List Playlist Items
-export const queryPlaylistsItems = async (playlistId: UUID) => {
+export const queryPlaylistItems = async (
+  playlistId: UUID,
+  random?: boolean,
+) => {
   const query: Query<PlaylistItem> = {
     whereIndex: ["by_playlistId", "=", playlistId],
-    sortBy: [["position", "asc"]],
+    sortBy: random === true ? "random" : [["position", "asc"]],
     join: {
       track: {
         store: "tracks",
@@ -242,7 +214,7 @@ export const queryPlaylistsItems = async (playlistId: UUID) => {
 export function usePlaylistItems(playlistId: UUID) {
   return useStoreQuery<PlaylistItem>(
     "playlistItems",
-    () => queryPlaylistsItems(playlistId),
+    () => queryPlaylistItems(playlistId),
     [playlistId],
   );
 }

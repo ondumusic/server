@@ -211,14 +211,18 @@ function Artists() {
 
         // The default behaviour we want is to add all tracks from the same
         // album to the queue and start playback at the selected track.
-        const albumTracks = data
+        const queueItems = data
           .flatMap((album) => {
             if (album.id !== selectedTrack.albumId) return [];
             return album.tracks;
           })
           .map((track) => ({ track }));
 
-        enqueueAndPlay(albumTracks, selectedTrack);
+        const startWithItem = queueItems.find((queueItem) => {
+          return queueItem.track.id === selectedTrack.id;
+        });
+
+        enqueueAndPlay(queueItems, startWithItem);
       } else {
         enqueueAndPlay(selectedTracks.map((track) => ({ track })));
       }
@@ -233,14 +237,18 @@ function Artists() {
 
       // The default behaviour we want is to add all tracks from the same
       // album to the queue and start playback at the selected track.
-      const albumTracks = data
+      const queueItems = data
         .flatMap((album) => {
           if (album.id !== item.track.albumId) return [];
           return album.tracks;
         })
         .map((track) => ({ track }));
 
-      enqueueAndPlay(albumTracks, item.track);
+      const startWithItem = queueItems.find((queueItem) => {
+        return queueItem.track.id === item.id;
+      });
+
+      enqueueAndPlay(queueItems, startWithItem);
     },
     [data, enqueueAndPlay, userConfirmQueueReplace],
   );

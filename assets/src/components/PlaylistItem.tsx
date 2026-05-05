@@ -3,7 +3,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { AnimatedWaveform } from "../components/icons/AnimatedWaveform";
 import { PlayIcon } from "../components/icons/PlayIcon";
 import type { ListItem as DefaultListItem } from "../components/SelectableList";
-import type { Playlist, Track } from "../types";
+import type { Playlist, PlaylistItem as TPlaylistItem, Track } from "../types";
 import { classNames } from "../utils/classNames";
 import { formatDuration } from "../utils/formatDuration";
 import { formatTotalDuration } from "../utils/formatTotalDuration";
@@ -18,6 +18,7 @@ type TrackItem = DefaultListItem & {
   type: "track";
   number: number;
   track: Track;
+  item: TPlaylistItem;
   lastTrack?: boolean;
 };
 

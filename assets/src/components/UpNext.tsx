@@ -115,7 +115,12 @@ export function UpNext({
         if (sourceListId === "playlist") {
           queryPlaylistItemsByIds(Array.from(itemIds))
             .then((items) =>
-              items.map((item) => ({ track: item.track as Track })),
+              items.map((item) => ({
+                track: item.track as Track,
+                meta: {
+                  playlistItemId: item.id,
+                },
+              })),
             )
             .then(addQueueAfter);
         } else {
@@ -175,7 +180,12 @@ export function UpNext({
       } else if (sourceListId === "playlist") {
         queryPlaylistItemsByIds(Array.from(itemIds))
           .then((items) =>
-            items.map((item) => ({ track: item.track as Track })),
+            items.map((item) => ({
+              track: item.track as Track,
+              meta: {
+                playlistItemId: item.id,
+              },
+            })),
           )
           .then((newTracks) => {
             addQueueAtIndex(newTracks, currentTrackIndex + 1 + insertAtIndex);

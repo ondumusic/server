@@ -8,7 +8,7 @@ import { useAudioManager } from "../hooks/useAudioManager";
 import { useDialog } from "../hooks/useDialog";
 import { type QueueItem, useQueue } from "../hooks/useQueue";
 import i18next from "../i18next";
-import { queryTracks } from "../library";
+import { queryPlaylistItems, queryTracks } from "../library";
 import type { Track, UUID } from "../types";
 
 interface PopulateInput {
@@ -20,7 +20,7 @@ interface PopulateInput {
 
 export interface PlayerContext {
   // Queue management
-  enqueueAndPlay(items: QueueItem[], startWithTrack?: Track): void;
+  enqueueAndPlay(items: QueueItem[], startWithItem?: QueueItem): void;
   enqueueNext(items: QueueItem[]): void;
   enqueueAfter(items: QueueItem[]): void;
   populateUpNext(input: PopulateInput): void;
@@ -28,7 +28,7 @@ export interface PlayerContext {
 }
 
 const PlayerContext = createContext<PlayerContext>({
-  enqueueAndPlay: (_items, _startWithTrack?) => {},
+  enqueueAndPlay: (_items, _startWithItem?) => {},
   enqueueNext: (_items) => {},
   enqueueAfter: (_items) => {},
   populateUpNext: (_input) => {},
@@ -42,6 +42,7 @@ export function usePlayer() {
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const {
     currentTrack,
+    currentItem,
     hasNextTrack,
     replaceQueue,
     addQueueNext,
@@ -67,32 +68,43 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
       playlistId,
       random = false,
     }: PopulateInput) => {
-      const tracks = await queryTracks({
-        artistId,
-        albumId,
-        playlistId,
-        random,
-      });
-      replaceQueue(tracks.map((track) => ({ track })));
+      if (playlistId) {
+        const items = await queryPlaylistItems(playlistId, random);
+        replaceQueue(
+          items.map((item) => ({
+            track: item.track as Track,
+            meta: {
+              playlistItemId: item.id,
+            },
+          })),
+        );
+      } else {
+        const tracks = await queryTracks({
+          artistId,
+          albumId,
+          random,
+        });
+        replaceQueue(tracks.map((track) => ({ track })));
+      }
     },
     [replaceQueue],
   );
 
   const value = {
     enqueueAndPlay: useCallback(
-      (items: QueueItem[], startWithTrack?: Track) => {
+      (items: QueueItem[], startWithItem?: QueueItem) => {
         if (items.length === 0) return;
 
-        replaceQueue(items, startWithTrack);
+        replaceQueue(items, startWithItem);
         if (!isPlaying) setIsPlaying(true);
 
         // If the user wants to play the current track from the beginning again
         // it technically doesn't change the state.. but we can seek to 0.
-        if (isPlaying && startWithTrack === currentTrack) {
+        if (isPlaying && startWithItem === currentItem) {
           scrubTo(0, true);
         }
       },
-      [setIsPlaying, isPlaying, currentTrack, replaceQueue, scrubTo],
+      [setIsPlaying, isPlaying, currentItem, replaceQueue, scrubTo],
     ),
     enqueueNext: useCallback(
       (items: QueueItem[]) => {

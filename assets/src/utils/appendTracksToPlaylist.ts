@@ -1,6 +1,6 @@
 import { generateNKeysBetween } from "fractional-indexing";
 import { type PlaylistOperations, playlistApi } from "../api";
-import { queryPlaylistsItems, sync } from "../library";
+import { queryPlaylistItems, sync } from "../library";
 import type { PlaylistItem, Track, UUID } from "../types";
 
 const batchUpdate = (playlistId: UUID, ops: PlaylistOperations) =>
@@ -12,7 +12,7 @@ const writeItemsToIndexedDb = async (playlistItems?: PlaylistItem[]) => {
 };
 
 async function getLastPlaylistItemPosition(playlistId: UUID) {
-  const items = await queryPlaylistsItems(playlistId);
+  const items = await queryPlaylistItems(playlistId);
   if (!items.length) return null;
   return (items.pop() as PlaylistItem).position;
 }
