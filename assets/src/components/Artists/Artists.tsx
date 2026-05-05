@@ -1,20 +1,20 @@
 import { type PropsWithChildren, useCallback } from "react";
-import { ArtistListItem } from "../components/ArtistListItem";
-import { Loading } from "../components/Loading";
+import { Loading } from "../../components/Loading";
 import {
   type ListItemState,
   SelectableList,
-} from "../components/SelectableList";
-import { usePlayer } from "../hooks/usePlayer";
-import i18next from "../i18next";
-import { useArtists } from "../library";
-import type { Artist, UUID } from "../types";
+} from "../../components/SelectableList";
+import { usePlayer } from "../../hooks/usePlayer";
+import i18next from "../../i18next";
+import { useArtists } from "../../library";
+import type { Artist, UUID } from "../../types";
+import { ArtistRow } from "./ArtistRow";
 
 function isArtist(artist: Artist, artistId: string): boolean {
   return artist.id === artistId || artist.slug === artistId;
 }
 
-export function ArtistList({
+export function Artists({
   artistId,
   onChange,
   onSubmit,
@@ -103,7 +103,7 @@ export function ArtistList({
 
   const renderItem = useCallback(
     (artist: Artist, state: ListItemState) => (
-      <ArtistListItem isSelected={state.isSelected} artist={artist} />
+      <ArtistRow isSelected={state.isSelected} artist={artist} />
     ),
     [],
   );

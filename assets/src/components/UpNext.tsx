@@ -97,12 +97,12 @@ export function UpNext({
     );
   }, [queue, currentTrackIndex]);
 
-  const onDragOver = useCallback((e: DragEvent) => {
+  const handleDragOver = useCallback((e: DragEvent) => {
     e.stopPropagation();
     e.preventDefault();
   }, []);
 
-  const onDropEmpty = useCallback(
+  const handleDropEmpty = useCallback(
     (e: DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
@@ -135,12 +135,12 @@ export function UpNext({
     [addQueueAfter],
   );
 
-  const onChange = useCallback(
+  const handleChange = useCallback(
     (itemIds: Set<string>) => setSelectedTrackIds(itemIds),
     [],
   );
 
-  const onDelete = useCallback(
+  const handleDelete = useCallback(
     (itemIds: Set<string>) => {
       const selectedItems = listItems.filter((item) =>
         itemIds.has(item.track.id),
@@ -153,7 +153,7 @@ export function UpNext({
     [listItems, removeFromQueue],
   );
 
-  const onSubmit = useCallback(
+  const handleSubmit = useCallback(
     (itemIds: Set<string>) => {
       const lastItemId = [...itemIds].pop();
       if (!lastItemId) return;
@@ -164,9 +164,9 @@ export function UpNext({
     [skipToTrackIndex],
   );
 
-  const onContextMenu = useCallback(() => [], []);
+  const handleContextMenu = useCallback(() => [], []);
 
-  const onDrop = useCallback(
+  const handleDrop = useCallback(
     (itemIds: Set<string>, insertAtIndex: number, sourceListId: string) => {
       if (sourceListId === "upNext") {
         const currentIndexes: number[] = Array.from(itemIds).map((itemId) =>
@@ -204,7 +204,7 @@ export function UpNext({
     [addQueueAtIndex, currentTrackIndex, rearrangeQueue],
   );
 
-  const onDoubleClick = useCallback(
+  const handleDoubleClick = useCallback(
     (item: ListItem) => {
       skipToTrackIndex(item.position);
       setSelectedTrackIds(new Set([]));
@@ -266,8 +266,8 @@ export function UpNext({
             "block h-full text-center py-8 text-sm text-white/50",
             listItems.length !== 0 && "hidden",
           ])}
-          onDragOver={onDragOver}
-          onDrop={onDropEmpty}
+          onDragOver={handleDragOver}
+          onDrop={handleDropEmpty}
         >
           <Trans i18nKey="upNext.emptyView">No upcoming tracks.</Trans>
         </div>
@@ -300,12 +300,12 @@ export function UpNext({
             paddingBottom={20}
             items={listItems}
             selectedIds={selectedTrackIds}
-            onChange={onChange}
-            onDelete={onDelete}
-            onDrop={onDrop}
-            onSubmit={onSubmit}
-            onContextMenu={onContextMenu}
-            onDoubleClick={onDoubleClick}
+            onChange={handleChange}
+            onDelete={handleDelete}
+            onDrop={handleDrop}
+            onSubmit={handleSubmit}
+            onContextMenu={handleContextMenu}
+            onDoubleClick={handleDoubleClick}
             renderItem={renderItem}
           />
         </div>

@@ -20,10 +20,11 @@ export function Panel({
 }>) {
   const hasSidebar = typeof renderSidebar === "function";
   const allowPanels = useMediaQuery("(width >= 48rem)") && hasSidebar;
-  const { defaultLayout, onLayoutChange } = useDefaultLayout({
-    groupId: "panelSplitView",
-    storage: localStorage,
-  });
+  const { defaultLayout, onLayoutChange: handleLayoutChange } =
+    useDefaultLayout({
+      groupId: "panelSplitView",
+      storage: localStorage,
+    });
 
   return (
     <div
@@ -39,7 +40,7 @@ export function Panel({
         <Group
           className="w-full"
           defaultLayout={defaultLayout}
-          onLayoutChange={onLayoutChange}
+          onLayoutChange={handleLayoutChange}
           orientation="horizontal"
         >
           <ResizablePanel

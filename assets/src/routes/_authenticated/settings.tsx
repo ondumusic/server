@@ -4,10 +4,10 @@ import { repo } from "../../library";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   staticData: { view: "settings" as const },
-  component: Settings,
+  component: SettingsLayout,
 });
 
-function Settings() {
+function SettingsLayout() {
   return (
     <Panel>
       Settings: Coming Soon

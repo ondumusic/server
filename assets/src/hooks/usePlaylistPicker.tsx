@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { PlaylistList } from "../components/PlaylistList";
+import { Playlists } from "../components/Playlists";
 import { useDialog } from "../hooks/useDialog";
 import type { Playlist } from "../types";
 
@@ -24,7 +24,7 @@ const PlaylistPicker = ({
 
   return (
     <div className="bg-gray-200 flex flex-col max-h-100">
-      <PlaylistList
+      <Playlists
         playlistId={selectedPlaylist?.id}
         onChange={(playlist) => selectPlaylist(playlist)}
         onSubmit={(playlist) => onClose(playlist)}

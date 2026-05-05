@@ -3,10 +3,10 @@ import { Panel } from "../../components/Panel";
 
 export const Route = createFileRoute("/_authenticated/albums")({
   staticData: { view: "albums" as const },
-  component: Albums,
+  component: AlbumsLayout,
 });
 
-function Albums() {
+function AlbumsLayout() {
   return (
     <Panel>
       Albums: Coming Soon

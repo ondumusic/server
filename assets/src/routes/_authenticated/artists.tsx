@@ -5,21 +5,21 @@ import {
   useParams,
 } from "@tanstack/react-router";
 import { useCallback } from "react";
-import { ArtistList } from "../../components/ArtistList";
+import { Artists } from "../../components/Artists";
 import { Panel } from "../../components/Panel";
 import { usePlayer } from "../../hooks/usePlayer";
 import type { Artist, UUID } from "../../types";
 
 export const Route = createFileRoute("/_authenticated/artists")({
   staticData: { view: "artists" as const },
-  component: Artists,
+  component: ArtistsLayout,
 });
 
 type Params = {
   artistId: UUID;
 };
 
-function Artists() {
+function ArtistsLayout() {
   const navigate = useNavigate();
   const { populateUpNext, userConfirmQueueReplace } = usePlayer();
   const routeParams = useParams({
@@ -49,7 +49,7 @@ function Artists() {
 
   const renderSidebar = useCallback(() => {
     return (
-      <ArtistList
+      <Artists
         artistId={artistId}
         onChange={handleChange}
         onSubmit={handleSubmit}

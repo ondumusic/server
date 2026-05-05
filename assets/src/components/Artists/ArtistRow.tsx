@@ -1,14 +1,14 @@
 import { memo } from "react";
-import { Marquee } from "../components/Marquee";
-import type { Artist } from "../types";
-import { classNames } from "../utils/classNames";
+import { Marquee } from "../../components/Marquee";
+import type { Artist } from "../../types";
+import { classNames } from "../../utils/classNames";
 
 interface Props {
   artist: Artist;
   isSelected: boolean;
 }
 
-export const ArtistListItem = memo(({ artist, isSelected = false }: Props) => {
+export const ArtistRow = memo(({ artist, isSelected = false }: Props) => {
   return (
     <li
       className={classNames([

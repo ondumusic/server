@@ -7,7 +7,7 @@ import {
 import { useCallback } from "react";
 import { playlistApi } from "../../api";
 import { Panel } from "../../components/Panel";
-import { PlaylistList } from "../../components/PlaylistList";
+import { Playlists } from "../../components/Playlists";
 import { useDialog } from "../../hooks/useDialog";
 import { usePlayer } from "../../hooks/usePlayer";
 import i18next from "../../i18next";
@@ -16,14 +16,14 @@ import type { Playlist, UUID } from "../../types";
 
 export const Route = createFileRoute("/_authenticated/playlists")({
   staticData: { view: "playlists" as const },
-  component: Playlists,
+  component: PlaylistsLayout,
 });
 
 type Params = {
   playlistId: UUID;
 };
 
-function Playlists() {
+function PlaylistsLayout() {
   const navigate = useNavigate();
   const { promptConfirm } = useDialog();
   const { populateUpNext, userConfirmQueueReplace } = usePlayer();
@@ -94,7 +94,7 @@ function Playlists() {
 
   const renderSidebar = useCallback(() => {
     return (
-      <PlaylistList
+      <Playlists
         playlistId={playlistId}
         onCreate={handleCreate}
         onChange={handleChange}

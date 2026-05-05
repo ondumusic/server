@@ -39,19 +39,19 @@ export function NowPlaying() {
     }
   }, [currentAlbum]);
 
-  const onScrubStart = () => {
+  const handleScrubStart = () => {
     isScrubbing.current = true;
     setIsPlaying(false);
   };
 
-  const onScrub = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleScrub = (event: ChangeEvent<HTMLInputElement>) => {
     if (!isScrubbing.current) return;
     const newCurrentTime = parseFloat(event.target.value);
     scrubTime.current = newCurrentTime;
     scrubTo(newCurrentTime);
   };
 
-  const onScrubEnd = () => {
+  const handleScrubEnd = () => {
     isScrubbing.current = false;
     if (!scrubTime.current) return;
     scrubTo(scrubTime.current, true);
@@ -132,9 +132,9 @@ export function NowPlaying() {
             value={currentTime}
             min={0}
             max={duration}
-            onChange={onScrub}
-            onMouseDown={onScrubStart}
-            onMouseUp={onScrubEnd}
+            onChange={handleScrub}
+            onMouseDown={handleScrubStart}
+            onMouseUp={handleScrubEnd}
           />
         </div>
       </div>

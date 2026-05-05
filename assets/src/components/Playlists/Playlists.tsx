@@ -5,21 +5,18 @@ import {
   useMemo,
   useState,
 } from "react";
-import { playlistApi } from "../api";
-import { Loading } from "../components/Loading";
-import {
-  type ListItem,
-  PlaylistListItem,
-} from "../components/PlaylistListItem";
+import { playlistApi } from "../../api";
+import { Loading } from "../../components/Loading";
 import {
   type ListItemState,
   SelectableList,
-} from "../components/SelectableList";
-import type { ContextMenuItem } from "../hooks/useContextMenu";
-import { usePlayer } from "../hooks/usePlayer";
-import i18next from "../i18next";
-import { sync, usePlaylists } from "../library";
-import type { Playlist, UUID } from "../types";
+} from "../../components/SelectableList";
+import type { ContextMenuItem } from "../../hooks/useContextMenu";
+import { usePlayer } from "../../hooks/usePlayer";
+import i18next from "../../i18next";
+import { sync, usePlaylists } from "../../library";
+import type { Playlist, UUID } from "../../types";
+import { type ListItem, PlaylistRow } from "./PlaylistRow";
 
 function isPlaylist(playlist: Playlist, playlistId: string): boolean {
   return playlist.id === playlistId;
@@ -30,7 +27,7 @@ interface PendingPlaylist {
   isFolder?: boolean;
 }
 
-export function PlaylistList({
+export function Playlists({
   playlistId,
   onCreate,
   onChange,
@@ -158,7 +155,7 @@ export function PlaylistList({
     return buildTree(null, 0);
   }, [allItems, creatingPlaylist, renamingPlaylist, openFolders, onCreate]);
 
-  const onTypeMatch = useCallback((item: Playlist, query: string) => {
+  const handleTypeMatch = useCallback((item: Playlist, query: string) => {
     const matcher = new RegExp(`^${query.replace(/\s+/g, "")}`, "iu");
     const name = item.name
       .normalize("NFD")
@@ -364,7 +361,7 @@ export function PlaylistList({
 
   const renderItem = useCallback(
     (playlist: ListItem, state: ListItemState) => (
-      <PlaylistListItem isSelected={state.isSelected} playlist={playlist} />
+      <PlaylistRow isSelected={state.isSelected} playlist={playlist} />
     ),
     [],
   );
@@ -382,7 +379,7 @@ export function PlaylistList({
       paddingTop={10}
       paddingBottom={10}
       defaultFocusId={currentPlaylist?.id}
-      onTypeMatch={onTypeMatch}
+      onTypeMatch={handleTypeMatch}
       defaultFocusType="center"
       selectedIds={
         currentPlaylist ? new Set([currentPlaylist.id]) : new Set([])

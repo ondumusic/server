@@ -132,11 +132,13 @@ export class AudioService {
     // If readyState is 3 (HAVE_FUTURE_DATA) or higher (4: HAVE_ENOUGH_DATA)
     // we should be able to play immediately.
     if (audioRef.readyState >= 3) {
-      audioRef.play();
+      // audioRef.play();
+      audioRef.play().catch((err) => console.warn("blocked:", err.name));
     } else {
       // Otherwise we'll autoplay when the canplay event is dispatched.
       const canPlay = () => {
-        audioRef.play();
+        // audioRef.play();
+        audioRef.play().catch((err) => console.warn("blocked:", err.name));
         audioRef.removeEventListener("canplay", canPlay);
         audioRef.onerror = null;
       };
@@ -172,7 +174,8 @@ export class AudioService {
     const audioRef = this.#getCurrentAudioRef();
     if (!audioRef) return;
 
-    audioRef.play();
+    // audioRef.play();
+    audioRef.play().catch((err) => console.warn("blocked:", err.name));
   }
 
   pause() {

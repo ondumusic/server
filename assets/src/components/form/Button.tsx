@@ -37,7 +37,7 @@ export function Button({
   link,
   style,
   type,
-  onClick,
+  onClick: handleClick,
 }: PropsWithChildren<{
   disabled?: boolean;
   style?: ButtonStyle;
@@ -56,7 +56,7 @@ export function Button({
         !link && colors.button,
       ])}
       type={type}
-      onClick={onClick}
+      onClick={handleClick}
     >
       {children}
     </button>
