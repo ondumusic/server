@@ -2,9 +2,9 @@ defmodule MusicBox.Playlists do
   @moduledoc false
 
   import Ecto.Query, warn: false
-  alias MusicBox.Repo
-
+  alias MusicBox.FractionalIndex
   alias MusicBox.Playlists.{Operations, Playlist, PlaylistItem}
+  alias MusicBox.Repo
 
   @spec paginate_playlists(map()) :: Repo.page(Playlist)
   def paginate_playlists(params) do
@@ -46,6 +46,30 @@ defmodule MusicBox.Playlists do
           {:ok, Operations.result()} | Operations.error()
   def update_playlist_items(playlist, changes) do
     Operations.batch_update(playlist, changes)
+  end
+
+  @spec rebalance_playlist_items(Playlist.t()) :: {:ok, non_neg_integer()}
+  def rebalance_playlist_items(playlist) do
+    Repo.transact(fn repo ->
+      item_ids =
+        from(i in PlaylistItem,
+          where: i.playlist_id == ^playlist.id,
+          order_by: [asc: :position],
+          select: i.id
+        )
+        |> repo.all()
+
+      new_keys = FractionalIndex.generate_n_keys_between(nil, nil, length(item_ids))
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+      Enum.zip(item_ids, new_keys)
+      |> Enum.each(fn {item_id, key} ->
+        from(i in PlaylistItem, where: i.id == ^item_id)
+        |> repo.update_all(set: [position: key, updated_at: now])
+      end)
+
+      {:ok, length(item_ids)}
+    end)
   end
 
   @spec paginate_playlists_items(Playlist.t(), map()) :: Repo.page(PlaylistItem)
