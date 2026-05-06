@@ -96,6 +96,14 @@ defmodule MusicBoxWeb.PlaylistJSON do
     }
   end
 
+  def batch_error(%{error: {:invalid_positions, positions}}) do
+    %{
+      ok: false,
+      error: "invalid_positions",
+      positions: positions
+    }
+  end
+
   def batch_error(%{error: {:missing_items, ids}}) do
     %{
       ok: false,

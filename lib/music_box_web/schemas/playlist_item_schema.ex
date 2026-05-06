@@ -29,11 +29,7 @@ defmodule MusicBoxWeb.Schemas.PlaylistItem do
         description: "Entity type"
       },
       id: MusicBoxWeb.Schemas.PlaylistItemId,
-      position: %Schema{
-        type: :string,
-        example: "a",
-        description: "The position of the item in the playlist using fractional indexing."
-      },
+      position: MusicBoxWeb.Schemas.FractionalIndex,
       playlistId: MusicBoxWeb.Schemas.PlaylistId,
       trackId: MusicBoxWeb.Schemas.TrackId,
       insertedAt: %Schema{type: :string, format: :"date-time"}

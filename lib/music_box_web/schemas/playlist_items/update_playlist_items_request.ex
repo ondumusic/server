@@ -10,11 +10,7 @@ defmodule MusicBoxWeb.Schemas.PositionedTrack do
     type: :object,
     required: [:position, :trackId],
     properties: %{
-      position: %Schema{
-        type: :string,
-        description: "Fractional index position",
-        example: "a"
-      },
+      position: MusicBoxWeb.Schemas.FractionalIndex,
       trackId: TrackId
     },
     additionalProperties: false
@@ -33,11 +29,7 @@ defmodule MusicBoxWeb.Schemas.PositionedItem do
     type: :object,
     required: [:position, :itemId],
     properties: %{
-      position: %Schema{
-        type: :string,
-        description: "Fractional index position",
-        example: "a"
-      },
+      position: MusicBoxWeb.Schemas.FractionalIndex,
       itemId: PlaylistItemId
     },
     additionalProperties: false
@@ -162,6 +154,24 @@ defmodule MusicBoxWeb.Schemas.UpdatePlaylistItemsError do
     })
   end
 
+  defmodule InvalidPositions do
+    require OpenApiSpex
+    @moduledoc false
+
+    OpenApiSpex.schema(%{
+      title: "InvalidPositionsError",
+      type: :object,
+      required: [:error, :positions],
+      properties: %{
+        ok: %Schema{type: :boolean, example: false},
+        error: %Schema{type: :string, enum: ["invalid_positions"]},
+        positions: %Schema{type: :array, items: %Schema{type: :string}}
+      },
+      example: %{"error" => "invalid_positions", "positions" => ["z@p"]},
+      additionalProperties: false
+    })
+  end
+
   defmodule UnknownItems do
     require OpenApiSpex
     @moduledoc false
@@ -208,6 +218,7 @@ defmodule MusicBoxWeb.Schemas.UpdatePlaylistItemsError do
       TooManyOperations,
       MoveRemoveConflict,
       AddMoveConflict,
+      InvalidPositions,
       UnknownItems,
       UnknownTracks
     ],
@@ -218,6 +229,7 @@ defmodule MusicBoxWeb.Schemas.UpdatePlaylistItemsError do
         "too_many_operations" => "#/components/schemas/TooManyOperationsError",
         "move_remove_conflict" => "#/components/schemas/MoveRemoveConflictError",
         "add_move_conflict" => "#/components/schemas/AddMoveConflictError",
+        "invalid_positions" => "#/components/schemas/InvalidPositionsError",
         "unknown_items" => "#/components/schemas/UnknownItemsError",
         "unknown_tracks" => "#/components/schemas/UnknownTracksError"
       }

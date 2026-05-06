@@ -12,7 +12,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
         items =
           tracks
           |> Enum.filter(&(&1.number in [4, 8, 9]))
-          |> Enum.zip(["c", "b", "a"])
+          |> Enum.zip(["a2", "a1", "a0"])
           |> Enum.map(fn {track, position} ->
             %{
               position: position,
@@ -150,9 +150,9 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                "totalEntries" => 3,
                "pageSize" => 100,
                "entries" => [
-                 %{"position" => "a"},
-                 %{"position" => "b"},
-                 %{"position" => "c"}
+                 %{"position" => "a0"},
+                 %{"position" => "a1"},
+                 %{"position" => "a2"}
                ]
              } =
                conn
@@ -317,7 +317,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
 
       Playlists.update_playlist_items(playlist, %{
         add: [
-          %{track_id: track.id, position: "a"}
+          %{track_id: track.id, position: "a0"}
         ]
       })
 
@@ -336,7 +336,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
 
     test "can add items to playlist", %{conn: conn, playlist: playlist} do
       track = MusicBox.Tracks.paginate_tracks(%{}).entries |> Enum.find(&(&1.number == 5))
-      position = "d"
+      position = "a3"
       track_id = track.id
 
       playlist =
@@ -377,7 +377,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
       playlist = update_record(playlist, %{is_folder: true})
 
       track = MusicBox.Tracks.paginate_tracks(%{}).entries |> Enum.find(&(&1.number == 5))
-      position = "d"
+      position = "a3"
       track_id = track.id
 
       assert %{
@@ -398,7 +398,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
 
     test "can move items in playlist", %{conn: conn, playlist: playlist} do
       item = List.first(playlist.items)
-      position = "q"
+      position = "a6"
       item_id = item.id
 
       assert %{
@@ -496,7 +496,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> patch(~p"/api/playlists/#{playlist.id}/items", %{
                  move: [
                    %{
-                     position: "a",
+                     position: "a0",
                      itemId: item_id
                    }
                  ]
@@ -532,7 +532,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                  add: [
                    %{
                      trackId: track_id,
-                     position: "a"
+                     position: "a0"
                    }
                  ]
                })
@@ -541,13 +541,13 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
 
     test "ensures positions are unique", %{conn: conn, playlist: playlist} do
       track = MusicBox.Tracks.paginate_tracks(%{}).entries |> Enum.find(&(&1.number == 5))
-      position = "a"
+      position = "a0"
       track_id = track.id
 
       assert %{
                "ok" => false,
                "error" => "add_move_conflict",
-               "positions" => ["a"]
+               "positions" => ["a0"]
              } =
                conn
                |> patch(~p"/api/playlists/#{playlist.id}/items", %{
@@ -590,6 +590,27 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> api_response(422, "UpdatePlaylistItemsError")
     end
 
+    test "validates position value", %{conn: conn, playlist: playlist} do
+      item = List.first(playlist.items)
+      item_id = item.id
+
+      assert %{
+               "ok" => false,
+               "error" => "invalid_positions",
+               "positions" => ["q1"]
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}/items", %{
+                 move: [
+                   %{
+                     position: "q1",
+                     itemId: item_id
+                   }
+                 ]
+               })
+               |> api_response(422, "UpdatePlaylistItemsError")
+    end
+
     test "full happy path playlist test", %{conn: conn} do
       artist = MusicBox.Artists.get_artist!("the-beatles")
       album = MusicBox.Albums.get_album_for_artist!(artist, "with-the-beatles")
@@ -618,22 +639,22 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                "added" => [
                  %{
                    "id" => item1,
-                   "position" => "a",
+                   "position" => "a0",
                    "trackId" => ^track1
                  },
                  %{
                    "id" => item2,
-                   "position" => "b",
+                   "position" => "a1",
                    "trackId" => ^track2
                  },
                  %{
                    "id" => item3,
-                   "position" => "c",
+                   "position" => "a2",
                    "trackId" => ^track3
                  },
                  %{
                    "id" => item4,
-                   "position" => "d",
+                   "position" => "a3",
                    "trackId" => ^track4
                  }
                ],
@@ -644,19 +665,19 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> patch(~p"/api/playlists/#{playlist_id}/items", %{
                  add: [
                    %{
-                     position: "a",
+                     position: "a0",
                      trackId: track1
                    },
                    %{
-                     position: "b",
+                     position: "a1",
                      trackId: track2
                    },
                    %{
-                     position: "c",
+                     position: "a2",
                      trackId: track3
                    },
                    %{
-                     position: "d",
+                     position: "a3",
                      trackId: track4
                    }
                  ]
@@ -667,14 +688,14 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                "ok" => true,
                "added" => [
                  %{
-                   "position" => "e",
+                   "position" => "a5",
                    "id" => item5,
                    "trackId" => ^track5
                  }
                ],
                "moved" => [
                  %{
-                   "position" => "a1",
+                   "position" => "a6",
                    "id" => ^item3
                  }
                ],
@@ -684,13 +705,13 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                |> patch(~p"/api/playlists/#{playlist_id}/items", %{
                  add: [
                    %{
-                     position: "e",
+                     position: "a5",
                      trackId: track5
                    }
                  ],
                  move: [
                    %{
-                     position: "a1",
+                     position: "a6",
                      itemId: item3
                    }
                  ],
@@ -700,7 +721,7 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
 
       playlist = Playlists.get_playlist!(playlist_id)
 
-      assert [item1, item3, item2, item5] ==
+      assert [item1, item2, item5, item3] ==
                playlist
                |> Playlists.paginate_playlists_items(%{})
                |> Map.get(:entries)

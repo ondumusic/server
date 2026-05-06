@@ -1,6 +1,7 @@
 defmodule MusicBox.Playlists.Operations do
   @moduledoc false
 
+  alias MusicBox.FractionalIndex
   alias MusicBox.Playlists.{Playlist, PlaylistItem}
   alias MusicBox.Repo
   alias MusicBox.Tracks.Track
@@ -30,6 +31,7 @@ defmodule MusicBox.Playlists.Operations do
           | {:error, {:missing_tracks, [String.t()]}}
           | {:error, {:conflict_items, [String.t()]}}
           | {:error, {:conflict_positions, [position()]}}
+          | {:error, {:invalid_positions, [position()]}}
           | {:error, :playlist_is_folder}
 
   @spec batch_update(Playlist.t(), t()) :: {:ok, result()} | error()
@@ -55,6 +57,7 @@ defmodule MusicBox.Playlists.Operations do
          :ok <- validate_item_id_conflicts(moves, removes),
          :ok <- validate_unique_items(:move, Enum.map(moves, & &1["item_id"])),
          :ok <- validate_unique_items(:remove, removes),
+         :ok <- validate_item_positions(adds, moves),
          :ok <- validate_positions(adds, moves),
          :ok <- validate_tracks(adds),
          existing_items <- get_existing_items(playlist, combined_ids),
@@ -107,13 +110,31 @@ defmodule MusicBox.Playlists.Operations do
     end
   end
 
-  defp validate_positions(adds, moves) do
+  defp validate_item_positions(adds, moves) do
     conflict_positions = find_duplicates_by(adds, moves, "position")
 
     if conflict_positions == [] do
       :ok
     else
       {:error, {:conflict_items, conflict_positions}}
+    end
+  end
+
+  defp validate_positions(adds, moves) do
+    invalid_positions =
+      List.flatten([adds, moves])
+      |> Enum.map(&Map.get(&1, "position"))
+      |> Enum.flat_map(fn position ->
+        case FractionalIndex.validate(position) do
+          :ok -> []
+          {:error, _} -> [position]
+        end
+      end)
+
+    if invalid_positions == [] do
+      :ok
+    else
+      {:error, {:invalid_positions, invalid_positions}}
     end
   end
 
