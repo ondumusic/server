@@ -7,6 +7,7 @@ import {
 import { usePlayer } from "../../hooks/usePlayer";
 import { usePlaylistPicker } from "../../hooks/usePlaylistPicker";
 import { useQueue } from "../../hooks/useQueue";
+import { useToast } from "../../hooks/useToast";
 import i18next from "../../i18next";
 import type { Album, Artist as TArtist, Track, UUID } from "../../types";
 import { appendTracksToPlaylist } from "../../utils/appendTracksToPlaylist";
@@ -47,6 +48,7 @@ interface Props {
 
 export function Artist({ artist, currentAlbumId, albums }: Props) {
   const artistId = artist.id;
+  const { showToast } = useToast();
   const { showPlaylistPicker, getMostRecentPlaylist } = usePlaylistPicker();
   const {
     enqueueAndPlay,
@@ -238,9 +240,16 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
               count: album.tracks.length,
             }),
             onClick: async () => {
-              const playlistId = await showPlaylistPicker();
-              if (!playlistId) return;
-              await appendTracksToPlaylist(playlistId as UUID, album.tracks);
+              const playlist = await showPlaylistPicker();
+              if (playlist === false) return;
+              await appendTracksToPlaylist(playlist.id, album.tracks);
+              showToast({
+                message: i18next.t("toast.addedToPlaylist", {
+                  defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
+                  count: album.tracks.length,
+                  playlistName: playlist.name,
+                }),
+              });
             },
           },
         ];
@@ -258,6 +267,13 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
                 recentPlaylist.id as UUID,
                 album.tracks,
               );
+              showToast({
+                message: i18next.t("toast.addedToPlaylist", {
+                  defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
+                  count: album.tracks.length,
+                  playlistName: recentPlaylist.name,
+                }),
+              });
             },
           });
         }
@@ -317,9 +333,16 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
             count: selectedTracks.length,
           }),
           onClick: async () => {
-            const playlistId = await showPlaylistPicker();
-            if (!playlistId) return;
-            await appendTracksToPlaylist(playlistId as UUID, selectedTracks);
+            const playlist = await showPlaylistPicker();
+            if (playlist === false) return;
+            await appendTracksToPlaylist(playlist.id, selectedTracks);
+            showToast({
+              message: i18next.t("toast.addedToPlaylist", {
+                defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
+                count: selectedTracks.length,
+                playlistName: playlist.name,
+              }),
+            });
           },
         },
       ];
@@ -337,6 +360,13 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
               recentPlaylist.id as UUID,
               selectedTracks,
             );
+            showToast({
+              message: i18next.t("toast.addedToPlaylist", {
+                defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
+                count: selectedTracks.length,
+                playlistName: recentPlaylist.name,
+              }),
+            });
           },
         });
       }
@@ -379,6 +409,7 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
       userConfirmQueueReplace,
       showPlaylistPicker,
       getMostRecentPlaylist,
+      showToast,
     ],
   );
 

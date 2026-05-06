@@ -145,6 +145,10 @@
     "tracks_one": "{{count}} track",
     "tracks_other": "{{count}} tracks"
   },
+  "toast": {
+    "addedToPlaylist_one": "Add {{ count }} track to {{ playlistName }}",
+    "addedToPlaylist_other": "Add {{ count }} tracks to {{ playlistName }}"
+  },
   "upNext": {
     "emptyView": "No upcoming tracks.",
     "title": "Up Next"

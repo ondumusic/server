@@ -75,18 +75,20 @@ export function usePlaylistPicker() {
     return <PlaylistPicker onClose={closeDialog} />;
   }, [closeDialog]);
 
-  const showPlaylistPicker = useCallback(async () => {
+  const showPlaylistPicker = useCallback(async (): Promise<
+    Playlist | false
+  > => {
     const result = await showDialog<Playlist>({ renderDialog });
-    if (typeof result === "boolean") return result;
-    if (!result) return;
+    if (!result) return Promise.resolve(false);
+
     localStorage.setItem(
       "mostRecentPlaylist",
       JSON.stringify({
-        id: result.id,
-        name: result.name,
+        id: (result as Playlist).id,
+        name: (result as Playlist).name,
       }),
     );
-    return result.id;
+    return result as Playlist;
   }, [showDialog, renderDialog]);
 
   return { showPlaylistPicker, getMostRecentPlaylist };
