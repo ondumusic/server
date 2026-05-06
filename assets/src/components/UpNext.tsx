@@ -143,9 +143,7 @@ export function UpNext({
 
   const handleDelete = useCallback(
     (itemIds: Set<string>) => {
-      const selectedItems = listItems.filter((item) =>
-        itemIds.has(item.track.id),
-      );
+      const selectedItems = listItems.filter((item) => itemIds.has(item.id));
       const trackIndexes = selectedItems.map((item) => item.position);
       if (trackIndexes.length !== 0) {
         removeFromQueue(trackIndexes);
