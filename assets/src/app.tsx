@@ -11,6 +11,7 @@ import { MediaSessionProvider } from "./hooks/useMediaSession";
 import { PhoenixSocketProvider } from "./hooks/usePhoenixSocket";
 import { PlayerProvider } from "./hooks/usePlayer";
 import { QueueProvider } from "./hooks/useQueue";
+import { ToastProvider } from "./hooks/useToast";
 import { LibraryProvider } from "./library";
 import { Router } from "./router";
 
@@ -40,7 +41,9 @@ if (appRoot) {
                     <PlayerProvider>
                       <MediaSessionProvider>
                         <ContextMenuProvider>
-                          <Router />
+                          <ToastProvider>
+                            <Router />
+                          </ToastProvider>
                         </ContextMenuProvider>
                       </MediaSessionProvider>
                     </PlayerProvider>
