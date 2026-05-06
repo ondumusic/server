@@ -1,8 +1,5 @@
 import { authApi } from "../api";
-import type { Track, UUID } from "../types";
-
-// TODO: Maybe make this configurable for user? Per album/track?
-const CROSSFADE_DURATION = 1000; // ms
+import type { Track } from "../types";
 
 interface AudioEvent {
   duration: number;
@@ -21,32 +18,45 @@ type AudioEventHandler = (event: AudioEvent) => void;
 type AudioEventUnsubscriber = () => void;
 
 export class AudioService {
-  #audioRefs: Map<UUID, HTMLAudioElement> = new Map();
+  #audioRef: HTMLAudioElement;
   #eventListeners: Map<AudioEventName, Set<AudioEventHandler>> = new Map();
   #currentTrack?: AudioTrack;
-  #preloadedTrack?: AudioTrack;
   #playToken?: string;
   #playTokenFetchedAt?: Date;
   #playTokenMaxAge: number = 1800 * 1000;
   #endedTimer?: ReturnType<typeof setTimeout>;
-  #fadeHandler?: () => void;
-  #isFading: boolean = false;
 
   constructor() {
+    this.#audioRef = new Audio();
+    this.#audioRef.preload = "auto";
+    this.#audioRef.addEventListener("timeupdate", this.#emitStateChange);
+    this.#audioRef.addEventListener("ended", this.#emitStateChange);
+    this.#audioRef.addEventListener("play", this.#emitStateChange);
+    this.#audioRef.addEventListener("pause", this.#emitStateChange);
+    this.#audioRef.addEventListener("play", this.#handlePlayEvent);
+    this.#audioRef.addEventListener("pause", this.#handlePauseEvent);
+
     this.#refreshPlayToken();
   }
 
   destroy() {
     this.stop();
     this.#eventListeners = new Map();
+
+    this.#audioRef.removeEventListener("timeupdate", this.#emitStateChange);
+    this.#audioRef.removeEventListener("ended", this.#emitStateChange);
+    this.#audioRef.removeEventListener("play", this.#emitStateChange);
+    this.#audioRef.removeEventListener("pause", this.#emitStateChange);
+    this.#audioRef.removeEventListener("play", this.#handlePlayEvent);
+    this.#audioRef.removeEventListener("pause", this.#handlePauseEvent);
+    this.#audioRef.onerror = null;
+    this.#audioRef.src = "";
   }
 
   stop() {
-    this.#stopCrossfade();
     this.#currentTrack = undefined;
-    this.#preloadedTrack = undefined;
     clearTimeout(this.#endedTimer);
-    this.#cleanupRefs();
+    this.#audioRef.pause();
   }
 
   on(
@@ -73,136 +83,53 @@ export class AudioService {
       this.#currentTrack?.id === audioTrack.id &&
       this.#currentTrack?.queueIndex === audioTrack.queueIndex;
 
-    const isPreloadedTrack =
-      this.#preloadedTrack?.id === audioTrack.id &&
-      this.#preloadedTrack?.queueIndex === audioTrack.queueIndex;
-
-    let stopPlayback = true;
-    if (this.#isFading && (isCurrentTrack || isPreloadedTrack)) {
-      stopPlayback = false;
-    }
-
-    this.#log({
-      isFading: this.#isFading,
-      isCurrentTrack,
-      isPreloadedTrack,
-      stopPlayback,
-    });
-
-    // If we are fading the fade will already start playing the song.
-    if (!stopPlayback && this.#isFading) {
-      this.#log("ignoring play() because already crossfading to this track");
-      return;
-    }
-
-    // If there is current playback and we are not fading to this song we can
-    // stop the playback (pause, mute).
-    const currentRef = this.#getCurrentAudioRef();
-    if (currentRef && stopPlayback) {
-      currentRef.pause();
-      currentRef.volume = 0;
-    }
-
-    // At this point there should not be any crossfade active anymore
-    this.#stopCrossfade();
-
-    // Get audio reference for this track
-    const audioRef = this.#getAudioRef(audioTrack);
-
-    // If we want to play the same track we can just rewind.
     if (isCurrentTrack) {
       this.scrubTo(0, true);
       return;
     }
 
-    // Make sure the previous audio element doesn't call onerror event.
-    if (currentRef) {
-      currentRef.onerror = null;
-    }
-
-    // Set currenTrack to the new Track
     this.#currentTrack = audioTrack;
+    this.#setSource(audioTrack);
 
-    // Load the track
-    this.#setSource(audioRef, audioTrack);
+    this.#audioRef.volume = 1;
 
-    audioRef.load();
-    audioRef.volume = 1;
-
-    // If readyState is 3 (HAVE_FUTURE_DATA) or higher (4: HAVE_ENOUGH_DATA)
-    // we should be able to play immediately.
-    if (audioRef.readyState >= 3) {
-      // audioRef.play();
-      audioRef.play().catch((err) => console.warn("blocked:", err.name));
+    if (this.#audioRef.readyState >= 3) {
+      this.#audioRef.play().catch((err) => console.warn("blocked:", err.name));
     } else {
-      // Otherwise we'll autoplay when the canplay event is dispatched.
       const canPlay = () => {
-        // audioRef.play();
-        audioRef.play().catch((err) => console.warn("blocked:", err.name));
-        audioRef.removeEventListener("canplay", canPlay);
-        audioRef.onerror = null;
+        this.#audioRef
+          .play()
+          .catch((err) => console.warn("blocked:", err.name));
+        this.#audioRef.removeEventListener("canplay", canPlay);
+        this.#audioRef.onerror = null;
       };
-
-      audioRef.addEventListener("canplay", canPlay);
+      this.#audioRef.addEventListener("canplay", canPlay);
     }
-
-    // Cleanup any old unused audio refs.
-    this.#cleanupRefs();
-  }
-
-  preload(audioTrack: AudioTrack) {
-    if (this.#currentTrack?.id === audioTrack.id) {
-      this.#log("not preloading; same as currentTrack");
-      return;
-    }
-
-    if (this.#preloadedTrack?.id === audioTrack.id) {
-      this.#log("already preloaded");
-      return;
-    }
-
-    this.#log("preload", audioTrack.id);
-    const audioRef = this.#getAudioRef(audioTrack);
-    this.#setSource(audioRef, audioTrack);
-    audioRef.load();
-    audioRef.volume = 0;
-
-    this.#preloadedTrack = audioTrack;
   }
 
   resume() {
-    const audioRef = this.#getCurrentAudioRef();
-    if (!audioRef) return;
-
-    // audioRef.play();
-    audioRef.play().catch((err) => console.warn("blocked:", err.name));
+    this.#audioRef.play().catch((err) => console.warn("blocked:", err.name));
   }
 
   pause() {
-    const audioRef = this.#getCurrentAudioRef();
-    if (!audioRef) return;
-
-    audioRef.pause();
+    this.#audioRef.pause();
   }
 
   scrubTo(updatedTime: number, forcePlay: boolean = false) {
-    const audioRef = this.#getCurrentAudioRef();
-    if (!audioRef) return;
-
-    let duration = audioRef.duration || 0;
+    let duration = this.#audioRef.duration || 0;
     if (Number.isNaN(duration)) duration = 0;
-    audioRef.currentTime = Math.max(0, Math.min(updatedTime, duration));
+    this.#audioRef.currentTime = Math.max(0, Math.min(updatedTime, duration));
+
+    this.#monitorEnded();
 
     if (forcePlay === true) this.resume();
   }
 
   get isPlaying() {
-    const audioRef = this.#getCurrentAudioRef();
-    if (!audioRef) return false;
-    return !audioRef.paused && !audioRef.ended;
+    return !this.#audioRef.paused && !this.#audioRef.ended;
   }
 
-  #setSource(audioRef: HTMLAudioElement, audioTrack: AudioTrack) {
+  #setSource(audioTrack: AudioTrack) {
     const sources =
       audioTrack.transcode === true
         ? [`${audioTrack.streamUrl}?transcode=1&token=${this.#playToken}`]
@@ -211,108 +138,131 @@ export class AudioService {
             `${audioTrack.streamUrl}?transcode=1&token=${this.#playToken}`,
           ];
 
-    audioRef.src = sources[0];
+    this.#audioRef.src = sources[0];
+    this.#audioRef.load();
 
     if (sources.length === 1) return;
 
     let sourceIndex = 0;
     const nextSource = () => {
       // MEDIA_ERR_ABORTED || MEDIA_ERR_NETWORK
-      if (audioRef.error?.code === 1 || audioRef.error?.code === 12) {
-        audioRef.onerror = null;
+      if (
+        this.#audioRef.error?.code === 1 ||
+        this.#audioRef.error?.code === 12
+      ) {
+        this.#audioRef.onerror = null;
         this.#log("audio aborted");
         return;
       }
 
       if (sourceIndex >= sources.length) {
-        audioRef.onerror = null;
+        this.#audioRef.onerror = null;
         this.#log("no sources left");
         return;
       }
 
-      audioRef.src = sources[++sourceIndex];
-      audioRef.load();
+      this.#audioRef.src = sources[++sourceIndex];
+      this.#audioRef.load();
     };
 
-    audioRef.onerror = nextSource;
+    this.#audioRef.onerror = nextSource;
   }
 
-  #getCurrentAudioRef() {
-    if (!this.#currentTrack) return;
-    return this.#audioRefs.get(this.#currentTrack.id);
-  }
+  // In some scenarios (mostly related to live transcoding) the ended event
+  // was not triggered properly. This is why we also add a monitor to force
+  // "end" it when it should have ended.
+  #monitorEnded() {
+    clearTimeout(this.#endedTimer);
+    this.#endedTimer = undefined;
 
-  #getAudioRef(audioTrack: AudioTrack): HTMLAudioElement {
-    let audioRef = this.#audioRefs.get(audioTrack.id);
-    if (!audioRef) {
-      audioRef = new Audio();
-      audioRef.addEventListener("timeupdate", this.#emitStateChange);
-      audioRef.addEventListener("ended", this.#emitStateChange);
-      audioRef.addEventListener("play", this.#emitStateChange);
-      audioRef.addEventListener("pause", this.#emitStateChange);
-      this.#audioRefs.set(audioTrack.id, audioRef);
+    const trackId = this.#currentTrack?.id;
+    const queueIndex = this.#currentTrack?.queueIndex;
+
+    const startMonitor = () => {
+      if (
+        this.#currentTrack?.id !== trackId ||
+        this.#currentTrack?.queueIndex !== queueIndex
+      ) {
+        return;
+      }
+
+      const duration = this.#audioRef.duration;
+      if (!Number.isFinite(duration) || duration <= 0) return;
+
+      const remaining = (duration - this.#audioRef.currentTime) * 1000;
+      if (remaining <= 0) return;
+
+      clearTimeout(this.#endedTimer);
+      this.#endedTimer = setTimeout(() => {
+        if (
+          this.#currentTrack?.id !== trackId ||
+          this.#currentTrack?.queueIndex !== queueIndex
+        ) {
+          return;
+        }
+        this.#log("monitoring ended");
+        this.#endedTimer = undefined;
+        this.#emitEnded();
+      }, remaining + 500);
+
+      this.#log("started monitoring for ended", {
+        trackId,
+        remaining: remaining + 500,
+      });
+    };
+
+    if (this.#audioRef.readyState >= 1) {
+      startMonitor();
+    } else {
+      const onMetadata = () => {
+        this.#audioRef.removeEventListener("loadedmetadata", onMetadata);
+        startMonitor();
+      };
+      this.#audioRef.addEventListener("loadedmetadata", onMetadata);
     }
-
-    return audioRef;
   }
+
+  #handlePlayEvent = () => {
+    this.#log("play event", { currentTrackId: this.#currentTrack?.id });
+    this.#monitorEnded();
+  };
+
+  #handlePauseEvent = () => {
+    this.#log("pause event");
+    clearTimeout(this.#endedTimer);
+    this.#endedTimer = undefined;
+  };
 
   #emitStateChange = (event: Event) => {
-    const audioRef = this.#getCurrentAudioRef();
-    if (audioRef !== event.target) return;
-    if (audioRef.readyState < 3) return;
+    if (this.#audioRef.readyState < 3) return;
 
-    let duration = audioRef.duration || 0;
+    let duration = this.#audioRef.duration || 0;
     if (Number.isNaN(duration)) duration = 0;
 
-    let progressPercentage = (audioRef.currentTime / duration) * 100;
+    let progressPercentage = (this.#audioRef.currentTime / duration) * 100;
     if (Number.isNaN(progressPercentage)) progressPercentage = 0;
 
     const audioEvent: AudioEvent = {
-      currentTime: audioRef.currentTime,
+      currentTime: this.#audioRef.currentTime,
       duration,
       progressPercentage,
-      isPlaying: !audioRef.paused && !audioRef.ended,
+      isPlaying: !this.#audioRef.paused && !this.#audioRef.ended,
     };
 
     this.#emit("timeupdate", audioEvent);
 
     if (event.type === "ended") {
-      if (this.#isFading) return;
       this.#log("event ended");
       clearTimeout(this.#endedTimer);
       this.#emitEnded();
     }
-
-    if (event.type === "timeupdate") {
-      // Set the endedTimer because sometimes (mostly when transcoding) there
-      // are potential issues resulting in the ended event not being sent.
-      if (audioEvent.duration - audioEvent.currentTime < 0.2) {
-        clearTimeout(this.#endedTimer);
-        this.#endedTimer = setTimeout(() => {
-          if (this.#isFading) return;
-          this.#log("timer ended");
-          this.#emitEnded();
-        }, 200);
-      }
-
-      if (
-        audioEvent.duration - audioEvent.currentTime <=
-        CROSSFADE_DURATION / 1000
-      ) {
-        this.#log("should crossfade");
-        this.#crossfade(this.#preloadedTrack);
-      }
-    }
-
-    return event;
   };
 
   #emitEnded() {
-    const audioRef = this.#getCurrentAudioRef();
-    if (!audioRef) return;
-
-    const duration = Number.isFinite(audioRef.duration) ? audioRef.duration : 0;
-    const currentTime = audioRef.currentTime || 0;
+    const duration = Number.isFinite(this.#audioRef.duration)
+      ? this.#audioRef.duration
+      : 0;
+    const currentTime = this.#audioRef.currentTime || 0;
     let progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
     if (Number.isNaN(progressPercentage)) progressPercentage = 0;
 
@@ -320,7 +270,7 @@ export class AudioService {
       duration,
       currentTime,
       progressPercentage,
-      isPlaying: !audioRef.paused && !audioRef.ended,
+      isPlaying: !this.#audioRef.paused && !this.#audioRef.ended,
     });
   }
 
@@ -329,122 +279,6 @@ export class AudioService {
     listeners.forEach((listener) => {
       listener(event);
     });
-  }
-
-  #crossfade(to?: AudioTrack) {
-    if (this.#isFading) {
-      this.#log("already fading");
-      return;
-    }
-
-    if (!to) {
-      this.#log("not crossfading; no preloadedTrack");
-      return;
-    }
-
-    this.#stopCrossfade();
-
-    if (this.#currentTrack?.id === to.id) {
-      this.#log("not crossfading; same as currenTrack");
-      return;
-    }
-
-    this.#isFading = true;
-
-    const currentRef = this.#getCurrentAudioRef();
-    const nextRef = this.#getAudioRef(to);
-    if (!currentRef) return;
-
-    // Start next track at 0 volume to avoid pop
-    nextRef.volume = 0;
-    nextRef.play().catch((err) => {
-      this.#log("next track play failed", err);
-      this.#stopCrossfade();
-      this.#emitEnded(); // skip track on failure
-    });
-
-    const startTime = performance.now();
-    let endedLastTrack = false;
-
-    const fade = () => {
-      const elapsed = performance.now() - startTime;
-      const progress = Math.min(elapsed / CROSSFADE_DURATION, 1);
-
-      // Use equal-power crossfade curve for smoother transition
-      const fadeOut = Math.cos(progress * Math.PI * 0.5);
-      const fadeIn = Math.sin(progress * Math.PI * 0.5);
-
-      currentRef.volume = fadeOut;
-      nextRef.volume = fadeIn;
-
-      if (progress >= 0.3 && progress <= 0.6) {
-        if (!endedLastTrack) {
-          endedLastTrack = true;
-          clearTimeout(this.#endedTimer);
-          this.#currentTrack = to;
-          this.#preloadedTrack = undefined;
-          this.#emitEnded();
-        }
-      }
-
-      if (progress >= 1) {
-        currentRef.pause();
-        currentRef.currentTime = 0;
-        currentRef.volume = 1;
-
-        this.#stopCrossfade();
-        this.#cleanupRefs();
-      }
-    };
-
-    this.#fadeHandler = fade;
-    currentRef.addEventListener("timeupdate", fade);
-    currentRef.addEventListener("ended", fade);
-    nextRef.addEventListener("timeupdate", fade);
-    nextRef.addEventListener("ended", fade);
-  }
-
-  #stopCrossfade() {
-    this.#log("stop crossfade");
-    this.#isFading = false;
-    if (!this.#fadeHandler) return;
-    const fadeHandler = this.#fadeHandler;
-
-    this.#audioRefs.forEach((ref) => {
-      ref.removeEventListener("timeupdate", fadeHandler);
-      ref.removeEventListener("ended", fadeHandler);
-    });
-
-    this.#fadeHandler = undefined;
-  }
-
-  #cleanupRefs() {
-    const currentRef = this.#getCurrentAudioRef();
-    const toDelete: UUID[] = [];
-
-    this.#log("cleanup refs");
-    this.#audioRefs.forEach((ref, trackId) => {
-      if (ref === currentRef) return;
-      if (trackId === this.#preloadedTrack?.id) return;
-
-      this.#log("cleanup ref", trackId);
-      toDelete.push(trackId);
-
-      ref.removeEventListener("timeupdate", this.#emitStateChange);
-      ref.removeEventListener("ended", this.#emitStateChange);
-      ref.removeEventListener("play", this.#emitStateChange);
-      ref.removeEventListener("pause", this.#emitStateChange);
-
-      ref.onerror = null;
-      ref.volume = 0;
-      ref.src = "";
-      ref.load();
-    });
-
-    toDelete.forEach((id) => {
-      this.#audioRefs.delete(id);
-    });
-    this.#log("refs remaining:", this.#audioRefs);
   }
 
   async #refreshPlayToken() {

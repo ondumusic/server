@@ -48,13 +48,7 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
   const [isPlaying, realSetIsPlaying] = useState(false);
   const [emitTimeUpdate, addTimeObserver] = useObserver<TimeUpdateEvent>();
   const [duration, setDuration] = useState(0);
-  const {
-    currentTrack,
-    currentTrackIndex,
-    nextTrack,
-    hasNextTrack,
-    getNextTrack,
-  } = useQueue();
+  const { currentTrack, currentTrackIndex, nextTrack } = useQueue();
 
   // Manage the AudioService (only execute on first render/mount)
   useEffect(() => {
@@ -102,31 +96,6 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
       realSetIsPlaying(true);
     }
   };
-
-  // Preload next track to improve playback experience
-  useEffect(() => {
-    if (!hasNextTrack) return;
-
-    let preloadStarted = false;
-    const unsubscribe = addTimeObserver(({ progressPercentage }) => {
-      if (preloadStarted) return;
-      if (progressPercentage < 70) return;
-      preloadStarted = true;
-
-      const nextTrack = getNextTrack();
-      if (!nextTrack) return;
-
-      if (audioService.current) {
-        audioService.current.preload({
-          ...nextTrack,
-          queueIndex: currentTrackIndex + 1,
-        });
-        unsubscribe();
-      }
-    });
-
-    return unsubscribe;
-  }, [hasNextTrack, getNextTrack, currentTrackIndex, addTimeObserver]);
 
   // Reset when track changes
   // biome-ignore lint/correctness/useExhaustiveDependencies(setIsPlaying): suppress dependency setIsPlaying
