@@ -11,6 +11,7 @@ import { MediaSessionProvider } from "./hooks/useMediaSession";
 import { PhoenixSocketProvider } from "./hooks/usePhoenixSocket";
 import { PlayerProvider } from "./hooks/usePlayer";
 import { QueueProvider } from "./hooks/useQueue";
+import { ThemeProvider } from "./hooks/useTheme";
 import { ToastProvider } from "./hooks/useToast";
 import { LibraryProvider } from "./library";
 import { Router } from "./router";
@@ -32,27 +33,29 @@ if (appRoot) {
   root.render(
     <StrictMode>
       <Suspense fallback={<Loading />}>
-        <AuthProvider>
-          <LibraryProvider>
-            <PhoenixSocketProvider>
-              <DialogProvider>
-                <QueueProvider>
-                  <AudioManagerProvider>
-                    <PlayerProvider>
-                      <MediaSessionProvider>
-                        <ContextMenuProvider>
-                          <ToastProvider>
-                            <Router />
-                          </ToastProvider>
-                        </ContextMenuProvider>
-                      </MediaSessionProvider>
-                    </PlayerProvider>
-                  </AudioManagerProvider>
-                </QueueProvider>
-              </DialogProvider>
-            </PhoenixSocketProvider>
-          </LibraryProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <LibraryProvider>
+              <PhoenixSocketProvider>
+                <DialogProvider>
+                  <QueueProvider>
+                    <AudioManagerProvider>
+                      <PlayerProvider>
+                        <MediaSessionProvider>
+                          <ContextMenuProvider>
+                            <ToastProvider>
+                              <Router />
+                            </ToastProvider>
+                          </ContextMenuProvider>
+                        </MediaSessionProvider>
+                      </PlayerProvider>
+                    </AudioManagerProvider>
+                  </QueueProvider>
+                </DialogProvider>
+              </PhoenixSocketProvider>
+            </LibraryProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </Suspense>
     </StrictMode>,
   );
