@@ -1,81 +1,21 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 @plugin "@tailwindcss/forms";
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @layer base {
   :root {
-    --accent-50: var(--color-indigo-50);
-    --accent-100: var(--color-indigo-100);
-    --accent-200: var(--color-indigo-200);
-    --accent-300: var(--color-indigo-300);
-    --accent-400: var(--color-indigo-400);
-    --accent-500: var(--color-indigo-500);
-    --accent-600: var(--color-indigo-600);
-    --accent-700: var(--color-indigo-700);
-    --accent-800: var(--color-indigo-800);
-    --accent-900: var(--color-indigo-900);
-    --accent-950: var(--color-indigo-950);
-
-    --text-base: var(--color-black);
-    --text-selected: var(--color-black);
-
-    --dialog-bg: var(--color-white);
-    --dialog-fg: var(--color-black);
-
-    --panel-fg: rgba(0, 0, 0, 0.9);
-    --panel-fg-muted: rgba(0, 0, 0, 0.45);
-    --panel-fg-hint: rgba(0, 0, 0, 0.3);
-    --panel-fg-divider: rgba(0, 0, 0, 0.1);
-    --panel-bg: rgba(255, 255, 255, 0.75);
-    --panel-border: rgba(255, 255, 255, 0.8);
-
-    --navbar-bg: var(--panel-bg);
-    --navbar-fg: var(--color-black);
-    --navbar-hover-bg: rgba(255, 255, 255, 0.3);
-    --navbar-active-bg: rgba(255, 255, 255, 0.7);
-
-    --sidebar-fg: var(--panel-fg);
-    --sidebar-bg: rgba(255, 255, 255, 0.65);
-    --sidebar-active-bg: rgba(255, 255, 255, 0.7);
-    --sidebar-active-fg: var(--color-black);
-    --sidebar-inactive-bg: rgba(20, 20, 20, 0.15);
-    --sidebar-inactive-fg: var(--color-black);
-    --sidebar-divider: rgba(255, 255, 255, 0.5);
-    --sidebar-divider-hover: rgba(255, 255, 255, 0.35);
-    --sidebar-divider-active: rgba(0, 0, 0, 0.25);
-
-    /*
-    --dialog-bg: var(--color-black);
-    --dialog-fg: var(--color-white);
-
-    --panel-fg: rgba(255, 255, 255, 0.8);
-    --panel-fg-muted: rgba(255, 255, 255, 0.45);
-    --panel-fg-hint: rgba(255, 255, 255, 0.3);
-    --panel-fg-divider: rgba(255, 255, 255, 0.1);
-    --panel-bg: rgba(20, 20, 20, 0.75);
-    --panel-border: rgba(255, 255, 255, 0.15);
-    --panel-header-bg: rgba(20, 20, 20, 0.75);
-    --panel-header-border: rgba(255, 255, 255, 0.2);
-
-    --navbar-bg: var(--panel-bg);
-    --navbar-fg: var(--color-white);
-    --navbar-hover-bg: rgba(0, 0, 0, 0.4);
-    --navbar-active-bg: rgba(255, 255, 255, 0.15);
-
-    --sidebar-fg: var(--panel-fg);
-    --sidebar-bg: rgba(20, 20, 20, 0.5);
-    --sidebar-active-bg: rgba(255, 255, 255, 0.15);
-    --sidebar-active-fg: var(--color-white);
-    --sidebar-inactive-bg: rgba(0, 0, 0, 0.4);
-    --sidebar-inactive-fg: var(--color-white);
-    --sidebar-divider: rgba(255, 255, 255, 0.1);
-    --sidebar-divider-hover: rgba(255, 255, 255, 0.2);
-    --sidebar-divider-active: rgba(255, 255, 255, 0.35);
-    /**/
-
-    --label-fg: var(--color-zinc-800);
-    --error-fg: var(--color-rose-600);
-    --muted-fg: var(--color-stone-400);
+    --accent-50: var(--color-blue-50);
+    --accent-100: var(--color-blue-100);
+    --accent-200: var(--color-blue-200);
+    --accent-300: var(--color-blue-300);
+    --accent-400: var(--color-blue-400);
+    --accent-500: var(--color-blue-500);
+    --accent-600: var(--color-blue-600);
+    --accent-700: var(--color-blue-700);
+    --accent-800: var(--color-blue-800);
+    --accent-900: var(--color-blue-900);
+    --accent-950: var(--color-blue-950);
 
     /*
      * NOTE: This is linked to the hardcoded `theme-color` meta tag.
@@ -83,6 +23,97 @@
      */
     --gradient-tint: var(--color-mist-600);
   }
+}
+
+:root,
+[data-theme="light"] {
+  --text-base: var(--color-black);
+  --text-selected: var(--color-black);
+
+  --panel-fg: rgba(0, 0, 0, 0.9);
+  --panel-fg-muted: rgba(0, 0, 0, 0.45);
+  --panel-fg-hint: rgba(0, 0, 0, 0.3);
+  --panel-fg-divider: rgba(0, 0, 0, 0.1);
+  --panel-bg: rgba(255, 255, 255, 0.75);
+  --panel-border: rgba(255, 255, 255, 0.8);
+
+  --contextmenu-bg: rgb(255, 255, 255);
+  --contextmenu-fg: rgb(0, 0, 0);
+  --contextmenu-divider: rgba(220, 220, 220, 0.8);
+  --contextmenu-border: rgba(220, 220, 220, 0.8);
+
+  --navbar-bg: var(--panel-bg);
+  --navbar-fg: var(--color-black);
+  --navbar-hover-bg: rgba(255, 255, 255, 0.3);
+  --navbar-active-bg: rgba(255, 255, 255, 0.7);
+
+  --sidebar-fg: var(--panel-fg);
+  --sidebar-bg: rgba(255, 255, 255, 0.65);
+  --sidebar-active-bg: rgba(255, 255, 255, 0.7);
+  --sidebar-active-fg: var(--color-black);
+  --sidebar-inactive-bg: rgba(20, 20, 20, 0.15);
+  --sidebar-inactive-fg: var(--color-black);
+  --sidebar-divider: rgba(255, 255, 255, 0.5);
+  --sidebar-divider-hover: rgba(255, 255, 255, 0.35);
+  --sidebar-divider-active: rgba(0, 0, 0, 0.25);
+
+  --header-bg: rgba(255, 255, 255, 0.9);
+  --header-divider: rgba(255, 255, 255, 0.5);
+
+  --toast-bg: rgba(0, 0, 0, 0.6);
+  --toast-fg: rgb(255, 255, 255);
+
+  --dialog-bg: var(--color-white);
+  --dialog-fg: var(--color-black);
+
+  --label-fg: var(--color-zinc-800);
+  --error-fg: var(--color-red-600);
+  --muted-fg: var(--color-stone-400);
+}
+
+[data-theme="dark"] {
+  --text-base: var(--color-white);
+  --text-selected: var(--color-white);
+
+  --panel-fg: rgba(255, 255, 255, 0.9);
+  --panel-fg-muted: rgba(255, 255, 255, 0.5);
+  --panel-fg-hint: rgba(255, 255, 255, 0.35);
+  --panel-fg-divider: rgba(255, 255, 255, 0.12);
+  --panel-bg: rgba(60, 60, 65, 0.6);
+  --panel-border: rgba(255, 255, 255, 0.12);
+
+  --contextmenu-bg: rgb(48, 48, 52);
+  --contextmenu-fg: rgb(245, 245, 245);
+  --contextmenu-divider: rgba(80, 80, 86, 0.8);
+  --contextmenu-border: rgba(80, 80, 86, 0.8);
+
+  --navbar-bg: var(--panel-bg);
+  --navbar-fg: var(--color-white);
+  --navbar-hover-bg: rgba(255, 255, 255, 0.08);
+  --navbar-active-bg: rgba(255, 255, 255, 0.18);
+
+  --sidebar-fg: var(--panel-fg);
+  --sidebar-bg: rgba(40, 40, 45, 0.55);
+  --sidebar-active-bg: rgba(255, 255, 255, 0.15);
+  --sidebar-active-fg: var(--color-white);
+  --sidebar-inactive-bg: rgba(0, 0, 0, 0.3);
+  --sidebar-inactive-fg: rgba(255, 255, 255, 1);
+  --sidebar-divider: rgba(255, 255, 255, 0.1);
+  --sidebar-divider-hover: rgba(255, 255, 255, 0.06);
+  --sidebar-divider-active: rgba(0, 0, 0, 0.3);
+
+  --header-bg: rgba(40, 40, 44, 0.85);
+  --header-divider: rgba(255, 255, 255, 0.1);
+
+  --toast-bg: rgba(245, 245, 245, 0.95);
+  --toast-fg: rgb(20, 20, 20);
+
+  --dialog-bg: rgb(35, 35, 38);
+  --dialog-fg: var(--color-white);
+
+  --label-fg: var(--color-zinc-200);
+  --error-fg: var(--color-red-400);
+  --muted-fg: var(--color-stone-400);
 }
 
 @theme inline {
@@ -101,8 +132,10 @@
   --color-base: var(--text-base);
   --color-selected: var(--text-selected);
 
-  --color-dialog-bg: var(--dialog-bg);
-  --color-dialog-fg: var(--dialog-fg);
+  --color-contextmenu-bg: var(--contextmenu-bg);
+  --color-contextmenu-fg: var(--contextmenu-fg);
+  --color-contextmenu-divider: var(--contextmenu-divider);
+  --color-contextmenu-border: var(--contextmenu-border);
 
   --color-panel-fg: var(--panel-fg);
   --color-panel-fg-muted: var(--panel-fg-muted);
@@ -125,6 +158,15 @@
   --color-sidebar-divider: var(--sidebar-divider);
   --color-sidebar-divider-hover: var(--sidebar-divider-hover);
   --color-sidebar-divider-active: var(--sidebar-divider-active);
+
+  --color-header-bg: var(--header-bg);
+  --color-header-divider: var(--header-divider);
+
+  --color-toast-bg: var(--toast-bg);
+  --color-toast-fg: var(--toast-fg);
+
+  --color-dialog-bg: var(--dialog-bg);
+  --color-dialog-fg: var(--dialog-fg);
 
   --color-label: var(--color-panel-fg);
   --color-error: var(--error-fg);

@@ -14,12 +14,14 @@ export function Panel({
   renderSidebar,
   mobileShowSidebar,
   size = "large",
+  title,
 }: PropsWithChildren<{
   size?: "small" | "large";
+  title?: string;
   renderSidebar?: () => ReactNode;
   mobileShowSidebar?: boolean;
 }>) {
-  const hasSidebar = typeof renderSidebar === "function";
+  const hasSidebar = size === "large" && typeof renderSidebar === "function";
   const allowPanels = useMediaQuery("(width >= 48rem)") && hasSidebar;
   const { defaultLayout, onLayoutChange: handleLayoutChange } =
     useDefaultLayout({
@@ -33,10 +35,19 @@ export function Panel({
         "relative flex flex-col mx-auto overflow-hidden text-panel-fg",
         "border border-panel-border",
         size === "large" && "h-full w-full lg:shadow-lg lg:rounded-md",
-        size === "small" &&
-          "max-w-md p-6 backdrop-blur-2xl backdrop-saturate-150 bg-panel-bg shadow-lg rounded-md",
+        size === "small" && "max-w-md shadow-lg rounded-md",
       ])}
     >
+      {title && (
+        <header>
+          <div className="text-center bg-header-bg">
+            <h1 className="text-lg font-medium py-1.5 px-4 leading-8">
+              {title}
+            </h1>
+          </div>
+          <div className="bg-header-divider w-full h-[1px]"></div>
+        </header>
+      )}
       {allowPanels ? (
         <Group
           className="w-full"

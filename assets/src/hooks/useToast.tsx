@@ -51,7 +51,7 @@ const Toast = ({
     <div className="absolute left-1/2 max-w-1/2 -translate-x-1/2 bottom-8">
       <div
         className={classNames([
-          "flex gap-2 bg-black/60 text-white px-4 py-2 text-center text-sm rounded-md shadow-md",
+          "flex gap-2 bg-toast-bg text-toast-fg px-4 py-2 text-center text-sm rounded-md shadow-md",
           "transition-translate-y transition-all duration-250",
           "[transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)]",
           show

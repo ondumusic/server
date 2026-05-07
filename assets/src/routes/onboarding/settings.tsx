@@ -6,6 +6,7 @@ import { Button } from "../../components/form/Button";
 import { FormActions } from "../../components/form/FormActions";
 import { Input } from "../../components/form/Input";
 import { Loading } from "../../components/Loading";
+import { Panel } from "../../components/Panel";
 import { useAuth } from "../../hooks/useAuth";
 import { type FormState, useForm } from "../../hooks/useForm";
 import { usePhoenixSocket } from "../../hooks/usePhoenixSocket";
@@ -94,21 +95,17 @@ export function Settings() {
 
   return (
     <div className="h-full content-center">
-      <div className="mx-auto max-w-md rounded-md p-6 shadow-md bg-white">
-        <header className="text-center">
-          <div>
-            <h1 className="text-lg font-semibold leading-8 text-zinc-800">
-              <Trans i18nKey="settingsForm.title">Setup MusicBox</Trans>
-            </h1>
-            <p className="mt-2 text-sm leading-6 text-zinc-600">
-              <Trans i18nKey="settingsForm.subtitle">
-                Fill in the form below to get started.
-              </Trans>
-            </p>
-          </div>
-        </header>
+      <Panel
+        size="small"
+        title={t("settingsForm.title", { defaultValue: "Setup MusicBox" })}
+      >
+        <p className="mt-4 text-center text-sm leading-6 text-muted">
+          <Trans i18nKey="settingsForm.subtitle">
+            Fill in the form below to get started.
+          </Trans>
+        </p>
 
-        <form action={form.action} className="mt-10 space-y-8">
+        <form action={form.action} className="space-y-8 pt-8 py-4 px-6">
           <Input<SettingFields>
             form={form}
             type="text"
@@ -196,7 +193,7 @@ export function Settings() {
             </Button>
           </FormActions>
         </form>
-      </div>
+      </Panel>
     </div>
   );
 }

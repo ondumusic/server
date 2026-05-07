@@ -1,5 +1,5 @@
 export function classNames(
-  classes: Array<undefined | null | string | boolean>,
+  classes: Array<undefined | null | string | boolean | string[]>,
 ): string {
   return classes
     .flat()

@@ -14,18 +14,18 @@ const styleColors = (style?: ButtonStyle): Colors => {
       return {
         button:
           "bg-zinc-900 hover:bg-zinc-700 text-white active:text-white/80 disabled:text-white/80 disabled:bg-zinc-900/50",
-        link: "text-zinc-800 hover:text-zinc-700 active:text-black disabled:text-zinc-400",
+        link: "text-zinc-800 hover:text-zinc-600 active:text-black disabled:text-zinc-400 dark:text-zinc-200 dark:hover:text-zinc-50 dark:active:text-white dark:disabled:text-zinc-600",
       };
     case "danger":
       return {
         button:
           "bg-rose-900 hover:bg-rose-700 text-white active:text-white/80 disabled:text-white/80 disabled:bg-rose-900/50",
-        link: "text-rose-800 hover:text-rose-700 active:text-black disabled:text-rose-400",
+        link: "text-rose-800 hover:text-rose-700 active:text-black disabled:text-rose-400 dark:text-rose-300 dark:hover:text-rose-200 dark:active:text-white dark:disabled:text-rose-700",
       };
     default:
       return {
         button:
-          "bg-accent-700 hover:bg-accent-800 text-white active:text-white/80 disabled:text-white/80 disabled:bg-accent-900/50",
+          "bg-accent-600 hover:bg-accent-700 text-white active:text-white/80 disabled:text-white/80 disabled:bg-accent-900/50",
         link: "text-accent-600 hover:text-zinc-700 active:text-black disabled:text-zinc-400",
       };
   }
@@ -53,7 +53,7 @@ export function Button({
       className={classNames([
         "w-full cursor-pointer disabled:cursor-default rounded-lg py-2 px-3 text-sm font-semibold leading-6",
         link && colors.link,
-        !link && colors.button,
+        !link && ["shadow-md", ...colors.button],
       ])}
       type={type}
       onClick={handleClick}

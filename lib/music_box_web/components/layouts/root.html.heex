@@ -6,6 +6,15 @@
     <meta name="theme-color" content="#4b585b" />
     <title>MusicBox</title>
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+    <script>
+      (function() {
+        const userSetting = localStorage.getItem("theme") || "auto";
+        const theme = userSetting === "auto"
+          ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+          : userSetting;
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
     <script defer type="module" phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
     </script>
   </head>

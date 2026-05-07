@@ -4,6 +4,7 @@ import { authApi } from "../../api";
 import { Button } from "../../components/form/Button";
 import { FormActions } from "../../components/form/FormActions";
 import { Input } from "../../components/form/Input";
+import { Panel } from "../../components/Panel";
 import { useAuth } from "../../hooks/useAuth";
 import { type FormState, useForm } from "../../hooks/useForm";
 
@@ -60,16 +61,11 @@ export function UserComponent() {
 
   return (
     <div className="h-full content-center">
-      <div className="mx-auto max-w-md rounded-md p-6 shadow-md bg-white">
-        <header className="text-center">
-          <div>
-            <h1 className="text-lg font-semibold leading-8 text-zinc-800">
-              <Trans i18nKey="signupForm.title">Setup your Account</Trans>
-            </h1>
-          </div>
-        </header>
-
-        <form action={form.action} className="mt-10 space-y-8">
+      <Panel
+        size="small"
+        title={t("signupForm.title", { defaultValue: "Setup your Account" })}
+      >
+        <form action={form.action} className="space-y-8 pt-8 py-4 px-6">
           <Input<SignupFields>
             form={form}
             type="text"
@@ -105,7 +101,7 @@ export function UserComponent() {
             </Button>
           </FormActions>
         </form>
-      </div>
+      </Panel>
     </div>
   );
 }

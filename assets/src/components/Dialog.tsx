@@ -12,7 +12,6 @@ export type DialogResult = boolean | null;
 export type CloseHandler = (result: DialogResult) => void;
 
 interface DialogConfig {
-  title?: string;
   message: string;
   danger?: boolean;
   confirmMessage?: string;
@@ -81,18 +80,13 @@ export function Dialog({ type, config, onClose }: Props) {
         "self-center justify-self-center outline-none",
         "rounded-md shadow-2xl bg-dialog-bg text-dialog-fg",
         "max-w-md dialog-modal",
+        "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]",
       ])}
     >
       {type === "custom" ? (
         <div>{config.renderDialog()}</div>
       ) : (
         <div className="p-6 space-y-8">
-          {config.title && (
-            <h4 className="text-xl font-semibold pb-1 border-b border-stone-300">
-              {config.title}
-            </h4>
-          )}
-
           <p>{config.message}</p>
 
           <div className="flex flex-row-reverse gap-2 justify-start items-center">
