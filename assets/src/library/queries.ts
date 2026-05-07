@@ -27,8 +27,10 @@ export function useArtists() {
 export const queryArtistAlbums = async (artistId: UUID) => {
   return await repo.query<Album>("albums", {
     whereIndex: ["by_artistId", "=", artistId],
-    sortDir: "desc",
-    sortBy: "releaseYear",
+    sortBy: [
+      ["releaseYear", "desc"],
+      ["name", "asc"],
+    ],
     join: {
       tracks: {
         store: "tracks",
@@ -117,6 +119,7 @@ export const queryTracks = (filters: TrackFilters) => {
         ? "random"
         : [
             ["albumReleaseYear", "desc"],
+            ["albumName", "asc"],
             ["disc", "asc"],
             ["number", "asc"],
           ],
