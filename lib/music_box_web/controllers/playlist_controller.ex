@@ -104,8 +104,8 @@ defmodule MusicBoxWeb.PlaylistController do
   def update_playlist(conn, params) do
     case Playlists.update_playlist(conn.assigns.playlist, params) do
       {:ok, playlist} ->
-        conn
-        |> render(:playlist, playlist: playlist)
+        MusicBoxWeb.Endpoint.broadcast("library:sync", "processed", %{playlists: [playlist.id]})
+        render(conn, :playlist, playlist: playlist)
 
       {:error, changeset} ->
         conn
@@ -129,7 +129,15 @@ defmodule MusicBoxWeb.PlaylistController do
 
   def delete_playlist(conn, _params) do
     case Playlists.delete_playlist(conn.assigns.playlist) do
-      {:ok, _playlist} ->
+      {:ok, playlist} ->
+        deleted = [
+          %{entityType: "playlistItem", entityId: playlist.id}
+        ]
+
+        MusicBoxWeb.Endpoint.broadcast("library:sync", "deleted", %{
+          deletions: deleted
+        })
+
         send_resp(conn, :no_content, "")
 
       {:error, changeset} ->

@@ -69,7 +69,9 @@ defmodule MusicBox.FileScanner.Operations do
       end)
 
     if deleted != [] do
-      broadcast(MusicBox.PubSub, "library:sync", "deleted", deleted)
+      broadcast(MusicBox.PubSub, "library:sync", "deleted", %{
+        deletions: deleted
+      })
     end
   end
 

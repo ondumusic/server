@@ -6,6 +6,7 @@ defmodule MusicBoxWeb.LibraryChannel do
   alias MusicBox.Albums.Album
   alias MusicBox.Artists.Artist
   alias MusicBox.Playlists.Playlist
+  alias MusicBox.Playlists.PlaylistItem
   alias MusicBox.Repo
   alias MusicBoxWeb.{LibraryJSON, PlaylistJSON}
 
@@ -21,9 +22,17 @@ defmodule MusicBoxWeb.LibraryChannel do
     json_changes =
       changes
       |> Enum.map(fn
-        {:artists = k, artist_ids} -> {k, fetch_artists(artist_ids)}
-        {:albums = k, album_ids} -> {k, fetch_albums(album_ids)}
-        {:playlists = k, playlist_ids} -> {k, fetch_playlists(playlist_ids)}
+        {:artists = k, artist_ids} ->
+          {k, fetch_artists(artist_ids)}
+
+        {:albums = k, album_ids} ->
+          {k, fetch_albums(album_ids)}
+
+        {:playlists = k, playlist_ids} ->
+          {k, fetch_playlists(playlist_ids)}
+
+        {:playlist_items, playlist_item_ids} ->
+          {:playlistItems, fetch_playlist_items(playlist_item_ids)}
       end)
       |> Map.new()
 
@@ -54,5 +63,13 @@ defmodule MusicBoxWeb.LibraryChannel do
     )
     |> Repo.all()
     |> Enum.map(&PlaylistJSON.playlist(%{playlist: &1}))
+  end
+
+  defp fetch_playlist_items(ids) do
+    from(p in PlaylistItem.preloaded(),
+      where: p.id in ^ids
+    )
+    |> Repo.all()
+    |> Enum.map(&PlaylistJSON.playlist_item(%{playlist_item: &1}))
   end
 end

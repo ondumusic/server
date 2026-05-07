@@ -1,6 +1,8 @@
 defmodule MusicBox.Playlists.Operations do
   @moduledoc false
 
+  import Phoenix.Channel.Server, only: [broadcast: 4]
+
   alias MusicBox.FractionalIndex
   alias MusicBox.Playlists.{Playlist, PlaylistItem}
   alias MusicBox.Repo
@@ -222,6 +224,15 @@ defmodule MusicBox.Playlists.Operations do
           )
           |> Repo.delete_all(returning: true)
 
+        deleted =
+          Enum.map(results, fn playlist_item_id ->
+            %{entityType: "playlistItem", entityId: playlist_item_id}
+          end)
+
+        broadcast(MusicBox.PubSub, "library:sync", "deleted", %{
+          deletions: deleted
+        })
+
         results
       end
 
@@ -252,6 +263,10 @@ defmodule MusicBox.Playlists.Operations do
             returning: true
           )
 
+        broadcast(MusicBox.PubSub, "library:sync", "processed", %{
+          playlist_items: Enum.map(results, & &1.id)
+        })
+
         results
       end
 
@@ -276,6 +291,10 @@ defmodule MusicBox.Playlists.Operations do
             conflict_target: [:id],
             returning: true
           )
+
+        broadcast(MusicBox.PubSub, "library:sync", "processed", %{
+          playlist_items: Enum.map(results, & &1.id)
+        })
 
         results
       end
@@ -310,7 +329,7 @@ defmodule MusicBox.Playlists.Operations do
       |> Repo.update_all([])
 
     if count > 0 do
-      MusicBoxWeb.Endpoint.broadcast!("library:sync", "processed", %{
+      broadcast(MusicBox.PubSub, "library:sync", "processed", %{
         playlists: [playlist.id]
       })
     end
