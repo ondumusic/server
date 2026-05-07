@@ -147,7 +147,8 @@
   },
   "toast": {
     "addedToPlaylist_one": "Add {{ count }} track to {{ playlistName }}",
-    "addedToPlaylist_other": "Add {{ count }} tracks to {{ playlistName }}"
+    "addedToPlaylist_other": "Add {{ count }} tracks to {{ playlistName }}",
+    "defaultLinkTitle": "View"
   },
   "upNext": {
     "emptyView": "No upcoming tracks.",

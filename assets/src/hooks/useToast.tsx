@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import {
   createContext,
   type PropsWithChildren,
@@ -7,10 +8,13 @@ import {
   useRef,
   useState,
 } from "react";
+import i18next from "../i18next";
 import { classNames } from "../utils/classNames";
 
 export interface ToastMessage {
   message: string;
+  link?: string;
+  linkTitle?: string;
 }
 
 interface ToastContextValue {
@@ -62,6 +66,15 @@ const Toast = ({
         onBlur={onMouseLeave}
       >
         <span>{toast?.message}</span>
+
+        {toast?.link && (
+          <Link to={toast?.link} className="underline hover:no-underline">
+            {toast.linkTitle ??
+              i18next.t("toast.defaultLinkTitle", {
+                defaultValue: "View",
+              })}
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -244,6 +244,7 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
               if (playlist === false) return;
               await appendTracksToPlaylist(playlist.id, album.tracks);
               showToast({
+                link: `/playlists/${playlist.id}`,
                 message: i18next.t("toast.addedToPlaylist", {
                   defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
                   count: album.tracks.length,
@@ -268,6 +269,7 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
                 album.tracks,
               );
               showToast({
+                link: `/playlists/${recentPlaylist.id}`,
                 message: i18next.t("toast.addedToPlaylist", {
                   defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
                   count: album.tracks.length,
@@ -337,6 +339,7 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
             if (playlist === false) return;
             await appendTracksToPlaylist(playlist.id, selectedTracks);
             showToast({
+              link: `/playlists/${playlist.id}`,
               message: i18next.t("toast.addedToPlaylist", {
                 defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
                 count: selectedTracks.length,
@@ -361,6 +364,7 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
               selectedTracks,
             );
             showToast({
+              link: `/playlists/${recentPlaylist.id}`,
               message: i18next.t("toast.addedToPlaylist", {
                 defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
                 count: selectedTracks.length,
