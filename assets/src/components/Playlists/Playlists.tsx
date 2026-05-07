@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 import { playlistApi } from "../../api";
+import { PlusIcon } from "../../components/icons/PlusIcon";
 import { Loading } from "../../components/Loading";
 import {
   type ListItemState,
@@ -30,12 +31,14 @@ interface PendingPlaylist {
 
 export function Playlists({
   playlistId,
+  showBottomBar = false,
   onCreate,
   onChange,
   onDelete,
   onSubmit,
 }: PropsWithChildren<{
   playlistId?: UUID;
+  showBottomBar?: boolean;
   onCreate?: (playlist: Playlist) => void;
   onChange?: (playlist: Playlist) => void;
   onDelete?: (playlist: Playlist) => void;
@@ -380,35 +383,57 @@ export function Playlists({
     : undefined;
 
   return (
-    <SelectableList<ListItem>
-      multiple={false}
-      items={listItems}
-      paddingTop={10}
-      paddingBottom={10}
-      defaultFocusId={currentPlaylist?.id}
-      onTypeMatch={handleTypeMatch}
-      defaultFocusType="center"
-      selectedIds={
-        currentPlaylist ? new Set([currentPlaylist.id]) : new Set([])
-      }
-      keyBindings={{
-        ArrowRight: ({ focusedItem }) => {
-          if (!focusedItem?.isFolder) return;
-          openFolders.add(focusedItem.id);
-          setOpenFolders(new Set([...openFolders]));
-        },
-        ArrowLeft: ({ focusedItem }) => {
-          if (!focusedItem?.isFolder) return;
-          openFolders.delete(focusedItem.id);
-          setOpenFolders(new Set([...openFolders]));
-        },
-      }}
-      onContextMenu={handleContextMenu}
-      onChange={handleChange}
-      onDelete={handleDelete}
-      onSubmit={handleSubmit}
-      onDoubleClick={handleDoubleClick}
-      renderItem={renderItem}
-    />
+    <div className="flex flex-col h-full">
+      <div className="h-full overflow-auto">
+        <SelectableList<ListItem>
+          multiple={false}
+          items={listItems}
+          paddingTop={10}
+          paddingBottom={10}
+          defaultFocusId={currentPlaylist?.id}
+          onTypeMatch={handleTypeMatch}
+          defaultFocusType="center"
+          selectedIds={
+            currentPlaylist ? new Set([currentPlaylist.id]) : new Set([])
+          }
+          keyBindings={{
+            ArrowRight: ({ focusedItem }) => {
+              if (!focusedItem?.isFolder) return;
+              openFolders.add(focusedItem.id);
+              setOpenFolders(new Set([...openFolders]));
+            },
+            ArrowLeft: ({ focusedItem }) => {
+              if (!focusedItem?.isFolder) return;
+              openFolders.delete(focusedItem.id);
+              setOpenFolders(new Set([...openFolders]));
+            },
+          }}
+          onContextMenu={handleContextMenu}
+          onChange={handleChange}
+          onDelete={handleDelete}
+          onSubmit={handleSubmit}
+          onDoubleClick={handleDoubleClick}
+          renderItem={renderItem}
+        />
+      </div>
+      {showBottomBar && (
+        <div className="pt-4 p-2">
+          <button
+            className="flex items-center gap-1 w-full rounded-md cursor-pointer py-2 px-2 justify-start text-sm font-medium bg-sidebar-bottom-bg opacity-80 hover:opacity-100 text-sidebar-bottom-fg shadow-sm text-sidebar-active-fg focus:border-0 focus:ring-0 focus:outline-0"
+            type="button"
+            onClick={() => {
+              setCreatingPlaylist({
+                isFolder: false,
+              });
+            }}
+          >
+            <PlusIcon title="New Playlist" className="size-6" />
+            {i18next.t("contextMenu.createPlaylist", {
+              defaultValue: "Create Playlist",
+            })}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

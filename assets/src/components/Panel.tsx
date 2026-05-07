@@ -1,4 +1,4 @@
-import type { PropsWithChildren, ReactNode } from "react";
+import { type PropsWithChildren, type ReactNode, useMemo } from "react";
 import {
   Group,
   Panel as ResizablePanel,
@@ -29,6 +29,11 @@ export function Panel({
       storage: localStorage,
     });
 
+  const renderedSidebar = useMemo(() => {
+    if (!hasSidebar) return;
+    return renderSidebar();
+  }, [hasSidebar, renderSidebar]);
+
   return (
     <div
       className={classNames([
@@ -48,7 +53,7 @@ export function Panel({
           <div className="bg-header-divider w-full h-[1px]"></div>
         </header>
       )}
-      {allowPanels ? (
+      {allowPanels && renderedSidebar ? (
         <Group
           className="w-full"
           defaultLayout={defaultLayout}
@@ -68,7 +73,7 @@ export function Panel({
                 "bg-sidebar-bg backdrop-blur-2xl backdrop-saturate-150",
               ])}
             >
-              {renderSidebar()}
+              {renderedSidebar}
             </div>
           </ResizablePanel>
           <Separator className="w-[1px] bg-sidebar-divider [&[data-separator='hover']]:bg-sidebar-divider-hover [&[data-separator='active']]:bg-sidebar-divider-active focus:outline-none focus:bg-sidebar-divider-active" />
@@ -82,7 +87,9 @@ export function Panel({
         </Group>
       ) : (
         <div className="@container w-full h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-panel-bg backdrop-blur-2xl backdrop-saturate-150">
-          {mobileShowSidebar && hasSidebar ? renderSidebar() : children}
+          {mobileShowSidebar && hasSidebar && renderedSidebar
+            ? renderedSidebar
+            : children}
         </div>
       )}
     </div>

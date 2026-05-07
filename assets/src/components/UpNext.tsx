@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import {
   type DragEvent,
   type PropsWithChildren,
@@ -12,9 +13,12 @@ import {
   type ListItemState,
   SelectableList,
 } from "../components/SelectableList";
+import { usePlaylistPicker } from "../hooks/usePlaylistPicker";
 import { type QueueItem, useQueue } from "../hooks/useQueue";
+import { useToast } from "../hooks/useToast";
 import { queryPlaylistItemsByIds, queryTracksByIds } from "../library";
-import type { Track } from "../types";
+import type { Track, UUID } from "../types";
+import { appendTracksToPlaylist } from "../utils/appendTracksToPlaylist";
 import { classNames } from "../utils/classNames";
 import { formatDuration } from "../utils/formatDuration";
 
@@ -36,6 +40,8 @@ export function UpNext({
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
     new Set([]),
   );
+  const { showPlaylistPicker, getMostRecentPlaylist } = usePlaylistPicker();
+  const { showToast } = useToast();
   const [height, setHeight] = useState<number>(0);
   const {
     queue,
@@ -152,6 +158,93 @@ export function UpNext({
     [listItems, removeFromQueue],
   );
 
+  const handleContextMenu = useCallback(
+    (selectedIds: Set<string>) => {
+      const recentPlaylist = getMostRecentPlaylist();
+
+      const selectedTracks = listItems
+        .filter((item) => selectedIds.has(item.id))
+        .map((item) => item.track);
+      if (selectedTracks.length === 0) return [];
+
+      const playlistActions = [
+        {
+          type: "item",
+          key: "add_to_playlist",
+          label: i18next.t("contextMenu.addToPlaylist", {
+            defaultValue: "Add To Playlist...",
+            count: selectedTracks.length,
+          }),
+          onClick: async () => {
+            const playlist = await showPlaylistPicker();
+            if (playlist === false) return;
+            await appendTracksToPlaylist(playlist.id, selectedTracks);
+            showToast({
+              link: `/playlists/${playlist.id}`,
+              message: i18next.t("toast.addedToPlaylist", {
+                defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
+                count: selectedTracks.length,
+                playlistName: playlist.name,
+              }),
+            });
+          },
+        },
+      ];
+
+      if (recentPlaylist) {
+        playlistActions.unshift({
+          type: "item",
+          key: "add_to_recent_playlist",
+          label: i18next.t("contextMenu.addToRecentPlaylist", {
+            defaultValue: "Add To {{ playlistName }}",
+            playlistName: recentPlaylist.name,
+          }),
+          onClick: async () => {
+            await appendTracksToPlaylist(
+              recentPlaylist.id as UUID,
+              selectedTracks,
+            );
+            showToast({
+              link: `/playlists/${recentPlaylist.id}`,
+              message: i18next.t("toast.addedToPlaylist", {
+                defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
+                count: selectedTracks.length,
+                playlistName: recentPlaylist.name,
+              }),
+            });
+          },
+        });
+      }
+
+      return [
+        ...playlistActions,
+        {
+          type: "divider" as const,
+          key: "destructive",
+        },
+        {
+          type: "item",
+          key: "remove",
+          danger: true,
+          label: i18next.t("contextMenu.removeTracks", {
+            defaultValue: "Remove {{ count }} tracks",
+            count: selectedTracks.length,
+          }),
+          onClick() {
+            handleDelete(selectedIds);
+          },
+        },
+      ];
+    },
+    [
+      listItems,
+      handleDelete,
+      showToast,
+      showPlaylistPicker,
+      getMostRecentPlaylist,
+    ],
+  );
+
   const handleSubmit = useCallback(
     (itemIds: Set<string>) => {
       const lastItemId = [...itemIds].pop();
@@ -162,8 +255,6 @@ export function UpNext({
     },
     [skipToTrackIndex],
   );
-
-  const handleContextMenu = useCallback(() => [], []);
 
   const handleDrop = useCallback(
     (itemIds: Set<string>, insertAtIndex: number, sourceListId: string) => {

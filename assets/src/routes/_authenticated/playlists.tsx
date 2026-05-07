@@ -100,6 +100,7 @@ function PlaylistsLayout() {
     return (
       <Playlists
         playlistId={playlistId}
+        showBottomBar={true}
         onCreate={handleCreate}
         onChange={handleChange}
         onDelete={handleDelete}

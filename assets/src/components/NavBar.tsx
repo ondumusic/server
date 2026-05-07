@@ -42,7 +42,6 @@ export function NavBar() {
       .filter((v): v is ViewId => Boolean(v))
       .pop() ?? "artists";
 
-  // const [active, setActive] = useState("artists");
   const [hovered, setHovered] = useState<ViewId | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -59,6 +58,7 @@ export function NavBar() {
     return { x: er.left - cr.left, width: er.width };
   }, []);
 
+  // Subscribe to router events to keep lastVisited map up to date.
   useEffect(() => {
     return router.subscribe("onResolved", ({ toLocation }) => {
       const match = router.state.matches
@@ -72,6 +72,7 @@ export function NavBar() {
     });
   }, [router]);
 
+  // Set the rects at the right place
   useLayoutEffect(() => {
     const rect = measure(active);
     if (rect) setActiveRect(rect);
@@ -113,12 +114,11 @@ export function NavBar() {
       role="tablist"
       onMouseLeave={() => setHovered(null)}
       className={classNames([
-        "bg-navbar-bg mb-5 flex lg:shadow-md lg:rounded-lg items-end",
+        "relative bg-navbar-bg mb-5 flex lg:shadow-md lg:rounded-lg items-end",
         "text-navbar-fg text-sm",
         "backdrop-blur-2xl backdrop-saturate-150 px-1 py-1 gap-0.5",
       ])}
     >
-      {/* Hover indicator — fades only, no slide */}
       <div
         aria-hidden
         className="pointer-events-none absolute top-1 bottom-1 rounded-lg bg-navbar-hover-bg transition-opacity duration-200"
@@ -128,19 +128,20 @@ export function NavBar() {
           opacity: hoverRect && hovered !== active ? 1 : 0,
         }}
       />
-      {/* Active indicator — slides, but only after first paint */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute top-1 bottom-1 rounded-lg bg-navbar-active-bg shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
-        style={{
-          transform: `translateX(${(activeRect?.x ?? 0) - 4}px)`,
-          width: activeRect?.width ?? 0,
-          opacity: activeRect ? 1 : 0,
-          transition: enableTransition
-            ? "transform 250ms cubic-bezier(0.4,0,0.2,1), width 250ms cubic-bezier(0.4,0,0.2,1)"
-            : "none",
-        }}
-      />
+
+      {activeRect && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute top-1 bottom-1 rounded-lg bg-navbar-active-bg shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+          style={{
+            transform: `translateX(${activeRect.x - 4}px)`,
+            width: activeRect.width,
+            transition: enableTransition
+              ? "transform 250ms cubic-bezier(0.4,0,0.2,1), width 250ms cubic-bezier(0.4,0,0.2,1)"
+              : "none",
+          }}
+        />
+      )}
 
       {items.map((item) => {
         const isActive = active === item.id;

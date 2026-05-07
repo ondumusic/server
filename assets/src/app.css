@@ -51,11 +51,16 @@
   --sidebar-bg: rgba(255, 255, 255, 0.65);
   --sidebar-active-bg: rgba(255, 255, 255, 0.7);
   --sidebar-active-fg: var(--color-black);
+  --sidebar-bottom-bg: rgba(220, 220, 220, 0.7);
+  --sidebar-bottom-fg: var(--color-black);
   --sidebar-inactive-bg: rgba(20, 20, 20, 0.15);
   --sidebar-inactive-fg: var(--color-black);
   --sidebar-divider: rgba(255, 255, 255, 0.5);
   --sidebar-divider-hover: rgba(255, 255, 255, 0.35);
   --sidebar-divider-active: rgba(0, 0, 0, 0.25);
+
+  --picker-bg: rgb(230, 230, 235);
+  --picker-fg: var(--color-black);
 
   --header-bg: rgba(255, 255, 255, 0.9);
   --header-divider: rgba(255, 255, 255, 0.5);
@@ -96,14 +101,19 @@
   --sidebar-bg: rgba(40, 40, 45, 0.55);
   --sidebar-active-bg: rgba(255, 255, 255, 0.15);
   --sidebar-active-fg: var(--color-white);
+  --sidebar-bottom-bg: rgba(255, 255, 255, 0.15);
+  --sidebar-bottom-fg: var(--color-white);
   --sidebar-inactive-bg: rgba(0, 0, 0, 0.3);
   --sidebar-inactive-fg: rgba(255, 255, 255, 1);
   --sidebar-divider: rgba(255, 255, 255, 0.1);
-  --sidebar-divider-hover: rgba(255, 255, 255, 0.06);
-  --sidebar-divider-active: rgba(0, 0, 0, 0.3);
+  --sidebar-divider-hover: rgba(255, 255, 255, 0.3);
+  --sidebar-divider-active: rgba(255, 255, 255, 0.7);
 
-  --header-bg: rgba(40, 40, 44, 0.85);
+  --header-bg: rgba(100, 100, 105, 0.2);
   --header-divider: rgba(255, 255, 255, 0.1);
+
+  --picker-bg: rgb(40, 40, 45);
+  --picker-fg: var(--color-white);
 
   --toast-bg: rgba(245, 245, 245, 0.95);
   --toast-fg: rgb(20, 20, 20);
@@ -153,6 +163,8 @@
   --color-sidebar-fg: var(--sidebar-fg);
   --color-sidebar-active-bg: var(--sidebar-active-bg);
   --color-sidebar-active-fg: var(--sidebar-active-fg);
+  --color-sidebar-bottom-bg: var(--sidebar-bottom-bg);
+  --color-sidebar-bottom-fg: var(--sidebar-bottom-fg);
   --color-sidebar-inactive-bg: var(--sidebar-inactive-bg);
   --color-sidebar-inactive-fg: var(--sidebar-inactive-fg);
   --color-sidebar-divider: var(--sidebar-divider);
@@ -161,6 +173,8 @@
 
   --color-header-bg: var(--header-bg);
   --color-header-divider: var(--header-divider);
+
+  --color-picker-bg: var(--picker-bg);
 
   --color-toast-bg: var(--toast-bg);
   --color-toast-fg: var(--toast-fg);

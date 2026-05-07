@@ -5,7 +5,7 @@ import {
   redirect,
   useLocation,
 } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavBar } from "../components/NavBar";
 import { Player } from "../components/Player";
 import { useQueue } from "../hooks/useQueue";
@@ -35,6 +35,11 @@ function Authenticated() {
   );
 
   const isOnboarding = false;
+
+  useEffect(() => {
+    if (location.pathname === "/") return;
+    setIsPanelOpen(true);
+  }, [location]);
 
   if (location.pathname === "/" && queue.length === 0) {
     return <Navigate to="/artists" replace />;

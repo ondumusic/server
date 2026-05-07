@@ -47,6 +47,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   };
 
   const logout = () => {
+    authApi.logout();
     auth.logout();
     updateState();
   };

@@ -41,7 +41,7 @@ const PlaylistPicker = ({
   );
 
   return (
-    <div className="bg-gray-200 flex flex-col max-h-100">
+    <div className="bg-picker-bg flex flex-col max-h-100">
       <Playlists
         playlistId={selectedPlaylist?.id}
         onChange={(playlist) => selectPlaylist(playlist)}
@@ -50,14 +50,14 @@ const PlaylistPicker = ({
 
       <div className="flex flex-shrink-0 gap-2 p-2 text-md font-medium">
         <button
-          className="w-full rounded-md cursor-pointer py-2 px-6 text-md font-medium bg-sidebar-active-bg shadow-sm text-sidebar-active-fg focus:border-0 focus:ring-0 focus:outline-0"
+          className="w-full rounded-md cursor-pointer py-2 px-6 text-sm font-medium bg-sidebar-active-bg shadow-sm text-sidebar-active-fg focus:border-0 focus:ring-0 focus:outline-0"
           type="button"
           onClick={() => onClose(false)}
         >
           Cancel
         </button>
         <button
-          className="w-full rounded-md cursor-pointer py-2 px-6 text-md font-medium text-accent-500 bg-sidebar-active-bg shadow-sm focus:border-0 focus:ring-0 focus:outline-0"
+          className="w-full rounded-md cursor-pointer py-2 px-6 text-sm font-medium text-white bg-accent-500 hover:bg-accent-600 shadow-sm focus:border-0 focus:ring-0 focus:outline-0"
           type="button"
           onClick={() => onClose(selectedPlaylist ?? false)}
         >

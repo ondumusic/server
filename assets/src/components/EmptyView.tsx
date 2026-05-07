@@ -7,7 +7,7 @@ export function EmptyView({
   message: string;
 }>) {
   return (
-    <div className="h-full content-center text-center">
+    <div className="h-full content-center text-center text-muted">
       <p>{message}</p>
       {children}
     </div>

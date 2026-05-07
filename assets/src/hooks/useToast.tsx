@@ -34,11 +34,13 @@ export function useToast() {
 const Toast = ({
   message,
   show,
+  dismiss,
   onMouseEnter,
   onMouseLeave,
 }: {
   message: ToastMessage | null;
   show: boolean;
+  dismiss: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
 }) => {
@@ -68,7 +70,11 @@ const Toast = ({
         <span>{toast?.message}</span>
 
         {toast?.link && (
-          <Link to={toast?.link} className="underline hover:no-underline">
+          <Link
+            to={toast?.link}
+            onClick={dismiss}
+            className="underline hover:no-underline"
+          >
             {toast.linkTitle ??
               i18next.t("toast.defaultLinkTitle", {
                 defaultValue: "View",
@@ -148,6 +154,7 @@ export function ToastProvider({ children }: PropsWithChildren) {
       <Toast
         message={toast}
         show={toast !== null}
+        dismiss={clearToast}
         onMouseEnter={pauseTimer}
         onMouseLeave={resumeTimer}
       />

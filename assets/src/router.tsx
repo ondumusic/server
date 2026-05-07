@@ -1,5 +1,5 @@
 import { createRouter, RouterProvider } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loading } from "./components/Loading";
 import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { useAuth } from "./hooks/useAuth";
@@ -36,6 +36,11 @@ export function Router() {
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>(
     hydrateReact.onboarding,
   );
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies(isLoggedIn): suppress dependency isLoggedIn as we want to run this on any change
+  useEffect(() => {
+    router.invalidate();
+  }, [isLoggedIn]);
 
   const context = {
     auth: {

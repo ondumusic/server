@@ -3,6 +3,7 @@ import {
   Outlet,
   redirect,
 } from "@tanstack/react-router";
+import { ToastProvider } from "../hooks/useToast";
 import type { RouteContext } from "../types";
 
 // Use the routerContext to create your root route
@@ -20,5 +21,9 @@ export const Route = createRootRouteWithContext<RouteContext>()({
       throw redirect({ to: "/" });
     }
   },
-  component: () => <Outlet />,
+  component: () => (
+    <ToastProvider>
+      <Outlet />
+    </ToastProvider>
+  ),
 });

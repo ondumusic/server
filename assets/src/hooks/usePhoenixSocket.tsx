@@ -49,9 +49,9 @@ export const PhoenixSocketProvider = ({ children }: PropsWithChildren) => {
     // Join the channel to receive all library updates
     const channel = socketRef.current.channel("library:sync", {});
     channel.join();
-    channel.on("deleted", (deletions) => {
+    channel.on("deleted", (data) => {
       sync.pushChanges({
-        deletions,
+        deletions: data.deletions ?? [],
       });
     });
     channel.on("processed", (data) => {
@@ -66,6 +66,7 @@ export const PhoenixSocketProvider = ({ children }: PropsWithChildren) => {
         albums: data.albums,
         tracks: data.albums?.flatMap((album: Album) => album.tracks),
         playlists: data.playlists,
+        playlistItems: data.playlistItems,
       });
     });
   }, [isLoggedIn]);

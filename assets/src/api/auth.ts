@@ -40,6 +40,10 @@ type PlayTokenResult =
       playToken: string;
     };
 
+type LogoutResponse = {
+  ok: true;
+};
+
 export const authApi = {
   login(username?: string, password?: string, opts?: RequestOptions) {
     return client.post<
@@ -84,6 +88,10 @@ export const authApi = {
 
   getCurrentUser(opts?: RequestOptions) {
     return client.get<undefined, User>(`/auth/me`, opts);
+  },
+
+  logout(opts?: RequestOptions) {
+    return client.delete<undefined, LogoutResponse>(`/auth/session`, opts);
   },
 
   getPlayToken(opts?: RequestOptions) {
