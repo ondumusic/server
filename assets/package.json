@@ -53,10 +53,5 @@
     "react-i18next": "^17.0.4",
     "react-resizable-panels": "^4.10.0",
     "vite": "^8.0.9"
-  },
-  "pnpm": {
-    "overrides": {
-      "@swc/core": "1.13.20"
-    }
   }
 }
