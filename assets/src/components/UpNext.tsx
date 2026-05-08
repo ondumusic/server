@@ -182,7 +182,7 @@ export function UpNext({
             showToast({
               link: `/playlists/${playlist.id}`,
               message: i18next.t("toast.addedToPlaylist", {
-                defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
+                defaultValue: "Added {{ count }} tracks to {{ playlistName }}",
                 count: selectedTracks.length,
                 playlistName: playlist.name,
               }),
@@ -207,7 +207,7 @@ export function UpNext({
             showToast({
               link: `/playlists/${recentPlaylist.id}`,
               message: i18next.t("toast.addedToPlaylist", {
-                defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
+                defaultValue: "Added {{ count }} tracks to {{ playlistName }}",
                 count: selectedTracks.length,
                 playlistName: recentPlaylist.name,
               }),

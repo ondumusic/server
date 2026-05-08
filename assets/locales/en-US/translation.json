@@ -146,9 +146,21 @@
     "tracks_other": "{{count}} tracks"
   },
   "toast": {
-    "addedToPlaylist_one": "Add {{ count }} track to {{ playlistName }}",
-    "addedToPlaylist_other": "Add {{ count }} tracks to {{ playlistName }}",
-    "defaultLinkTitle": "View"
+    "addedArtistToPlayNow": "Playing {{ artistName }}",
+    "addedArtistToPlayShuffled": "Shuffling {{ artistName }}",
+    "addedPlaylistToPlayNow": "Playing {{ playlistName }}",
+    "addedPlaylistToPlayShuffled": "Shuffling {{ playlistName }}",
+    "addedToPlayAfter_one": "Added {{ count }} tracks to the queue",
+    "addedToPlayAfter_other": "Added {{ count }} tracks to the queue",
+    "addedToPlaylist_one": "Added {{ count }} track to {{ playlistName }}",
+    "addedToPlaylist_other": "Added {{ count }} tracks to {{ playlistName }}",
+    "addedToPlayNext_one": "Added {{ count }} tracks to up next",
+    "addedToPlayNext_other": "Added {{ count }} tracks to up next",
+    "addedToPlayShuffled_one": "Shuffling {{ count }} tracks",
+    "addedToPlayShuffled_other": "Shuffling {{ count }} tracks",
+    "defaultLinkTitle": "View",
+    "removedFromPlaylist_one": "Removed {{ count }} tracks from playlist",
+    "removedFromPlaylist_other": "Removed {{ count }} tracks from playlist"
   },
   "upNext": {
     "emptyView": "No upcoming tracks.",

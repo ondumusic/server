@@ -15,6 +15,7 @@ import {
 import type { ContextMenuItem } from "../../hooks/useContextMenu";
 import { usePlayer } from "../../hooks/usePlayer";
 import { maybeResetPlaylistPicker } from "../../hooks/usePlaylistPicker";
+import { useToast } from "../../hooks/useToast";
 import i18next from "../../i18next";
 import { sync, usePlaylists } from "../../library";
 import type { Playlist, UUID } from "../../types";
@@ -53,6 +54,7 @@ export function Playlists({
   const [creatingPlaylist, setCreatingPlaylist] = useState<
     PendingPlaylist | false
   >(false);
+  const { showToast } = useToast();
 
   // Pre-open folders if the playlistId from route params is available
   useEffect(() => {
@@ -299,7 +301,7 @@ export function Playlists({
       return [
         {
           type: "item",
-          key: "play_next",
+          key: "play",
           label: i18next.t("contextMenu.playPlaylist", {
             defaultValue: 'Play "{{ playlist }}"',
             playlist: playlist.name,
@@ -307,6 +309,13 @@ export function Playlists({
           onClick: async () => {
             if (!(await userConfirmQueueReplace())) return;
             populateUpNext({ playlistId: playlist.id });
+
+            showToast({
+              message: i18next.t("toast.addedPlaylistToPlayNow", {
+                defaultValue: "Playing {{ playlistName }}",
+                playlistName: playlist.name,
+              }),
+            });
           },
         },
         {
@@ -319,6 +328,13 @@ export function Playlists({
           onClick: async () => {
             if (!(await userConfirmQueueReplace())) return;
             populateUpNext({ playlistId: playlist.id, random: true });
+
+            showToast({
+              message: i18next.t("toast.addedPlaylistToPlayShuffled", {
+                defaultValue: "Shuffling {{ playlistName }}",
+                playlistName: playlist.name,
+              }),
+            });
           },
         },
         {
@@ -335,6 +351,7 @@ export function Playlists({
       populateUpNext,
       handleDelete,
       openFolders,
+      showToast,
     ],
   );
 

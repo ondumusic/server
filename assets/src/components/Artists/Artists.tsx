@@ -5,6 +5,7 @@ import {
   SelectableList,
 } from "../../components/SelectableList";
 import { usePlayer } from "../../hooks/usePlayer";
+import { useToast } from "../../hooks/useToast";
 import i18next from "../../i18next";
 import { useArtists } from "../../library";
 import type { Artist, UUID } from "../../types";
@@ -25,6 +26,7 @@ export function Artists({
 }>) {
   const { populateUpNext, userConfirmQueueReplace } = usePlayer();
   const { data: listItems, loading: isLoading } = useArtists();
+  const { showToast } = useToast();
 
   const handleTypeMatch = useCallback((item: Artist, query: string) => {
     const matcher = new RegExp(`^${query.replace(/\s+/g, "")}`, "iu");
@@ -64,6 +66,13 @@ export function Artists({
           onClick: async () => {
             if (!(await userConfirmQueueReplace())) return;
             populateUpNext({ artistId: artist.id });
+
+            showToast({
+              message: i18next.t("toast.addedArtistToPlayNow", {
+                defaultValue: "Playing {{ artistName }}",
+                artistName: artist.name,
+              }),
+            });
           },
         },
         {
@@ -76,11 +85,18 @@ export function Artists({
           onClick: async () => {
             if (!(await userConfirmQueueReplace())) return;
             populateUpNext({ artistId: artist.id, random: true });
+
+            showToast({
+              message: i18next.t("toast.addedArtistToPlayShuffled", {
+                defaultValue: "Shuffling {{ artistName }}",
+                artistName: artist.name,
+              }),
+            });
           },
         },
       ];
     },
-    [listItems, userConfirmQueueReplace, populateUpNext],
+    [listItems, userConfirmQueueReplace, populateUpNext, showToast],
   );
 
   const handleDoubleClick = useCallback(

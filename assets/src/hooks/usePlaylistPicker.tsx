@@ -42,11 +42,13 @@ const PlaylistPicker = ({
 
   return (
     <div className="bg-picker-bg flex flex-col max-h-100">
-      <Playlists
-        playlistId={selectedPlaylist?.id}
-        onChange={(playlist) => selectPlaylist(playlist)}
-        onSubmit={(playlist) => onClose(playlist)}
-      />
+      <div className="h-full overflow-auto">
+        <Playlists
+          playlistId={selectedPlaylist?.id}
+          onChange={(playlist) => selectPlaylist(playlist)}
+          onSubmit={(playlist) => onClose(playlist)}
+        />
+      </div>
 
       <div className="flex flex-shrink-0 gap-2 p-2 text-md font-medium">
         <button

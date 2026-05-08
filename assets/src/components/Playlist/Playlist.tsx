@@ -7,6 +7,7 @@ import type { ContextMenuItem } from "../../hooks/useContextMenu";
 import { usePlayer } from "../../hooks/usePlayer";
 import { usePlaylistMutations } from "../../hooks/usePlaylistMutations";
 import { useQueue } from "../../hooks/useQueue";
+import { useToast } from "../../hooks/useToast";
 import i18next from "../../i18next";
 import { queryTracksByIds } from "../../library";
 import type {
@@ -27,6 +28,7 @@ interface Props {
 
 export function Playlist({ playlist, items }: Props) {
   const playlistId = playlist.id;
+  const { showToast } = useToast();
   const [selectedItemIds, setSelectedItemIds] = useState<Set<UUID>>(
     new Set([]),
   );
@@ -189,6 +191,13 @@ export function Playlist({ playlist, items }: Props) {
           }),
           onClick() {
             enqueueNext(queueItems);
+
+            showToast({
+              message: i18next.t("toast.addedToPlayNext", {
+                defaultValue: "Added {{ count }} tracks to up next",
+                count: queueItems.length,
+              }),
+            });
           },
         },
         {
@@ -200,6 +209,13 @@ export function Playlist({ playlist, items }: Props) {
           }),
           onClick() {
             enqueueAfter(queueItems);
+
+            showToast({
+              message: i18next.t("toast.addedToPlayAfter", {
+                defaultValue: "Added {{ count }} tracks to the queue",
+                count: queueItems.length,
+              }),
+            });
           },
         },
         {
@@ -216,11 +232,18 @@ export function Playlist({ playlist, items }: Props) {
           }),
           onClick() {
             handleDelete(selectedIds);
+
+            showToast({
+              message: i18next.t("toast.removedFromPlaylist", {
+                defaultValue: "Removed {{ count }} tracks from playlist",
+                count: queueItems.length,
+              }),
+            });
           },
         },
       ];
     },
-    [currentItems, handleDelete, enqueueNext, enqueueAfter],
+    [currentItems, handleDelete, enqueueNext, enqueueAfter, showToast],
   );
 
   const listItems = useMemo(() => {

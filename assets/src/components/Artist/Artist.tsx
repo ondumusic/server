@@ -246,7 +246,8 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
               showToast({
                 link: `/playlists/${playlist.id}`,
                 message: i18next.t("toast.addedToPlaylist", {
-                  defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
+                  defaultValue:
+                    "Added {{ count }} tracks to {{ playlistName }}",
                   count: album.tracks.length,
                   playlistName: playlist.name,
                 }),
@@ -271,7 +272,8 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
               showToast({
                 link: `/playlists/${recentPlaylist.id}`,
                 message: i18next.t("toast.addedToPlaylist", {
-                  defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
+                  defaultValue:
+                    "Added {{ count }} tracks to {{ playlistName }}",
                   count: album.tracks.length,
                   playlistName: recentPlaylist.name,
                 }),
@@ -290,6 +292,13 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
             }),
             onClick() {
               enqueueNext(album.tracks.map((track) => ({ track })));
+
+              showToast({
+                message: i18next.t("toast.addedToPlayNext", {
+                  defaultValue: "Added {{ count }} tracks to up next",
+                  count: album.tracks.length,
+                }),
+              });
             },
           },
           {
@@ -301,6 +310,13 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
             }),
             onClick() {
               enqueueAfter(album.tracks.map((track) => ({ track })));
+
+              showToast({
+                message: i18next.t("toast.addedToPlayAfter", {
+                  defaultValue: "Added {{ count }} tracks to the queue",
+                  count: album.tracks.length,
+                }),
+              });
             },
           },
           {
@@ -313,6 +329,13 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
             async onClick() {
               if (!(await userConfirmQueueReplace())) return;
               populateUpNext({ albumId: album.id, random: true });
+
+              showToast({
+                message: i18next.t("toast.addedToPlayShuffled", {
+                  defaultValue: "Shuffling {{ count }} tracks",
+                  count: album.tracks.length,
+                }),
+              });
             },
           },
           {
@@ -341,7 +364,7 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
             showToast({
               link: `/playlists/${playlist.id}`,
               message: i18next.t("toast.addedToPlaylist", {
-                defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
+                defaultValue: "Added {{ count }} tracks to {{ playlistName }}",
                 count: selectedTracks.length,
                 playlistName: playlist.name,
               }),
@@ -366,7 +389,7 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
             showToast({
               link: `/playlists/${recentPlaylist.id}`,
               message: i18next.t("toast.addedToPlaylist", {
-                defaultValue: "Add {{ count }} tracks to {{ playlistName }}",
+                defaultValue: "Added {{ count }} tracks to {{ playlistName }}",
                 count: selectedTracks.length,
                 playlistName: recentPlaylist.name,
               }),
@@ -385,6 +408,13 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
           }),
           onClick() {
             enqueueNext(selectedTracks.map((track) => ({ track })));
+
+            showToast({
+              message: i18next.t("toast.addedToPlayNext", {
+                defaultValue: "Added {{ count }} tracks to up next",
+                count: selectedTracks.length,
+              }),
+            });
           },
         },
         {
@@ -396,6 +426,13 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
           }),
           onClick() {
             enqueueAfter(selectedTracks.map((track) => ({ track })));
+
+            showToast({
+              message: i18next.t("toast.addedToPlayAfter", {
+                defaultValue: "Added {{ count }} tracks to the queue",
+                count: selectedTracks.length,
+              }),
+            });
           },
         },
         {
