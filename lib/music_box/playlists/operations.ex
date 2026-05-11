@@ -32,7 +32,6 @@ defmodule MusicBox.Playlists.Operations do
           | {:error, {:missing_items, [String.t()]}}
           | {:error, {:missing_tracks, [String.t()]}}
           | {:error, {:conflict_items, [String.t()]}}
-          | {:error, {:conflict_positions, [position()]}}
           | {:error, {:invalid_positions, [position()]}}
           | {:error, :playlist_is_folder}
 
@@ -64,7 +63,7 @@ defmodule MusicBox.Playlists.Operations do
          :ok <- validate_tracks(adds),
          existing_items <- get_existing_items(playlist, combined_ids),
          :ok <- validate_items(existing_items, combined_ids),
-         :ok <- validate_unique_positions(playlist, adds, moves) do
+         {:ok, %{adds: adds, moves: moves}} <- ensure_unique_positions(playlist, adds, moves) do
       {:ok,
        %{
          adds: adds,
@@ -140,7 +139,7 @@ defmodule MusicBox.Playlists.Operations do
     end
   end
 
-  defp validate_unique_positions(playlist, adds, moves) do
+  defp ensure_unique_positions(playlist, adds, moves) do
     combined_positions =
       List.flatten([
         adds,
@@ -148,17 +147,60 @@ defmodule MusicBox.Playlists.Operations do
       ])
       |> Enum.map(& &1["position"])
 
-    from(i in PlaylistItem,
-      where: i.playlist_id == ^playlist.id and i.position in ^combined_positions,
-      select: i.position
-    )
-    |> Repo.all()
-    |> case do
-      [] ->
-        :ok
+    conflicts =
+      from(i in PlaylistItem,
+        where: i.playlist_id == ^playlist.id and i.position in ^combined_positions,
+        select: i.position
+      )
+      |> Repo.all()
 
-      conflict_positions ->
-        {:error, {:conflict_positions, conflict_positions}}
+    if conflicts == [] do
+      {:ok, %{adds: adds, moves: moves}}
+    else
+      lowest_conflict = Enum.min(conflicts, fn -> nil end)
+
+      # Get all positions above the lowest known conflict, we need them all so we
+      # can try to find new positions in similar spots.
+      used_positions =
+        from(i in PlaylistItem,
+          where: i.playlist_id == ^playlist.id and i.position > ^lowest_conflict,
+          order_by: [asc: i.position],
+          select: i.position
+        )
+        |> Repo.all()
+
+      {:ok,
+       %{
+         adds: do_fix_positions(adds, conflicts, used_positions),
+         moves: do_fix_positions(moves, conflicts, used_positions)
+       }}
+    end
+  end
+
+  defp do_fix_positions([], _conflicts, _used), do: []
+  defp do_fix_positions(_adds, [], _used), do: []
+
+  defp do_fix_positions(items, conflicts, used) do
+    Enum.map(items, fn item ->
+      next = Enum.find(used, fn p -> p > item["position"] end)
+
+      if item["position"] in conflicts do
+        new_position = generate_new_position(item["position"], next, used)
+        Map.put(item, "position", new_position)
+      else
+        item
+      end
+    end)
+  end
+
+  defp generate_new_position(before_key, after_key, used) do
+    position = FractionalIndex.generate_key_between(before_key, after_key)
+
+    if position in used do
+      next_after = Enum.find(used, fn p -> p > position end)
+      generate_new_position(position, next_after, used)
+    else
+      position
     end
   end
 

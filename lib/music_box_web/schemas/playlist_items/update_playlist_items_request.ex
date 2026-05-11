@@ -136,24 +136,6 @@ defmodule MusicBoxWeb.Schemas.UpdatePlaylistItemsError do
     })
   end
 
-  defmodule AddMoveConflict do
-    require OpenApiSpex
-    @moduledoc false
-
-    OpenApiSpex.schema(%{
-      title: "AddMoveConflictError",
-      type: :object,
-      required: [:error, :positions],
-      properties: %{
-        ok: %Schema{type: :boolean, example: false},
-        error: %Schema{type: :string, enum: ["add_move_conflict"]},
-        positions: %Schema{type: :array, items: %Schema{type: :string}}
-      },
-      example: %{"error" => "add_move_conflict", "positions" => ["a1"]},
-      additionalProperties: false
-    })
-  end
-
   defmodule InvalidPositions do
     require OpenApiSpex
     @moduledoc false
@@ -217,7 +199,6 @@ defmodule MusicBoxWeb.Schemas.UpdatePlaylistItemsError do
       PlaylistIsFolder,
       TooManyOperations,
       MoveRemoveConflict,
-      AddMoveConflict,
       InvalidPositions,
       UnknownItems,
       UnknownTracks
@@ -228,7 +209,6 @@ defmodule MusicBoxWeb.Schemas.UpdatePlaylistItemsError do
         "playlist_is_folder" => "#/components/schemas/PlaylistIsFolder",
         "too_many_operations" => "#/components/schemas/TooManyOperationsError",
         "move_remove_conflict" => "#/components/schemas/MoveRemoveConflictError",
-        "add_move_conflict" => "#/components/schemas/AddMoveConflictError",
         "invalid_positions" => "#/components/schemas/InvalidPositionsError",
         "unknown_items" => "#/components/schemas/UnknownItemsError",
         "unknown_tracks" => "#/components/schemas/UnknownTracksError"

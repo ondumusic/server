@@ -545,9 +545,13 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
       track_id = track.id
 
       assert %{
-               "ok" => false,
-               "error" => "add_move_conflict",
-               "positions" => ["a0"]
+               "ok" => true,
+               "added" => [
+                 %{
+                   "trackId" => ^track_id,
+                   "position" => "a0V"
+                 }
+               ]
              } =
                conn
                |> patch(~p"/api/playlists/#{playlist.id}/items", %{
@@ -558,7 +562,67 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
                    }
                  ]
                })
-               |> api_response(422, "UpdatePlaylistItemsError")
+               |> api_response(200, "UpdatePlaylistItemsResponse")
+
+      %{entries: entries} = Playlists.paginate_playlists_items(playlist, %{})
+      assert Enum.at(entries, 0).position == "a0"
+      assert Enum.at(entries, 1).position == "a0V"
+      assert Enum.at(entries, 1).track_id == track_id
+      assert Enum.at(entries, 2).position == "a1"
+      assert Enum.at(entries, 3).position == "a2"
+    end
+
+    @tag :skip_playlist
+    test "ensures positions are unique (next calculated also taken)", %{conn: conn} do
+      tracks = MusicBox.Tracks.paginate_tracks(%{}).entries
+
+      items =
+        tracks
+        |> Enum.filter(&(&1.number in [4, 8, 9]))
+        |> Enum.zip(["a0", "a0V", "a1"])
+        |> Enum.map(fn {track, position} ->
+          %{
+            position: position,
+            track_id: track.id
+          }
+        end)
+
+      playlist =
+        TestSeeds.insert_playlist(%{
+          name: "Test Playlist",
+          items: items
+        })
+
+      track = Enum.find(tracks, &(&1.number == 5))
+      track_id = track.id
+      position = "a0"
+
+      assert %{
+               "ok" => true,
+               "added" => [
+                 %{
+                   "trackId" => ^track_id,
+                   "position" => "a0G"
+                 }
+               ]
+             } =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}/items", %{
+                 add: [
+                   %{
+                     position: position,
+                     trackId: track_id
+                   }
+                 ]
+               })
+               |> api_response(200, "UpdatePlaylistItemsResponse")
+
+      %{entries: entries} = Playlists.paginate_playlists_items(playlist, %{})
+      assert Enum.at(entries, 0).position == "a0"
+      assert Enum.at(entries, 1).position == "a0G"
+      assert Enum.at(entries, 1).track_id == track_id
+      assert Enum.at(entries, 2).position == "a0V"
+      assert Enum.at(entries, 3).position == "a1"
     end
 
     test "restrict amount of operations per request", %{conn: conn, playlist: playlist} do
