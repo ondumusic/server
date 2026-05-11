@@ -36,7 +36,7 @@ defmodule MusicBox.Tool.ResizeArtwork do
       "-i",
       path,
       "-vf",
-      "scale=500:500:force_original_aspect_ratio=decrease:flags=lanczos",
+      "scale='min(min(iw,ih),500)':'min(min(iw,ih),500)':flags=lanczos",
       "-q:v",
       "2",
       "-update",
