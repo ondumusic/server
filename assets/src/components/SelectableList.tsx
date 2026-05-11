@@ -646,7 +646,7 @@ export function SelectableList<T>({
 
     // Configure the dragging dataTransfer
     e.dataTransfer.effectAllowed = "move";
-    // This hacky custom type is to understand where we are draggong from in dragOver
+    // This hacky custom type is to understand where we are dragging from in dragOver
     e.dataTransfer.setData(
       `application/x-list-${listId?.toLowerCase()}`,
       JSON.stringify(true),
@@ -696,6 +696,18 @@ export function SelectableList<T>({
   const handleDragOver = (e: DragEvent) => {
     const listElement = listRef.current;
     if (!listElement) return null;
+
+    // Only handle drag overs when they are allowed
+    const sourceListId = e.dataTransfer.types
+      .find((t) => t.startsWith("application/x-list-"))
+      ?.replace("application/x-list-", "");
+    if (!sourceListId) return;
+    if (
+      !allowDropFrom.some(
+        (allowed) => sourceListId.toLowerCase() === allowed.toLowerCase(),
+      )
+    )
+      return;
 
     e.preventDefault();
     e.stopPropagation();

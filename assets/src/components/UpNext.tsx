@@ -36,6 +36,10 @@ export function UpNext({
 }: PropsWithChildren<{
   isVisible: boolean;
 }>) {
+  const allowDropFrom = useMemo(
+    () => ["upNext", "albumTracks", "playlist"],
+    [],
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
     new Set([]),
@@ -53,11 +57,6 @@ export function UpNext({
     addQueueAfter,
     rearrangeQueue,
   } = useQueue();
-
-  const allowDropFrom = useMemo(
-    () => ["upNext", "albumTracks", "playlist"],
-    [],
-  );
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -103,11 +102,26 @@ export function UpNext({
     );
   }, [queue, currentTrackIndex]);
 
-  const handleDragOver = useCallback((e: DragEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "copy";
-  }, []);
+  const handleDragOver = useCallback(
+    (e: DragEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      const sourceListId = e.dataTransfer.types
+        .find((t) => t.startsWith("application/x-list-"))
+        ?.replace("application/x-list-", "");
+      if (!sourceListId) return;
+      if (
+        !allowDropFrom.some(
+          (allowed) => sourceListId.toLowerCase() === allowed.toLowerCase(),
+        )
+      )
+        return;
+
+      e.dataTransfer.dropEffect = "copy";
+    },
+    [allowDropFrom],
+  );
 
   const handleDropEmpty = useCallback(
     (e: DragEvent) => {
