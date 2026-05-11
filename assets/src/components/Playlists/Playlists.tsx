@@ -386,9 +386,20 @@ export function Playlists({
     [listItems, handleDoubleClick],
   );
 
-  const handleDrop = useCallback(
-    (selectedIds: Set<UUID>, insertAtIndex: number, sourceListId: string) => {
-      console.log("drop from", sourceListId);
+  const changePlaylistParent = useCallback(
+    async (playlistId: UUID, parentId: UUID | null) => {
+      const updatedPlaylist = await playlistApi.updatePlaylist(playlistId, {
+        parentId,
+      });
+      await sync.pushChanges({
+        playlists: [updatedPlaylist],
+      });
+    },
+    [],
+  );
+
+  const handlePlaylistMove = useCallback(
+    async (selectedIds: Set<UUID>, insertAtIndex: number) => {
       const rootFolder = insertAtIndex === listItems.length;
       const selectedId = Array.from(selectedIds).pop();
       const playlist = allItems.find((folder) => folder.id === selectedId);
@@ -396,13 +407,7 @@ export function Playlists({
 
       if (rootFolder) {
         if (!playlist.parentId) return; // already in root
-        console.log("move to root");
-        showToast({
-          message: i18next.t("toast.PLACEHOLDER", {
-            defaultValue: "Moved {{ playlistName }} to root",
-            playlistName: playlist.name,
-          }),
-        });
+        await changePlaylistParent(playlist.id, null);
       } else {
         const targetFolder = listItems[insertAtIndex];
         const targetFolderId = targetFolder?.isFolder
@@ -411,31 +416,27 @@ export function Playlists({
 
         if (!targetFolderId) {
           if (!playlist.parentId) return; // already in root
-          console.log("move to root");
-          showToast({
-            message: i18next.t("toast.PLACEHOLDER", {
-              defaultValue: "Moved {{ playlistName }} to root",
-              playlistName: playlist.name,
-            }),
-          });
+          await changePlaylistParent(playlist.id, null);
         } else {
           const target = allItems.find(
             (folder) => folder.id === targetFolderId,
           );
           if (!target) return;
           if (playlist.parentId === target.id) return; // already in folder
-          console.log("move to", target.name);
-          showToast({
-            message: i18next.t("toast.PLACEHOLDER", {
-              defaultValue: "Moved {{ playlistName }} to {{ targetName }}",
-              playlistName: playlist.name,
-              targetName: target.name,
-            }),
-          });
+          await changePlaylistParent(playlist.id, target.id);
         }
       }
     },
-    [allItems, listItems, showToast],
+    [allItems, listItems, changePlaylistParent],
+  );
+
+  const handleDrop = useCallback(
+    (selectedIds: Set<UUID>, insertAtIndex: number, sourceListId: string) => {
+      if (sourceListId === "playlists") {
+        handlePlaylistMove(selectedIds, insertAtIndex);
+      }
+    },
+    [handlePlaylistMove],
   );
 
   const renderItem = useCallback(
@@ -459,9 +460,9 @@ export function Playlists({
     <div className="flex flex-col h-full">
       <div className="h-full overflow-auto">
         <SelectableList<ListItem>
-          id="artists"
+          id="playlists"
           allowDrag={true}
-          allowDropFrom={["artists"]}
+          allowDropFrom={["playlists"]}
           dropTargetType="item"
           dropTargetClass="bg-transparent"
           onDrop={handleDrop}

@@ -8,8 +8,8 @@ interface CreatePlaylistRequest {
 }
 
 interface UpdatePlaylistRequest {
-  name: string;
-  parentId?: UUID;
+  name?: string;
+  parentId?: UUID | null;
 }
 
 interface DeletePlaylistResponse {
