@@ -18,6 +18,7 @@ import { classNames } from "../utils/classNames";
 export interface ListItemState {
   isSelected: boolean;
   isDragging: boolean;
+  isDropTarget: boolean;
   isFocused: boolean;
 }
 
@@ -33,6 +34,8 @@ export type KeyContext<T> = {
   selectedIds: Set<string>;
 };
 
+type DropTargetType = "between" | "item";
+
 type BaseProps<T> = {
   items: ListItem[];
   selectedIds: Set<string>;
@@ -40,6 +43,7 @@ type BaseProps<T> = {
   defaultFocusId?: string;
   defaultFocusType?: ScrollLogicalPosition;
   dropTargetClass?: string;
+  dropTargetType?: DropTargetType;
   itemHeight?: "auto" | number | ((item: T) => number);
   scrollOverscan?: number;
   paddingBottom?: number;
@@ -79,6 +83,7 @@ export function SelectableList<T>({
   renderItem,
   defaultFocusId,
   defaultFocusType = "nearest",
+  dropTargetType = "between",
   dropTargetClass = "bg-blue-500",
   resetScrollOnItemsChange = false,
   multiple: allowMultiple,
@@ -654,6 +659,9 @@ export function SelectableList<T>({
       }),
     );
 
+    // For now this is only scenario we don't want/need drag image.
+    // if (dropTargetType === "item") return;
+
     // Create custom drag image showing selection count
     const dragImage = document.createElement("div");
     dragImage.classList.add(
@@ -725,7 +733,10 @@ export function SelectableList<T>({
         height: getItemHeight(items[mid]),
       };
 
-      const midpoint = rect.top + rect.height / 2;
+      const midpoint =
+        dropTargetType === "between"
+          ? rect.top + rect.height / 2
+          : rect.top + rect.height;
 
       if (mouseY < midpoint) {
         dropIndex = mid;
@@ -828,6 +839,7 @@ export function SelectableList<T>({
               {renderItem(items[sampleIndex] as T, {
                 isSelected: false,
                 isDragging: false,
+                isDropTarget: false,
                 isFocused: false,
               })}
             </div>
@@ -846,6 +858,7 @@ export function SelectableList<T>({
             const index = startIndex + visibleIndex;
             const isSelected = selectedIds.has(item.id);
             const isDragging = draggingIds.has(item.id);
+            const isDropTarget = index === dropAtIndex;
             const isFocused = index === focusedIndex;
             const selectable = item.selectable !== false;
 
@@ -897,7 +910,12 @@ export function SelectableList<T>({
                 aria-disabled={!selectable}
                 className="relative"
               >
-                {renderItem(item as T, { isSelected, isDragging, isFocused })}
+                {renderItem(item as T, {
+                  isSelected,
+                  isDragging,
+                  isDropTarget,
+                  isFocused,
+                })}
               </div>
             );
           })}

@@ -177,7 +177,7 @@ export function Playlists({
   }, []);
 
   const handleChange = useCallback(
-    (selectedIds: Set<string>) => {
+    (selectedIds: Set<UUID>) => {
       const playlist = listItems.find((playlist) =>
         selectedIds.has(playlist.id),
       );
@@ -191,7 +191,7 @@ export function Playlists({
   );
 
   const handleDelete = useCallback(
-    async (selectedIds: Set<string>) => {
+    async (selectedIds: Set<UUID>) => {
       if (selectedIds.size !== 1) return;
       const playlist = listItems.find((p) => selectedIds.has(p.id));
       if (!playlist) return;
@@ -204,7 +204,7 @@ export function Playlists({
   );
 
   const handleContextMenu = useCallback(
-    (selectedIds: Set<string>): ContextMenuItem[] => {
+    (selectedIds: Set<UUID>): ContextMenuItem[] => {
       const createPlaylist = {
         type: "item",
         key: "create_playlist",
@@ -376,7 +376,7 @@ export function Playlists({
   );
 
   const handleSubmit = useCallback(
-    async (selectedIds: Set<string>) => {
+    async (selectedIds: Set<UUID>) => {
       const playlist = listItems.find((playlist) =>
         selectedIds.has(playlist.id),
       );
@@ -386,9 +386,65 @@ export function Playlists({
     [listItems, handleDoubleClick],
   );
 
+  const handleDrop = useCallback(
+    (selectedIds: Set<UUID>, insertAtIndex: number, sourceListId: string) => {
+      console.log("drop from", sourceListId);
+      const rootFolder = insertAtIndex === listItems.length;
+      const selectedId = Array.from(selectedIds).pop();
+      const playlist = allItems.find((folder) => folder.id === selectedId);
+      if (!playlist) return;
+
+      if (rootFolder) {
+        if (!playlist.parentId) return; // already in root
+        console.log("move to root");
+        showToast({
+          message: i18next.t("toast.PLACEHOLDER", {
+            defaultValue: "Moved {{ playlistName }} to root",
+            playlistName: playlist.name,
+          }),
+        });
+      } else {
+        const targetFolder = listItems[insertAtIndex];
+        const targetFolderId = targetFolder?.isFolder
+          ? targetFolder?.id
+          : targetFolder?.parentId;
+
+        if (!targetFolderId) {
+          if (!playlist.parentId) return; // already in root
+          console.log("move to root");
+          showToast({
+            message: i18next.t("toast.PLACEHOLDER", {
+              defaultValue: "Moved {{ playlistName }} to root",
+              playlistName: playlist.name,
+            }),
+          });
+        } else {
+          const target = allItems.find(
+            (folder) => folder.id === targetFolderId,
+          );
+          if (!target) return;
+          if (playlist.parentId === target.id) return; // already in folder
+          console.log("move to", target.name);
+          showToast({
+            message: i18next.t("toast.PLACEHOLDER", {
+              defaultValue: "Moved {{ playlistName }} to {{ targetName }}",
+              playlistName: playlist.name,
+              targetName: target.name,
+            }),
+          });
+        }
+      }
+    },
+    [allItems, listItems, showToast],
+  );
+
   const renderItem = useCallback(
     (playlist: ListItem, state: ListItemState) => (
-      <PlaylistRow isSelected={state.isSelected} playlist={playlist} />
+      <PlaylistRow
+        isSelected={state.isSelected}
+        isDropTarget={state.isDropTarget}
+        playlist={playlist}
+      />
     ),
     [],
   );
@@ -403,6 +459,12 @@ export function Playlists({
     <div className="flex flex-col h-full">
       <div className="h-full overflow-auto">
         <SelectableList<ListItem>
+          id="artists"
+          allowDrag={true}
+          allowDropFrom={["artists"]}
+          dropTargetType="item"
+          dropTargetClass="bg-transparent"
+          onDrop={handleDrop}
           multiple={false}
           items={listItems}
           paddingTop={10}
