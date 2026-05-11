@@ -17,8 +17,14 @@ import { usePlayer } from "../../hooks/usePlayer";
 import { maybeResetPlaylistPicker } from "../../hooks/usePlaylistPicker";
 import { useToast } from "../../hooks/useToast";
 import i18next from "../../i18next";
-import { sync, usePlaylists } from "../../library";
-import type { Playlist, UUID } from "../../types";
+import {
+  queryPlaylistItemsByIds,
+  queryTracksByIds,
+  sync,
+  usePlaylists,
+} from "../../library";
+import type { Playlist, Track, UUID } from "../../types";
+import { appendTracksToPlaylist } from "../../utils/appendTracksToPlaylist";
 import { type ListItem, PlaylistRow } from "./PlaylistRow";
 
 function isPlaylist(playlist: Playlist, playlistId: string): boolean {
@@ -431,12 +437,47 @@ export function Playlists({
   );
 
   const handleDrop = useCallback(
-    (selectedIds: Set<UUID>, insertAtIndex: number, sourceListId: string) => {
+    async (
+      selectedIds: Set<UUID>,
+      insertAtIndex: number,
+      sourceListId: string,
+    ) => {
       if (sourceListId === "playlists") {
-        handlePlaylistMove(selectedIds, insertAtIndex);
+        await handlePlaylistMove(selectedIds, insertAtIndex);
+        return;
       }
+
+      // Can't drop tracks on folders or non plaaylist
+      const targetPlaylist = listItems[insertAtIndex];
+      if (!targetPlaylist || targetPlaylist?.isFolder) return;
+
+      let tracks: Track[] = [];
+      if (sourceListId === "playlist") {
+        const playlistItems = await queryPlaylistItemsByIds(
+          Array.from(selectedIds),
+        );
+        tracks = playlistItems
+          .map((item) => item.track as Track)
+          .filter((t) => !!t);
+      } else if (sourceListId === "upNext") {
+        const trackIds = [...selectedIds].map((queueId) => {
+          return queueId.split("/").shift() as UUID;
+        });
+        tracks = await queryTracksByIds(trackIds);
+      }
+
+      if (tracks.length === 0) return;
+      await appendTracksToPlaylist(targetPlaylist.id, tracks);
+      showToast({
+        link: `/playlists/${targetPlaylist.id}`,
+        message: i18next.t("toast.addedToPlaylist", {
+          defaultValue: "Added {{ count }} tracks to {{ playlistName }}",
+          count: tracks.length,
+          playlistName: targetPlaylist.name,
+        }),
+      });
     },
-    [handlePlaylistMove],
+    [listItems, showToast, handlePlaylistMove],
   );
 
   const renderItem = useCallback(
@@ -462,7 +503,7 @@ export function Playlists({
         <SelectableList<ListItem>
           id="playlists"
           allowDrag={true}
-          allowDropFrom={["playlists"]}
+          allowDropFrom={["playlists", "playlist", "upNext"]}
           dropTargetType="item"
           dropTargetClass="bg-transparent"
           onDrop={handleDrop}
