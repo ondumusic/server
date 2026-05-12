@@ -14,14 +14,26 @@ import type { Album, UUID } from "../../types";
 import { appendTracksToPlaylist } from "../../utils/appendTracksToPlaylist";
 import { AlbumCard } from "./AlbumCard";
 
-export function Albums({ currentAlbumId }: { currentAlbumId?: UUID }) {
-  const gridSize = useMediaQuery("(width >= 48rem)") ? 6 : 2;
+type SortOption = keyof Album & string;
+
+export function Albums({
+  currentAlbumId,
+  gotoAlbumDetails,
+}: {
+  currentAlbumId?: UUID;
+  gotoAlbumDetails: (album: Album) => void;
+}) {
+  const gridSize = useMediaQuery("(width >= 48rem)") ? 5 : 2;
   const { populateUpNext, enqueueNext, enqueueAfter, userConfirmQueueReplace } =
     usePlayer();
   const { showPlaylistPicker, getMostRecentPlaylist } = usePlaylistPicker();
   const { showToast } = useToast();
-  const { data: albums, loading } = useAlbums();
   const [selectedIds, setSelectedIds] = useState<Set<UUID>>(new Set([]));
+
+  const defaultSortOption = (localStorage.getItem("albumSort") ??
+    "artistSortName") as SortOption;
+  const [sortBy, setSortBy] = useState<SortOption>(defaultSortOption);
+  const { data: albums, loading } = useAlbums({ sortBy });
 
   const renderItem = useCallback((item: Album, state: ListItemState) => {
     return <AlbumCard album={item} isSelected={state.isSelected} />;
@@ -213,32 +225,46 @@ export function Albums({ currentAlbumId }: { currentAlbumId?: UUID }) {
     [albums, userConfirmQueueReplace, showToast, populateUpNext],
   );
 
-  const handleDoubleClick = useCallback(
-    async (item: Album) => {
-      handleSubmit(new Set([item.id]));
-    },
-    [handleSubmit],
-  );
-
   if (loading) return <Loading />;
 
   return (
-    <SelectableList<Album>
-      id="albums"
-      allowDrag={true}
-      items={albums}
-      gridSize={gridSize}
-      gridGapSize={24}
-      scrollOverscan={5}
-      multiple={true}
-      defaultFocusId={currentAlbumId}
-      defaultFocusType="center"
-      selectedIds={selectedIds}
-      onChange={handleChange}
-      onContextMenu={handleContextMenu}
-      onSubmit={handleSubmit}
-      onDoubleClick={handleDoubleClick}
-      renderItem={renderItem}
-    />
+    <div className="flex flex-col h-full">
+      <div className="flex-shrink-0 text-right pb-4">
+        <select
+          className="text-sm"
+          onChange={(e) => {
+            const newSortBy = (e.target as HTMLSelectElement)
+              .value as SortOption;
+            localStorage.setItem("albumSort", newSortBy);
+            setSortBy(newSortBy);
+          }}
+          value={sortBy}
+        >
+          <option value="artistSortName">Artist</option>
+          <option value="sortName">Name</option>
+          <option value="releaseYear">Release Year</option>
+          <option value="insertedAt">Date Added</option>
+        </select>
+      </div>
+      <div className="h-full overflow-auto">
+        <SelectableList<Album>
+          id="albums"
+          allowDrag={true}
+          items={albums}
+          gridSize={gridSize}
+          gridGapSize={24}
+          scrollOverscan={5}
+          multiple={true}
+          defaultFocusId={currentAlbumId}
+          defaultFocusType="center"
+          selectedIds={selectedIds}
+          onChange={handleChange}
+          onContextMenu={handleContextMenu}
+          onSubmit={handleSubmit}
+          onDoubleClick={gotoAlbumDetails}
+          renderItem={renderItem}
+        />
+      </div>
+    </div>
   );
 }

@@ -9,7 +9,7 @@ import type {
 import { isUUID } from "../utils/isUUID";
 import { useStoreQuery, useStoreRecord } from "./hooks";
 import { repo } from "./repo";
-import type { Query } from "./repo/queryHelpers";
+import type { Query, SortField } from "./repo/queryHelpers";
 
 // List Artists
 export const queryArtists = () =>
@@ -79,16 +79,37 @@ export function useArtist(idOrSlug: UUID | string) {
 }
 
 // List Albums
-export const queryAlbums = () =>
-  repo.query<Album>("albums", {
-    sortBy: [
-      ["artistSortName", "asc"],
-      ["sortName", "asc"],
-    ],
-  });
+interface AlbumParams {
+  sortBy?: keyof Album & string;
+  sortDir?: "asc" | "desc";
+}
 
-export function useAlbums() {
-  return useStoreQuery<Album>("albums", queryAlbums);
+export const queryAlbums = (params: AlbumParams = {}) => {
+  const sortDir = params.sortDir ?? "asc";
+  let sortBy: SortField<Album>[] = [
+    ["artistSortName", sortDir],
+    ["sortName", sortDir],
+  ];
+
+  switch (params.sortBy) {
+    case "insertedAt":
+      sortBy = [["insertedAt", sortDir]];
+      break;
+
+    case "releaseYear":
+      sortBy = [["releaseYear", sortDir]];
+      break;
+
+    case "sortName":
+      sortBy = [["sortName", sortDir]];
+      break;
+  }
+
+  return repo.query<Album>("albums", { sortBy });
+};
+
+export function useAlbums(params: AlbumParams = {}) {
+  return useStoreQuery<Album>("albums", () => queryAlbums(params), [params]);
 }
 
 // Album details
