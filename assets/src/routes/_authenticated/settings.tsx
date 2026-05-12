@@ -38,7 +38,7 @@ function SettingsLayout() {
         <li
           className={
             "border rounded-md shadow-md text-sm " +
-            (theme === "auto" && "bg-blue-500 text-white border-transparent")
+            (theme === "auto" && "bg-accent-500 text-white border-transparent")
           }
         >
           <button
@@ -52,7 +52,7 @@ function SettingsLayout() {
         <li
           className={
             "border rounded-md shadow-md text-sm " +
-            (theme === "dark" && "bg-blue-500 text-white border-transparent")
+            (theme === "dark" && "bg-accent-500 text-white border-transparent")
           }
         >
           <button
@@ -66,7 +66,7 @@ function SettingsLayout() {
         <li
           className={
             "border rounded-md shadow-md text-sm " +
-            (theme === "light" && "bg-blue-500 text-white border-transparent")
+            (theme === "light" && "bg-accent-500 text-white border-transparent")
           }
         >
           <button

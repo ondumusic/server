@@ -286,7 +286,7 @@ export function Playlist({ playlist, items }: Props) {
       multiple
       allowDrag
       allowDropFrom={["playlist", "upNext"]}
-      dropTargetClass="bg-blue-500"
+      dropTargetClass="bg-accent-500"
       items={listItems}
       selectedIds={selectedItemIds}
       onChange={handleChange}

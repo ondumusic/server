@@ -1,4 +1,7 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { FloatingDropdown } from "../../components/FloatingDropdown";
+import { SortAscIcon } from "../../components/icons/SortAscIcon";
+import { SortDescIcon } from "../../components/icons/SortDescIcon";
 import { Loading } from "../../components/Loading";
 import {
   type ListItemState,
@@ -15,6 +18,7 @@ import { appendTracksToPlaylist } from "../../utils/appendTracksToPlaylist";
 import { AlbumCard } from "./AlbumCard";
 
 type SortOption = keyof Album & string;
+type SortDirection = "asc" | "desc";
 
 export function Albums({
   currentAlbumId,
@@ -32,8 +36,75 @@ export function Albums({
 
   const defaultSortOption = (localStorage.getItem("albumSort") ??
     "artistSortName") as SortOption;
+  const defaultSortDir = (localStorage.getItem("albumSortDir") ??
+    "asc") as SortDirection;
   const [sortBy, setSortBy] = useState<SortOption>(defaultSortOption);
-  const { data: albums, loading } = useAlbums({ sortBy });
+  const [sortDir, setSortDir] = useState<SortDirection>(defaultSortDir);
+  const sortOptions = useMemo(
+    () => [
+      {
+        value: "artistSortName" as SortOption,
+        label: i18next.t("sortBy.album.artistSortName", {
+          defaultValue: "Artist",
+        }),
+        sublabel:
+          sortDir === "asc"
+            ? i18next.t("sortBy.textAsc", {
+                defaultValue: "A-Z",
+              })
+            : i18next.t("sortBy.textDesc", {
+                defaultValue: "Z-A",
+              }),
+      },
+      {
+        value: "sortName" as SortOption,
+        label: i18next.t("sortBy.album.sortName", {
+          defaultValue: "Name",
+        }),
+        sublabel:
+          sortDir === "asc"
+            ? i18next.t("sortBy.textAsc", {
+                defaultValue: "A-Z",
+              })
+            : i18next.t("sortBy.textDesc", {
+                defaultValue: "Z-A",
+              }),
+      },
+      {
+        value: "releaseYear" as SortOption,
+        label: i18next.t("sortBy.album.releaseYear", {
+          defaultValue: "Release Year",
+        }),
+        sublabel:
+          sortDir === "asc"
+            ? i18next.t("sortBy.dateAsc", {
+                defaultValue: "Oldest First",
+              })
+            : i18next.t("sortBy.dateDesc", {
+                defaultValue: "Newest First",
+              }),
+      },
+      {
+        value: "insertedAt" as SortOption,
+        label: i18next.t("sortBy.album.insertedAt", {
+          defaultValue: "Date Added",
+        }),
+        sublabel:
+          sortDir === "asc"
+            ? i18next.t("sortBy.dateAsc", {
+                defaultValue: "Oldest First",
+              })
+            : i18next.t("sortBy.dateDesc", {
+                defaultValue: "Newest First",
+              }),
+      },
+    ],
+    [sortDir],
+  );
+  const currentSortOption =
+    sortOptions.find(({ value }) => value === sortBy) ?? sortOptions[0];
+
+  const { data: albums, loading } = useAlbums({ sortBy, sortDir });
 
   const renderItem = useCallback((item: Album, state: ListItemState) => {
     return <AlbumCard album={item} isSelected={state.isSelected} />;
@@ -229,22 +300,28 @@ export function Albums({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-shrink-0 text-right pb-4">
-        <select
-          className="text-sm"
-          onChange={(e) => {
-            const newSortBy = (e.target as HTMLSelectElement)
-              .value as SortOption;
-            localStorage.setItem("albumSort", newSortBy);
-            setSortBy(newSortBy);
+      <div className="fixed top-0 right-4 flex-shrink-0 text-right z-[1000]">
+        <FloatingDropdown<SortOption>
+          onChange={(value) => {
+            if (sortBy === value) {
+              const newSortDir = sortDir === "asc" ? "desc" : "asc";
+              setSortDir(newSortDir);
+              localStorage.setItem("albumSortDir", newSortDir);
+            } else {
+              localStorage.setItem("albumSort", value);
+              setSortBy(value);
+            }
           }}
           value={sortBy}
+          options={sortOptions}
         >
-          <option value="artistSortName">Artist</option>
-          <option value="sortName">Name</option>
-          <option value="releaseYear">Release Year</option>
-          <option value="insertedAt">Date Added</option>
-        </select>
+          {currentSortOption?.label}
+          {sortDir === "asc" ? (
+            <SortAscIcon className="size-5" title="" />
+          ) : (
+            <SortDescIcon className="size-5" title="" />
+          )}
+        </FloatingDropdown>
       </div>
       <div className="h-full overflow-auto">
         <SelectableList<Album>
@@ -255,6 +332,7 @@ export function Albums({
           gridGapSize={24}
           scrollOverscan={5}
           multiple={true}
+          paddingTop={58}
           defaultFocusId={currentAlbumId}
           defaultFocusType="center"
           selectedIds={selectedIds}

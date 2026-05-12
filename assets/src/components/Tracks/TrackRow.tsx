@@ -35,7 +35,7 @@ export function TrackRow({
           "flex w-full items-center h-12 gap-4 text-sm py-1.5 @md:px-2",
           isDragging && "opacity-50",
           isSelected &&
-            "bg-blue-400 [.selectable-list:focus_&]:bg-blue-500 text-white",
+            "bg-accent-400 [.selectable-list:focus_&]:bg-accent-500 text-white",
           isSelected && "rounded-t-md rounded-b-md",
           isSelected &&
             "[[aria-selected=true]+[aria-selected=true]_&]:rounded-t-none",

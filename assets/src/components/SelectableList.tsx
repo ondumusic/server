@@ -86,7 +86,7 @@ export function SelectableList<T>({
   defaultFocusId,
   defaultFocusType = "nearest",
   dropTargetType = "between",
-  dropTargetClass = "bg-blue-500",
+  dropTargetClass = "bg-accent-500",
   resetScrollOnItemsChange = false,
   multiple: allowMultiple,
   keyBindings = {},
@@ -702,7 +702,7 @@ export function SelectableList<T>({
       "rounded-md",
       "font-light",
       "text-white",
-      "bg-blue-500",
+      "bg-accent-500",
       "shadow-lg",
       "text-sm",
     );

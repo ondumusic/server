@@ -42,6 +42,11 @@
   --contextmenu-divider: rgba(220, 220, 220, 0.8);
   --contextmenu-border: rgba(220, 220, 220, 0.8);
 
+  --floating-menu-bg: rgba(255, 255, 255, 0.7);
+  --floating-menu-bg-hover: rgb(255, 255, 255);
+  --floating-menu-fg: rgb(0, 0, 0);
+  --floating-menu-border: rgba(255, 255, 255, 0.8);
+
   --navbar-bg: var(--panel-bg);
   --navbar-fg: var(--color-black);
   --navbar-hover-bg: rgba(255, 255, 255, 0.3);
@@ -91,6 +96,11 @@
   --contextmenu-fg: rgb(245, 245, 245);
   --contextmenu-divider: rgba(80, 80, 86, 0.8);
   --contextmenu-border: rgba(80, 80, 86, 0.8);
+
+  --floating-menu-bg: rgba(48, 48, 52, 0.6);
+  --floating-menu-bg-hover: rgba(42, 42, 46, 0.8);
+  --floating-menu-fg: rgb(255, 255, 255);
+  --floating-menu-border: rgba(255, 255, 255, 0.2);
 
   --navbar-bg: var(--panel-bg);
   --navbar-fg: var(--color-white);
@@ -147,6 +157,11 @@
   --color-contextmenu-divider: var(--contextmenu-divider);
   --color-contextmenu-border: var(--contextmenu-border);
 
+  --color-floating-menu-bg: var(--floating-menu-bg);
+  --color-floating-menu-bg-hover: var(--floating-menu-bg-hover);
+  --color-floating-menu-fg: var(--floating-menu-fg);
+  --color-floating-menu-border: var(--floating-menu-border);
+
   --color-panel-fg: var(--panel-fg);
   --color-panel-fg-muted: var(--panel-fg-muted);
   --color-panel-fg-hint: var(--panel-fg-hint);
@@ -196,13 +211,18 @@ body {
   );
 }
 
-dialog {
+dialog,
+.floating-dropdown {
   transform: scale(0.95);
   transition:
     opacity 200ms,
     transform 200ms,
     display 200ms allow-discrete,
     overlay 200ms allow-discrete;
+}
+
+.floating-dropdown {
+  transform-origin: top right;
 }
 
 dialog.dialog-modal {
@@ -235,6 +255,12 @@ dialog.dialog-contextmenu::backdrop {
   dialog[open] {
     opacity: 0;
     transform: scale(0.95);
+  }
+
+  .floating-dropdown {
+    opacity: 0;
+    transform: scale(0.7);
+    transform-origin: top right;
   }
 
   dialog.dialog-modal[open]::backdrop {

@@ -136,6 +136,18 @@
     },
     "title": "Setup your Account"
   },
+  "sortBy": {
+    "album": {
+      "artistSortName": "Artist",
+      "insertedAt": "Date Added",
+      "releaseYear": "Release Year",
+      "sortName": "Name"
+    },
+    "dateAsc": "Oldest First",
+    "dateDesc": "Newest First",
+    "textAsc": "A-Z",
+    "textDesc": "Z-A"
+  },
   "sync": {
     "albums_one": "{{count}} album",
     "albums_other": "{{count}} albums",
