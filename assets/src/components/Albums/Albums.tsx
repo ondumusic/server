@@ -224,6 +224,8 @@ export function Albums({ currentAlbumId }: { currentAlbumId?: UUID }) {
 
   return (
     <SelectableList<Album>
+      id="albums"
+      allowDrag={true}
       items={albums}
       gridSize={gridSize}
       gridGapSize={24}

@@ -16,7 +16,11 @@ import {
 import { usePlaylistPicker } from "../hooks/usePlaylistPicker";
 import { type QueueItem, useQueue } from "../hooks/useQueue";
 import { useToast } from "../hooks/useToast";
-import { queryPlaylistItemsByIds, queryTracksByIds } from "../library";
+import {
+  queryPlaylistItemsByIds,
+  queryTracks,
+  queryTracksByIds,
+} from "../library";
 import type { Track, UUID } from "../types";
 import { appendTracksToPlaylist } from "../utils/appendTracksToPlaylist";
 import { classNames } from "../utils/classNames";
@@ -37,7 +41,7 @@ export function UpNext({
   isVisible: boolean;
 }>) {
   const allowDropFrom = useMemo(
-    () => ["upNext", "albumTracks", "playlist"],
+    () => ["upNext", "albumTracks", "playlist", "albums"],
     [],
   );
   const containerRef = useRef<HTMLDivElement>(null);
@@ -143,6 +147,10 @@ export function UpNext({
                 },
               })),
             )
+            .then(addQueueAfter);
+        } else if (sourceListId === "albums") {
+          queryTracks({ albumIds: Array.from(itemIds) })
+            .then((tracks) => tracks.map(trackToQueueItem))
             .then(addQueueAfter);
         } else {
           queryTracksByIds(Array.from(itemIds))
@@ -293,6 +301,12 @@ export function UpNext({
           )
           .then((newTracks) => {
             addQueueAtIndex(newTracks, currentTrackIndex + 1 + insertAtIndex);
+          });
+      } else if (sourceListId === "albums") {
+        queryTracks({ albumIds: Array.from(itemIds) })
+          .then((tracks) => tracks.map(trackToQueueItem))
+          .then((queueItems) => {
+            addQueueAtIndex(queueItems, currentTrackIndex + 1 + insertAtIndex);
           });
       } else {
         queryTracksByIds(Array.from(itemIds))
