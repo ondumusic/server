@@ -69,6 +69,8 @@ type DragProps =
   | { allowDrag: true; allowDropFrom?: string[]; id: string }
   | { allowDrag?: boolean; allowDropFrom: string[]; id: string };
 
+type GridProps = { gridSize?: number; gridGapSize?: number };
+
 export function SelectableList<T>({
   id: listId,
   items,
@@ -91,10 +93,12 @@ export function SelectableList<T>({
   allowDrag = false,
   allowDropFrom = [],
   itemHeight = "auto",
-  scrollOverscan = 10,
+  scrollOverscan: preferredScrollOverscan = 10,
   paddingBottom = 0,
   paddingTop = 0,
-}: PropsWithChildren<BaseProps<T> & DragProps>) {
+  gridSize = 1,
+  gridGapSize = 0,
+}: PropsWithChildren<BaseProps<T> & DragProps & GridProps>) {
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollBlockType, setScrollBlockType] = useState<
     ScrollLogicalPosition | undefined
@@ -120,6 +124,12 @@ export function SelectableList<T>({
   const measureRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [measuredHeights, setMeasuredHeights] = useState<Map<string, number>>(
     new Map(),
+  );
+
+  // Calculate actual overscan
+  const scrollOverscan = useMemo(
+    () => gridSize * preferredScrollOverscan,
+    [gridSize, preferredScrollOverscan],
   );
 
   // Determine the first selectable index
@@ -155,9 +165,9 @@ export function SelectableList<T>({
         height = itemHeight(item as T);
       }
 
-      return height;
+      return height + gridGapSize;
     },
-    [itemHeight, measuredHeights],
+    [itemHeight, gridGapSize, measuredHeights],
   );
 
   // Reset when items change
@@ -268,51 +278,69 @@ export function SelectableList<T>({
   }, [items, itemHeight]);
 
   // Calculate total height and offsets
-  const { totalItemsHeight, offsets } = useMemo(() => {
-    const offsets: number[] = [0];
+  const { totalItemsHeight, offsets, rowHeights } = useMemo(() => {
+    const offsets: number[] = [];
+    const rowHeights: number[] = [];
     let acc = 0;
-    for (let i = 0; i < items.length; i++) {
-      acc += getItemHeight(items[i]);
-      if (i < items.length - 1) offsets.push(acc);
+
+    for (let i = 0; i < items.length; i += gridSize) {
+      const rowHeight = Math.max(
+        ...items.slice(i, i + gridSize).map((item) => getItemHeight(item)),
+      );
+      for (let j = i; j < Math.min(i + gridSize, items.length); j++) {
+        offsets.push(acc);
+        rowHeights.push(rowHeight);
+      }
+      acc += rowHeight;
     }
-    return { totalItemsHeight: acc, offsets };
-  }, [items, getItemHeight]);
+
+    // We should remove the gridGapSize ones from the total height
+    // because it's only applied - between - items.
+    acc -= gridGapSize;
+
+    return { totalItemsHeight: acc, offsets, rowHeights };
+  }, [items, getItemHeight, gridSize, gridGapSize]);
+
   const totalHeight = totalItemsHeight + paddingTop + paddingBottom;
 
   // Find the first visible item
   const startIndex = useMemo(() => {
     let index = 0;
-    for (let i = 0; i < items.length; i++) {
-      if (offsets[i] + getItemHeight(items[i]) > scrollTop) {
+    for (let i = 0; i < items.length; i += gridSize) {
+      if (offsets[i] + rowHeights[i] > scrollTop) {
         index = i;
         break;
       }
     }
     return Math.max(0, index - scrollOverscan);
-  }, [scrollTop, offsets, items, getItemHeight, scrollOverscan]);
+  }, [scrollTop, offsets, rowHeights, items.length, scrollOverscan, gridSize]);
 
   // Find the last visible item
   const endIndex = useMemo(() => {
     const viewportBottom = scrollTop + scrollHeight;
     let index = startIndex;
 
-    for (let i = startIndex; i < items.length; i++) {
+    for (let i = startIndex; i < items.length; i += gridSize) {
       index = i;
-
-      if (offsets[i] + getItemHeight(items[i]) > viewportBottom) {
+      if (offsets[i] + rowHeights[i] > viewportBottom) {
         break;
       }
     }
 
-    return Math.min(items.length - 1, index + scrollOverscan);
+    const snappedEnd = Math.min(
+      Math.ceil((index + scrollOverscan) / gridSize) * gridSize + gridSize - 1,
+      items.length - 1,
+    );
+    return snappedEnd;
   }, [
     scrollTop,
     scrollHeight,
     startIndex,
     offsets,
-    items,
-    getItemHeight,
+    rowHeights,
+    items.length,
     scrollOverscan,
+    gridSize,
   ]);
 
   const scrollOffsetY = offsets[startIndex] || 0;
@@ -486,9 +514,47 @@ export function SelectableList<T>({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const updateKeyboardSelection = (e: React.KeyboardEvent, mod: number) => {
     const isMultiSelect = allowMultiple && (isMacOS ? e.metaKey : e.ctrlKey);
     const isRangeSelect = allowMultiple && e.shiftKey;
+
+    let newIndex = focusedIndex + mod;
+
+    // Skip non-selectable items
+    while (
+      newIndex >= 0 &&
+      newIndex < items.length &&
+      items[newIndex].selectable === false
+    ) {
+      if (mod > 0) newIndex++;
+      else newIndex--;
+    }
+
+    if (newIndex >= 0 && newIndex < items.length) {
+      setFocusedIndex(newIndex);
+      setScrollBlockType("nearest");
+
+      if (isRangeSelect) {
+        const start = Math.min(lastSelectedIndexRef.current, newIndex);
+        const end = Math.max(lastSelectedIndexRef.current, newIndex);
+        const newSelection = new Set<string>();
+
+        for (let i = start; i <= end; i++) {
+          if (items[i].selectable !== false) {
+            newSelection.add(items[i].id);
+          }
+        }
+
+        onChange(newSelection);
+      } else if (!isMultiSelect) {
+        onChange(new Set([items[newIndex].id]));
+        lastSelectedIndexRef.current = newIndex;
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const isMultiSelect = allowMultiple && (isMacOS ? e.metaKey : e.ctrlKey);
 
     // Select all
     if (e.key === "a" && isMultiSelect) {
@@ -531,67 +597,25 @@ export function SelectableList<T>({
     // Keyboard arrow navigation
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      let newIndex = focusedIndex + 1;
+      updateKeyboardSelection(e, +gridSize);
+      return;
+    }
 
-      // Skip non-selectable items
-      while (newIndex < items.length && items[newIndex].selectable === false) {
-        newIndex++;
-      }
-
-      if (newIndex < items.length) {
-        setFocusedIndex(newIndex);
-        setScrollBlockType("nearest");
-
-        if (isRangeSelect) {
-          const start = Math.min(lastSelectedIndexRef.current, newIndex);
-          const end = Math.max(lastSelectedIndexRef.current, newIndex);
-          const newSelection = new Set<string>();
-
-          for (let i = start; i <= end; i++) {
-            if (items[i].selectable !== false) {
-              newSelection.add(items[i].id);
-            }
-          }
-
-          onChange(newSelection);
-        } else if (!isMultiSelect) {
-          onChange(new Set([items[newIndex].id]));
-          lastSelectedIndexRef.current = newIndex;
-        }
-      }
+    if (e.key === "ArrowRight" && gridGapSize > 1) {
+      e.preventDefault();
+      updateKeyboardSelection(e, +1);
       return;
     }
 
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      let newIndex = focusedIndex - 1;
+      updateKeyboardSelection(e, -gridSize);
+      return;
+    }
 
-      // Skip non-selectable items
-      while (newIndex >= 0 && items[newIndex].selectable === false) {
-        newIndex--;
-      }
-
-      if (newIndex >= 0) {
-        setFocusedIndex(newIndex);
-        setScrollBlockType("nearest");
-
-        if (isRangeSelect) {
-          const start = Math.min(lastSelectedIndexRef.current, newIndex);
-          const end = Math.max(lastSelectedIndexRef.current, newIndex);
-          const newSelection = new Set<string>();
-
-          for (let i = start; i <= end; i++) {
-            if (items[i].selectable !== false) {
-              newSelection.add(items[i].id);
-            }
-          }
-
-          onChange(newSelection);
-        } else if (!isMultiSelect) {
-          onChange(new Set([items[newIndex].id]));
-          lastSelectedIndexRef.current = newIndex;
-        }
-      }
+    if (e.key === "ArrowLeft" && gridGapSize > 1) {
+      e.preventDefault();
+      updateKeyboardSelection(e, -1);
       return;
     }
 
@@ -827,40 +851,60 @@ export function SelectableList<T>({
           : undefined
       }
     >
-      {itemHeight === "auto" &&
-        items.length > 0 &&
-        uniqueItemTypes.map((type) => {
-          const sampleIndex =
-            type === "default"
-              ? 0
-              : items.findIndex((item) => item.type === type);
+      <div
+        className={classNames([
+          "invisible -top-[999px]",
+          "absolute w-full",
+          "left-0 right-0 pointer-events-none",
+          gridSize > 1 && "grid",
+        ])}
+        style={{
+          ...(gridSize > 1 && {
+            gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+          }),
+          gap: `${gridGapSize}px`,
+        }}
+      >
+        {itemHeight === "auto" &&
+          items.length > 0 &&
+          uniqueItemTypes.map((type) => {
+            const sampleIndex =
+              type === "default"
+                ? 0
+                : items.findIndex((item) => item.type === type);
 
-          if (sampleIndex === -1) return null;
+            if (sampleIndex === -1) return null;
 
-          return (
-            <div
-              key={`measure-${type}`}
-              ref={(el) => {
-                el
-                  ? measureRefs.current.set(type, el)
-                  : measureRefs.current.delete(type);
-              }}
-              data-type={type}
-              className="flex absolute pointer-events-none invisible -top-[999px]"
-            >
-              {renderItem(items[sampleIndex] as T, {
-                isSelected: false,
-                isDragging: false,
-                isDropTarget: false,
-                isFocused: false,
-              })}
-            </div>
-          );
-        })}
+            return (
+              <div
+                key={`measure-${type}`}
+                ref={(el) => {
+                  el
+                    ? measureRefs.current.set(type, el)
+                    : measureRefs.current.delete(type);
+                }}
+                data-type={type}
+                className="flex w-full"
+              >
+                {renderItem(items[sampleIndex] as T, {
+                  isSelected: false,
+                  isDragging: false,
+                  isDropTarget: false,
+                  isFocused: false,
+                })}
+              </div>
+            );
+          })}
+      </div>
 
       <div className="relative" style={{ height: totalHeight }}>
         <div
+          className={classNames([gridSize > 1 && "grid"])}
           style={{
+            ...(gridSize > 1 && {
+              gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+            }),
+            gap: `${gridGapSize}px`,
             paddingBottom,
             paddingTop,
             transform: `translate3d(0, ${scrollOffsetY}px, 0)`,
