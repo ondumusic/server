@@ -137,8 +137,8 @@ export function Artists({
       paddingTop={10}
       paddingBottom={10}
       defaultFocusId={currentArtist?.id}
-      onTypeMatch={handleTypeMatch}
       defaultFocusType="center"
+      onTypeMatch={handleTypeMatch}
       selectedIds={currentArtist ? new Set([currentArtist.id]) : new Set([])}
       onContextMenu={handleContextMenu}
       onChange={handleChange}

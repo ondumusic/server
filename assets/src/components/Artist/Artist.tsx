@@ -487,6 +487,7 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
     <SelectableList<ListItem>
       multiple
       allowDrag
+      allowDropFrom={[]}
       id="albumTracks"
       items={listItems}
       defaultFocusId={currentAlbum?.id}
