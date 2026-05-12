@@ -187,7 +187,6 @@ export function Playlist({ playlist, items }: Props) {
           key: "play_next",
           label: i18next.t("contextMenu.playNext", {
             defaultValue: "Play Next",
-            count: queueItems.length,
           }),
           onClick() {
             enqueueNext(queueItems);
@@ -205,7 +204,6 @@ export function Playlist({ playlist, items }: Props) {
           key: "play_after",
           label: i18next.t("contextMenu.playAfter", {
             defaultValue: "Add To Queue",
-            count: queueItems.length,
           }),
           onClick() {
             enqueueAfter(queueItems);

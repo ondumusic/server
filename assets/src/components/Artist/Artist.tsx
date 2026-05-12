@@ -288,7 +288,6 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
             key: "play_next",
             label: i18next.t("contextMenu.playNext", {
               defaultValue: "Play Next",
-              count: album.tracks.length,
             }),
             onClick() {
               enqueueNext(album.tracks.map((track) => ({ track })));
@@ -306,7 +305,6 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
             key: "play_after",
             label: i18next.t("contextMenu.playAfter", {
               defaultValue: "Add To Queue",
-              count: album.tracks.length,
             }),
             onClick() {
               enqueueAfter(album.tracks.map((track) => ({ track })));
@@ -404,7 +402,6 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
           key: "play_next",
           label: i18next.t("contextMenu.playNext", {
             defaultValue: "Play Next",
-            count: selectedTracks.length,
           }),
           onClick() {
             enqueueNext(selectedTracks.map((track) => ({ track })));
@@ -422,7 +419,6 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
           key: "play_after",
           label: i18next.t("contextMenu.playAfter", {
             defaultValue: "Add To Queue",
-            count: selectedTracks.length,
           }),
           onClick() {
             enqueueAfter(selectedTracks.map((track) => ({ track })));

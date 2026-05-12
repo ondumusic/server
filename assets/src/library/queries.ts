@@ -109,6 +109,7 @@ export function useAlbum(albumId: UUID | undefined) {
 interface TrackFilters {
   artistId?: UUID;
   albumId?: UUID;
+  albumIds?: UUID[];
   random?: boolean;
 }
 
@@ -140,6 +141,8 @@ export const queryTracks = (filters: TrackFilters) => {
     };
   } else if (filters.albumId) {
     query = { ...query, whereIndex: ["by_albumId", "=", filters.albumId] };
+  } else if (filters.albumIds) {
+    query = { ...query, whereIndex: ["by_albumId", "in", filters.albumIds] };
   }
 
   return repo.query<Track>("tracks", query);

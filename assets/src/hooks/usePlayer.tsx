@@ -14,6 +14,7 @@ import type { Track, UUID } from "../types";
 interface PopulateInput {
   artistId?: UUID;
   albumId?: UUID;
+  albumIds?: UUID[];
   playlistId?: UUID;
   random?: boolean;
 }
@@ -65,6 +66,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     async ({
       artistId,
       albumId,
+      albumIds,
       playlistId,
       random = false,
     }: PopulateInput) => {
@@ -82,6 +84,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
         const tracks = await queryTracks({
           artistId,
           albumId,
+          albumIds,
           random,
         });
         replaceQueue(tracks.map((track) => ({ track })));

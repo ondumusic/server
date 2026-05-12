@@ -58,7 +58,7 @@ export function Artists({
       return [
         {
           type: "item",
-          key: "play_next",
+          key: "play",
           label: i18next.t("contextMenu.playArtist", {
             defaultValue: 'Play "{{ artist }}"',
             artist: artist.name,
@@ -77,7 +77,7 @@ export function Artists({
         },
         {
           type: "item",
-          key: "play_after",
+          key: "shuffle",
           label: i18next.t("contextMenu.shuffleArtist", {
             defaultValue: 'Shuffle "{{ artist }}"',
             artist: artist.name,
