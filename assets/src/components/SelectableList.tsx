@@ -665,11 +665,18 @@ export function SelectableList<T>({
     // Store this so we can update item states
     setDraggingIds(new Set(currentSelection));
 
-    // Pre-seed dropAtIndex to current item
-    setDropAtIndex(index);
+    // Pre-seed dropAtIndex to current item (if allowed to drop in same list
+    if (
+      allowDropFrom.some(
+        (allowed) => listId?.toLowerCase() === allowed.toLowerCase(),
+      )
+    ) {
+      setDropAtIndex(index);
+      e.dataTransfer.effectAllowed = "copyMove";
+    } else {
+      e.dataTransfer.effectAllowed = "copy";
+    }
 
-    // Configure the dragging dataTransfer
-    e.dataTransfer.effectAllowed = "move";
     // This hacky custom type is to understand where we are dragging from in dragOver
     e.dataTransfer.setData(
       `application/x-list-${listId?.toLowerCase()}`,
@@ -730,8 +737,9 @@ export function SelectableList<T>({
       !allowDropFrom.some(
         (allowed) => sourceListId.toLowerCase() === allowed.toLowerCase(),
       )
-    )
+    ) {
       return;
+    }
 
     e.preventDefault();
     e.stopPropagation();

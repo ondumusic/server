@@ -37,7 +37,7 @@
     "removeTracks_other": "Remove {{ count }} tracks",
     "renamePlaylist": "Rename",
     "shuffleAlbum_one": "Shuffle Album",
-    "shuffleAlbum_other": "Shuffle Album",
+    "shuffleAlbum_other": "Shuffle Albums",
     "shuffleArtist": "Shuffle \"{{ artist }}\"",
     "shufflePlaylist": "Shuffle \"{{ playlist }}\""
   },

@@ -17,6 +17,7 @@ import { usePlaylistPicker } from "../hooks/usePlaylistPicker";
 import { type QueueItem, useQueue } from "../hooks/useQueue";
 import { useToast } from "../hooks/useToast";
 import {
+  queryPlaylistItems,
   queryPlaylistItemsByIds,
   queryTracks,
   queryTracksByIds,
@@ -41,7 +42,7 @@ export function UpNext({
   isVisible: boolean;
 }>) {
   const allowDropFrom = useMemo(
-    () => ["upNext", "albumTracks", "playlist", "albums"],
+    () => ["upNext", "albumTracks", "playlist", "playlists", "albums"],
     [],
   );
   const containerRef = useRef<HTMLDivElement>(null);
@@ -137,7 +138,19 @@ export function UpNext({
           e.dataTransfer.getData("application/json"),
         );
 
-        if (sourceListId === "playlist") {
+        if (sourceListId === "playlists") {
+          if (itemIds.length !== 1) return;
+          queryPlaylistItems(itemIds[0])
+            .then((items) =>
+              items.map((item) => ({
+                track: item.track as Track,
+                meta: {
+                  playlistItemId: item.id,
+                },
+              })),
+            )
+            .then(addQueueAfter);
+        } else if (sourceListId === "playlist") {
           queryPlaylistItemsByIds(Array.from(itemIds))
             .then((items) =>
               items.map((item) => ({
@@ -289,6 +302,21 @@ export function UpNext({
           new Set(currentIndexes),
           currentTrackIndex + 1 + insertAtIndex,
         );
+      } else if (sourceListId === "playlists") {
+        if (itemIds.size !== 1) return;
+
+        queryPlaylistItems(Array.from(itemIds)[0])
+          .then((items) =>
+            items.map((item) => ({
+              track: item.track as Track,
+              meta: {
+                playlistItemId: item.id,
+              },
+            })),
+          )
+          .then((newTracks) => {
+            addQueueAtIndex(newTracks, currentTrackIndex + 1 + insertAtIndex);
+          });
       } else if (sourceListId === "playlist") {
         queryPlaylistItemsByIds(Array.from(itemIds))
           .then((items) =>
