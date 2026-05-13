@@ -1,4 +1,9 @@
-import { useMatches, useNavigate, useRouter } from "@tanstack/react-router";
+import {
+  useLocation,
+  useMatches,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router";
 import {
   useCallback,
   useEffect,
@@ -32,6 +37,7 @@ type Rect = { x: number; width: number };
 const lastVisited = new Map<ViewId, string>();
 
 export function NavBar() {
+  const location = useLocation();
   const navigate = useNavigate();
   const matches = useMatches();
   const router = useRouter();
@@ -145,7 +151,11 @@ export function NavBar() {
 
       {items.map((item) => {
         const isActive = active === item.id;
-        const targetHref = lastVisited.get(item.id) ?? item.href;
+
+        // Use last visited href, unless we are already there then go to the
+        // original item.href (e.g. to go from detail view to overview)
+        let targetHref = lastVisited.get(item.id) ?? item.href;
+        if (targetHref === location.href) targetHref = item.href;
 
         return (
           <button
