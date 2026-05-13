@@ -1,9 +1,20 @@
 import type { ListItem as DefaultListItem } from "../../components/SelectableList";
-import type { Album, Track } from "../../types";
+import type { Album, Disc, Track } from "../../types";
+
+export type DiscItem = DefaultListItem & {
+  type: "disc";
+  disc: Disc;
+};
+
+export type PlaceholderItem = DefaultListItem & {
+  type: "placeholder";
+};
 
 export type TrackItem = DefaultListItem & {
   type: "track";
   track: Track;
+  showTrackArtist: boolean;
+  lastTrackOnDisc: boolean;
 };
 
 export type HeaderItem = DefaultListItem & {
@@ -12,4 +23,4 @@ export type HeaderItem = DefaultListItem & {
   tracks: Track[];
 };
 
-export type ListItem = HeaderItem | TrackItem;
+export type ListItem = HeaderItem | DiscItem | TrackItem | PlaceholderItem;

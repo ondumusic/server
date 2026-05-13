@@ -12,7 +12,6 @@ import i18next from "../../i18next";
 import type { Album, Artist as TArtist, Track, UUID } from "../../types";
 import { appendTracksToPlaylist } from "../../utils/appendTracksToPlaylist";
 import { splitTracksByDisc } from "../../utils/splitTracksByDisc";
-
 import { ArtistAlbumDiscRow } from "./ArtistAlbumDiscRow";
 import { ArtistAlbumRow } from "./ArtistAlbumRow";
 import { ArtistAlbumTrackRow } from "./ArtistAlbumTrackRow";
