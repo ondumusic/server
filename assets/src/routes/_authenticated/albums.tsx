@@ -49,17 +49,17 @@ function AlbumsLayout() {
 
   return (
     <Panel renderSidebar={randerSidebar}>
-      <div className="p-4 h-full overflow-auto">
-        {currentAlbumId ? (
-          <Outlet />
-        ) : (
+      {currentAlbumId ? (
+        <Outlet />
+      ) : (
+        <div className="p-4 h-full overflow-auto">
           <Albums
             style="grid"
             currentAlbumId={currentAlbumId}
             gotoAlbumDetails={handleGotoAlbumDetails}
           />
-        )}
-      </div>
+        </div>
+      )}
     </Panel>
   );
 }
