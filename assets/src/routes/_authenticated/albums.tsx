@@ -1,5 +1,6 @@
 import {
   createFileRoute,
+  Outlet,
   useNavigate,
   useParams,
 } from "@tanstack/react-router";
@@ -35,13 +36,29 @@ function AlbumsLayout() {
     [navigate],
   );
 
+  const randerSidebar = useCallback(() => {
+    if (!currentAlbumId) return;
+    return (
+      <Albums
+        style="list"
+        currentAlbumId={currentAlbumId}
+        gotoAlbumDetails={handleGotoAlbumDetails}
+      />
+    );
+  }, [currentAlbumId, handleGotoAlbumDetails]);
+
   return (
-    <Panel>
+    <Panel renderSidebar={randerSidebar}>
       <div className="p-4 h-full overflow-auto">
-        <Albums
-          currentAlbumId={currentAlbumId}
-          gotoAlbumDetails={handleGotoAlbumDetails}
-        />
+        {currentAlbumId ? (
+          <Outlet />
+        ) : (
+          <Albums
+            style="grid"
+            currentAlbumId={currentAlbumId}
+            gotoAlbumDetails={handleGotoAlbumDetails}
+          />
+        )}
       </div>
     </Panel>
   );

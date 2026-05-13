@@ -27,6 +27,7 @@ defmodule MusicBoxWeb.Router do
     get "/artists/:id", PageController, :react
     get "/artists/:id/:album_id", PageController, :react
     get "/albums", PageController, :react
+    get "/albums/:id", PageController, :react
     get "/playlists", PageController, :react
     get "/playlists/:id", PageController, :react
     get "/settings", PageController, :react

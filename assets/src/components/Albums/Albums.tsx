@@ -16,6 +16,7 @@ import { queryTracks, useAlbums } from "../../library";
 import type { Album, UUID } from "../../types";
 import { appendTracksToPlaylist } from "../../utils/appendTracksToPlaylist";
 import { AlbumCard } from "./AlbumCard";
+import { AlbumRow } from "./AlbumRow";
 
 type SortOption = keyof Album & string;
 type SortDirection = "asc" | "desc";
@@ -23,7 +24,9 @@ type SortDirection = "asc" | "desc";
 export function Albums({
   currentAlbumId,
   gotoAlbumDetails,
+  style: listStyle = "grid",
 }: {
+  style: "grid" | "list";
   currentAlbumId?: UUID;
   gotoAlbumDetails: (album: Album) => void;
 }) {
@@ -106,13 +109,29 @@ export function Albums({
 
   const { data: albums, loading } = useAlbums({ sortBy, sortDir });
 
-  const renderItem = useCallback((item: Album, state: ListItemState) => {
-    return <AlbumCard album={item} isSelected={state.isSelected} />;
-  }, []);
+  const renderItem = useCallback(
+    (item: Album, state: ListItemState) => {
+      if (listStyle === "grid") {
+        return <AlbumCard album={item} isSelected={state.isSelected} />;
+      } else if (listStyle === "list") {
+        return <AlbumRow album={item} isSelected={state.isSelected} />;
+      }
+    },
+    [listStyle],
+  );
 
-  const handleChange = useCallback((selectedIds: Set<UUID>) => {
-    setSelectedIds(selectedIds);
-  }, []);
+  const handleChange = useCallback(
+    (selectedIds: Set<UUID>) => {
+      if (listStyle === "grid") {
+        setSelectedIds(selectedIds);
+      } else {
+        const selectedAlbum = albums.find((album) => selectedIds.has(album.id));
+        if (!selectedAlbum) return;
+        gotoAlbumDetails(selectedAlbum);
+      }
+    },
+    [albums, listStyle, gotoAlbumDetails],
+  );
 
   const handleContextMenu = useCallback(
     (selectedIds: Set<UUID>) => {
@@ -296,50 +315,68 @@ export function Albums({
     [albums, userConfirmQueueReplace, showToast, populateUpNext],
   );
 
+  const handleDoubleClick = useCallback(
+    (album: Album) => {
+      if (listStyle === "grid") {
+        gotoAlbumDetails(album);
+      } else {
+        handleSubmit(new Set([album.id]));
+      }
+    },
+    [listStyle, gotoAlbumDetails, handleSubmit],
+  );
+
   if (loading) return <Loading />;
 
   return (
     <div className="flex flex-col h-full">
-      <div className="fixed top-0 right-4 flex-shrink-0 text-right z-[1000]">
-        <FloatingDropdown<SortOption>
-          onChange={(value) => {
-            if (sortBy === value) {
-              const newSortDir = sortDir === "asc" ? "desc" : "asc";
-              setSortDir(newSortDir);
-              localStorage.setItem("albumSortDir", newSortDir);
-            } else {
-              localStorage.setItem("albumSort", value);
-              setSortBy(value);
-            }
-          }}
-          value={sortBy}
-          options={sortOptions}
-        >
-          {currentSortOption?.label}
-          {sortDir === "asc" ? (
-            <SortAscIcon className="size-5" title="" />
-          ) : (
-            <SortDescIcon className="size-5" title="" />
-          )}
-        </FloatingDropdown>
-      </div>
+      {listStyle === "grid" && (
+        <div className="fixed top-0 right-4 flex-shrink-0 text-right z-[1000]">
+          <FloatingDropdown<SortOption>
+            onChange={(value) => {
+              if (sortBy === value) {
+                const newSortDir = sortDir === "asc" ? "desc" : "asc";
+                setSortDir(newSortDir);
+                localStorage.setItem("albumSortDir", newSortDir);
+              } else {
+                localStorage.setItem("albumSort", value);
+                setSortBy(value);
+              }
+            }}
+            value={sortBy}
+            options={sortOptions}
+          >
+            {currentSortOption?.label}
+            {sortDir === "asc" ? (
+              <SortAscIcon className="size-5" title="" />
+            ) : (
+              <SortDescIcon className="size-5" title="" />
+            )}
+          </FloatingDropdown>
+        </div>
+      )}
       <div className="h-full overflow-auto">
         <SelectableList<Album>
           id="albums"
           allowDrag={true}
           items={albums}
-          gridSize={gridSize}
-          gridGapSize={24}
-          scrollOverscan={5}
-          multiple={true}
-          paddingTop={58}
+          gridSize={listStyle === "grid" ? gridSize : 1}
+          gridGapSize={listStyle === "grid" ? 24 : 0}
+          scrollOverscan={listStyle === "grid" ? 5 : 10}
+          multiple={listStyle === "grid"}
+          paddingTop={listStyle === "grid" ? 58 : 10}
+          paddingBottom={listStyle === "grid" ? 0 : 10}
           defaultFocusId={currentAlbumId}
-          defaultFocusType="center"
-          selectedIds={selectedIds}
+          defaultFocusType="nearest"
+          selectedIds={
+            listStyle === "grid"
+              ? selectedIds
+              : new Set(currentAlbumId ? [currentAlbumId] : [])
+          }
           onChange={handleChange}
           onContextMenu={handleContextMenu}
           onSubmit={handleSubmit}
-          onDoubleClick={gotoAlbumDetails}
+          onDoubleClick={handleDoubleClick}
           renderItem={renderItem}
         />
       </div>
