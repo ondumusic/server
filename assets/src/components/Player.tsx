@@ -1,4 +1,9 @@
-import { type PropsWithChildren, useEffect, useState } from "react";
+import {
+  type DragEvent,
+  type PropsWithChildren,
+  useEffect,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { NextIcon } from "../components/icons/NextIcon";
 import { PanelCloseIcon } from "../components/icons/PanelCloseIcon";
@@ -140,8 +145,23 @@ export function Player({
 }>) {
   const [showUpNext, setShowUpNext] = useState<boolean>(false);
 
+  // UpNext contains the actual drop target so if user is dragging over here
+  // we should
+  const handleDragOver = (e: DragEvent) => {
+    const sourceListId = e.dataTransfer.types
+      .find((t) => t.startsWith("application/x-list-"))
+      ?.replace("application/x-list-", "");
+    if (!sourceListId) return;
+
+    setShowUpNext(true);
+  };
+
   return (
-    <div className="flex flex-row lg:flex-col h-full w-full justify-center text-center select-none">
+    // biome-ignore lint/a11y/noStaticElementInteractions: allow dragging events
+    <div
+      className="flex flex-row lg:flex-col h-full w-full justify-center text-center select-none"
+      onDragOver={handleDragOver}
+    >
       <NowPlaying />
 
       <PlaybackControls
