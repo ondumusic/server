@@ -93,7 +93,7 @@ export function FloatingDropdown<T>({
               key={option.value as string}
               className={classNames([
                 "text-left text-sm cursor-pointer px-2 py-2.5 rounded-md group/option",
-                "hover:bg-accent-500 hover:text-white",
+                "hover:bg-accent-400 hover:text-white",
               ])}
               role="option"
               tabIndex={0}

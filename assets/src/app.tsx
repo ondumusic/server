@@ -14,6 +14,7 @@ import { QueueProvider } from "./hooks/useQueue";
 import { ThemeProvider } from "./hooks/useTheme";
 import { LibraryProvider } from "./library";
 import { Router } from "./router";
+import { applyAccentColor } from "./utils/updateAccentColor";
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -27,8 +28,9 @@ import "./i18next";
 
 const appRoot = document.getElementById("App");
 if (appRoot) {
-  const root = createRoot(appRoot);
+  applyAccentColor();
 
+  const root = createRoot(appRoot);
   root.render(
     <StrictMode>
       <Suspense fallback={<Loading />}>

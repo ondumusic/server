@@ -1,8 +1,36 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { useState } from "react";
 import { Panel } from "../../components/Panel";
 import { useAuth } from "../../hooks/useAuth";
 import { useTheme } from "../../hooks/useTheme";
 import { repo } from "../../library";
+import {
+  getAccentColor,
+  isAccessible,
+  updateAccentColor,
+} from "../../utils/updateAccentColor";
+
+function ColorPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (color: string) => void;
+}) {
+  return (
+    <label
+      className="inline-block relative w-8 h-8 rounded-full border-2 border-white shadow-md cursor-pointer overflow-hidden"
+      style={{ backgroundColor: value }}
+    >
+      <input
+        type="color"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+      />
+    </label>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/settings")({
   staticData: { view: "settings" as const },
@@ -10,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 });
 
 function SettingsLayout() {
+  const [color, setColor] = useState(getAccentColor());
   const { theme, setTheme } = useTheme();
   const { currentUser, logout } = useAuth();
 
@@ -78,6 +107,23 @@ function SettingsLayout() {
           </button>
         </li>
       </ul>
+      <br />
+      <br />
+      <div className="flex gap-2 items-center">
+        <span>Accent Color:</span>
+        <ColorPicker
+          value={color}
+          onChange={(newColor) => {
+            updateAccentColor(newColor);
+            setColor(newColor);
+          }}
+        />
+      </div>
+      {!isAccessible(color) && (
+        <div className="bg-amber-600 text-white">
+          This color could cause poor readability
+        </div>
+      )}
       <Outlet />
     </Panel>
   );

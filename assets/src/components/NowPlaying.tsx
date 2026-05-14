@@ -6,9 +6,9 @@ import i18next from "../i18next";
 import { useAlbum } from "../library";
 import { formatDuration } from "../utils/formatDuration";
 import {
-  resetAccentColor,
-  updateAccentColor,
-} from "../utils/updateAccentColor";
+  resetBackgroundColor,
+  updateBackgroundColor,
+} from "../utils/updateBackgroundColor";
 
 export function NowPlaying() {
   const { setIsPlaying, duration, scrubTo, addTimeObserver } =
@@ -35,7 +35,7 @@ export function NowPlaying() {
   useEffect(() => {
     if (!currentAlbum) return;
     if (!currentAlbum.artworkUrl) {
-      resetAccentColor();
+      resetBackgroundColor();
     }
   }, [currentAlbum]);
 
@@ -69,7 +69,7 @@ export function NowPlaying() {
           src={currentAlbum?.artworkUrl}
           alt=""
           className="w-20 lg:w-full aspect-square object-cover object-center lg:rounded-md overflow-hidden lg:shadow-md lg:mb-4"
-          onLoad={(e) => updateAccentColor(e.target as HTMLImageElement)}
+          onLoad={(e) => updateBackgroundColor(e.target as HTMLImageElement)}
         />
       ) : (
         <div className="w-20 aspect-square bg-linear-to-tl from-mist-600 to-mist-700 lg:rounded-md lg:w-full lg:shadow-md lg:mb-4"></div>
