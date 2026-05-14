@@ -104,9 +104,25 @@
     "60min": "Every hour",
     "720min": "Every 12 hour"
   },
+  "promptLogout": {
+    "cancel": "Cancel",
+    "confirm": "Logout",
+    "message": "Are you sure you want to logout ?"
+  },
   "selection": {
     "dragItems_one": "{{ count }} item",
     "dragItems_other": "{{ count }} items"
+  },
+  "settings": {
+    "general": {
+      "currentlyLoggedIn": "Logged in as <strong>{{username}}</strong>",
+      "logout": "Logout",
+      "subtitle": "Change user preferences",
+      "title": "General"
+    },
+    "library": {
+      "title": "Library"
+    }
   },
   "settingsForm": {
     "button": {

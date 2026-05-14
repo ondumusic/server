@@ -1,129 +1,133 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { useState } from "react";
-import { Panel } from "../../components/Panel";
-import { useAuth } from "../../hooks/useAuth";
-import { useTheme } from "../../hooks/useTheme";
-import { repo } from "../../library";
 import {
-  getAccentColor,
-  isAccessible,
-  updateAccentColor,
-} from "../../utils/updateAccentColor";
-
-function ColorPicker({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (color: string) => void;
-}) {
-  return (
-    <label
-      className="inline-block relative w-8 h-8 rounded-full border-2 border-white shadow-md cursor-pointer overflow-hidden"
-      style={{ backgroundColor: value }}
-    >
-      <input
-        type="color"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-      />
-    </label>
-  );
-}
+  createFileRoute,
+  Navigate,
+  Outlet,
+  useMatchRoute,
+} from "@tanstack/react-router";
+import { Trans } from "react-i18next";
+import { LogoutIcon } from "../../components/icons/LogoutIcon";
+import { Marquee } from "../../components/Marquee";
+import { Panel } from "../../components/Panel";
+import {
+  type ListItemState,
+  SelectableList,
+} from "../../components/SelectableList";
+import { useAuth } from "../../hooks/useAuth";
+import { useDialog } from "../../hooks/useDialog";
+import i18next from "../../i18next";
+import { classNames } from "../../utils/classNames";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   staticData: { view: "settings" as const },
   component: SettingsLayout,
 });
 
+interface ListItem {
+  id: string;
+  label: string;
+  current: boolean;
+}
+
 function SettingsLayout() {
-  const [color, setColor] = useState(getAccentColor());
-  const { theme, setTheme } = useTheme();
   const { currentUser, logout } = useAuth();
+  const { promptConfirm } = useDialog();
+  const matchRoute = useMatchRoute();
+
+  const settingSections = [
+    {
+      id: "general",
+      current: matchRoute({ to: "/settings/" }) !== false,
+      label: i18next.t("settings.general.title", {
+        defaultValue: "General",
+      }),
+    },
+    {
+      id: "library",
+      current: matchRoute({ to: "/settings/library/" }) !== false,
+      label: i18next.t("settings.library.title", {
+        defaultValue: "Library",
+      }),
+    },
+  ];
+
+  const renderItem = (item: ListItem, state: ListItemState) => (
+    <li
+      className={classNames([
+        "mx-2 px-4 rounded-md whitespace-nowrap items-center flex gap-2",
+        "text-sm",
+        state.isSelected &&
+          "bg-sidebar-inactive-bg text-sidebar-inactive-fg [.selectable-list:focus_&]:bg-sidebar-active-bg [.selectable-list:focus_&]:shadow-sm [.selectable-list:focus_&]:text-sidebar-active-fg",
+      ])}
+    >
+      <Marquee className="py-2.5" delay={500} text={item.label} />
+    </li>
+  );
+
+  const handleLogout = async () => {
+    const confirmed = await promptConfirm({
+      message: i18next.t("promptLogout.message", {
+        defaultValue: "Are you sure you want to logout ?",
+      }),
+      confirmMessage: i18next.t("promptLogout.confirm", {
+        defaultValue: "Logout",
+      }),
+      cancelMessage: i18next.t("promptLogout.cancel", {
+        defaultValue: "Cancel",
+      }),
+    });
+    if (!confirmed) return;
+    logout();
+  };
+
+  const currentSection = settingSections.find(
+    (section) => section.current === true,
+  );
+
+  const renderSidebar = () => {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="h-full overflow-auto">
+          <SelectableList<ListItem>
+            multiple={false}
+            items={settingSections}
+            renderItem={renderItem}
+            selectedIds={new Set([currentSection?.id ?? "general"])}
+            paddingTop={10}
+            onChange={console.log}
+          />
+        </div>
+        <div className="pt-4 p-2">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex items-center cursor-pointer gap-4 w-full rounded-md py-2 px-4 justify-between text-sm font-normal bg-sidebar-bottom-bg opacity-80 text-sidebar-bottom-fg shadow-sm text-sidebar-active-fg hover:opacity-100 focus:border-0 focus:ring-0 focus:outline-0"
+          >
+            <span>
+              <Trans
+                i18nKey="settings.general.currentlyLoggedIn"
+                values={{ username: currentUser?.username }}
+                components={{ strong: <strong /> }}
+              >
+                Logged in as <strong>{"{{username}}"}</strong>
+              </Trans>
+            </span>
+
+            <LogoutIcon
+              className="size-5"
+              title={i18next.t("settings.general.logout", {
+                defaultValue: "Logout",
+              })}
+            />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  if (!currentSection) return <Navigate to="/settings" replace />;
 
   return (
-    <Panel>
-      Settings: Coming Soon
-      <hr />
-      Logged in as: <strong>{currentUser?.username}</strong> - (
-      <button type="button" onClick={logout} className="cursor-pointer">
-        logout
-      </button>
-      )
-      <br />
-      <h3 className="font-bold">debug options</h3>
-      <button
-        type="button"
-        className="bg-red-600 dark:bg-red-400 text-white py-1.5 px-2 text-sm rounded-md shadow-md"
-        onClick={() => repo.teardown().then(() => location.reload())}
-      >
-        delete local indexeddb and refresh
-      </button>
-      <br />
-      <br />
-      Theme:
-      <ul className="inline-flex pl-4 gap-2">
-        <li
-          className={
-            "border rounded-md shadow-md text-sm " +
-            (theme === "auto" && "bg-accent-500 text-white border-transparent")
-          }
-        >
-          <button
-            type="button"
-            className="py-0.5 px-2 cursor-pointer"
-            onClick={() => setTheme("auto")}
-          >
-            Auto
-          </button>
-        </li>
-        <li
-          className={
-            "border rounded-md shadow-md text-sm " +
-            (theme === "dark" && "bg-accent-500 text-white border-transparent")
-          }
-        >
-          <button
-            type="button"
-            className="py-0.5 px-2 cursor-pointer"
-            onClick={() => setTheme("dark")}
-          >
-            Dark
-          </button>
-        </li>
-        <li
-          className={
-            "border rounded-md shadow-md text-sm " +
-            (theme === "light" && "bg-accent-500 text-white border-transparent")
-          }
-        >
-          <button
-            type="button"
-            className="py-0.5 px-2 cursor-pointer"
-            onClick={() => setTheme("light")}
-          >
-            Light
-          </button>
-        </li>
-      </ul>
-      <br />
-      <br />
-      <div className="flex gap-2 items-center">
-        <span>Accent Color:</span>
-        <ColorPicker
-          value={color}
-          onChange={(newColor) => {
-            updateAccentColor(newColor);
-            setColor(newColor);
-          }}
-        />
-      </div>
-      {!isAccessible(color) && (
-        <div className="bg-amber-600 text-white">
-          This color could cause poor readability
-        </div>
-      )}
+    <Panel renderSidebar={renderSidebar}>
       <Outlet />
     </Panel>
   );
