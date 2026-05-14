@@ -20,6 +20,10 @@
     "previousTrack": "Previous Track",
     "showUpNext": "Up Next"
   },
+  "colorPicker": {
+    "customColor": "Custom colour",
+    "readabilityWarning": "This colour could cause poor readability"
+  },
   "contextMenu": {
     "addToPlaylist_one": "Add To Playlist...",
     "addToPlaylist_other": "Add To Playlist...",

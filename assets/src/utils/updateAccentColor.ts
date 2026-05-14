@@ -47,5 +47,5 @@ export function updateAccentColor(baseColor: string) {
 }
 
 export function isAccessible(baseColor: string): boolean {
-  return wcagContrast(baseColor, "white") >= 4.5; // AA
+  return wcagContrast(baseColor, "white") >= 3;
 }

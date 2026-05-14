@@ -102,7 +102,7 @@ function SettingsLayout() {
             onClick={handleLogout}
             className="flex items-center cursor-pointer gap-4 w-full rounded-md py-2 px-4 justify-between text-sm font-normal bg-sidebar-bottom-bg opacity-80 text-sidebar-bottom-fg shadow-sm text-sidebar-active-fg hover:opacity-100 focus:border-0 focus:ring-0 focus:outline-0"
           >
-            <span>
+            <span className="truncate">
               <Trans
                 i18nKey="settings.general.currentlyLoggedIn"
                 values={{ username: currentUser?.username }}
@@ -113,7 +113,7 @@ function SettingsLayout() {
             </span>
 
             <LogoutIcon
-              className="size-5"
+              className="size-5 flex-shrink-0"
               title={i18next.t("settings.general.logout", {
                 defaultValue: "Logout",
               })}
