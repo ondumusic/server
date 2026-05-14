@@ -103,7 +103,9 @@ export function SelectableList<T>({
   const [scrollBlockType, setScrollBlockType] = useState<
     ScrollLogicalPosition | undefined
   >(defaultFocusType);
-  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
+  const [focusedIndex, setFocusedIndex] = useState<number>(
+    items.findIndex((item) => defaultFocusId === item.id),
+  );
   const lastSelectedIndexRef = useRef<number>(0);
   const { createContextMenu } = useContextMenu();
 
@@ -171,9 +173,8 @@ export function SelectableList<T>({
   );
 
   // Reset when items change
-  useEffect(() => {
+  useLayoutEffect(() => {
     const defaultIndex = items.findIndex((item) => defaultFocusId === item.id);
-
     setFocusedIndex(defaultIndex);
     lastSelectedIndexRef.current = defaultIndex;
   }, [items, defaultFocusId]);
@@ -199,7 +200,7 @@ export function SelectableList<T>({
   }, [typeMatch, onTypeMatch, onChange, items]);
 
   // Measure parent container (scroll area) height
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!listRef.current) return;
 
     const observer = new ResizeObserver((elements) => {
@@ -252,7 +253,7 @@ export function SelectableList<T>({
 
   // Automatically determine item height for every type
   // biome-ignore lint/correctness/useExhaustiveDependencies(items): suppress dependency items as changing it might change size too
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (itemHeight !== "auto") return;
 
     const observer = new ResizeObserver((entries) => {
@@ -353,7 +354,7 @@ export function SelectableList<T>({
   // Scroll focussed item into view, which is to make the experience feel
   // better when using keyboard arrow navigation.
   // biome-ignore lint/correctness/useExhaustiveDependencies(scrollTop): suppress dependency scrollTop otherwise this will execute on every scroll behaviour
-  useEffect(() => {
+  useLayoutEffect(() => {
     const listElement = listRef.current;
     if (!listElement) return;
     if (focusedIndex === -1) return;
@@ -406,7 +407,7 @@ export function SelectableList<T>({
 
   // Reset scroll when items change
   // biome-ignore lint/correctness/useExhaustiveDependencies(items): suppress dependency
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!listRef.current) return;
     if (!resetScrollOnItemsChange) return;
     listRef.current.scrollTop = 0;

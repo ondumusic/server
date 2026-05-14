@@ -132,6 +132,9 @@ export function Artists({
 
   return (
     <SelectableList<Artist>
+      id="artists"
+      allowDrag={true}
+      allowDropFrom={[]}
       multiple={false}
       items={listItems}
       paddingTop={10}
