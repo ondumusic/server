@@ -118,14 +118,26 @@
     "dragItems_other": "{{ count }} items"
   },
   "settings": {
+    "appearance": {
+      "accentColor": "Accent Colour",
+      "summary": "These settings are stored locally for this session only.",
+      "theme": "Theme",
+      "title": "Appearance"
+    },
     "general": {
       "currentlyLoggedIn": "Logged in as <strong>{{username}}</strong>",
       "logout": "Logout",
+      "resetLocalDatabase": "Reset Local Database",
+      "resetUserSettings": "Reset User Settings",
       "subtitle": "Change user preferences",
       "title": "General"
     },
     "library": {
       "title": "Library"
+    },
+    "maintenance": {
+      "summary": "Sometimes you just need a little reset.",
+      "title": "Maintenance"
     }
   },
   "settingsForm": {
@@ -176,6 +188,11 @@
     "progressText": "$t(sync.artists, {\"count\": {{artistCount}} }), $t(sync.albums, {\"count\": {{albumCount}} }), $t(sync.tracks, {\"count\": {{trackCount}} })",
     "tracks_one": "{{count}} track",
     "tracks_other": "{{count}} tracks"
+  },
+  "themeSwitcher": {
+    "auto": "Auto",
+    "dark": "Dark",
+    "light": "Light"
   },
   "toast": {
     "addedAlbumToPlayNow_one": "Playing {{ albumName }}",
