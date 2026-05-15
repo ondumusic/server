@@ -33,16 +33,18 @@ export function ColorPicker({
             onClick={() => onChange(preset)}
             style={{ backgroundColor: preset }}
           >
-            {preset === value && <CheckIcon className="size-5" title="" />}
+            {preset === value && (
+              <CheckIcon className="size-5 text-white" title="" />
+            )}
           </button>
         ))}
-        <label className="inline-block relative w-8 h-8 rounded-full cursor-pointer overflow-hidden border-1 border-dashed border-black">
+        <label className="inline-block relative w-8 h-8 rounded-full cursor-pointer overflow-hidden border-1 border-dashed border-black dark:border-white">
           {!isPreset ? (
             <div
-              className="absolute scale-80 top-0 left-0 inline-flex justify-center items-center relative w-8 h-8 rounded-full cursor-pointer overflow-hidden"
+              className="absolute scale-80 top-0 left-0 inline-flex justify-center items-center relative w-full h-full rounded-full cursor-pointer overflow-hidden"
               style={{ backgroundColor: value }}
             >
-              <CheckIcon className="size-5" title="" />
+              <CheckIcon className="size-4 text-white" title="" />
             </div>
           ) : (
             <PlusIcon
@@ -61,7 +63,7 @@ export function ColorPicker({
         </label>
       </div>
       {!isAccessible(value) && (
-        <div className="flex items-center gap-1 mt-4 text-amber-700 text-sm">
+        <div className="flex items-center gap-1 mt-4 text-amber-700 dark:text-amber-400 text-sm">
           <WarningIcon className="size-4" title="" />
           <span>
             <Trans i18nKey="colorPicker.readabilityWarning">
