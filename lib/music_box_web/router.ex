@@ -31,6 +31,7 @@ defmodule MusicBoxWeb.Router do
     get "/playlists", PageController, :react
     get "/playlists/:id", PageController, :react
     get "/settings", PageController, :react
+    get "/settings/library", PageController, :react
 
     get "/onboarding/:step", PageController, :react
   end

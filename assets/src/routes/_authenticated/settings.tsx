@@ -3,6 +3,7 @@ import {
   Navigate,
   Outlet,
   useMatchRoute,
+  useNavigate,
 } from "@tanstack/react-router";
 import { Trans } from "react-i18next";
 import { LogoutIcon } from "../../components/icons/LogoutIcon";
@@ -32,6 +33,7 @@ function SettingsLayout() {
   const { currentUser, logout } = useAuth();
   const { promptConfirm } = useDialog();
   const matchRoute = useMatchRoute();
+  const navigate = useNavigate();
 
   const settingSections = [
     {
@@ -63,6 +65,16 @@ function SettingsLayout() {
     </li>
   );
 
+  const handleChange = async (itemIds: Set<string>) => {
+    const item = settingSections.find((item) => itemIds.has(item.id));
+    if (!item) return;
+
+    const href = item.id === "general" ? "/settings" : `/settings/${item.id}`;
+    navigate({
+      to: href,
+    });
+  };
+
   const handleLogout = async () => {
     const confirmed = await promptConfirm({
       message: i18next.t("promptLogout.message", {
@@ -93,7 +105,7 @@ function SettingsLayout() {
             renderItem={renderItem}
             selectedIds={new Set([currentSection?.id ?? "general"])}
             paddingTop={10}
-            onChange={console.log}
+            onChange={handleChange}
           />
         </div>
         <div className="pt-4 p-2">
