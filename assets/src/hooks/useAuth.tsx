@@ -7,6 +7,7 @@ import {
 } from "react";
 import { authApi, ClientError } from "../api";
 import { Loading } from "../components/Loading";
+import { repo } from "../library";
 import { auth } from "../services/auth";
 import type { User } from "../types";
 
@@ -46,9 +47,11 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     });
   };
 
-  const logout = () => {
+  const logout = async () => {
     authApi.logout();
     auth.logout();
+    await repo.teardown();
+    localStorage.clear();
     updateState();
   };
 
