@@ -35,7 +35,14 @@ defmodule MusicBoxWeb.Schemas.Track do
     mimetype: %Schema{type: :string, example: "audio/mp3"},
     downloadUrl: %Schema{type: :string, example: "https://example.com/download/..."},
     streamUrl: %Schema{type: :string, example: "https://example.com/stream/..."},
-    insertedAt: %Schema{type: :string, format: :"date-time"}
+    insertedAt: %Schema{type: :string, format: :"date-time"},
+    relativeFilePath: %Schema{
+      type: :string,
+      example: "The Beatles/Revolver/01 Taxman.m4a",
+      description: """
+      This is the relative file path of this track inside your library.
+      """
+    }
   }
 
   @base_required [

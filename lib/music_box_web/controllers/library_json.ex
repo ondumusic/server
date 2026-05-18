@@ -101,7 +101,8 @@ defmodule MusicBoxWeb.LibraryJSON do
       mimetype: mimetype,
       insertedAt: track.inserted_at,
       downloadUrl: url(~p"/download/#{track}"),
-      streamUrl: url(~p"/stream/#{track}")
+      streamUrl: url(~p"/stream/#{track}"),
+      relativeFilePath: track.file.path
     }
 
     item =
