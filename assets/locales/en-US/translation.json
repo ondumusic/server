@@ -40,6 +40,7 @@
     "removeTracks_one": "Remove {{ count }} track",
     "removeTracks_other": "Remove {{ count }} tracks",
     "renamePlaylist": "Rename",
+    "scanLibrary": "Scan the library",
     "shuffleAlbum_one": "Shuffle Album",
     "shuffleAlbum_other": "Shuffle Albums",
     "shuffleArtist": "Shuffle \"{{ artist }}\"",
@@ -212,9 +213,11 @@
     "addedToPlayNext_other": "Added {{ count }} tracks to up next",
     "addedToPlayShuffled_one": "Shuffling {{ count }} tracks",
     "addedToPlayShuffled_other": "Shuffling {{ count }} tracks",
+    "completedLibraryScan": "Library scan completed",
     "defaultLinkTitle": "View",
     "removedFromPlaylist_one": "Removed {{ count }} tracks from playlist",
-    "removedFromPlaylist_other": "Removed {{ count }} tracks from playlist"
+    "removedFromPlaylist_other": "Removed {{ count }} tracks from playlist",
+    "startedLibraryScan": "Started scanning the library for new tracks"
   },
   "upNext": {
     "emptyView": "No upcoming tracks.",

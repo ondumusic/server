@@ -12,13 +12,16 @@ import { auth } from "../services/auth";
 import type { Album } from "../types";
 
 export type OnInitialDataCallback = () => void;
+export type OnScanCallback = () => void;
 
 export interface PhoenixSocketContext {
   waitForUpdate(callback: OnInitialDataCallback): void;
+  waitForScan(callback: OnScanCallback): void;
 }
 
 const PhoenixSocketContext = createContext<PhoenixSocketContext>({
   waitForUpdate: (_callback: OnInitialDataCallback) => {},
+  waitForScan: (_callback: OnScanCallback) => {},
 });
 
 export function usePhoenixSocket() {
@@ -28,6 +31,7 @@ export function usePhoenixSocket() {
 export const PhoenixSocketProvider = ({ children }: PropsWithChildren) => {
   const { isLoggedIn } = useAuth();
   const dataCallback = useRef<OnInitialDataCallback>(null);
+  const scanCallback = useRef<OnScanCallback>(null);
   const socketRef = useRef<Socket>(null);
 
   useEffect(() => {
@@ -69,11 +73,19 @@ export const PhoenixSocketProvider = ({ children }: PropsWithChildren) => {
         playlistItems: data.playlistItems,
       });
     });
+    channel.on("completed", (_data) => {
+      if (!scanCallback.current) return;
+      scanCallback.current();
+      scanCallback.current = null;
+    });
   }, [isLoggedIn]);
 
   const value = {
     waitForUpdate(callback: OnInitialDataCallback) {
       dataCallback.current = callback;
+    },
+    waitForScan(callback: OnScanCallback) {
+      scanCallback.current = callback;
     },
   };
 

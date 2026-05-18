@@ -22,6 +22,10 @@ type SettingsResult =
     };
 
 export const settingApi = {
+  getSettings(opts?: RequestOptions) {
+    return client.get<undefined, Settings>("/settings", opts);
+  },
+
   updateSettings(settings: Settings, opts?: RequestOptions) {
     return client.patch<Settings, SettingsResult>("/settings", settings, opts);
   },

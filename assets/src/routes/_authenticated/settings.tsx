@@ -5,8 +5,11 @@ import {
   useMatchRoute,
   useNavigate,
 } from "@tanstack/react-router";
+import { useState } from "react";
 import { Trans } from "react-i18next";
+import { scanApi } from "../../api";
 import { LogoutIcon } from "../../components/icons/LogoutIcon";
+import { SpinnerIcon } from "../../components/icons/SpinnerIcon";
 import { Marquee } from "../../components/Marquee";
 import { Panel } from "../../components/Panel";
 import {
@@ -15,6 +18,8 @@ import {
 } from "../../components/SelectableList";
 import { useAuth } from "../../hooks/useAuth";
 import { useDialog } from "../../hooks/useDialog";
+import { usePhoenixSocket } from "../../hooks/usePhoenixSocket";
+import { useToast } from "../../hooks/useToast";
 import i18next from "../../i18next";
 import { classNames } from "../../utils/classNames";
 
@@ -32,8 +37,11 @@ interface ListItem {
 function SettingsLayout() {
   const { currentUser, logout } = useAuth();
   const { promptConfirm } = useDialog();
+  const { showToast } = useToast();
   const matchRoute = useMatchRoute();
   const navigate = useNavigate();
+  const { waitForScan } = usePhoenixSocket();
+  const [isScanning, setIsScanning] = useState(false);
 
   const settingSections = [
     {
@@ -62,6 +70,9 @@ function SettingsLayout() {
       ])}
     >
       <Marquee className="py-2.5" delay={500} text={item.label} />
+      {isScanning && item.id === "library" && (
+        <SpinnerIcon className="animate-spin size-5" title={item.label} />
+      )}
     </li>
   );
 
@@ -73,6 +84,45 @@ function SettingsLayout() {
     navigate({
       to: href,
     });
+  };
+
+  const handleContextMenu = (itemIds: Set<string>) => {
+    if (itemIds.size !== 1) return [];
+    const [id] = itemIds;
+
+    if (id === "library") {
+      return [
+        {
+          type: "item",
+          key: "play",
+          label: i18next.t("contextMenu.scanLibrary", {
+            defaultValue: "Scan the library",
+          }),
+          onClick: async () => {
+            showToast({
+              message: i18next.t("toast.startedLibraryScan", {
+                defaultValue: "Started scanning the library for new tracks",
+              }),
+            });
+
+            scanApi.startScanner().then(() => {
+              setIsScanning(true);
+
+              waitForScan(() => {
+                setIsScanning(false);
+                showToast({
+                  message: i18next.t("toast.completedLibraryScan", {
+                    defaultValue: "Library scan completed",
+                  }),
+                });
+              });
+            });
+          },
+        },
+      ];
+    }
+
+    return [];
   };
 
   const handleLogout = async () => {
@@ -106,6 +156,7 @@ function SettingsLayout() {
             selectedIds={new Set([currentSection?.id ?? "general"])}
             paddingTop={10}
             onChange={handleChange}
+            onContextMenu={handleContextMenu}
           />
         </div>
         <div className="pt-4 p-2">
