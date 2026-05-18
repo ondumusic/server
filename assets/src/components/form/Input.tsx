@@ -16,7 +16,8 @@ interface CommonProps<T> {
 
 type TextInputProps = {
   type: "text" | "password";
-  defaultValue?: string | number;
+  value?: string;
+  defaultValue?: string;
 };
 
 type SelectInputProps = {
@@ -45,44 +46,55 @@ export function Input<T>(props: Props<T>) {
   if (props.type === "select") inputType = props.type;
 
   return (
-    <div>
-      <Label htmlFor={id} hasError={hasError} title={props.label || field} />
+    <div
+      className={
+        form.horizontal ? "grid grid-cols-8 gap-6 group/horizontal-form" : ""
+      }
+    >
+      <Label
+        htmlFor={id}
+        hasError={hasError}
+        title={props.label || field}
+        horizontal={form.horizontal === true}
+      />
 
-      {inputType === "select" && (
-        <Select
-          id={id}
-          name={field}
-          hasError={hasError}
-          defaultValue={defaultValue}
-          autoFocus={!!props.autoFocus}
-          required={!!props.required}
-          options={(props as SelectInputProps).options}
-        />
-      )}
+      <div className={form.horizontal ? "col-span-5" : ""}>
+        {inputType === "select" && (
+          <Select
+            id={id}
+            name={field}
+            hasError={hasError}
+            defaultValue={defaultValue}
+            autoFocus={!!props.autoFocus}
+            required={!!props.required}
+            options={(props as SelectInputProps).options}
+          />
+        )}
 
-      {inputType === "text" && (
-        <TextField
-          id={id}
-          name={field}
-          type={type}
-          hasError={hasError}
-          defaultValue={defaultValue}
-          autoFocus={!!props.autoFocus}
-          required={!!props.required}
-        />
-      )}
+        {inputType === "text" && (
+          <TextField
+            id={id}
+            name={field}
+            type={type}
+            hasError={hasError}
+            defaultValue={defaultValue}
+            autoFocus={!!props.autoFocus}
+            required={!!props.required}
+          />
+        )}
 
-      {hasError && (
-        <p className="mt-3 flex text-sm gap-1 leading-6 text-error">
-          {state.errors[field].message}
-        </p>
-      )}
+        {hasError && (
+          <p className="mt-3 flex text-sm gap-1 leading-6 text-error">
+            {state.errors[field].message}
+          </p>
+        )}
 
-      {props.help && (
-        <div className="mt-3 text-sm leading-6 gap-1 text-muted">
-          {props.help}
-        </div>
-      )}
+        {props.help && (
+          <div className="mt-3 text-sm leading-6 gap-1 text-muted">
+            {props.help}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

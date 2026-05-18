@@ -1,8 +1,7 @@
+import type { ScanType, Settings } from "../types";
 import { client, type RequestOptions } from "./client";
 
-type ScanType = "full" | "quick";
-
-interface Settings {
+interface SettingsInput {
   musicPath?: string;
   scanType?: ScanType;
   pollInterval?: number;
@@ -19,6 +18,7 @@ type SettingsResult =
     }
   | {
       ok: true;
+      settings: Settings;
     };
 
 export const settingApi = {
@@ -26,7 +26,11 @@ export const settingApi = {
     return client.get<undefined, Settings>("/settings", opts);
   },
 
-  updateSettings(settings: Settings, opts?: RequestOptions) {
-    return client.patch<Settings, SettingsResult>("/settings", settings, opts);
+  updateSettings(settings: SettingsInput, opts?: RequestOptions) {
+    return client.patch<SettingsInput, SettingsResult>(
+      "/settings",
+      settings,
+      opts,
+    );
   },
 };

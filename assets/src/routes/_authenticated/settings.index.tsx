@@ -141,7 +141,7 @@ function SettingsLayout() {
             <div className="flex flex-col gap-4">
               <button
                 type="button"
-                className="bg-red-400 hover:bg-red-500 border border-red-600 dark:border-red-400 cursor-pointer py-1.5 px-2 text-sm rounded-md shadow-md"
+                className="bg-red-400 hover:bg-red-500 border border-red-600 dark:border-red-400 cursor-pointer py-1.5 px-2 text-sm rounded-md shadow-md text-white"
                 onClick={handleResetDatabase}
               >
                 <Trans i18nKey="settings.general.resetLocalDatabase">
@@ -151,7 +151,7 @@ function SettingsLayout() {
 
               <button
                 type="button"
-                className="bg-red-400 hover:bg-red-500 border border-red-600 dark:border-red-400 cursor-pointer py-1.5 px-2 text-sm rounded-md shadow-md"
+                className="bg-red-400 hover:bg-red-500 border border-red-600 dark:border-red-400 cursor-pointer py-1.5 px-2 text-sm rounded-md shadow-md text-white"
                 onClick={handleResetSettings}
               >
                 <Trans i18nKey="settings.general.resetUserSettings">

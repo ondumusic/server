@@ -99,15 +99,15 @@
   },
   "pollInterval": {
     "10min": "Every 10 minutes",
-    "120min": "Every 2 hour",
-    "1440min": "Every 24 hour",
+    "120min": "Every 2 hours",
+    "1440min": "Every 24 hours",
     "15min": "Every 15 minutes",
-    "180min": "Every 3 hour",
+    "180min": "Every 3 hours",
     "30min": "Every half hour",
-    "360min": "Every 6 hour",
+    "360min": "Every 6 hours",
     "5min": "Every 5 minutes",
     "60min": "Every hour",
-    "720min": "Every 12 hour"
+    "720min": "Every 12 hours"
   },
   "promptLogout": {
     "cancel": "Cancel",
@@ -134,6 +134,7 @@
       "title": "General"
     },
     "library": {
+      "save": "Save Changes",
       "subtitle": "Change your music library settings",
       "title": "Library"
     },
@@ -215,6 +216,7 @@
     "addedToPlayShuffled_other": "Shuffling {{ count }} tracks",
     "completedLibraryScan": "Library scan completed",
     "defaultLinkTitle": "View",
+    "librarySettingsSaved": "Updated library settings",
     "removedFromPlaylist_one": "Removed {{ count }} tracks from playlist",
     "removedFromPlaylist_other": "Removed {{ count }} tracks from playlist",
     "startedLibraryScan": "Started scanning the library for new tracks"

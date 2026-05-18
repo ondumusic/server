@@ -3,6 +3,7 @@ import { useActionState } from "react";
 export interface Form<T> {
   id: string;
   state: FormState<T>;
+  horizontal?: boolean;
   isPending: boolean;
   action(payload: FormData): void;
 }
@@ -18,12 +19,20 @@ export interface FormState<T> {
   errors: FormErrors;
 }
 
+export interface FormOptions {
+  horizontal?: boolean;
+}
+
 type SubmitHandler<T> = (
   prevState: FormState<T>,
   formData: FormData,
 ) => Promise<FormState<T>>;
 
-export function useForm<T>(id: string, onSubmit: SubmitHandler<T>): Form<T> {
+export function useForm<T>(
+  id: string,
+  onSubmit: SubmitHandler<T>,
+  opts: FormOptions = {},
+): Form<T> {
   const [formState, formAction, isPending] = useActionState(onSubmit, {
     fields: {} as T,
     errors: {},
@@ -34,5 +43,6 @@ export function useForm<T>(id: string, onSubmit: SubmitHandler<T>): Form<T> {
     state: formState,
     isPending,
     action: formAction,
+    ...opts,
   };
 }

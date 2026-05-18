@@ -17,8 +17,10 @@ export function TextField(props: Props) {
       name={props.name}
       type={props.type || "text"}
       className={classNames([
-        "mt-2 block w-full bg-white/85 rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
-        !props.hasError && "border-zinc-300 focus:border-zinc-400",
+        "mt-2 block w-full rounded-lg focus:ring-0 sm:text-sm sm:leading-6",
+        "bg-white/80 dark:bg-black/40",
+        !props.hasError &&
+          "border-zinc-400/60 focus:border-zinc-400 dark:border-zinc-400/50 dark:focus:border-zinc-200/50",
         props.hasError && "border-rose-400 focus:border-rose-400",
       ])}
       defaultValue={props.defaultValue}

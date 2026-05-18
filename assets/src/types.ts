@@ -164,6 +164,14 @@ export interface User {
   username: string;
 }
 
+export type ScanType = "full" | "quick";
+
+export interface Settings {
+  musicPath: string;
+  scanType: ScanType;
+  pollInterval: number;
+}
+
 export type IndexesOf<T> = T extends Artist
   ? Artist.Indexes
   : T extends Album

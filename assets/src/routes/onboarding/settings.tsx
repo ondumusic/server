@@ -168,19 +168,19 @@ export function Settings() {
                 defaultValue: "Every hour",
               }),
               "120": t("pollInterval.120min", {
-                defaultValue: "Every 2 hour",
+                defaultValue: "Every 2 hour2",
               }),
               "180": t("pollInterval.180min", {
-                defaultValue: "Every 3 hour",
+                defaultValue: "Every 3 hour2",
               }),
               "360": t("pollInterval.360min", {
-                defaultValue: "Every 6 hour",
+                defaultValue: "Every 6 hour2",
               }),
               "720": t("pollInterval.720min", {
-                defaultValue: "Every 12 hour",
+                defaultValue: "Every 12 hour2",
               }),
               "1440": t("pollInterval.1440min", {
-                defaultValue: "Every 24 hour",
+                defaultValue: "Every 24 hour2",
               }),
             }}
             defaultValue="60"

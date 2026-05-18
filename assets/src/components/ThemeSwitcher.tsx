@@ -3,6 +3,7 @@ import { Trans } from "react-i18next";
 import { ThemeAutoIcon } from "../components/icons/ThemeAutoIcon";
 import { ThemeDarkIcon } from "../components/icons/ThemeDarkIcon";
 import { ThemeLightIcon } from "../components/icons/ThemeLightIcon";
+import { classNames } from "../utils/classNames";
 
 const Option = ({
   children,
@@ -15,10 +16,13 @@ const Option = ({
   onChange: (value: string) => void;
 }>) => (
   <li
-    className={
-      "border-y first:border-l border-r first:rounded-l-md last:rounded-r-md text-sm border-muted dark:border-white/60 " +
-      (isSelected && "bg-accent-500 text-white")
-    }
+    className={classNames([
+      "border-y first:border-l border-r first:rounded-l-md last:rounded-r-md text-sm",
+      "border-zinc-400/60 focus:border-zinc-400",
+      "dark:border-zinc-400/50 dark:focus:border-zinc-200/50",
+      isSelected && "bg-accent-500 text-white",
+      !isSelected && "bg-white/80 dark:bg-black/40",
+    ])}
   >
     <button
       type="button"
