@@ -3,6 +3,7 @@ import type {
   Artist,
   Playlist,
   PlaylistItem,
+  Stats,
   Track,
   UUID,
 } from "../types";
@@ -289,3 +290,16 @@ export const queryPlaylistItemsByIds = async (playlistItemIds: UUID[]) => {
     track: tracks.find((track) => track.id === item.trackId),
   }));
 };
+
+export function useStats() {
+  return useStoreRecord<Stats>("tracks", async () => {
+    const [artists, albums, tracks, playlists] = await Promise.all([
+      repo.count("artists"),
+      repo.count("albums"),
+      repo.count("tracks"),
+      repo.count("playlists"),
+    ]);
+
+    return { artists, albums, tracks, playlists };
+  });
+}

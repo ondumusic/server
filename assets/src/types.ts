@@ -172,6 +172,13 @@ export interface Settings {
   pollInterval: number;
 }
 
+export type Stats = {
+  artists: number;
+  albums: number;
+  tracks: number;
+  playlists: number;
+};
+
 export type IndexesOf<T> = T extends Artist
   ? Artist.Indexes
   : T extends Album

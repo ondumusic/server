@@ -6,7 +6,9 @@ import { Button } from "../../components/form/Button";
 import { Input } from "../../components/form/Input";
 import { type FormState, useForm } from "../../hooks/useForm";
 import { useToast } from "../../hooks/useToast";
+import { useStats } from "../../library";
 import type { ScanType, Settings } from "../../types";
+import { formatStat } from "../../utils/formatStat";
 
 export const Route = createFileRoute("/_authenticated/settings/library")({
   async loader() {
@@ -25,6 +27,8 @@ type SettingFields = {
 function SettingsLayout() {
   const { t } = useTranslation();
   const { showToast } = useToast();
+  const { data: stats } = useStats();
+
   const [currentSettings, setCurrentSettings] = useState<Settings>(
     Route.useLoaderData(),
   );
@@ -78,6 +82,38 @@ function SettingsLayout() {
       </header>
 
       <div className="space-y-16">
+        <div className="grid grid-cols-4 gap-4">
+          <div className="border rounded-md border-white/30 bg-black/20 p-4">
+            <h4 className="uppercase text-xs text-muted">
+              <Trans i18nKey="stats.artists">Artists</Trans>
+            </h4>
+            <span className="text-2xl">{formatStat(stats?.artists ?? 0)}</span>
+          </div>
+
+          <div className="border rounded-md border-white/30 bg-black/20 p-4">
+            <h4 className="uppercase text-xs text-muted">
+              <Trans i18nKey="stats.albums">Albums</Trans>
+            </h4>
+            <span className="text-2xl">{formatStat(stats?.albums ?? 0)}</span>
+          </div>
+
+          <div className="border rounded-md border-white/30 bg-black/20 p-4">
+            <h4 className="uppercase text-xs text-muted">
+              <Trans i18nKey="stats.tracks">Tracks</Trans>
+            </h4>
+            <span className="text-2xl">{formatStat(stats?.tracks ?? 0)}</span>
+          </div>
+
+          <div className="border rounded-md border-white/30 bg-black/20 p-4">
+            <h4 className="uppercase text-xs text-muted">
+              <Trans i18nKey="stats.playlists">Playlists</Trans>
+            </h4>
+            <span className="text-2xl">
+              {formatStat(stats?.playlists ?? 0)}
+            </span>
+          </div>
+        </div>
+
         <form action={form.action} className="space-y-8">
           <Input<SettingFields>
             form={form}
