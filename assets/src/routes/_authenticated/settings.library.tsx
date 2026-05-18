@@ -83,28 +83,28 @@ function SettingsLayout() {
 
       <div className="space-y-16">
         <div className="grid grid-cols-4 gap-4">
-          <div className="border rounded-md border-white/30 bg-black/20 p-4">
+          <div className="border rounded-md shadow-md bg-white/70 border-white/90 dark:border-white/30 dark:bg-black/20 p-4">
             <h4 className="uppercase text-xs text-muted">
               <Trans i18nKey="stats.artists">Artists</Trans>
             </h4>
             <span className="text-2xl">{formatStat(stats?.artists ?? 0)}</span>
           </div>
 
-          <div className="border rounded-md border-white/30 bg-black/20 p-4">
+          <div className="border rounded-md shadow-md bg-white/70 border-white/90 dark:border-white/30 dark:bg-black/20 p-4">
             <h4 className="uppercase text-xs text-muted">
               <Trans i18nKey="stats.albums">Albums</Trans>
             </h4>
             <span className="text-2xl">{formatStat(stats?.albums ?? 0)}</span>
           </div>
 
-          <div className="border rounded-md border-white/30 bg-black/20 p-4">
+          <div className="border rounded-md shadow-md bg-white/70 border-white/90 dark:border-white/30 dark:bg-black/20 p-4">
             <h4 className="uppercase text-xs text-muted">
               <Trans i18nKey="stats.tracks">Tracks</Trans>
             </h4>
             <span className="text-2xl">{formatStat(stats?.tracks ?? 0)}</span>
           </div>
 
-          <div className="border rounded-md border-white/30 bg-black/20 p-4">
+          <div className="border rounded-md shadow-md bg-white/70 border-white/90 dark:border-white/30 dark:bg-black/20 p-4">
             <h4 className="uppercase text-xs text-muted">
               <Trans i18nKey="stats.playlists">Playlists</Trans>
             </h4>
