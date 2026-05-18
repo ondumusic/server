@@ -26,6 +26,7 @@ defmodule MusicBoxWeb.ApiSpec do
         %Tag{name: "Tracks", description: "Browse tracks"},
         %Tag{name: "Auth", description: "Authentication and session management"},
         %Tag{name: "Sync", description: "Library synchronization"},
+        %Tag{name: "Scan", description: "Library file scanning"},
         %Tag{name: "Search", description: "Search across the library"},
         %Tag{name: "Settings", description: "Manage library settings"},
         %Tag{name: "Playlists", description: "Create and manage playlists"}

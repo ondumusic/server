@@ -92,6 +92,8 @@ defmodule MusicBoxWeb.Router do
 
     get "/sync", SyncController, :sync
 
+    post "/scan", LibraryController, :scan
+
     get "/search", SearchController, :search
   end
 end

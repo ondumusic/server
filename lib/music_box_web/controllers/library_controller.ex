@@ -3,6 +3,8 @@ defmodule MusicBoxWeb.LibraryController do
 
   alias MusicBox.Albums
   alias MusicBox.Artists
+  alias MusicBox.FileScanner
+  alias MusicBox.Settings
   alias MusicBox.Tracks
 
   plug :assign_artist when action in [:artist, :artist_albums, :artist_album]
@@ -177,6 +179,26 @@ defmodule MusicBoxWeb.LibraryController do
 
   def track(conn, _params) do
     render(conn, :track, track: conn.assigns.track, album: conn.assigns.track.album)
+  end
+
+  operation :scan,
+    summary: "Scan for changes in your library",
+    tags: ["Scan"],
+    responses: [
+      accepted:
+        {"Started an asynchronous file scan operation.", "application/json", Schemas.ScanResponse},
+      unauthorized: {"Invalid authentication.", "application/json", Schemas.Error}
+    ]
+
+  def scan(conn, _params) do
+    settings = Settings.get()
+    FileScanner.scan_async(settings.scan_type)
+
+    conn
+    |> put_status(:accepted)
+    |> json(%{
+      ok: true
+    })
   end
 
   defp assign_artist(conn, _opts) do
