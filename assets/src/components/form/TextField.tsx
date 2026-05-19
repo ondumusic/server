@@ -3,7 +3,7 @@ import { classNames } from "../../utils/classNames";
 interface Props {
   id?: string;
   name: string;
-  defaultValue?: string | number;
+  defaultValue?: string;
   type?: string;
   hasError?: boolean;
   required?: boolean;

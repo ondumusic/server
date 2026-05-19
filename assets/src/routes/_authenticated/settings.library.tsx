@@ -22,6 +22,7 @@ type SettingFields = {
   musicPath?: string;
   scanType?: ScanType;
   pollInterval?: number;
+  stripSortPrefixes?: string[];
 };
 
 function SettingsLayout() {
@@ -45,6 +46,7 @@ function SettingsLayout() {
           formData.get("pollInterval") as string,
           10,
         ) as number,
+        stripSortPrefixes: formData.getAll("stripSortPrefixes") as string[],
       },
       errors: {},
     };
@@ -178,6 +180,20 @@ function SettingsLayout() {
             }}
             defaultValue={String(currentSettings.pollInterval)}
             required
+          />
+
+          <Input<SettingFields>
+            form={form}
+            type="token"
+            field="stripSortPrefixes"
+            label={t("settingsForm.field.stripSortPrefixes", {
+              defaultValue: "Sort Prefixes",
+            })}
+            help={t("settingsForm.help.stripSortPrefixes", {
+              defaultValue:
+                'A list of prefixes to filter out when sorting, e.g. if you want The Beatles to be sorted as Beatles you would add "the".',
+            })}
+            defaultValue={currentSettings.stripSortPrefixes}
           />
 
           <div className="w-[50%] ml-[26%]">

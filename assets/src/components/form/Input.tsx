@@ -3,6 +3,7 @@ import type { Form } from "../../hooks/useForm";
 import { Label } from "./Label";
 import { Select } from "./Select";
 import { TextField } from "./TextField";
+import { TokenField } from "./TokenField";
 
 interface CommonProps<T> {
   form: Form<T>;
@@ -26,7 +27,13 @@ type SelectInputProps = {
   defaultValue?: string;
 };
 
-type InputFieldProps = SelectInputProps | TextInputProps;
+type TokenInputProps = {
+  type: "token";
+  value?: string[];
+  defaultValue?: string[];
+};
+
+type InputFieldProps = SelectInputProps | TextInputProps | TokenInputProps;
 
 type Props<T> = CommonProps<T> & InputFieldProps & PropsWithChildren;
 
@@ -43,7 +50,7 @@ export function Input<T>(props: Props<T>) {
 
   // Determine what to render based on props.type, default to TextField
   let inputType = "text";
-  if (props.type === "select") inputType = props.type;
+  if (["select", "token"].indexOf(props.type) !== -1) inputType = props.type;
 
   return (
     <div
@@ -64,7 +71,7 @@ export function Input<T>(props: Props<T>) {
             id={id}
             name={field}
             hasError={hasError}
-            defaultValue={defaultValue}
+            defaultValue={defaultValue as string}
             autoFocus={!!props.autoFocus}
             required={!!props.required}
             options={(props as SelectInputProps).options}
@@ -77,7 +84,18 @@ export function Input<T>(props: Props<T>) {
             name={field}
             type={type}
             hasError={hasError}
-            defaultValue={defaultValue}
+            defaultValue={defaultValue as string}
+            autoFocus={!!props.autoFocus}
+            required={!!props.required}
+          />
+        )}
+
+        {inputType === "token" && (
+          <TokenField
+            id={id}
+            name={field}
+            hasError={hasError}
+            defaultValue={defaultValue as string[]}
             autoFocus={!!props.autoFocus}
             required={!!props.required}
           />

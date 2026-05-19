@@ -170,6 +170,7 @@ export interface Settings {
   musicPath: string;
   scanType: ScanType;
   pollInterval: number;
+  stripSortPrefixes: string[];
 }
 
 export type Stats = {
