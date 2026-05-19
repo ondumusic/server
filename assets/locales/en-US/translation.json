@@ -121,7 +121,7 @@
   "settings": {
     "appearance": {
       "accentColor": "Accent Colour",
-      "summary": "These settings are stored locally for this session only.",
+      "summary": "These settings are stored locally for this browser only.",
       "theme": "Theme",
       "title": "Appearance"
     },
@@ -150,12 +150,14 @@
     "field": {
       "musicPath": "Music Directory",
       "pollInterval": "Scan Interval",
-      "scanType": "Scan Type"
+      "scanType": "Scan Type",
+      "stripSortPrefixes": "Sort Prefixes"
     },
     "help": {
       "musicPath": "The absolute path to your music collection. When running in a container (like Docker) it will generally be a volume mapped at /music",
       "pollInterval": "How often should we scan for new music?",
-      "scanType": "In general a quick scan is recommended as it is much faster."
+      "scanType": "In general a quick scan is recommended as it is much faster.",
+      "stripSortPrefixes": "A list of prefixes to filter out when sorting, e.g. if you want The Beatles to be sorted as Beatles you would add \"the\"."
     },
     "subtitle": "Fill in the form below to get started.",
     "title": "Setup MusicBox"

@@ -104,7 +104,7 @@ function GeneralSettings() {
           })}
           subtitle={i18next.t("settings.appearance.summary", {
             defaultValue:
-              "These settings are stored locally for this session only.",
+              "These settings are stored locally for this browser only.",
           })}
         >
           <Setting
