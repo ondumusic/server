@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router";
 import i18next from "i18next";
 import {
   type DragEvent,
@@ -13,10 +14,13 @@ import {
   type ListItemState,
   SelectableList,
 } from "../components/SelectableList";
+import type { ContextMenuItem } from "../hooks/useContextMenu";
 import { usePlaylistPicker } from "../hooks/usePlaylistPicker";
 import { type QueueItem, useQueue } from "../hooks/useQueue";
 import { useToast } from "../hooks/useToast";
 import {
+  queryAlbum,
+  queryArtist,
   queryPlaylistItems,
   queryPlaylistItemsByIds,
   queryTracks,
@@ -69,6 +73,7 @@ export function UpNext({
     addQueueAfter,
     rearrangeQueue,
   } = useQueue();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -205,7 +210,7 @@ export function UpNext({
   );
 
   const handleContextMenu = useCallback(
-    (selectedIds: Set<string>) => {
+    async (selectedIds: Set<string>) => {
       const recentPlaylist = getMostRecentPlaylist();
 
       const selectedTracks = listItems
@@ -262,7 +267,51 @@ export function UpNext({
         });
       }
 
+      const gotoActions: ContextMenuItem[] = [];
+      if (selectedIds.size === 1) {
+        const artist = await queryArtist(selectedTracks[0].albumArtistId);
+        const album = await queryAlbum(selectedTracks[0].albumId);
+
+        if (artist) {
+          gotoActions.push({
+            type: "item",
+            key: "goto_artist",
+            label: i18next.t("contextMenu.gotoArtist", {
+              defaultValue: "Go to Artist",
+            }),
+            onClick: async () => {
+              navigate({
+                to: `/artists/${artist.slug}`,
+              });
+            },
+          });
+        }
+
+        if (artist && album) {
+          gotoActions.push({
+            type: "item",
+            key: "goto_album",
+            label: i18next.t("contextMenu.gotoAlbum", {
+              defaultValue: "Go to Album",
+            }),
+            onClick: async () => {
+              navigate({
+                to: `/artists/${artist.slug}/${album.slug}`,
+              });
+            },
+          });
+        }
+
+        if (gotoActions.length) {
+          gotoActions.push({
+            type: "divider" as const,
+            key: "playlists",
+          });
+        }
+      }
+
       return [
+        ...gotoActions,
         ...playlistActions,
         {
           type: "divider" as const,
@@ -283,6 +332,7 @@ export function UpNext({
       ];
     },
     [
+      navigate,
       listItems,
       handleDelete,
       showToast,

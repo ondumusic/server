@@ -59,7 +59,9 @@ type BaseProps<T> = {
     droppedAtIndex: number,
     sourceListId: string,
   ) => void;
-  onContextMenu?: (selectedIds: Set<string>) => ContextMenuItem[];
+  onContextMenu?: (
+    selectedIds: Set<string>,
+  ) => ContextMenuItem[] | Promise<ContextMenuItem[]>;
   onTypeMatch?: (item: T, query: string) => boolean;
   renderItem: (item: T, state: ListItemState) => ReactNode;
 };

@@ -30,7 +30,7 @@ export type ContextMenuItem =
       onClick(): void;
     };
 
-type ContextMenuFunction = () => ContextMenuItem[];
+type ContextMenuFunction = () => ContextMenuItem[] | Promise<ContextMenuItem[]>;
 type ContextMenuInput = ContextMenuItem[] | ContextMenuFunction;
 
 interface ContextMenuContextValue {
@@ -256,13 +256,18 @@ export function ContextMenuProvider({ children }: PropsWithChildren) {
   function createContextMenu<T>(
     itemsOrFunction: ContextMenuInput,
   ): MouseEventHandler<T> {
-    return (e: ReactMouseEvent<T>) => {
+    return async (e: ReactMouseEvent<T>) => {
       e.preventDefault();
       e.stopPropagation();
 
       let newItems: ContextMenuItem[] = [];
       if (typeof itemsOrFunction === "function") {
-        newItems = itemsOrFunction();
+        const items = itemsOrFunction();
+        if (items instanceof Promise) {
+          newItems = await (items as Promise<ContextMenuItem[]>);
+        } else {
+          newItems = items as ContextMenuItem[];
+        }
       } else {
         newItems = itemsOrFunction;
       }
