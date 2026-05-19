@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import {
   type ListItemState,
@@ -9,7 +10,7 @@ import { usePlaylistMutations } from "../../hooks/usePlaylistMutations";
 import { useQueue } from "../../hooks/useQueue";
 import { useToast } from "../../hooks/useToast";
 import i18next from "../../i18next";
-import { queryTracksByIds } from "../../library";
+import { queryAlbum, queryArtist, queryTracksByIds } from "../../library";
 import type {
   PlaylistItem,
   Playlist as TPlaylist,
@@ -32,6 +33,7 @@ export function Playlist({ playlist, items }: Props) {
   const [selectedItemIds, setSelectedItemIds] = useState<Set<UUID>>(
     new Set([]),
   );
+  const navigate = useNavigate();
 
   const { reorder, addTracks, removeItems, pending } = usePlaylistMutations(
     playlistId,
@@ -166,7 +168,7 @@ export function Playlist({ playlist, items }: Props) {
   );
 
   const handleContextMenu = useCallback(
-    (selectedIds: Set<string>): ContextMenuItem[] => {
+    async (selectedIds: Set<string>): Promise<ContextMenuItem[]> => {
       if (selectedIds.size === 0) {
         return [];
       }
@@ -181,7 +183,51 @@ export function Playlist({ playlist, items }: Props) {
         }));
       if (!queueItems) return [];
 
+      const gotoActions: ContextMenuItem[] = [];
+      if (selectedIds.size === 1) {
+        const artist = await queryArtist(queueItems[0].track.albumArtistId);
+        const album = await queryAlbum(queueItems[0].track.albumId);
+
+        if (artist) {
+          gotoActions.push({
+            type: "item",
+            key: "goto_artist",
+            label: i18next.t("contextMenu.gotoArtist", {
+              defaultValue: "Go to Artist",
+            }),
+            onClick: async () => {
+              navigate({
+                to: `/artists/${artist.slug}`,
+              });
+            },
+          });
+        }
+
+        if (artist && album) {
+          gotoActions.push({
+            type: "item",
+            key: "goto_album",
+            label: i18next.t("contextMenu.gotoAlbum", {
+              defaultValue: "Go to Album",
+            }),
+            onClick: async () => {
+              navigate({
+                to: `/artists/${artist.slug}/${album.slug}`,
+              });
+            },
+          });
+        }
+
+        if (gotoActions.length) {
+          gotoActions.push({
+            type: "divider" as const,
+            key: "playlists",
+          });
+        }
+      }
+
       return [
+        ...gotoActions,
         {
           type: "item",
           key: "play_next",
@@ -241,7 +287,14 @@ export function Playlist({ playlist, items }: Props) {
         },
       ];
     },
-    [currentItems, handleDelete, enqueueNext, enqueueAfter, showToast],
+    [
+      currentItems,
+      handleDelete,
+      enqueueNext,
+      enqueueAfter,
+      showToast,
+      navigate,
+    ],
   );
 
   const listItems = useMemo(() => {

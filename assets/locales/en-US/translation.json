@@ -31,6 +31,8 @@
     "createPlaylist": "Create Playlist",
     "createPlaylistFolder": "Create Folder",
     "deletePlaylist": "Delete \"{{ playlist }}\"",
+    "gotoAlbum": "Go to Album",
+    "gotoArtist": "Go to Artist",
     "playAfter": "Add To Queue",
     "playAlbum_one": "Play \"{{ album }}\"",
     "playAlbum_other": "Play {{ count }} albums",
