@@ -10,16 +10,11 @@
     "cov": "vitest run --watch --coverage",
     "format": "biome check --write --unsafe",
     "generate-routes": "tsr generate",
-    "i18n:extract": "i18next-cli extract",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "i18n:extract": "i18next-cli extract"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.14",
-    "@chromatic-com/storybook": "^5.1.2",
     "@faker-js/faker": "^10.4.0",
-    "@storybook/addon-docs": "^10.3.6",
-    "@storybook/react-vite": "^10.3.6",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/vite": "^4.2.4",
     "@types/culori": "^4.0.1",
@@ -34,7 +29,6 @@
     "fishery": "^2.4.0",
     "i18next-cli": "^1.56.11",
     "playwright": "^1.59.1",
-    "storybook": "^10.3.6",
     "tailwindcss": "^4.2.4",
     "terser": "^5.47.1",
     "typescript": "^6.0.3",
