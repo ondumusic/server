@@ -27,6 +27,8 @@ const form: Form<FormFields> = {
   isPending: false,
   action() {},
   updateField() {},
+  resetFields() {},
+  resetAll() {},
   state: {
     ok: null,
     errors: {},

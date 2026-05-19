@@ -47,6 +47,7 @@ function Login() {
     } else {
       newState.errors = response.fields;
       newState.ok = false;
+      form.resetFields(["password"]);
     }
 
     return newState;

@@ -22,6 +22,8 @@ const form: Form<FormFields> = {
   isDirty: false,
   action() {},
   updateField() {},
+  resetFields() {},
+  resetAll() {},
   state: {
     ok: null,
     errors: {},

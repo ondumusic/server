@@ -10,6 +10,8 @@ export interface Form<T> {
   isPending: boolean;
   updateField<K extends keyof T>(field: K, value: T[K]): void;
   action(payload: FormData): void;
+  resetFields(keys: (keyof T)[]): void;
+  resetAll(): void;
 }
 
 export interface FormErrors {
@@ -35,11 +37,11 @@ type SubmitHandler = (
 export function useForm<T>(
   id: string,
   onSubmit: SubmitHandler,
-  values: T,
+  initialValues: T,
   opts: FormOptions = {},
 ): Form<T> {
   const [resetKey, setResetKey] = useState(0);
-  const [fields, setFields] = useState<T>(values as T);
+  const [fields, setFields] = useState<T>(initialValues as T);
   const [isDirty, setIsDirty] = useState(false);
   const [state, action, isPending] = useActionState(onSubmit, {
     ok: null,
@@ -48,12 +50,12 @@ export function useForm<T>(
 
   // The useEffect dependency does not do a deep compare so we'll stringify it
   // so we can see when it changed more easily.
-  const valueString = JSON.stringify(values);
+  const valueString = JSON.stringify(initialValues);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies(valueString): suppress dependency valueString
-  // biome-ignore lint/correctness/useExhaustiveDependencies(values): suppress dependency values
+  // biome-ignore lint/correctness/useExhaustiveDependencies(initialValues): suppress dependency initialValues
   useEffect(() => {
-    setFields(values as T);
+    setFields(initialValues as T);
     setIsDirty(false);
     setResetKey((n) => n + 1);
   }, [valueString]);
@@ -69,6 +71,17 @@ export function useForm<T>(
     setIsDirty(true);
   };
 
+  const resetFields = (keys: (keyof T)[]) => {
+    setFields((prev) => {
+      const patch = Object.fromEntries(
+        keys.map((k) => [k, initialValues[k] ?? ""]),
+      ) as Partial<T>;
+      return { ...prev, ...patch };
+    });
+  };
+
+  const resetAll = () => setFields(initialValues);
+
   return {
     id,
     key: `${id}-${resetKey}`,
@@ -78,6 +91,8 @@ export function useForm<T>(
     isDirty,
     isPending,
     updateField,
+    resetFields,
+    resetAll,
     ...opts,
   };
 }

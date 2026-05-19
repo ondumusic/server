@@ -15,6 +15,7 @@ export function TextField(props: Props) {
   return (
     <input
       id={props.id || props.name}
+      key={props.name}
       name={props.name}
       type={props.type || "text"}
       className={classNames([
@@ -24,7 +25,7 @@ export function TextField(props: Props) {
           "border-zinc-400/60 focus:border-zinc-400 dark:border-zinc-400/50 dark:focus:border-zinc-200/50",
         props.hasError && "border-rose-400 focus:border-rose-400",
       ])}
-      value={props.value}
+      value={String(props.value ?? "")}
       onChange={(e) => props.onChange?.(e.target.value)}
       required={props.required || false}
     />
