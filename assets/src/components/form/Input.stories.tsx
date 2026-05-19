@@ -17,14 +17,18 @@ type FormFields = {
 
 const form: Form<FormFields> = {
   id: "testForm",
+  key: "testForm-0",
   isPending: false,
+  isDirty: false,
   action() {},
+  updateField() {},
   state: {
-    fields: {
-      name: "Waldo",
-      password: null,
-    },
+    ok: null,
     errors: {},
+  },
+  fields: {
+    name: "Waldo",
+    password: null,
   },
 };
 

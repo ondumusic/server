@@ -28,34 +28,31 @@ function Login() {
   const { redirect: redirectTo } = Route.useSearch() as LocationSearch;
   const redirectRef = useRef<string>(redirectTo ?? "/");
 
-  const onSubmit = async (
-    prevState: FormState<LoginFields>,
-    formData: FormData,
-  ) => {
-    const newState: FormState<LoginFields> = {
+  const onSubmit = async (prevState: FormState, formData: FormData) => {
+    const newState: FormState = {
       ...prevState,
-      fields: {
-        username: formData.get("username") as string,
-        password: formData.get("password") as string,
-      },
       errors: {},
     };
 
-    const response = await authApi.login(
-      newState.fields.username,
-      newState.fields.password,
-    );
+    const fields = {
+      username: formData.get("username") as string,
+      password: formData.get("password") as string,
+    };
+
+    const response = await authApi.login(fields.username, fields.password);
 
     if (response.ok) {
       completeLogin(response.currentUser, response.sessionToken);
+      newState.ok = true;
     } else {
       newState.errors = response.fields;
+      newState.ok = false;
     }
 
     return newState;
   };
 
-  const form = useForm<LoginFields>("loginForm", onSubmit);
+  const form = useForm<LoginFields>("loginForm", onSubmit, {});
 
   if (isLoggedIn) {
     return <Navigate to={redirectRef?.current ?? "/"} replace />;
@@ -67,7 +64,11 @@ function Login() {
         size="small"
         title={t("loginForm.title", { defaultValue: "Login" })}
       >
-        <form action={form.action} className="space-y-8 pt-8 py-4 px-6">
+        <form
+          key={form.key}
+          action={form.action}
+          className="space-y-8 pt-8 py-4 px-6"
+        >
           <Input<LoginFields>
             form={form}
             type="text"
@@ -81,7 +82,6 @@ function Login() {
             form={form}
             type="password"
             field="password"
-            defaultValue=""
             label={t("loginForm.field.password", { defaultValue: "Password" })}
             required
           />

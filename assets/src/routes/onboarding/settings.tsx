@@ -31,24 +31,22 @@ export function Settings() {
   const { onboarding } = Route.useRouteContext();
   const [showLoader, setShowLoader] = useState<boolean>(false);
 
-  const onSubmit = async (
-    prevState: FormState<SettingFields>,
-    formData: FormData,
-  ) => {
-    const newState: FormState<SettingFields> = {
+  const onSubmit = async (prevState: FormState, formData: FormData) => {
+    const newState: FormState = {
       ...prevState,
-      fields: {
-        musicPath: formData.get("musicPath") as string,
-        scanType: formData.get("scanType") as ScanType,
-        pollInterval: parseInt(
-          formData.get("pollInterval") as string,
-          10,
-        ) as number,
-      },
       errors: {},
     };
 
-    const response = await settingApi.updateSettings(newState.fields);
+    const fields = {
+      musicPath: formData.get("musicPath") as string,
+      scanType: formData.get("scanType") as ScanType,
+      pollInterval: parseInt(
+        formData.get("pollInterval") as string,
+        10,
+      ) as number,
+    };
+
+    const response = await settingApi.updateSettings(fields);
 
     // const response = await client.post<Request, Response>(
     //   "/settings",
@@ -58,18 +56,24 @@ export function Settings() {
     if (response.ok) {
       setShowLoader(true);
       onboarding.setStep(null);
+      newState.ok = true;
 
       waitForUpdate(() => {
         navigate({ to: "/" });
       });
     } else {
+      newState.ok = false;
       newState.errors = response.fields;
     }
 
     return newState;
   };
 
-  const form = useForm<SettingFields>("settingsForm", onSubmit);
+  const form = useForm<SettingFields>("settingsForm", onSubmit, {
+    musicPath: "/music",
+    scanType: "quick",
+    pollInterval: 60,
+  });
 
   if (!isLoggedIn) {
     return (
@@ -105,7 +109,11 @@ export function Settings() {
           </Trans>
         </p>
 
-        <form action={form.action} className="space-y-8 pt-8 py-4 px-6">
+        <form
+          key={form.key}
+          action={form.action}
+          className="space-y-8 pt-8 py-4 px-6"
+        >
           <Input<SettingFields>
             form={form}
             type="text"
@@ -113,7 +121,6 @@ export function Settings() {
             label={t("settingsForm.field.musicPath", {
               defaultValue: "Music Directory",
             })}
-            defaultValue="/music"
             help={t("settingsForm.help.musicPath", {
               defaultValue:
                 "The absolute path to your music collection. When running in a container (like Docker) it will generally be a volume mapped at /music",
@@ -137,7 +144,6 @@ export function Settings() {
               defaultValue:
                 "In general a quick scan is recommended as it is much faster.",
             })}
-            defaultValue="quick"
             required
           />
 
@@ -183,7 +189,6 @@ export function Settings() {
                 defaultValue: "Every 24 hour2",
               }),
             }}
-            defaultValue="60"
             required
           />
 

@@ -3,11 +3,12 @@ import { classNames } from "../../utils/classNames";
 interface Props {
   id?: string;
   name: string;
-  defaultValue?: string;
+  value?: string;
   type?: string;
   hasError?: boolean;
   required?: boolean;
   autoFocus?: boolean;
+  onChange?: (value: string) => void;
 }
 
 export function TextField(props: Props) {
@@ -23,7 +24,8 @@ export function TextField(props: Props) {
           "border-zinc-400/60 focus:border-zinc-400 dark:border-zinc-400/50 dark:focus:border-zinc-200/50",
         props.hasError && "border-rose-400 focus:border-rose-400",
       ])}
-      defaultValue={props.defaultValue}
+      value={props.value}
+      onChange={(e) => props.onChange?.(e.target.value)}
       required={props.required || false}
     />
   );

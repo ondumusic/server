@@ -5,6 +5,7 @@ interface SettingsInput {
   musicPath?: string;
   scanType?: ScanType;
   pollInterval?: number;
+  stripSortPrefixes?: string[];
 }
 
 type SettingsResult =

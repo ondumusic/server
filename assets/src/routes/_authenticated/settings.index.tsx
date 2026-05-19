@@ -14,7 +14,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/settings/")({
   staticData: { view: "settings" as const },
-  component: SettingsLayout,
+  component: GeneralSettings,
 });
 
 const Section = ({
@@ -49,7 +49,7 @@ const Setting = ({
   </div>
 );
 
-function SettingsLayout() {
+function GeneralSettings() {
   const [color, setColor] = useState(getAccentColor());
   const { theme, setTheme } = useTheme();
   const { promptConfirm } = useDialog();

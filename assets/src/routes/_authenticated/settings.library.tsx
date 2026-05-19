@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { settingApi } from "../../api";
@@ -7,68 +7,78 @@ import { Input } from "../../components/form/Input";
 import { type FormState, useForm } from "../../hooks/useForm";
 import { useToast } from "../../hooks/useToast";
 import { useStats } from "../../library";
-import type { ScanType, Settings } from "../../types";
+import type { ScanType } from "../../types";
 import { formatStat } from "../../utils/formatStat";
 
 export const Route = createFileRoute("/_authenticated/settings/library")({
   async loader() {
-    return await settingApi.getSettings();
+    const settings = await settingApi.getSettings();
+    return {
+      ...settings,
+      pollInterval: String(settings.pollInterval),
+    };
   },
   staticData: { view: "settings" as const },
-  component: SettingsLayout,
+  component: LibrarySettings,
 });
 
 type SettingFields = {
-  musicPath?: string;
   scanType?: ScanType;
-  pollInterval?: number;
+  pollInterval?: string;
   stripSortPrefixes?: string[];
 };
 
-function SettingsLayout() {
+function LibrarySettings() {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const { data: stats } = useStats();
-
-  const [currentSettings, setCurrentSettings] = useState<Settings>(
+  const router = useRouter();
+  const [currentSettings, setCurrentSettings] = useState<SettingFields>(
     Route.useLoaderData(),
   );
 
-  const onSubmit = async (
-    prevState: FormState<SettingFields>,
-    formData: FormData,
-  ) => {
-    const newState: FormState<SettingFields> = {
+  const onSubmit = async (prevState: FormState, formData: FormData) => {
+    const newState: FormState = {
       ...prevState,
-      fields: {
-        scanType: formData.get("scanType") as ScanType,
-        pollInterval: parseInt(
-          formData.get("pollInterval") as string,
-          10,
-        ) as number,
-        stripSortPrefixes: formData.getAll("stripSortPrefixes") as string[],
-      },
       errors: {},
     };
 
-    const response = await settingApi.updateSettings(newState.fields);
+    const response = await settingApi.updateSettings({
+      scanType: formData.get("scanType") as ScanType,
+      pollInterval: parseInt(
+        formData.get("pollInterval") as string,
+        10,
+      ) as number,
+      stripSortPrefixes: formData.getAll("stripSortPrefixes") as string[],
+    });
     if (response.ok) {
-      setCurrentSettings(response.settings);
+      setCurrentSettings({
+        ...response.settings,
+        pollInterval: String(response.settings.pollInterval),
+      });
       showToast({
         message: t("toast.librarySettingsSaved", {
           defaultValue: "Updated library settings",
         }),
       });
+      newState.ok = true;
+      router.invalidate();
     } else {
       newState.errors = response.fields;
+      newState.ok = false;
     }
 
     return newState;
   };
 
-  const form = useForm<SettingFields>("settingsForm", onSubmit, {
-    horizontal: true,
-  });
+  const form = useForm<SettingFields>(
+    "settingsForm",
+    onSubmit,
+    currentSettings,
+    {
+      horizontal: true,
+    },
+  );
 
   return (
     <div className="h-full mx-4 lg:mx-8">
@@ -116,7 +126,7 @@ function SettingsLayout() {
           </div>
         </div>
 
-        <form action={form.action} className="space-y-8">
+        <form key={form.key} action={form.action} className="space-y-8">
           <Input<SettingFields>
             form={form}
             type="select"
@@ -132,7 +142,6 @@ function SettingsLayout() {
               defaultValue:
                 "In general a quick scan is recommended as it is much faster.",
             })}
-            defaultValue={currentSettings.scanType}
             required
           />
 
@@ -178,7 +187,6 @@ function SettingsLayout() {
                 defaultValue: "Every 24 hour2",
               }),
             }}
-            defaultValue={String(currentSettings.pollInterval)}
             required
           />
 
@@ -193,11 +201,14 @@ function SettingsLayout() {
               defaultValue:
                 'A list of prefixes to filter out when sorting, e.g. if you want The Beatles to be sorted as Beatles you would add "the".',
             })}
-            defaultValue={currentSettings.stripSortPrefixes}
           />
 
           <div className="w-[50%] ml-[26%]">
-            <Button disabled={form.isPending} type="submit" style="primary">
+            <Button
+              disabled={!form.isDirty || form.isPending}
+              type="submit"
+              style="primary"
+            >
               <Trans i18nKey="settings.library.save">Save Changes</Trans>
             </Button>
           </div>

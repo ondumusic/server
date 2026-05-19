@@ -18,19 +18,16 @@ interface CommonProps<T> {
 type TextInputProps = {
   type: "text" | "password";
   value?: string;
-  defaultValue?: string;
 };
 
 type SelectInputProps = {
   type: "select";
   options: { [key: string]: string };
-  defaultValue?: string;
 };
 
 type TokenInputProps = {
   type: "token";
   value?: string[];
-  defaultValue?: string[];
 };
 
 type InputFieldProps = SelectInputProps | TextInputProps | TokenInputProps;
@@ -39,14 +36,10 @@ type Props<T> = CommonProps<T> & InputFieldProps & PropsWithChildren;
 
 export function Input<T>(props: Props<T>) {
   const { form, field, type = "text" } = props;
-  const { isPending, state } = form as Form<T>;
-  const fields = state.fields as T;
+  const { isPending, fields, state, updateField } = form as Form<T>;
 
   const id = props.id || `${form.id}__${field}`;
   const hasError = !isPending && !!state.errors[field];
-
-  const defaultValue =
-    (fields[field as keyof T] as string) || props.defaultValue;
 
   // Determine what to render based on props.type, default to TextField
   let inputType = "text";
@@ -71,10 +64,13 @@ export function Input<T>(props: Props<T>) {
             id={id}
             name={field}
             hasError={hasError}
-            defaultValue={defaultValue as string}
+            value={fields[field as keyof T] as string}
             autoFocus={!!props.autoFocus}
             required={!!props.required}
             options={(props as SelectInputProps).options}
+            onChange={(value) =>
+              updateField(field as keyof T, value as T[keyof T])
+            }
           />
         )}
 
@@ -84,9 +80,12 @@ export function Input<T>(props: Props<T>) {
             name={field}
             type={type}
             hasError={hasError}
-            defaultValue={defaultValue as string}
+            value={fields[field as keyof T] as string}
             autoFocus={!!props.autoFocus}
             required={!!props.required}
+            onChange={(value) =>
+              updateField(field as keyof T, value as T[keyof T])
+            }
           />
         )}
 
@@ -95,9 +94,12 @@ export function Input<T>(props: Props<T>) {
             id={id}
             name={field}
             hasError={hasError}
-            defaultValue={defaultValue as string[]}
             autoFocus={!!props.autoFocus}
             required={!!props.required}
+            tokens={fields[field as keyof T] as string[]}
+            onChange={(value) =>
+              updateField(field as keyof T, value as T[keyof T])
+            }
           />
         )}
 

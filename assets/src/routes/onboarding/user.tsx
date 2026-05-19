@@ -23,37 +23,31 @@ export function UserComponent() {
   const { isLoggedIn, completeLogin } = useAuth();
   const { onboarding } = Route.useRouteContext();
 
-  const onSubmit = async (
-    prevState: FormState<SignupFields>,
-    formData: FormData,
-  ) => {
-    const newState: FormState<SignupFields> = {
+  const onSubmit = async (prevState: FormState, formData: FormData) => {
+    const newState: FormState = {
       ...prevState,
-      fields: {
-        username: formData.get("username") as string,
-        password: formData.get("password") as string,
-        passwordConfirmation: formData.get("passwordConfirmation") as string,
-      },
       errors: {},
     };
 
     const response = await authApi.signup(
-      newState.fields.username,
-      newState.fields.password,
-      newState.fields.passwordConfirmation,
+      formData.get("username") as string,
+      formData.get("password") as string,
+      formData.get("passwordConfirmation") as string,
     );
 
     if (response.ok) {
       completeLogin(response.currentUser, response.sessionToken);
       onboarding.setStep("settings");
+      newState.ok = true;
     } else {
+      newState.ok = false;
       newState.errors = response.fields;
     }
 
     return newState;
   };
 
-  const form = useForm<SignupFields>("signupForm", onSubmit);
+  const form = useForm<SignupFields>("signupForm", onSubmit, {});
 
   if (isLoggedIn) {
     return <Navigate to="/onboarding/settings" />;
@@ -65,7 +59,11 @@ export function UserComponent() {
         size="small"
         title={t("signupForm.title", { defaultValue: "Setup your Account" })}
       >
-        <form action={form.action} className="space-y-8 pt-8 py-4 px-6">
+        <form
+          key={form.key}
+          action={form.action}
+          className="space-y-8 pt-8 py-4 px-6"
+        >
           <Input<SignupFields>
             form={form}
             type="text"
@@ -79,7 +77,6 @@ export function UserComponent() {
             form={form}
             type="password"
             field="password"
-            defaultValue=""
             label={t("signupForm.field.password", { defaultValue: "Password" })}
             required
           />
@@ -88,7 +85,6 @@ export function UserComponent() {
             form={form}
             type="password"
             field="passwordConfirmation"
-            defaultValue=""
             label={t("signupForm.field.passwordConfirmation", {
               defaultValue: "Confirm Password",
             })}

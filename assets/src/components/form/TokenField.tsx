@@ -4,14 +4,15 @@ import { classNames } from "../../utils/classNames";
 interface Props {
   id?: string;
   name: string;
-  defaultValue?: string[];
+  tokens?: string[];
   hasError?: boolean;
   required?: boolean;
   autoFocus?: boolean;
+  onChange?: (value: string[]) => void;
 }
 
 export function TokenField(props: Props) {
-  const [tokens, setTokens] = useState<string[]>(props.defaultValue ?? []);
+  const tokens = props.tokens || [];
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -19,11 +20,11 @@ export function TokenField(props: Props) {
     const token = input.trim().replace(/,+$/, "");
     if (!token || tokens.some((t) => t.toLowerCase() === token.toLowerCase()))
       return;
-    setTokens((tokens) => [...tokens, token]);
+    props.onChange?.([...tokens, token]);
   };
 
   const removeToken = (token: string) => {
-    setTokens((tokens) => tokens.filter((t) => t !== token));
+    props.onChange?.(tokens.filter((t) => t !== token));
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {

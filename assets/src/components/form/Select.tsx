@@ -3,21 +3,23 @@ import { classNames } from "../../utils/classNames";
 interface Props {
   id?: string;
   name: string;
-  defaultValue?: string;
+  value?: string;
   options: { [key: string]: string };
   type?: string;
   hasError?: boolean;
   required?: boolean;
   multiple?: boolean;
   autoFocus?: boolean;
+  onChange?: (value: string) => void;
 }
 
 export function Select(props: Props) {
   return (
     <select
       id={props.id || props.name}
-      key={props.defaultValue}
       name={props.name}
+      value={String(props.value ?? "")}
+      onChange={(e) => props.onChange?.(e.target.value)}
       className={classNames([
         "mt-2 block w-full rounded-md border shadow-sm focus:ring-0 sm:text-sm",
         "border-zinc-400/60 bg-white/80 focus:border-zinc-400",
@@ -27,7 +29,6 @@ export function Select(props: Props) {
       ])}
       multiple={props.multiple}
       required={props.required || false}
-      defaultValue={props.defaultValue}
     >
       {Object.entries(props.options).map(([value, title]) => (
         <option key={`${props.name}-${value}`} value={value}>
