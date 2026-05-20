@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { Trans } from "react-i18next";
 import { Playlists } from "../components/Playlists";
 import { useDialog } from "../hooks/useDialog";
 import type { Playlist, UUID } from "../types";
@@ -47,6 +48,13 @@ const PlaylistPicker = ({
           playlistId={selectedPlaylist?.id}
           onChange={(playlist) => selectPlaylist(playlist)}
           onSubmit={(playlist) => onClose(playlist)}
+          onEmpty={
+            <p className="p-8 text-center text-muted">
+              <Trans i18nKey="playlistPicker.emptyView">
+                No playlists created yet.
+              </Trans>
+            </p>
+          }
         />
       </div>
 
@@ -56,14 +64,15 @@ const PlaylistPicker = ({
           type="button"
           onClick={() => onClose(false)}
         >
-          Cancel
+          <Trans i18nKey="playlistPicker.cancel">Cancel</Trans>
         </button>
         <button
-          className="w-full rounded-md cursor-pointer py-2 px-6 text-sm font-medium text-white bg-accent-500 hover:bg-accent-600 shadow-sm focus:border-0 focus:ring-0 focus:outline-0"
+          disabled={!selectedPlaylist}
+          className="w-full rounded-md cursor-pointer py-2 px-6 text-sm font-medium text-white bg-accent-500 hover:bg-accent-600 shadow-sm focus:border-0 focus:ring-0 focus:outline-0 disabled:bg-accent-400 disabled:opacity-80 disabled:cursor-default"
           type="button"
           onClick={() => onClose(selectedPlaylist ?? false)}
         >
-          Confirm
+          <Trans i18nKey="playlistPicker.confirm">Confirm</Trans>
         </button>
       </div>
     </div>
