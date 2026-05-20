@@ -17,6 +17,7 @@ type UpdatePasswordResult =
     }
   | {
       ok: true;
+      sessionToken: string;
     };
 
 export const userApi = {

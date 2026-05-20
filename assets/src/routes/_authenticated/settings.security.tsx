@@ -1,10 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Trans, useTranslation } from "react-i18next";
 import { userApi } from "../../api";
 import { Button } from "../../components/form/Button";
 import { Input } from "../../components/form/Input";
 import { type FormState, useForm } from "../../hooks/useForm";
 import { useToast } from "../../hooks/useToast";
+import { auth } from "../../services/auth";
 
 export const Route = createFileRoute("/_authenticated/settings/security")({
   staticData: { view: "settings" as const },
@@ -20,6 +21,7 @@ type PasswordFields = {
 function SecuritySettings() {
   const { t } = useTranslation();
   const { showToast } = useToast();
+  const router = useRouter();
 
   const onSubmit = async (prevState: FormState, formData: FormData) => {
     const newState: FormState = {
@@ -39,6 +41,9 @@ function SecuritySettings() {
         }),
       });
       newState.ok = true;
+      auth.sessionToken = response.sessionToken;
+      router.invalidate();
+      form.resetAll();
     } else {
       newState.errors = response.fields;
       newState.ok = false;
