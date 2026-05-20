@@ -135,7 +135,7 @@ function SettingsLayout() {
   const handleLogout = async () => {
     const confirmed = await promptConfirm({
       message: i18next.t("promptLogout.message", {
-        defaultValue: "Are you sure you want to logout ?",
+        defaultValue: "Are you sure you want to logout?",
       }),
       confirmMessage: i18next.t("promptLogout.confirm", {
         defaultValue: "Logout",

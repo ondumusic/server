@@ -50,7 +50,7 @@ export function ColorPicker({
             <PlusIcon
               className="absolute scale-80 w-full h-full"
               title={i18next.t("colorPicker.customColor", {
-                defaultValue: "Custom colour",
+                defaultValue: "Custom color",
               })}
             />
           )}
@@ -67,7 +67,7 @@ export function ColorPicker({
           <WarningIcon className="size-4" title="" />
           <span>
             <Trans i18nKey="colorPicker.readabilityWarning">
-              This colour could cause poor readability
+              This color could cause poor readability
             </Trans>
           </span>
         </div>

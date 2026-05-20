@@ -140,7 +140,7 @@ function LibrarySettings() {
             }}
             help={t("settingsForm.help.scanType", {
               defaultValue:
-                "In general a quick scan is recommended as it is much faster.",
+                "In general, a quick scan is recommended as it is much faster.",
             })}
             required
           />

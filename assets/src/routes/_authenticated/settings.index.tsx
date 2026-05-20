@@ -116,7 +116,7 @@ function GeneralSettings() {
           </Setting>
           <Setting
             label={i18next.t("settings.appearance.accentColor", {
-              defaultValue: "Accent Colour",
+              defaultValue: "Accent Color",
             })}
           >
             <ColorPicker
