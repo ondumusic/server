@@ -69,9 +69,10 @@ defmodule MusicBox.Accounts.User do
     false
   end
 
-  @spec validate_current_password(Ecto.Changeset.t(), String.t()) :: Ecto.Changeset.t()
-  def validate_current_password(changeset, password) do
-    changeset = cast(changeset, %{current_password: password}, [:current_password])
+  @spec validate_current_password(Ecto.Changeset.t()) :: Ecto.Changeset.t()
+  def validate_current_password(changeset) do
+    changeset = cast(changeset, changeset.params, [:current_password])
+    password = get_field(changeset, :current_password)
 
     if valid_password?(changeset.data, password) do
       changeset

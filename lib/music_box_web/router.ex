@@ -32,6 +32,7 @@ defmodule MusicBoxWeb.Router do
     get "/playlists/:id", PageController, :react
     get "/settings", PageController, :react
     get "/settings/library", PageController, :react
+    get "/settings/security", PageController, :react
 
     get "/onboarding/:step", PageController, :react
   end
@@ -89,6 +90,8 @@ defmodule MusicBoxWeb.Router do
     get "/playlists/:playlist_id", PlaylistController, :playlist
     get "/playlists/:playlist_id/items", PlaylistController, :playlist_items
     patch "/playlists/:playlist_id/items", PlaylistController, :update_playlist_items
+
+    patch "/user/password", UserController, :update_password
 
     get "/sync", SyncController, :sync
 

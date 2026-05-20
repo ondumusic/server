@@ -42,13 +42,13 @@ defmodule MusicBox.Accounts do
     User.password_changeset(user, attrs, hash_password: false)
   end
 
-  @spec update_user_password(User.t(), String.t(), map()) :: Repo.result(User.t())
-  @dialyzer {:no_opaque, update_user_password: 3}
-  def update_user_password(user, password, attrs) do
+  @spec update_user_password(User.t(), map()) :: Repo.result(User.t())
+  @dialyzer {:no_opaque, update_user_password: 2}
+  def update_user_password(user, attrs) do
     changeset =
       user
       |> User.password_changeset(attrs)
-      |> User.validate_current_password(password)
+      |> User.validate_current_password()
 
     Multi.new()
     |> Multi.update(:user, changeset)

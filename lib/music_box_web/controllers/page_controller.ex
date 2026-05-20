@@ -5,6 +5,21 @@ defmodule MusicBoxWeb.PageController do
 
   operation :react, false
 
+  # Tanstack router handles trailing slashes differently which can cause issues
+  # so for direct requests we'll just rewrite those as needed.
+  def react(%{request_path: path, query_string: query} = conn, _params)
+      when binary_part(path, byte_size(path), -1) == "/" and path != "/" do
+    target =
+      case query do
+        "" -> String.trim_trailing(path, "/")
+        q -> String.trim_trailing(path, "/") <> "?" <> q
+      end
+
+    conn
+    |> redirect(to: target)
+    |> halt()
+  end
+
   def react(conn, _params) do
     settings = Settings.get()
 
