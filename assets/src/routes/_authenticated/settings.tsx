@@ -52,6 +52,13 @@ function SettingsLayout() {
       }),
     },
     {
+      id: "security",
+      current: matchRoute({ to: "/settings/security/" }) !== false,
+      label: i18next.t("settings.security.title", {
+        defaultValue: "Security",
+      }),
+    },
+    {
       id: "library",
       current: matchRoute({ to: "/settings/library/" }) !== false,
       label: i18next.t("settings.library.title", {

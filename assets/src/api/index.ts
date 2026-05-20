@@ -13,3 +13,4 @@ export {
 export { scanApi } from "./scan";
 export { settingApi } from "./settings";
 export { trackApi } from "./tracks";
+export { userApi } from "./user";

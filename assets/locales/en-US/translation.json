@@ -75,6 +75,13 @@
   "onboarding": {
     "firstLoadWait": "Finding your music..."
   },
+  "passwordForm": {
+    "field": {
+      "currentPassword": "Current Password",
+      "password": "New Password",
+      "passwordConfirmation": "Confirm Password"
+    }
+  },
   "placeholders": {
     "newPlaylist": "Untitled"
   },
@@ -143,6 +150,13 @@
     "maintenance": {
       "summary": "Sometimes you just need a little reset.",
       "title": "Maintenance"
+    },
+    "password": {
+      "save": "Update Password"
+    },
+    "security": {
+      "subtitle": "Change your password",
+      "title": "Security"
     }
   },
   "settingsForm": {
@@ -229,7 +243,8 @@
     "librarySettingsSaved": "Updated library settings",
     "removedFromPlaylist_one": "Removed {{ count }} tracks from playlist",
     "removedFromPlaylist_other": "Removed {{ count }} tracks from playlist",
-    "startedLibraryScan": "Started scanning the library for new tracks"
+    "startedLibraryScan": "Started scanning the library for new tracks",
+    "updatedPassword": "Updated your password"
   },
   "upNext": {
     "emptyView": "No upcoming tracks.",
