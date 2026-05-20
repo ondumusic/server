@@ -2,6 +2,7 @@ defmodule MusicBoxWeb.UserController do
   use MusicBoxWeb, :controller
 
   alias MusicBox.Accounts
+  alias MusicBoxWeb.UserAuth
 
   operation :update_password,
     summary: "Update your password",
@@ -22,8 +23,10 @@ defmodule MusicBoxWeb.UserController do
         |> put_status(:unprocessable_entity)
         |> render(:changeset, changeset: changeset)
 
-      {:ok, _user} ->
-        json(conn, %{ok: true})
+      {:ok, user} ->
+        conn
+        |> UserAuth.log_in_user(user)
+        |> render(:update_password)
     end
   end
 end

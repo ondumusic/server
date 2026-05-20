@@ -1,12 +1,17 @@
 defmodule MusicBoxWeb.UserControllerTest do
   use MusicBoxWeb.ConnCase, async: false
 
+  alias MusicBox.Sessions.Session
+
   describe "update_password" do
     setup :register_and_log_in_user
 
     test "can change password", %{conn: conn, user: user} do
+      session_tokens = Repo.all(Session)
+
       assert %{
-               "ok" => true
+               "ok" => true,
+               "sessionToken" => _session_token
              } =
                conn
                |> patch(~p"/api/user/password", %{
@@ -15,6 +20,11 @@ defmodule MusicBoxWeb.UserControllerTest do
                  currentPassword: "itsamemario!"
                })
                |> api_response(200, "UpdatePasswordResponse")
+
+      # Changing password should invalidate existing sessions
+      # and return a new session for current user
+      refute Repo.get(Session, hd(session_tokens).id)
+      assert session_tokens != Repo.all(Session)
 
       # Make sure new password works when logging in
       assert %{

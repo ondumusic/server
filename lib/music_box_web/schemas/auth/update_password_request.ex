@@ -30,9 +30,10 @@ defmodule MusicBoxWeb.Schemas.UpdatePasswordResponse do
     type: :object,
     additionalProperties: false,
     properties: %{
-      ok: %Schema{type: :boolean, example: true}
+      ok: %Schema{type: :boolean, example: true},
+      sessionToken: MusicBoxWeb.Schemas.SessionToken
     },
-    required: [:ok]
+    required: [:ok, :sessionToken]
   })
 end
 
