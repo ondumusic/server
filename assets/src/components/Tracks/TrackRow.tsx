@@ -67,7 +67,7 @@ export function TrackRow({
           {isPlaying ? (
             <AnimatedWaveform
               className={classNames([
-                "size-3 text-accent-500",
+                "size-4 text-accent-500",
                 isSelected && "text-white",
               ])}
               title={t("button.playSelectedTrack", {
@@ -78,7 +78,7 @@ export function TrackRow({
           ) : (
             <PlayIcon
               className={classNames([
-                "size-3 text-accent-500",
+                "size-4 text-accent-500",
                 isSelected && "text-white",
               ])}
               title={t("button.playSelectedTrack", {

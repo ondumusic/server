@@ -7,7 +7,7 @@ interface Props {
 
 export function ArtistAlbumDiscRow({ item }: Props) {
   return (
-    <div className="font-semibold text-xs text-gray-500 pl-6 @md:pl-44 @xl:pl-62 pb-1">
+    <div className="font-semibold text-xs text-muted pl-6 @md:pl-44 @xl:pl-62 pb-1">
       <Trans i18nKey="album.discNumber" disc={item.disc.number}>
         Disc {{ disc: item.disc.number }}
       </Trans>

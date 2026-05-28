@@ -106,9 +106,9 @@ export function LibraryProvider({ children }: PropsWithChildren) {
           <p className="text-center py-6 text-xs">
             {t("sync.progressText", {
               defaultValue: "Syncing library...",
-              artistCount: syncProgress?.artists,
-              albumCount: syncProgress?.albums,
-              trackCount: syncProgress?.tracks,
+              artistCount: syncProgress?.artists ?? 0,
+              albumCount: syncProgress?.albums ?? 0,
+              trackCount: syncProgress?.tracks ?? 0,
             })}
           </p>
         </Loading>
