@@ -16,7 +16,7 @@ defmodule MusicBox.Artwork.Fetcher.Embedded do
       |> Storage.get_uri()
       |> Tool.extract_artwork()
       |> case do
-        nil -> {:cont, result}
+        {:error, :not_found} -> {:cont, result}
         bytes -> {:halt, bytes}
       end
     end)

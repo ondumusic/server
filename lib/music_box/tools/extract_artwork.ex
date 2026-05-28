@@ -9,7 +9,7 @@ defmodule MusicBox.Tool.ExtractArtwork do
 
     case System.cmd(ffmpeg_path, args) do
       {stdout, 0} when byte_size(stdout) > 64 -> stdout
-      _ -> nil
+      _ -> {:error, :not_found}
     end
   end
 

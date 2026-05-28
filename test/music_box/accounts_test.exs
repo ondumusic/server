@@ -143,9 +143,10 @@ defmodule MusicBox.AccountsTest do
 
     test "validates password", %{user: user} do
       {:error, changeset} =
-        Accounts.update_user_password(user, valid_user_password(), %{
+        Accounts.update_user_password(user, %{
           password: "not valid",
-          password_confirmation: "another"
+          password_confirmation: "another",
+          current_password: valid_user_password()
         })
 
       assert %{
@@ -158,23 +159,30 @@ defmodule MusicBox.AccountsTest do
       too_long = String.duplicate("db", 100)
 
       {:error, changeset} =
-        Accounts.update_user_password(user, valid_user_password(), %{password: too_long})
+        Accounts.update_user_password(user, %{
+          password: too_long,
+          current_password: valid_user_password()
+        })
 
       assert "should be at most 72 character(s)" in errors_on(changeset).password
     end
 
     test "validates current password", %{user: user} do
       {:error, changeset} =
-        Accounts.update_user_password(user, "invalid", %{password: valid_user_password()})
+        Accounts.update_user_password(user, %{
+          password: valid_user_password(),
+          current_password: "invalid"
+        })
 
       assert %{current_password: ["is not valid"]} = errors_on(changeset)
     end
 
     test "updates the password", %{user: user} do
       {:ok, user} =
-        Accounts.update_user_password(user, valid_user_password(), %{
+        Accounts.update_user_password(user, %{
           password: "new valid password",
-          password_confirmation: "new valid password"
+          password_confirmation: "new valid password",
+          current_password: valid_user_password()
         })
 
       assert is_nil(user.password)
@@ -185,9 +193,10 @@ defmodule MusicBox.AccountsTest do
       _ = Sessions.generate_user_session_token(user)
 
       {:ok, _} =
-        Accounts.update_user_password(user, valid_user_password(), %{
+        Accounts.update_user_password(user, %{
           password: "new valid password",
-          password_confirmation: "new valid password"
+          password_confirmation: "new valid password",
+          current_password: valid_user_password()
         })
 
       refute Repo.get_by(Session, user_id: user.id)
