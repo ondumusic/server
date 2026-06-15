@@ -7,8 +7,6 @@ defmodule MusicBox.Artwork do
   alias MusicBox.Repo
   alias MusicBox.Tool
 
-  require Logger
-
   @spec find(Album.t()) :: Repo.result(Albums.Artwork.t()) | {:error, Fetcher.find_error()}
   def find(%Album{} = album) do
     album = Repo.preload(album, [:artwork])

@@ -113,7 +113,7 @@ defmodule MusicBox.Transcoder.AACGapless do
       insert_at = ilst_abs + ilst_size
       added = byte_size(freeform)
 
-      <<before_b::binary-size(insert_at), after_b::binary>> = data
+      <<before_b::binary-size(^insert_at), after_b::binary>> = data
 
       new_data =
         (before_b <> freeform <> after_b)
@@ -174,12 +174,12 @@ defmodule MusicBox.Transcoder.AACGapless do
         new_data = before_b <> edts_atom <> after_b
 
         # Patch moov size
-        <<pre_moov::binary-size(moov_off), _::32, post_moov::binary>> = new_data
+        <<pre_moov::binary-size(^moov_off), _::32, post_moov::binary>> = new_data
         new_data = <<pre_moov::binary, moov_size + edts_size::32, post_moov::binary>>
 
         # Patch trak size
         trak_abs = moov_off + 8 + trak_rel
-        <<pre_trak::binary-size(trak_abs), _::32, post_trak::binary>> = new_data
+        <<pre_trak::binary-size(^trak_abs), _::32, post_trak::binary>> = new_data
         new_data = <<pre_trak::binary, trak_size + edts_size::32, post_trak::binary>>
 
         File.write!(file_path, new_data)
@@ -289,7 +289,7 @@ defmodule MusicBox.Transcoder.AACGapless do
   end
 
   defp update_atom_size(data, offset, new_size) do
-    <<before_b::binary-size(offset), _old::32, rest::binary>> = data
+    <<before_b::binary-size(^offset), _old::32, rest::binary>> = data
     before_b <> <<new_size::32>> <> rest
   end
 

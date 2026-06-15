@@ -4,7 +4,6 @@ defmodule MusicBox.Storage.S3 do
   @behaviour MusicBox.Storage
 
   alias MusicBox.Utils
-  require Logger
 
   @presigned_ttl 3_600
   @batch_concurrency 5

@@ -178,7 +178,6 @@ defmodule MusicBox.Playlists.Operations do
   end
 
   defp do_fix_positions([], _conflicts, _used), do: []
-  defp do_fix_positions(_adds, [], _used), do: []
 
   defp do_fix_positions(items, conflicts, used) do
     Enum.map(items, fn item ->
