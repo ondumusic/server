@@ -39,7 +39,7 @@ jobs:
         sudo apt install -fy ffmpeg --fix-missing
 
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Cache deps
       id: cache-deps
