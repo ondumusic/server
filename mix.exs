@@ -47,7 +47,7 @@ defmodule MusicBox.MixProject do
       {:bandit, "~> 1.5"},
       {:flop, "~> 0.26.3"},
       {:slugify, "~> 1.3"},
-      {:req, "~> 0.5.15"},
+      {:req, "~> 0.7.3"},
       {:observer_cli, "~> 1.8", only: [:dev]},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
