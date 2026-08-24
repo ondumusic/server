@@ -38,19 +38,19 @@ if (appRoot) {
           <AuthProvider>
             <LibraryProvider>
               <PhoenixSocketProvider>
-                <DialogProvider>
-                  <QueueProvider>
-                    <AudioManagerProvider>
-                      <PlayerProvider>
-                        <MediaSessionProvider>
-                          <ContextMenuProvider>
+                <ContextMenuProvider>
+                  <DialogProvider>
+                    <QueueProvider>
+                      <AudioManagerProvider>
+                        <PlayerProvider>
+                          <MediaSessionProvider>
                             <Router />
-                          </ContextMenuProvider>
-                        </MediaSessionProvider>
-                      </PlayerProvider>
-                    </AudioManagerProvider>
-                  </QueueProvider>
-                </DialogProvider>
+                          </MediaSessionProvider>
+                        </PlayerProvider>
+                      </AudioManagerProvider>
+                    </QueueProvider>
+                  </DialogProvider>
+                </ContextMenuProvider>
               </PhoenixSocketProvider>
             </LibraryProvider>
           </AuthProvider>
