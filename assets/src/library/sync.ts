@@ -48,6 +48,23 @@ class SyncClient {
 
   constructor() {
     this.#resetProgress();
+
+    // Ensure artwork cache is up to date
+    // For example Safari is pretty aggressive with evictions.
+    const prewarmArtwork = () => {
+      this.#refreshArtworkCache();
+    };
+
+    if (document.readyState === "complete") {
+      prewarmArtwork();
+    } else {
+      window.addEventListener("load", prewarmArtwork, { once: true });
+    }
+
+    navigator.serviceWorker.addEventListener(
+      "controllerchange",
+      prewarmArtwork,
+    );
   }
 
   addObserver(observer: SyncProgressObserver): () => void {
@@ -183,6 +200,13 @@ class SyncClient {
         urls,
       });
     }
+  }
+
+  async #refreshArtworkCache() {
+    const albums = await repo.query<Album>("albums", {
+      sortBy: [["releaseYear", "desc"]],
+    });
+    await this.#prewarmArtwork(albums);
   }
 
   async #updateMissingData() {

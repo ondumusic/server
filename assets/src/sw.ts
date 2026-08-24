@@ -22,7 +22,10 @@ function isArtworkRequest(url: URL): boolean {
 
 async function handleArtwork(req: Request, event: FetchEvent) {
   const cache = await getCache();
-  const cached = await cache.match(req);
+  const cached = await cache.match(req, {
+    ignoreVary: true,
+    ignoreSearch: true,
+  });
   if (cached) return cached;
 
   try {
@@ -69,13 +72,19 @@ self.addEventListener("fetch", (event) => {
 self.addEventListener("message", (event: ExtendableMessageEvent) => {
   const data = event.data as PrewarmMessage | undefined;
   if (data?.type === "PREWARM") {
+    console.log("prewarm", data);
     event.waitUntil(prewarm(data.urls));
   }
 });
 
 async function prewarm(urls: string[]): Promise<void> {
   const cache = await getCache();
-  const queue = [...urls];
+  const exists = new Set((await cache.keys()).map((r) => r.url));
+  console.log(exists);
+  const queue = urls.filter(
+    (u) => !exists.has(new URL(u, self.location.origin).href),
+  );
+  if (queue.length === 0) return;
 
   const worker = async (): Promise<void> => {
     while (queue.length > 0) {
@@ -88,9 +97,11 @@ async function prewarm(urls: string[]): Promise<void> {
 
       try {
         const res = await fetch(url, { priority: "low" } as RequestInit);
-        if (res.ok) await cache.put(url, res);
+        if (res.status === 200 && !res.headers.has("Content-Range")) {
+          await cache.put(url, res);
+        }
       } catch {
-        // Network error, just skip — on-demand fetch will retry when the user scrolls to it
+        // It will still try it on-demand so can ignore error here.
       }
     }
   };
