@@ -30,11 +30,15 @@ export type ContextMenuItem =
       onClick(): void;
     };
 
-type ContextMenuFunction = () => ContextMenuItem[] | Promise<ContextMenuItem[]>;
-type ContextMenuInput = ContextMenuItem[] | ContextMenuFunction;
+type ContextMenuFunction<T> = (
+  e: ReactMouseEvent<T>,
+) => ContextMenuItem[] | Promise<ContextMenuItem[]>;
+type ContextMenuInput<T> = ContextMenuItem[] | ContextMenuFunction<T>;
 
 interface ContextMenuContextValue {
-  createContextMenu<T>(itemsOrFunction: ContextMenuInput): MouseEventHandler<T>;
+  createContextMenu<T>(
+    itemsOrFunction: ContextMenuInput<T>,
+  ): MouseEventHandler<T>;
   closeContextMenu(): void;
 }
 
@@ -105,6 +109,7 @@ export function ContextMenu({
 
       // Make the modal visible
       setIsVisible(true);
+      if (menuRef.current?.open) menuRef.current?.close();
       menuRef.current?.showModal();
     });
     return () => cancelAnimationFrame(raf);
@@ -179,10 +184,9 @@ export function ContextMenu({
     };
   }, [onClose, focusedIndex, menuItems]);
 
-  // On mount immediately show the modal
+  // On mount default focus index to first item
   useEffect(() => {
     setFocusedIndex(0);
-    menuRef.current?.showModal();
   }, []);
 
   return (
@@ -254,30 +258,33 @@ export function ContextMenuProvider({ children }: PropsWithChildren) {
   const [position, setPosition] = useState<ContextMenuPosition | null>(null);
 
   function createContextMenu<T>(
-    itemsOrFunction: ContextMenuInput,
+    itemsOrFunction: ContextMenuInput<T>,
   ): MouseEventHandler<T> {
-    return async (e: ReactMouseEvent<T>) => {
+    return (e: ReactMouseEvent<T>) => {
       e.preventDefault();
-      e.stopPropagation();
+      // e.stopPropagation();
 
-      let newItems: ContextMenuItem[] = [];
+      let itemsPromise: Promise<ContextMenuItem[]>;
       if (typeof itemsOrFunction === "function") {
-        const items = itemsOrFunction();
+        const items = itemsOrFunction(e);
         if (items instanceof Promise) {
-          newItems = await (items as Promise<ContextMenuItem[]>);
+          itemsPromise = items;
         } else {
-          newItems = items as ContextMenuItem[];
+          itemsPromise = Promise.resolve(items as ContextMenuItem[]);
         }
       } else {
-        newItems = itemsOrFunction;
+        itemsPromise = Promise.resolve(itemsOrFunction);
       }
 
-      setItems(newItems);
-      if (newItems.length === 0) return;
-
-      setPosition({
+      const newPosition = {
         x: e.clientX,
         y: e.clientY,
+      };
+
+      if (!itemsPromise) return e;
+      itemsPromise.then((items: ContextMenuItem[]) => {
+        setItems(items);
+        setPosition(newPosition);
       });
 
       return e;

@@ -856,8 +856,47 @@ export function SelectableList<T>({
       onDrop={allowDrop ? handleDrop : undefined}
       onContextMenu={
         onContextMenu
-          ? createContextMenu<HTMLDivElement>(() => {
-              return onContextMenu(new Set([]));
+          ? createContextMenu<HTMLDivElement>((e) => {
+              // Was the context menu for an item or the entire list?
+              if (!(e.target instanceof HTMLElement)) {
+                return onContextMenu(new Set([]));
+              }
+
+              const el = e.target.closest<HTMLElement>("[data-item-id]");
+              const itemId = el?.dataset.itemId;
+              if (!itemId) {
+                return onContextMenu(new Set([]));
+              }
+
+              // Attempt to get the item index
+              const itemIndex = items.findIndex((item) => itemId === item.id);
+              if (itemIndex === -1) {
+                return onContextMenu(new Set([]));
+              }
+
+              // If the item that gets the context menu is not in the
+              // selection, we discard the entire selection and only
+              // select this item.
+              const item = items[itemIndex];
+              const isSelected = selectedIds.has(item.id);
+              if (!isSelected) {
+                const newSelection = new Set([item.id]);
+
+                // Only update selection if the item is selectable
+                // this way we can allow context menus on non-selectable
+                // items too.
+                if (item.selectable !== false) {
+                  onChange(newSelection);
+                  setFocusedIndex(itemIndex);
+                  setScrollBlockType("nearest");
+                  lastSelectedIndexRef.current = itemIndex;
+                }
+
+                return onContextMenu(newSelection);
+              }
+
+              // Otherwise just return the list of selectedIds
+              return onContextMenu(selectedIds);
             })
           : undefined
       }
@@ -945,33 +984,7 @@ export function SelectableList<T>({
                   allowDrag ? (e) => handleDragStart(index, e) : undefined
                 }
                 onDragEnd={allowDrag ? handleDragEnd : undefined}
-                onContextMenu={
-                  onContextMenu
-                    ? createContextMenu<HTMLDivElement>(() => {
-                        // If the item that gets the context menu is not in the
-                        // selection, we discard the entire selection and only
-                        // select this item.
-                        if (!isSelected) {
-                          const newSelection = new Set([item.id]);
-
-                          // Only update selection if the item is selectable
-                          // this way we can allow context menus on non-selectable
-                          // items too.
-                          if (item.selectable !== false) {
-                            onChange(newSelection);
-                            setFocusedIndex(index);
-                            setScrollBlockType("nearest");
-                            lastSelectedIndexRef.current = index;
-                          }
-
-                          return onContextMenu(newSelection);
-                        }
-
-                        // Otherwise just return the list of selectedIds
-                        return onContextMenu(selectedIds);
-                      })
-                    : undefined
-                }
+                data-item-id={item.id}
                 role="option"
                 aria-selected={selectable ? isSelected : undefined}
                 aria-disabled={!selectable}

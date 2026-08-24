@@ -82,6 +82,7 @@ export const PlaylistRow = memo(
 
               if (e.key === "Escape") {
                 if (playlist.onCancel) {
+                  e.preventDefault();
                   playlist.onCancel();
                 }
               } else if (e.key === "Enter") {

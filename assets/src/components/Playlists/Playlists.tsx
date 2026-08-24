@@ -40,6 +40,8 @@ interface PendingPlaylist {
 export function Playlists({
   playlistId,
   showBottomBar = false,
+  allowPlayback = true,
+  allowDelete = true,
   onCreate,
   onChange,
   onDelete,
@@ -48,6 +50,8 @@ export function Playlists({
 }: PropsWithChildren<{
   playlistId?: UUID;
   showBottomBar?: boolean;
+  allowPlayback?: boolean;
+  allowDelete?: boolean;
   onCreate?: (playlist: Playlist) => void;
   onChange?: (playlist: Playlist) => void;
   onDelete?: (playlist: Playlist) => void;
@@ -303,56 +307,70 @@ export function Playlists({
             key: "destructive",
           },
           renamePlaylist,
-          deletePlaylist,
-        ];
+          allowDelete ? deletePlaylist : undefined,
+        ].filter((item) => !!item) as ContextMenuItem[];
       }
 
-      return [
-        {
-          type: "item",
-          key: "play",
-          label: i18next.t("contextMenu.playPlaylist", {
-            defaultValue: 'Play "{{ playlist }}"',
-            playlist: playlist.name,
-          }),
-          onClick: async () => {
-            if (!(await userConfirmQueueReplace())) return;
-            populateUpNext({ playlistId: playlist.id });
-
-            showToast({
-              message: i18next.t("toast.addedPlaylistToPlayNow", {
-                defaultValue: "Playing {{ playlistName }}",
-                playlistName: playlist.name,
-              }),
-            });
-          },
-        },
-        {
-          type: "item",
-          key: "play_after",
-          label: i18next.t("contextMenu.shufflePlaylist", {
-            defaultValue: 'Shuffle "{{ playlist }}"',
-            playlist: playlist.name,
-          }),
-          onClick: async () => {
-            if (!(await userConfirmQueueReplace())) return;
-            populateUpNext({ playlistId: playlist.id, random: true });
-
-            showToast({
-              message: i18next.t("toast.addedPlaylistToPlayShuffled", {
-                defaultValue: "Shuffling {{ playlistName }}",
-                playlistName: playlist.name,
-              }),
-            });
-          },
-        },
+      let playbackControls: ContextMenuItem[] = [
+        createPlaylist,
+        createFolder,
         {
           type: "divider",
           key: "destructive",
         },
-        renamePlaylist,
-        deletePlaylist,
       ];
+      if (allowPlayback) {
+        playbackControls = [
+          {
+            type: "item",
+            key: "play",
+            label: i18next.t("contextMenu.playPlaylist", {
+              defaultValue: 'Play "{{ playlist }}"',
+              playlist: playlist.name,
+            }),
+            onClick: async () => {
+              if (!(await userConfirmQueueReplace())) return;
+              populateUpNext({ playlistId: playlist.id });
+
+              showToast({
+                message: i18next.t("toast.addedPlaylistToPlayNow", {
+                  defaultValue: "Playing {{ playlistName }}",
+                  playlistName: playlist.name,
+                }),
+              });
+            },
+          },
+          {
+            type: "item",
+            key: "play_after",
+            label: i18next.t("contextMenu.shufflePlaylist", {
+              defaultValue: 'Shuffle "{{ playlist }}"',
+              playlist: playlist.name,
+            }),
+            onClick: async () => {
+              if (!(await userConfirmQueueReplace())) return;
+              populateUpNext({ playlistId: playlist.id, random: true });
+
+              showToast({
+                message: i18next.t("toast.addedPlaylistToPlayShuffled", {
+                  defaultValue: "Shuffling {{ playlistName }}",
+                  playlistName: playlist.name,
+                }),
+              });
+            },
+          },
+          {
+            type: "divider",
+            key: "destructive",
+          },
+        ];
+      }
+
+      return [
+        ...playbackControls,
+        renamePlaylist,
+        allowDelete ? deletePlaylist : undefined,
+      ].filter((item) => !!item);
     },
     [
       listItems,
@@ -361,6 +379,8 @@ export function Playlists({
       handleDelete,
       openFolders,
       showToast,
+      allowPlayback,
+      allowDelete,
     ],
   );
 

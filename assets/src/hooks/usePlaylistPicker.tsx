@@ -46,10 +46,13 @@ const PlaylistPicker = ({
       <div className="h-full overflow-auto">
         <Playlists
           playlistId={selectedPlaylist?.id}
+          allowPlayback={false}
+          allowDelete={false}
+          onCreate={(playlist) => selectPlaylist(playlist)}
           onChange={(playlist) => selectPlaylist(playlist)}
           onSubmit={(playlist) => onClose(playlist)}
           onEmpty={
-            <p className="p-8 text-center text-muted">
+            <p className="p-8 text-center h-42 text-muted">
               <Trans i18nKey="playlistPicker.emptyView">
                 No playlists created yet.
               </Trans>
