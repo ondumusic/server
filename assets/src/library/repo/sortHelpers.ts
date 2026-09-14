@@ -1,10 +1,15 @@
 import { shuffle } from "../../utils/shuffle";
 import type { Comparable, SortField } from "./queryHelpers";
 
+const collator = new Intl.Collator(undefined, { numeric: true });
+
 function compare(a: unknown, b: unknown): number {
   if (a == null && b == null) return 0;
   if (a == null) return 1;
   if (b == null) return -1;
+  if (typeof a === "string" && typeof b === "string") {
+    return collator.compare(a, b);
+  }
   const x = a as Comparable;
   const y = b as Comparable;
   if (x < y) return -1;
