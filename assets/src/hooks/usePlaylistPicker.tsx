@@ -1,8 +1,12 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Trans } from "react-i18next";
+import { playlistApi } from "../api";
+import { PlaylistIcon } from "../components/icons/PlaylistIcon";
 import { Playlists } from "../components/Playlists";
 import { useDialog } from "../hooks/useDialog";
+import { repo, sync } from "../library";
 import type { Playlist, UUID } from "../types";
+import { classNames } from "../utils/classNames";
 
 const getMostRecentPlaylist = (): Playlist | null => {
   try {
@@ -32,6 +36,75 @@ export const maybeResetPlaylistPicker = (playlistId: UUID, name?: string) => {
   }
 };
 
+const CreatePlaylist = ({
+  onChange,
+}: {
+  onChange: (playlistName: string) => void;
+}) => {
+  return (
+    <div className="text-left text-dialog-fg">
+      <h3 className="font-semibold text-lg mb-6">
+        <Trans i18nKey="playlistPicker.createPlaylist.title">
+          Create a new playlist
+        </Trans>
+      </h3>
+
+      <div>
+        <label>
+          <span className="block font-semibold">
+            <Trans i18nKey="playlistPicker.createPlaylist.playlistName">
+              Playlist Name
+            </Trans>
+          </span>
+          <input
+            type="text"
+            onInput={(e) => onChange((e.target as HTMLInputElement).value)}
+            className={classNames([
+              "mt-2 block w-full rounded-lg focus:ring-0 sm:text-sm sm:leading-6",
+              "bg-white/80 dark:bg-black/40",
+              "border-zinc-400/60 focus:border-zinc-400 dark:border-zinc-400/50 dark:focus:border-zinc-200/50",
+            ])}
+          />
+        </label>
+      </div>
+    </div>
+  );
+};
+
+const EmptyState = ({
+  onChange,
+}: {
+  onChange: (playlistName: string) => void;
+}) => {
+  const [isCreating, setIsCreating] = useState<boolean>(true);
+
+  return (
+    <div className="p-8 text-sm text-center h-full content-center text-muted">
+      {isCreating ? (
+        <CreatePlaylist onChange={onChange} />
+      ) : (
+        <>
+          <PlaylistIcon title="Playlists" className="size-8 mx-auto mb-4" />
+          <p className="mb-2">
+            <Trans i18nKey="playlistPicker.emptyView">
+              No playlists created yet.
+            </Trans>
+          </p>
+          <button
+            type="button"
+            onClick={() => setIsCreating(true)}
+            className="inline-flex items-center justify-center text-accent-500 font-semibold cursor-pointer hover:text-accent-800"
+          >
+            <Trans i18nKey="playlistPicker.createFirstPlaylist">
+              Create Playlist
+            </Trans>
+          </button>
+        </>
+      )}
+    </div>
+  );
+};
+
 const PlaylistPicker = ({
   onClose,
 }: {
@@ -40,25 +113,51 @@ const PlaylistPicker = ({
   const [selectedPlaylist, selectPlaylist] = useState<Playlist | null>(
     getMostRecentPlaylist(),
   );
+  const [draftPlaylist, setDraftPlaylist] = useState<string | null>();
+  const [playlistCount, setPlaylistCount] = useState<number | undefined>(
+    undefined,
+  );
+
+  const hasPlaylists = typeof playlistCount === "number" && playlistCount > 0;
+
+  if (draftPlaylist) console.log(draftPlaylist);
+
+  useEffect(() => {
+    repo.count("playlists").then((count) => setPlaylistCount(count));
+  }, []);
+
+  const addToPlaylist = useCallback(async () => {
+    if (!selectedPlaylist && draftPlaylist) {
+      const newPlaylist = await playlistApi.createPlaylist({
+        name: draftPlaylist,
+      });
+
+      await sync.pushChanges({
+        playlists: [newPlaylist],
+      });
+
+      onClose(newPlaylist);
+
+      return;
+    }
+
+    onClose(selectedPlaylist ?? false);
+  }, [selectedPlaylist, draftPlaylist, onClose]);
 
   return (
     <div className="bg-picker-bg flex flex-col max-h-100">
-      <div className="h-full overflow-auto">
-        <Playlists
-          playlistId={selectedPlaylist?.id}
-          allowPlayback={false}
-          allowDelete={false}
-          onCreate={(playlist) => selectPlaylist(playlist)}
-          onChange={(playlist) => selectPlaylist(playlist)}
-          onSubmit={(playlist) => onClose(playlist)}
-          onEmpty={
-            <p className="p-8 text-center h-42 text-muted">
-              <Trans i18nKey="playlistPicker.emptyView">
-                No playlists created yet.
-              </Trans>
-            </p>
-          }
-        />
+      <div className="h-full min-h-42 overflow-auto">
+        {!hasPlaylists && <EmptyState onChange={setDraftPlaylist} />}
+        {hasPlaylists && (
+          <Playlists
+            playlistId={selectedPlaylist?.id}
+            allowPlayback={false}
+            allowDelete={false}
+            onCreate={(playlist) => selectPlaylist(playlist)}
+            onChange={(playlist) => selectPlaylist(playlist)}
+            onSubmit={(playlist) => onClose(playlist)}
+          />
+        )}
       </div>
 
       <div className="flex flex-shrink-0 gap-2 p-2 text-md font-medium">
@@ -70,12 +169,17 @@ const PlaylistPicker = ({
           <Trans i18nKey="playlistPicker.cancel">Cancel</Trans>
         </button>
         <button
-          disabled={!selectedPlaylist}
+          disabled={!selectedPlaylist && !draftPlaylist}
           className="w-full rounded-md cursor-pointer py-2 px-6 text-sm font-medium text-white bg-accent-500 hover:bg-accent-600 shadow-sm focus:border-0 focus:ring-0 focus:outline-0 disabled:bg-accent-400 disabled:opacity-80 disabled:cursor-default"
           type="button"
-          onClick={() => onClose(selectedPlaylist ?? false)}
+          onClick={addToPlaylist}
         >
-          <Trans i18nKey="playlistPicker.confirm">Confirm</Trans>
+          {!hasPlaylists && (
+            <Trans i18nKey="playlistPicker.create">Create</Trans>
+          )}
+          {hasPlaylists && (
+            <Trans i18nKey="playlistPicker.confirm">Confirm</Trans>
+          )}
         </button>
       </div>
     </div>

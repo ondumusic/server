@@ -109,6 +109,12 @@
   "playlistPicker": {
     "cancel": "Cancel",
     "confirm": "Confirm",
+    "create": "Create",
+    "createFirstPlaylist": "Create Playlist",
+    "createPlaylist": {
+      "playlistName": "Playlist Name",
+      "title": "Create a new playlist"
+    },
     "emptyView": "No playlists created yet."
   },
   "pollInterval": {

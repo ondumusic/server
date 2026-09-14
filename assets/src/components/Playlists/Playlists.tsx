@@ -1,6 +1,5 @@
 import {
   type PropsWithChildren,
-  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -46,7 +45,6 @@ export function Playlists({
   onChange,
   onDelete,
   onSubmit,
-  onEmpty,
 }: PropsWithChildren<{
   playlistId?: UUID;
   showBottomBar?: boolean;
@@ -56,7 +54,6 @@ export function Playlists({
   onChange?: (playlist: Playlist) => void;
   onDelete?: (playlist: Playlist) => void;
   onSubmit?: (playlist: Playlist) => void;
-  onEmpty?: ReactNode;
 }>) {
   const { populateUpNext, userConfirmQueueReplace } = usePlayer();
   const { data: allItems, loading: isLoading } = usePlaylists({
@@ -520,10 +517,6 @@ export function Playlists({
     ? listItems.find((playlist) => isPlaylist(playlist, playlistId))
     : undefined;
 
-  if (listItems.length === 0 && onEmpty) {
-    return onEmpty;
-  }
-
   return (
     <div className="flex flex-col h-full">
       <div className="h-full overflow-auto">
@@ -541,9 +534,7 @@ export function Playlists({
           defaultFocusId={currentPlaylist?.id}
           onTypeMatch={handleTypeMatch}
           defaultFocusType="center"
-          selectedIds={
-            currentPlaylist ? new Set([currentPlaylist.id]) : new Set([])
-          }
+          selectedIds={new Set(currentPlaylist ? [currentPlaylist.id] : [])}
           keyBindings={{
             ArrowRight: ({ focusedItem }) => {
               if (!focusedItem?.isFolder) return;

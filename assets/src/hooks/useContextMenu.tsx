@@ -283,6 +283,7 @@ export function ContextMenuProvider({ children }: PropsWithChildren) {
 
       if (!itemsPromise) return e;
       itemsPromise.then((items: ContextMenuItem[]) => {
+        if (items.length === 0) return;
         setItems(items);
         setPosition(newPosition);
       });
