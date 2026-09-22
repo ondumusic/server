@@ -25,6 +25,7 @@ defmodule MusicBox.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import MusicBox.DataCase
+      import MusicBox.TestHelpers
 
       import Mox
     end

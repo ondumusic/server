@@ -30,6 +30,7 @@ defmodule MusicBoxWeb.ConnCase do
       import Plug.Conn
       import Phoenix.ConnTest
       import MusicBoxWeb.ConnCase
+      import MusicBox.TestHelpers
 
       alias MusicBox.Repo
 

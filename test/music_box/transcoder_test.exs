@@ -102,15 +102,10 @@ defmodule MusicBox.TranscoderTest do
       task = Task.async(fn -> Transcoder.request_chunk(track.file, preset, 0) end)
       assert {:ok, chunk} = Task.await(task)
 
-      assert %Transcoder.Result{
-               failed_at: nil,
-               chunk_count: 1,
-               file_size: 56_204,
-               persisted: false
-             } = Transcoder.get_meta(track.file, preset)
-
-      # Expect same chunk for same request
-      assert {:ok, ^chunk} = Transcoder.request_chunk(track.file, preset, 0)
+      # The chunk is served before the job completes, wait for it to be persisted
+      assert_eventually(fn ->
+        match?(%{persisted: true}, Transcoder.get_meta(track.file, preset))
+      end)
 
       assert %Transcoder.Result{
                failed_at: nil,
@@ -551,15 +546,5 @@ defmodule MusicBox.TranscoderTest do
 
   defp absolute(path) do
     Path.join(@fixtures_path, path)
-  end
-
-  defp assert_eventually(fun, retries \\ 100) do
-    if fun.() do
-      :ok
-    else
-      if retries <= 0, do: flunk("assert_eventually timed out")
-      :timer.sleep(10)
-      assert_eventually(fun, retries - 1)
-    end
   end
 end

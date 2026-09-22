@@ -101,7 +101,7 @@ defmodule MusicBox.ArtworkTest do
         assert_receive %{event: "processed", payload: %{albums: [^album_id]}}
       end
 
-      assert eventually(fn -> :sys.get_state(worker_pid) == %{} end)
+      assert_eventually(fn -> :sys.get_state(worker_pid) == %{} end)
     end
   end
 
@@ -117,14 +117,5 @@ defmodule MusicBox.ArtworkTest do
           }
         end
     })
-  end
-
-  defp eventually(fun, attempts \\ 30) do
-    if fun.() or attempts == 0 do
-      fun.()
-    else
-      Process.sleep(50)
-      eventually(fun, attempts - 1)
-    end
   end
 end
