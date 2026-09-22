@@ -9,6 +9,7 @@ defmodule MusicBox.Artwork.Worker do
   import Ecto.Query
 
   @max_concurrency 2
+  @retry_after :timer.seconds(30)
 
   @spec start_link(Keyword.t()) :: {:ok, pid()}
   def start_link(_opts) do
@@ -17,7 +18,7 @@ defmodule MusicBox.Artwork.Worker do
 
   @impl true
   def init(_) do
-    default_state = []
+    default_state = %{}
     Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:sync")
     {:ok, next_batch(default_state)}
   end
@@ -36,30 +37,31 @@ defmodule MusicBox.Artwork.Worker do
     {:noreply, next_batch(state)}
   end
 
-  def handle_info({:processed, album}, state) do
-    new_state = Enum.reject(state, &(&1.id == album.id))
-    {:noreply, next_batch(new_state)}
-  end
+  def handle_info({:DOWN, ref, :process, _pid, reason}, state) do
+    new_state = Map.delete(state, ref)
 
-  def handle_info({:DOWN, ref, :process, _pid, _reason}, state) do
-    Process.demonitor(ref)
-    {:noreply, state}
+    if reason == :normal do
+      {:noreply, next_batch(new_state)}
+    else
+      # Delay so a crashing album does not immediately get picked up again.
+      Process.send_after(self(), :next_batch, @retry_after)
+      {:noreply, new_state}
+    end
   end
 
   def handle_info(_payload, state), do: {:noreply, state}
 
   defp next_batch(state) do
-    batch_size = max(0, @max_concurrency - length(state))
-    new_batch = if batch_size == 0, do: [], else: get_next_batch(batch_size)
+    batch_size = max(0, @max_concurrency - map_size(state))
+    in_progress_ids = Enum.map(state, fn {_ref, album} -> album.id end)
+    new_batch = if batch_size == 0, do: [], else: get_next_batch(batch_size, in_progress_ids)
 
-    for album <- new_batch do
-      start_async_fetcher(album)
+    for album <- new_batch, into: state do
+      {start_async_fetcher(album), album}
     end
-
-    state ++ new_batch
   end
 
-  defp get_next_batch(len) do
+  defp get_next_batch(len, exclude_ids) do
     available_fetchers = MusicBox.Albums.Artwork.fetchers()
     last_fetcher = List.last(available_fetchers)
 
@@ -68,6 +70,7 @@ defmodule MusicBox.Artwork.Worker do
       left_join: art in assoc(al, :artwork),
       left_join: artist in assoc(al, :artist),
       where: is_nil(art.path) and (is_nil(art.fetcher) or art.fetcher != ^last_fetcher),
+      where: al.id not in ^exclude_ids,
       preload: [artwork: art],
       order_by: [
         asc_nulls_first: art.last_fetch_attempt,
@@ -80,11 +83,7 @@ defmodule MusicBox.Artwork.Worker do
   end
 
   defp start_async_fetcher(album) do
-    myself = self()
-
-    Task.start(fn ->
-      Artwork.find(album)
-      send(myself, {:processed, album})
-    end)
+    {_pid, ref} = spawn_monitor(fn -> Artwork.find(album) end)
+    ref
   end
 end

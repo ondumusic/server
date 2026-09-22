@@ -17,26 +17,24 @@ defmodule MusicBox.Artwork.Fetcher do
   @spec save_artwork(Album.t(), binary()) :: {:ok, String.t()} | {:error, :failed_to_write}
   def save_artwork(album, bytes) do
     path = artwork_path(album)
+    tmp_path = tmp_path(path)
     File.mkdir_p!(Path.dirname(path))
 
-    with {:ok, file} <- File.open(path, [:write, :binary, :raw]),
+    with {:ok, file} <- File.open(tmp_path, [:write, :binary, :raw]),
          :ok <- IO.binwrite(file, bytes),
          :ok <- File.close(file),
-         {:ok, %{size: size}} when size > 0 <- File.stat(path),
-         true <- File.exists?(path) do
+         {:ok, %{size: size}} when size > 0 <- File.stat(tmp_path),
+         :ok <- File.rename(tmp_path, path) do
       {:ok, path}
     else
       {:ok, %{size: 0}} ->
-        File.rm(path)
+        File.rm(tmp_path)
         Logger.error("Failed to write #{path} (reason: empty file)")
         {:error, :failed_to_write}
 
       {:error, reason} ->
-        File.rm(path)
+        File.rm(tmp_path)
         Logger.error("Failed to write #{path} (reason: #{reason})")
-        {:error, :failed_to_write}
-
-      _ ->
         {:error, :failed_to_write}
     end
   end
@@ -44,5 +42,10 @@ defmodule MusicBox.Artwork.Fetcher do
   def artwork_path(album) do
     MusicBox.Config.artwork_path()
     |> Path.join("#{album.id}.jpg")
+  end
+
+  @spec tmp_path(String.t()) :: String.t()
+  def tmp_path(path) do
+    Path.rootname(path) <> ".#{System.unique_integer([:positive])}.tmp" <> Path.extname(path)
   end
 end
