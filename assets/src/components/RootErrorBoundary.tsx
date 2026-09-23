@@ -1,12 +1,14 @@
-import { ErrorComponent, Navigate, useLocation } from "@tanstack/react-router";
-import { type PropsWithChildren, useEffect } from "react";
+import {
+  ErrorComponent,
+  type ErrorComponentProps,
+  Navigate,
+  useLocation,
+} from "@tanstack/react-router";
+import { useEffect } from "react";
 import { ClientError } from "../api";
 import { useAuth } from "../hooks/useAuth";
 
-export function RootErrorBoundary({
-  error,
-  reset,
-}: PropsWithChildren<{ error: Error; reset: () => void }>) {
+export function RootErrorBoundary({ error, reset }: ErrorComponentProps) {
   const location = useLocation();
   const { isLoggedIn, logout } = useAuth();
   const abortedError = error instanceof ClientError && error.aborted;
