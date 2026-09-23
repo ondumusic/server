@@ -41,6 +41,7 @@ defmodule MusicBox.FileScanner.Operations do
     |> Multi.run(:artists, &maybe_create_artists/2)
     |> Multi.run(:albums, &maybe_create_albums/2)
     |> Multi.run(:tracks, &maybe_create_tracks/2)
+    |> Multi.run(:album_years, &update_album_release_years/2)
     |> Repo.transact()
   end
 
@@ -180,13 +181,17 @@ defmodule MusicBox.FileScanner.Operations do
 
     artist_albums =
       linked_file_artists
-      |> Enum.uniq_by(fn %{is_unknown: u, artist: a, file: %{metadata: m}} ->
+      |> Enum.group_by(fn %{is_unknown: u, artist: a, file: %{metadata: m}} ->
         {u, a, m.album || ""}
+      end)
+      |> Enum.map(fn {_key, [first | _] = group} ->
+        years = Enum.map(group, & &1.file.metadata.release_year)
+        Map.put(first, :release_year, find_distinct_release_year(years))
       end)
 
     entries =
       artist_albums
-      |> Enum.map(fn %{file: file, artist: artist, is_unknown: is_unknown} ->
+      |> Enum.map(fn %{file: file, artist: artist, is_unknown: is_unknown} = entry ->
         album_name = file.metadata.album || "Unknown Album"
 
         # For unknown albums we will add a hex prefix, e.g. "b33f-unknown" where
@@ -203,7 +208,7 @@ defmodule MusicBox.FileScanner.Operations do
           slug: slug_name,
           sort_name: Utils.sort_name(album_name, strip_prefixes: settings.strip_sort_prefixes),
           compilation: file.metadata.compilation,
-          release_year: file.metadata.release_year,
+          release_year: entry.release_year,
           is_unknown: is_unknown
         }
       end)
@@ -299,6 +304,45 @@ defmodule MusicBox.FileScanner.Operations do
       )
 
     {:ok, tracks}
+  end
+
+  # This function tries to set the album release year if it is missing despite
+  # one of the other tracks does have the metadata and they were just batched
+  # differently so it was not included in album creation. It also clears the
+  # year again if tracks across batches have conflicting years for some reason.
+  defp update_album_release_years(repo, %{albums: albums}) do
+    album_ids = Enum.map(albums, & &1.id)
+
+    years_by_album =
+      from(t in Track,
+        join: f in assoc(t, :file),
+        where: t.album_id in ^album_ids,
+        distinct: true,
+        select: {t.album_id, f.metadata["release_year"]}
+      )
+      |> repo.all()
+      |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+
+    # Only write albums where the year differs from what the upsert just set
+    albums
+    |> Enum.map(&{&1, find_distinct_release_year(Map.get(years_by_album, &1.id, []))})
+    |> Enum.reject(fn {album, year} -> album.release_year == year end)
+    |> Enum.group_by(&elem(&1, 1), &elem(&1, 0).id)
+    |> Enum.each(fn {year, ids} ->
+      from(al in Album, where: al.id in ^ids)
+      |> repo.update_all(set: [release_year: year])
+    end)
+
+    {:ok, years_by_album}
+  end
+
+  # Use the year if all tracks that have one agree, otherwise leave it unset
+  # rather than guessing between conflicting values.
+  defp find_distinct_release_year(years) do
+    case years |> Enum.reject(&is_nil/1) |> Enum.uniq() do
+      [year] -> year
+      _none_or_conflicting -> nil
+    end
   end
 
   def find_deleted_files(opts \\ []) do

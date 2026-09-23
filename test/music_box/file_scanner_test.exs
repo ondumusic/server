@@ -282,6 +282,44 @@ defmodule MusicBox.FileScannerTest do
       assert file_count == Repo.aggregate(MusicBox.Files.File, :count)
       assert album_count == Repo.aggregate(MusicBox.Albums.Album, :count)
     end
+
+    test "album gets release year even if only one track has it" do
+      stub_probe_with_dates(fn
+        "file://" <> path -> if String.ends_with?(path, "with_tags/sample.flac"), do: "1999"
+      end)
+
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+      assert %{release_year: 1999} = Repo.get_by!(MusicBox.Albums.Album, slug: "test-album")
+    end
+
+    test "album release year is nil when tracks have conflicting years" do
+      stub_probe_with_dates(fn
+        "file://" <> path ->
+          cond do
+            String.ends_with?(path, "with_tags/sample.flac") -> "1999"
+            String.ends_with?(path, "with_tags/sample.ogg") -> "2001"
+            true -> nil
+          end
+      end)
+
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+      assert %{release_year: nil} = Repo.get_by!(MusicBox.Albums.Album, slug: "test-album")
+    end
+  end
+
+  defp stub_probe_with_dates(date_fun) do
+    stub_probe(fn path ->
+      tags =
+        %{artist: "Test Artist", album: "Test Album", title: "Test Title", track: "1"}
+
+      tags =
+        case date_fun.(path) do
+          nil -> tags
+          date -> Map.put(tags, :date, date)
+        end
+
+      {:ok, %{format: %{duration: "3.4", tags: tags}}}
+    end)
   end
 
   describe "utils" do
