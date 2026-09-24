@@ -19,7 +19,7 @@ defmodule MusicBox.Tool.LoudnessTest do
         path = Path.join(@fixtures_path, unquote(fixture))
 
         assert {:ok, %{lufs: lufs, peak: peak}} = Loudness.exec(path)
-        assert is_float(lufs) and lufs < 0 and lufs > -70
+        assert lufs < 0 and lufs > -70
         assert is_float(peak) and peak < 3
       end
     end

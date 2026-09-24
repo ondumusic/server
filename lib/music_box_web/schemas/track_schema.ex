@@ -32,6 +32,11 @@ defmodule MusicBoxWeb.Schemas.Track do
     disc: %Schema{type: :integer, example: 1, nullable: true},
     number: %Schema{type: :integer, example: 1, nullable: true},
     duration: %Schema{type: :number, example: 123.45},
+    loudness: %Schema{
+      allOf: [Schemas.Loudness],
+      nullable: true,
+      description: "The measured loudness, null until measured (or when measuring failed)"
+    },
     mimetype: %Schema{type: :string, example: "audio/mp3"},
     downloadUrl: %Schema{type: :string, example: "https://example.com/download/..."},
     streamUrl: %Schema{type: :string, example: "https://example.com/stream/..."},
@@ -55,6 +60,7 @@ defmodule MusicBoxWeb.Schemas.Track do
     :disc,
     :number,
     :duration,
+    :loudness,
     :mimetype,
     :downloadUrl,
     :streamUrl,

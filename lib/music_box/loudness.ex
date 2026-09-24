@@ -6,6 +6,7 @@ defmodule MusicBox.Loudness do
   alias MusicBox.Repo
   alias MusicBox.Storage
   alias MusicBox.Tool
+  alias MusicBox.Tracks.Track
 
   import Ecto.Query
 
@@ -18,6 +19,9 @@ defmodule MusicBox.Loudness do
   the file changes. The result is only stored if the file did not change while
   we were measuring, otherwise the scanner already reset it and we would store a
   measurement of the old file.
+
+  A successful measurement also touches the track so clients pick it up on their
+  next sync.
   """
   @spec measure(File.t()) :: {:ok, Loudness.t()} | {:error, :file_changed}
   def measure(%File{} = file) do
@@ -33,13 +37,30 @@ defmodule MusicBox.Loudness do
           %Loudness{measured_at: measured_at}
       end
 
-    case Repo.update_all(unchanged_file(file), set: [loudness: loudness]) do
-      {1, _} -> {:ok, loudness}
-      {0, _} -> {:error, :file_changed}
+    Repo.transact(fn -> store(file, loudness) end)
+  end
+
+  defp store(file, loudness) do
+    now = DateTime.utc_now(:second)
+
+    case Repo.update_all(unchanged_file_query(file), set: [loudness: loudness, updated_at: now]) do
+      {1, _} ->
+        # Clients sync tracks by updated_at, a failed measurement changes
+        # nothing they can see so it doesn't need to be synced.
+        if loudness.lufs, do: touch_tracks(file, now)
+        {:ok, loudness}
+
+      {0, _} ->
+        {:error, :file_changed}
     end
   end
 
-  defp unchanged_file(%File{id: id, size: size, last_modified_at: mtime}) do
+  defp touch_tracks(file, now) do
+    from(t in Track, where: t.file_id == ^file.id)
+    |> Repo.update_all(set: [updated_at: now])
+  end
+
+  defp unchanged_file_query(%File{id: id, size: size, last_modified_at: mtime}) do
     query = from(f in File, where: f.id == ^id and f.size == ^size)
 
     if is_nil(mtime),

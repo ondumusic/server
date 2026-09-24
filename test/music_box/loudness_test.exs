@@ -28,6 +28,29 @@ defmodule MusicBox.LoudnessTest do
       assert %{lufs: nil, measured_at: %DateTime{}} = Repo.reload!(file).loudness
     end
 
+    test "touches the track so clients pick it up on their next sync" do
+      cursor = sync_cursor_in_the_past()
+      file = Repo.one!(from(f in File, limit: 1))
+      track = Repo.get_by!(MusicBox.Tracks.Track, file_id: file.id)
+
+      assert {:ok, _loudness} = Loudness.measure(file)
+
+      assert %{tracks: %{entries: [%{id: track_id}]}} =
+               MusicBox.Sync.get_entities(%{"cursor" => cursor})
+
+      assert track_id == track.id
+    end
+
+    @tag capture_log: true
+    test "does not touch the track when measuring failed" do
+      stub(MusicBox.Tool.LoudnessMock, :exec, fn _path -> {:error, :measure_failed} end)
+      cursor = sync_cursor_in_the_past()
+      file = Repo.one!(from(f in File, limit: 1))
+
+      assert {:ok, _loudness} = Loudness.measure(file)
+      assert %{tracks: %{entries: []}} = MusicBox.Sync.get_entities(%{"cursor" => cursor})
+    end
+
     test "does not store the measurement when the file changed meanwhile" do
       file = Repo.one!(from(f in File, limit: 1))
       Repo.update_all(from(f in File, where: f.id == ^file.id), inc: [size: 1])
@@ -35,6 +58,19 @@ defmodule MusicBox.LoudnessTest do
       assert {:error, :file_changed} = Loudness.measure(file)
       assert is_nil(Repo.reload!(file).loudness)
     end
+  end
+
+  # Moves all tracks back in time and returns a sync cursor after all of them,
+  # so anything touched from now on shows up in the next sync.
+  defp sync_cursor_in_the_past do
+    past = DateTime.add(DateTime.utc_now(:second), -1, :hour)
+    Repo.update_all(MusicBox.Tracks.Track, set: [updated_at: past])
+
+    params = %{"limit" => 10_000}
+    result = MusicBox.Sync.get_entities(params)
+    refute result.tracks.has_more?
+
+    MusicBox.Sync.encode_cursor(result, params)
   end
 
   describe "worker" do

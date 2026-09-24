@@ -4,6 +4,8 @@ defmodule MusicBoxWeb.LibraryControllerTest do
   alias MusicBox.Artists
   alias MusicBox.Tracks.Track
 
+  import Ecto.Query, only: [from: 2]
+
   describe "artists" do
     setup :register_and_log_in_user
 
@@ -666,6 +668,49 @@ defmodule MusicBoxWeb.LibraryControllerTest do
                conn
                |> get(~p"/api/tracks/#{track.id}")
                |> api_response(200, "Track")
+    end
+  end
+
+  describe "track loudness" do
+    setup :register_and_log_in_user
+
+    setup do
+      track = Repo.get_by(Track, name: "Roll Over Beethoven") |> Repo.preload(:file)
+      [track: track]
+    end
+
+    test "is null until measured", %{conn: conn, track: track} do
+      assert %{"loudness" => nil} =
+               conn
+               |> get(~p"/api/tracks/#{track.id}")
+               |> api_response(200, "Track")
+    end
+
+    test "returns the measurement", %{conn: conn, track: track} do
+      set_loudness(track, %{lufs: -9.2, peak: -0.3})
+
+      assert %{"loudness" => %{"lufs" => -9.2, "peak" => -0.3}} =
+               conn
+               |> get(~p"/api/tracks/#{track.id}")
+               |> api_response(200, "Track")
+    end
+
+    test "is null when measuring failed", %{conn: conn, track: track} do
+      set_loudness(track, %{lufs: nil, peak: nil})
+
+      assert %{"loudness" => nil} =
+               conn
+               |> get(~p"/api/tracks/#{track.id}")
+               |> api_response(200, "Track")
+    end
+
+    defp set_loudness(track, values) do
+      loudness =
+        struct!(MusicBox.Files.Loudness, Map.put(values, :measured_at, DateTime.utc_now(:second)))
+
+      Repo.update_all(from(f in MusicBox.Files.File, where: f.id == ^track.file.id),
+        set: [loudness: loudness]
+      )
     end
   end
 

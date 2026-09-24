@@ -98,6 +98,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       disc: track.disc,
       number: track.number,
       duration: track.duration,
+      loudness: loudness(track.file.loudness),
       mimetype: mimetype,
       insertedAt: track.inserted_at,
       downloadUrl: url(~p"/download/#{track}"),
@@ -124,4 +125,9 @@ defmodule MusicBoxWeb.LibraryJSON do
 
   def track(%{track: %{album: album} = track}),
     do: track(%{track: track, album: album})
+
+  # A failed measurement is stored without values, for clients that is the same
+  # as not measured yet.
+  defp loudness(%{lufs: lufs, peak: peak}) when is_float(lufs), do: %{lufs: lufs, peak: peak}
+  defp loudness(_loudness), do: nil
 end
