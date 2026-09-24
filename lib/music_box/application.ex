@@ -27,6 +27,7 @@ defmodule MusicBox.Application do
               MusicBox.FileScanner.Supervisor,
               MusicBox.Transcoder,
               MusicBox.Artwork.Worker,
+              MusicBox.Loudness.Worker,
               MusicBox.Cleanup.Worker
             ]
 

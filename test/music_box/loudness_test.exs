@@ -1,0 +1,98 @@
+defmodule MusicBox.LoudnessTest do
+  use MusicBox.DataCase, async: false
+
+  alias MusicBox.Files.File
+  alias MusicBox.Loudness
+
+  setup :set_mox_global
+
+  setup do
+    stub(MusicBox.Tool.LoudnessMock, :exec, fn _path -> {:ok, %{lufs: -9.5, peak: -0.4}} end)
+    :ok
+  end
+
+  describe "measure/1" do
+    test "stores the measurement" do
+      file = Repo.one!(from(f in File, limit: 1))
+
+      assert {:ok, %{lufs: -9.5, peak: -0.4, measured_at: %DateTime{}}} = Loudness.measure(file)
+      assert %{lufs: -9.5, peak: -0.4} = Repo.reload!(file).loudness
+    end
+
+    @tag capture_log: true
+    test "stores a failed measurement without values" do
+      stub(MusicBox.Tool.LoudnessMock, :exec, fn _path -> {:error, :measure_failed} end)
+      file = Repo.one!(from(f in File, limit: 1))
+
+      assert {:ok, %{lufs: nil, peak: nil, measured_at: %DateTime{}}} = Loudness.measure(file)
+      assert %{lufs: nil, measured_at: %DateTime{}} = Repo.reload!(file).loudness
+    end
+
+    test "does not store the measurement when the file changed meanwhile" do
+      file = Repo.one!(from(f in File, limit: 1))
+      Repo.update_all(from(f in File, where: f.id == ^file.id), inc: [size: 1])
+
+      assert {:error, :file_changed} = Loudness.measure(file)
+      assert is_nil(Repo.reload!(file).loudness)
+    end
+  end
+
+  describe "worker" do
+    test "measures every file once and never concurrently" do
+      pid = self()
+      in_progress = :ets.new(:in_progress, [:public])
+
+      stub(MusicBox.Tool.LoudnessMock, :exec, fn path ->
+        if :ets.update_counter(in_progress, path, 1, {path, 0}) > 1,
+          do: send(pid, {:concurrent_measure, path})
+
+        send(pid, {:measured, path})
+        Process.sleep(5)
+        :ets.update_counter(in_progress, path, -1)
+        {:ok, %{lufs: -9.5, peak: -0.4}}
+      end)
+
+      start_supervised!(Loudness.Worker)
+
+      assert_eventually(
+        fn ->
+          Repo.aggregate(from(f in File, where: is_nil(f.loudness)), :count) == 0
+        end,
+        500
+      )
+
+      refute_received {:concurrent_measure, _path}
+
+      paths = Repo.all(from(f in File, select: f.path))
+
+      for path <- paths do
+        uri = MusicBox.Storage.get_uri(path)
+        assert_received {:measured, ^uri}
+        refute_received {:measured, ^uri}
+      end
+    end
+
+    @tag capture_log: true
+    test "skips files that crash and keeps measuring the rest" do
+      [crashing | _] = Repo.all(from(f in File, order_by: f.path))
+      crashing_uri = MusicBox.Storage.get_uri(crashing.path)
+
+      stub(MusicBox.Tool.LoudnessMock, :exec, fn
+        ^crashing_uri -> raise "boom"
+        _path -> {:ok, %{lufs: -9.5, peak: -0.4}}
+      end)
+
+      worker_pid = start_supervised!(Loudness.Worker)
+
+      assert_eventually(
+        fn ->
+          Repo.all(from(f in File, where: is_nil(f.loudness), select: f.id)) == [crashing.id]
+        end,
+        500
+      )
+
+      assert_eventually(fn -> map_size(:sys.get_state(worker_pid).running) == 0 end)
+      assert MapSet.member?(:sys.get_state(worker_pid).crashed, crashing.id)
+    end
+  end
+end
