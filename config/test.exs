@@ -32,7 +32,8 @@ config :phoenix, :plug_init_mode, :runtime
 config :music_box,
   transcode_tool: MusicBox.Tool.TranscodeMock,
   probe_tool: MusicBox.Tool.ProbeMock,
-  extract_artwork_tool: MusicBox.Tool.ExtractArtworkMock
+  extract_artwork_tool: MusicBox.Tool.ExtractArtworkMock,
+  loudness_tool: MusicBox.Tool.LoudnessMock
 
 config :music_box,
   settings_cache: false

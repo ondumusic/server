@@ -42,6 +42,7 @@ config :music_box,
   resize_artwork_tool: MusicBox.Tool.ResizeArtwork,
   transcode_tool: MusicBox.Tool.Transcode,
   probe_tool: MusicBox.Tool.Probe,
+  loudness_tool: MusicBox.Tool.Loudness,
   cat_tool: MusicBox.Tool.Cat
 
 config :music_box,

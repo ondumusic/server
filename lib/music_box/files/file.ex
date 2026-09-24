@@ -4,6 +4,7 @@ defmodule MusicBox.Files.File do
   use MusicBox.Schema
 
   alias MusicBox.Files.FileMetadata
+  alias MusicBox.Files.Loudness
   alias MusicBox.Tracks.Track
 
   @type t :: %__MODULE__{}
@@ -16,6 +17,9 @@ defmodule MusicBox.Files.File do
     field :type, Ecto.Enum, values: ~w(aac aiff m4a mp3 opus ogg flac wav)a
 
     embeds_one :metadata, FileMetadata, on_replace: :delete
+
+    # Written by the loudness worker, the scanner only resets it when the file changed
+    embeds_one :loudness, Loudness, on_replace: :update
 
     has_one :track, Track
 

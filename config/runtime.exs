@@ -22,6 +22,7 @@ end
 
 config :music_box, MusicBox.Repo,
   journal_mode: :wal,
+  default_transaction_mode: :immediate,
   temp_store: :memory,
   cache_size: 64_000
 

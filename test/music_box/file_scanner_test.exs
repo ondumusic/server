@@ -93,6 +93,28 @@ defmodule MusicBox.FileScannerTest do
       assert [_artist_id] = payload.artists
     end
 
+    test "keeps loudness of unchanged files on a full scan" do
+      alias MusicBox.Files.{File, Loudness}
+
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+
+      loudness = %Loudness{lufs: -14.0, peak: -1.0, measured_at: DateTime.utc_now(:second)}
+      Repo.update_all(File, set: [loudness: loudness])
+
+      # Pretend one file changed on disk since it was measured
+      scanned = from(f in File, where: not is_nil(f.last_scanned_at))
+      [changed | _] = Repo.all(scanned)
+      Repo.update_all(from(f in File, where: f.id == ^changed.id), inc: [size: 1])
+
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+
+      for file <- Repo.all(scanned) do
+        if file.id == changed.id,
+          do: assert(is_nil(file.loudness)),
+          else: assert(file.loudness == loudness)
+      end
+    end
+
     test "can start async" do
       {:ok, :scan_started} = FileScanner.scan_async(:full)
       assert_receive %{topic: "library:sync", event: "processed", payload: payload}

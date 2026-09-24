@@ -4,6 +4,7 @@ defmodule MusicBox.Tool do
 
   def cat(path), do: impl(:cat_tool).exec(path)
   def probe(path), do: impl(:probe_tool).exec(path)
+  def loudness(path), do: impl(:loudness_tool).exec(path)
   def transcode(args), do: impl(:transcode_tool).exec(args)
   def extract_artwork(path), do: impl(:extract_artwork_tool).exec(path)
   def resize_artwork(opts), do: impl(:resize_artwork_tool).exec(opts)
