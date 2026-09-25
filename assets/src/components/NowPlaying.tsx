@@ -4,6 +4,7 @@ import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
 import i18next from "../i18next";
 import { useAlbum } from "../library";
+import { artworkUrl } from "../utils/artwork";
 import { formatDuration } from "../utils/formatDuration";
 import {
   resetBackgroundColor,
@@ -34,7 +35,7 @@ export function NowPlaying() {
 
   useEffect(() => {
     if (!currentAlbum) return;
-    if (!currentAlbum.artworkUrl) {
+    if (!artworkUrl(currentAlbum)) {
       resetBackgroundColor();
     }
   }, [currentAlbum]);
@@ -64,9 +65,9 @@ export function NowPlaying() {
 
   return (
     <div className="flex flex-wrap pr-10 lg:pr-0 gap-2 lg:block w-full cursor-default flex-shrink-0 lg:px-2">
-      {currentAlbum?.artworkUrl ? (
+      {artworkUrl(currentAlbum) ? (
         <img
-          src={currentAlbum?.artworkUrl}
+          src={artworkUrl(currentAlbum)}
           alt=""
           className="w-20 lg:w-full aspect-square object-cover object-center lg:rounded-md overflow-hidden lg:shadow-md lg:mb-4"
           onLoad={(e) => updateBackgroundColor(e.target as HTMLImageElement)}

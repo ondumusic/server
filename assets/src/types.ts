@@ -35,6 +35,12 @@ export namespace Artist {
   };
 }
 
+export interface ArtworkImage {
+  url: string;
+  width: number;
+  height: number;
+}
+
 export interface Album {
   __type: "album";
   id: UUID;
@@ -45,7 +51,8 @@ export interface Album {
   releaseYear: number;
   tracks: Track[];
   isUnknown: boolean;
-  artworkUrl?: string;
+  // Ordered from smallest to largest
+  artwork?: ArtworkImage[];
 
   artistName?: string;
   artistSortName?: string;

@@ -1,4 +1,5 @@
 import type { Album } from "../../types";
+import { artworkUrl } from "../../utils/artwork";
 import { classNames } from "../../utils/classNames";
 
 export function AlbumCard({
@@ -14,8 +15,8 @@ export function AlbumCard({
         className="relative w-full aspect-square bg-cover bg-center shadow-md rounded-md bg-stone-900"
         style={{
           contentVisibility: "auto",
-          ...(album.artworkUrl && {
-            backgroundImage: `url(${album.artworkUrl})`,
+          ...(artworkUrl(album) && {
+            backgroundImage: `url(${artworkUrl(album)})`,
           }),
         }}
       >

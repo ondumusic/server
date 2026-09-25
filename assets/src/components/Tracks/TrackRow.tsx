@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { AnimatedWaveform } from "../../components/icons/AnimatedWaveform";
 import { PlayIcon } from "../../components/icons/PlayIcon";
 import type { Track } from "../../types";
+import { artworkThumbnailUrl } from "../../utils/artwork";
 import { classNames } from "../../utils/classNames";
 import { formatDuration } from "../../utils/formatDuration";
 
@@ -89,11 +90,11 @@ export function TrackRow({
           )}
         </div>
 
-        {showAlbumArtwork && track?.album?.artworkUrl ? (
+        {showAlbumArtwork && artworkThumbnailUrl(track?.album) ? (
           <div
             className="w-8 h-8 overflow-hidden bg-contain bg-center lg:rounded-sm overflow-hidden lg:shadow-sm flex-shrink-0"
             style={{
-              backgroundImage: `url(${track?.album?.artworkUrl})`,
+              backgroundImage: `url(${artworkThumbnailUrl(track?.album)})`,
             }}
           />
         ) : (

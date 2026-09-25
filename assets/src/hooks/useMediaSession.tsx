@@ -48,10 +48,11 @@ const NavigatorMediaSessionProvider = ({ children }: PropsWithChildren) => {
     if (!currentTrack) {
       navigator.mediaSession.metadata = null;
     } else {
-      const artwork = [];
-      if (currentAlbum?.artworkUrl) {
-        artwork.push({ src: currentAlbum.artworkUrl });
-      }
+      const artwork = (currentAlbum?.artwork ?? []).map((image) => ({
+        src: image.url,
+        sizes: `${image.width}x${image.height}`,
+        type: "image/jpeg",
+      }));
 
       navigator.mediaSession.metadata = new MediaMetadata({
         title: currentTrack?.name,

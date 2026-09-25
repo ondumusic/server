@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { Marquee } from "../../components/Marquee";
 import type { Album } from "../../types";
+import { artworkThumbnailUrl } from "../../utils/artwork";
 import { classNames } from "../../utils/classNames";
 
 interface Props {
@@ -22,8 +23,8 @@ export const AlbumRow = memo(({ album, isSelected = false }: Props) => {
         className="relative w-10 h-10 aspect-square bg-cover bg-center shadow-md rounded-md bg-stone-900 flex-shrink-0"
         style={{
           contentVisibility: "auto",
-          ...(album.artworkUrl && {
-            backgroundImage: `url(${album.artworkUrl})`,
+          ...(artworkThumbnailUrl(album) && {
+            backgroundImage: `url(${artworkThumbnailUrl(album)})`,
           }),
         }}
       />

@@ -32,7 +32,7 @@ export const transforms = {
         slug: album.slug,
         releaseYear: album.releaseYear,
         isUnknown: album.isUnknown,
-        artworkUrl: album.artworkUrl,
+        artwork: album.artwork ?? [],
         insertedAt: new Date(album.insertedAt as string),
 
         artistId: album.artistId,

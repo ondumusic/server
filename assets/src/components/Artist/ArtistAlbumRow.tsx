@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { PlayIcon } from "../../components/icons/PlayIcon";
+import { artworkUrl } from "../../utils/artwork";
 import { formatTotalDuration } from "../../utils/formatTotalDuration";
 
 import type { AlbumItem } from "./types";
@@ -22,9 +23,9 @@ export function ArtistAlbumRow({ item, onPlayAlbum }: Props) {
     <div className="relative flex gap-4 mb-4 z-20 mt-12">
       <div className="relative @md:absolute top-0 left-0 w-20 flex-grow-0 flex-shrink-0 @md:w-32 @xl:w-48 group/artwork">
         <div className="w-full shadow-lg aspect-square rounded-sm overflow-hidden bg-linear-to-br from-stone-50 to-stone-200">
-          {item.album.artworkUrl && (
+          {artworkUrl(item.album) && (
             <img
-              src={item.album.artworkUrl}
+              src={artworkUrl(item.album)}
               alt=""
               className="w-full aspect-square object-cover object-center"
             />

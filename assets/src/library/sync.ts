@@ -1,5 +1,6 @@
 import { ClientError, client } from "../api";
 import type { Album, Artist, Playlist, PlaylistItem, Track } from "../types";
+import { artworkThumbnailUrl } from "../utils/artwork";
 import { notifyChanges } from "./events";
 import { repo } from "./repo";
 import { transforms } from "./transforms";
@@ -192,7 +193,10 @@ class SyncClient {
 
   async #prewarmArtwork(albums: Album[]) {
     if (!albums.length) return;
-    const urls = albums.map((album) => album.artworkUrl).filter((url) => !!url);
+    // Only thumbnails, larger artwork is cached when it is first shown.
+    const urls = albums
+      .map((album) => artworkThumbnailUrl(album))
+      .filter((url) => !!url);
     const sw = await navigator.serviceWorker?.ready;
     if (sw?.active) {
       sw.active.postMessage({

@@ -7,7 +7,7 @@ interface PrewarmMessage {
   urls: string[];
 }
 
-const CACHE_NAME = "artwork-v1";
+const CACHE_NAME = "artwork-v2";
 const PREWARM_CONCURRENCY = 3;
 
 let cachePromise: Promise<Cache>;
