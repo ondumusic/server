@@ -18,8 +18,17 @@ defmodule MusicBox.Tool.Loudness do
   @impl true
   def exec(path) do
     ffmpeg_path = System.find_executable("ffmpeg") || throw(:ffmpeg_not_found)
+    args = [ffmpeg_path | ffmpeg_args(path)]
 
-    case System.cmd(ffmpeg_path, ffmpeg_args(path), stderr_to_stdout: true) do
+    # If nice is installed we will use this to run ffmpeg at a lower priority to
+    # avoid slowing down more essential processes on smaller machines like a NAS.
+    {cmd, args} =
+      case System.find_executable("nice") do
+        nil -> {ffmpeg_path, tl(args)}
+        nice_path -> {nice_path, ["-n", "19" | args]}
+      end
+
+    case System.cmd(cmd, args, stderr_to_stdout: true) do
       {output, 0} -> parse(output)
       _ -> {:error, :measure_failed}
     end
