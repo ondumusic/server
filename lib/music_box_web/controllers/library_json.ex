@@ -50,15 +50,7 @@ defmodule MusicBoxWeb.LibraryJSON do
   end
 
   def album(%{album: album} = assigns) do
-    artwork_filename =
-      case album do
-        %{artwork: %{path: path}} when is_binary(path) -> Path.basename(path)
-        _ -> nil
-      end
-
-    artwork_url =
-      if artwork_filename,
-        do: url(~p"/artwork/#{artwork_filename}")
+    artwork = artwork(album)
 
     item = %{
       __type: "album",
@@ -70,7 +62,8 @@ defmodule MusicBoxWeb.LibraryJSON do
       releaseYear: album.release_year,
       isUnknown: album.is_unknown,
       trackCount: album.track_count,
-      artworkUrl: artwork_url,
+      artwork: artwork,
+      artworkUrl: artwork |> List.last(%{}) |> Map.get(:url),
       insertedAt: album.inserted_at
     }
 
@@ -130,4 +123,15 @@ defmodule MusicBoxWeb.LibraryJSON do
   # as not measured yet.
   defp loudness(%{lufs: lufs, peak: peak}) when is_float(lufs), do: %{lufs: lufs, peak: peak}
   defp loudness(_loudness), do: nil
+
+  # Ordered from smallest to largest.
+  defp artwork(%{id: album_id, artwork: %{path: path, width: width} = artwork})
+       when is_binary(path) and is_integer(width) do
+    for {variant, size} <- MusicBox.Artwork.variant_sizes(artwork) do
+      filename = "#{variant}.jpg"
+      %{url: url(~p"/artwork/#{album_id}/#{filename}"), width: size, height: size}
+    end
+  end
+
+  defp artwork(_album), do: []
 end

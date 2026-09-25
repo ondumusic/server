@@ -16,6 +16,8 @@ defmodule MusicBox.Albums.Artwork do
     belongs_to :album, Album, define_field: false
 
     field :path, :string
+    field :width, :integer
+    field :height, :integer
     field :fetcher, Ecto.Enum, values: @fetchers
     field :last_fetch_attempt, :utc_datetime
   end
@@ -25,6 +27,8 @@ defmodule MusicBox.Albums.Artwork do
     struct
     |> cast(attrs, [
       :path,
+      :width,
+      :height,
       :fetcher,
       :last_fetch_attempt
     ])

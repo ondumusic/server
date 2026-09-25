@@ -16,7 +16,7 @@ defmodule MusicBox.Artwork.Fetcher do
 
   @spec save_artwork(Album.t(), binary()) :: {:ok, String.t()} | {:error, :failed_to_write}
   def save_artwork(album, bytes) do
-    path = artwork_path(album)
+    path = source_path(album)
     tmp_path = tmp_path(path)
     File.mkdir_p!(Path.dirname(path))
 
@@ -39,9 +39,11 @@ defmodule MusicBox.Artwork.Fetcher do
     end
   end
 
-  def artwork_path(album) do
+  # The unprocessed artwork, removed again once it has been resized.
+  @spec source_path(Album.t()) :: String.t()
+  def source_path(album) do
     MusicBox.Config.artwork_path()
-    |> Path.join("#{album.id}.jpg")
+    |> Path.join("#{album.id}.source")
   end
 
   @spec tmp_path(String.t()) :: String.t()

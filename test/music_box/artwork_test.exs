@@ -1,6 +1,7 @@
 defmodule MusicBox.ArtworkTest do
   use MusicBox.DataCase, async: false
 
+  alias MusicBox.Albums
   alias MusicBox.Albums.Album
   alias MusicBox.Artwork
   alias MusicBox.Artwork.Fetcher
@@ -28,15 +29,16 @@ defmodule MusicBox.ArtworkTest do
   end
 
   describe "find/1" do
-    test "saves resized artwork" do
+    test "saves resized artwork variants" do
       album = Repo.one!(Album)
 
       assert {:ok, artwork} = Artwork.find(album)
       assert artwork.fetcher == :embedded
-      assert artwork.path == Fetcher.artwork_path(album)
-      assert File.exists?(artwork.path)
-      assert [artwork_file] = File.ls!(MusicBox.Config.artwork_path())
-      assert artwork_file == "#{album.id}.jpg"
+      assert artwork.path == Artwork.artwork_dir(album.id)
+      assert {artwork.width, artwork.height} == {800, 800}
+      assert File.ls!(MusicBox.Config.artwork_path()) == [album.id]
+      assert Enum.sort(File.ls!(artwork.path)) == ["large.jpg", "thumbnail.jpg"]
+      refute File.exists?(Fetcher.source_path(album))
     end
 
     @tag capture_log: true
@@ -47,7 +49,21 @@ defmodule MusicBox.ArtworkTest do
 
       assert {:ok, artwork} = Artwork.find(album)
       assert artwork.path == nil
-      assert File.ls!(MusicBox.Config.artwork_path()) == []
+      assert artwork.width == nil
+      assert Path.wildcard(Path.join(MusicBox.Config.artwork_path(), "**/*.*")) == []
+    end
+  end
+
+  describe "variant_sizes/1" do
+    test "fits the source within each variant without upscaling" do
+      assert Artwork.variant_sizes(%Albums.Artwork{width: 1215, height: 1030}) ==
+               [thumbnail: 128, large: 640]
+
+      assert Artwork.variant_sizes(%Albums.Artwork{width: 450, height: 400}) ==
+               [thumbnail: 128, large: 450]
+
+      assert Artwork.variant_sizes(%Albums.Artwork{width: 90, height: 100}) ==
+               [thumbnail: 100, large: 100]
     end
   end
 

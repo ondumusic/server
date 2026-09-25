@@ -29,10 +29,18 @@ defmodule MusicBoxWeb.Schemas.Album do
     sortName: %Schema{type: :string, example: "With the Beatles"},
     slug: %Schema{type: :string, example: "with-the-beatles"},
     artistId: Schemas.ArtistId,
+    artwork: %Schema{
+      type: :array,
+      items: Schemas.ArtworkImage,
+      description: "Available variants of the artwork."
+    },
     artworkUrl: %Schema{
       type: :string,
-      example: "https://example.com/artwork/123.jpg",
-      nullable: true
+      example: "https://example.com/artwork/7c388624-2362-45e2-ae94-ee9aa7a65cb6/large.jpg",
+      nullable: true,
+      deprecated: true,
+      description:
+        "Use `artwork` instead, this is the url of the largest version but will be removed in future versions."
     },
     releaseYear: %Schema{type: :integer, example: 2, nullable: true},
     trackCount: %Schema{type: :integer, example: 14},
@@ -47,6 +55,7 @@ defmodule MusicBoxWeb.Schemas.Album do
     :name,
     :sortName,
     :slug,
+    :artwork,
     :artworkUrl,
     :releaseYear,
     :trackCount,
