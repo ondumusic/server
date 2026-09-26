@@ -98,5 +98,6 @@ defmodule MusicBoxWeb.Router do
     post "/scan", LibraryController, :scan
 
     get "/search", SearchController, :search
+    get "/issues", IssueController, :issues
   end
 end

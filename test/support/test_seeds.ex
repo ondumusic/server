@@ -133,6 +133,7 @@ defmodule TestSeeds do
           artist: if(artist, do: artist.name),
           album: if(album, do: album.name),
           album_artist: Map.get(seed, :album_artist, if(artist, do: artist.name)),
+          title: Map.get(seed, :title, seed.name),
           disc: Map.get(seed, :disc),
           track: Map.get(seed, :track),
           release_year: Map.get(seed, :release_year),
