@@ -52,10 +52,7 @@ config :music_box,
   web_enabled: true,
   docs_enabled: true
 
-config :music_box, MusicBox.Artwork,
-  artwork_path: Path.absname("./tmp/artwork"),
-  custom_api: nil,
-  use_music_brainz: false
+config :music_box, MusicBox.Artwork, artwork_path: Path.absname("./tmp/artwork")
 
 config :music_box, MusicBox.Transcoder,
   max_concurrency: 3,

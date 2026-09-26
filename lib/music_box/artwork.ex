@@ -42,7 +42,7 @@ defmodule MusicBox.Artwork do
     end
   end
 
-  @spec find(Album.t()) :: Repo.result(Albums.Artwork.t()) | {:error, Fetcher.find_error()}
+  @spec find(Album.t()) :: Repo.result(Albums.Artwork.t())
   def find(%Album{} = album) do
     album = Repo.preload(album, [:artwork])
 
@@ -53,70 +53,34 @@ defmodule MusicBox.Artwork do
   end
 
   defp find_and_update(album) do
-    case get_next_fetcher(album) do
-      {:ok, fetcher} ->
-        case fetcher_module(fetcher).find(album) do
-          {:ok, path} -> update_album(album, %{fetcher: fetcher, path: path})
-          {:error, :skip} -> update_and_skip(album, %{fetcher: fetcher})
-          {:error, :retry_later} -> update_album(album, %{})
-          {:error, :not_found} -> update_album(album, %{fetcher: fetcher})
-          {:error, _error} = error -> error
-        end
+    fetchers = Albums.Artwork.fetchers()
 
-      {:error, _error} = error ->
-        error
-    end
-  end
-
-  defp get_next_fetcher(album) do
-    available_fetchers = Albums.Artwork.fetchers()
-
-    next_fetcher =
-      case album do
-        %{artwork: %{fetcher: fetcher}} ->
-          fetcher_index = Enum.find_index(available_fetchers, &(&1 == fetcher))
-          Enum.at(available_fetchers, fetcher_index + 1)
-
-        _ ->
-          List.first(available_fetchers)
+    params =
+      case find_artwork(album, fetchers) do
+        {:ok, fetcher, params} -> Map.put(params, :fetcher, fetcher)
+        :not_found -> %{fetcher: List.last(fetchers)}
       end
 
-    case next_fetcher do
-      nil -> {:error, :no_more_fetchers}
-      _ -> {:ok, next_fetcher}
+    Albums.update_artwork(album, Map.put(params, :last_fetch_attempt, DateTime.utc_now()))
+    |> tap(&broadcast/1)
+  end
+
+  defp find_artwork(_album, []), do: :not_found
+
+  defp find_artwork(album, [fetcher | fetchers]) do
+    with {:ok, source_path} <- fetcher_module(fetcher).find(album),
+         {:ok, params} <- resize(album, source_path) do
+      {:ok, fetcher, params}
+    else
+      {:error, _reason} -> find_artwork(album, fetchers)
     end
   end
 
   defp fetcher_module(fetcher) do
-    fetcher_module = Macro.camelize(to_string(fetcher))
-    fetcher_module = Module.safe_concat(MusicBox.Artwork.Fetcher, fetcher_module)
-    fetcher_module
+    Module.safe_concat(Fetcher, Macro.camelize(to_string(fetcher)))
   end
 
-  defp update_and_skip(album, params) do
-    case update_album(album, params) do
-      {:ok, artwork} -> find_and_update(%{album | artwork: artwork})
-      error -> error
-    end
-  end
-
-  defp update_album(album, params) do
-    params =
-      case params do
-        %{path: source_path} when is_binary(source_path) -> resize(album, source_path, params)
-        _ -> params
-      end
-
-    Albums.update_artwork(
-      album,
-      Map.merge(params, %{
-        last_fetch_attempt: DateTime.utc_now()
-      })
-    )
-    |> tap(&broadcast/1)
-  end
-
-  defp resize(album, source_path, params) do
+  defp resize(album, source_path) do
     variants =
       for {variant, size} <- @variants,
           do: {variant_path(album.id, variant), size}
@@ -126,15 +90,10 @@ defmodule MusicBox.Artwork do
 
     case result do
       {:ok, %{width: width, height: height}} ->
-        Map.merge(params, %{
-          path: artwork_dir(album.id),
-          width: width,
-          height: height
-        })
+        {:ok, %{path: artwork_dir(album.id), width: width, height: height}}
 
-      # Resizing failed so we should not store a path for this album.
-      {:error, _} ->
-        Map.delete(params, :path)
+      {:error, _reason} = error ->
+        error
     end
   end
 

@@ -1,8 +1,6 @@
 defmodule MusicBox.Issues.Rules do
   @moduledoc false
 
-  alias MusicBox.Albums.Artwork
-
   @type code ::
           :artwork_missing
           | :artwork_not_square
@@ -34,9 +32,6 @@ defmodule MusicBox.Issues.Rules do
   # Longest side (in pixels) below which artwork is considered low resolution.
   @min_artwork_size 500
 
-  # Artwork is only missing once all fetchers have been tried.
-  @last_fetcher List.last(Artwork.fetchers())
-
   @spec codes() :: [code()]
   def codes, do: @codes
 
@@ -51,7 +46,7 @@ defmodule MusicBox.Issues.Rules do
   defp unknown_album(%{is_unknown: true}), do: [issue(:album_missing)]
   defp unknown_album(_album), do: []
 
-  defp artwork(%{artwork_path: nil, artwork_fetcher: @last_fetcher}),
+  defp artwork(%{artwork_path: nil, artwork_fetcher: fetcher}) when not is_nil(fetcher),
     do: [issue(:artwork_missing)]
 
   defp artwork(%{artwork_path: path, artwork_width: width, artwork_height: height})

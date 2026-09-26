@@ -1,7 +1,6 @@
 defmodule MusicBox.Issues.RulesTest do
   use ExUnit.Case, async: true
 
-  alias MusicBox.Albums.Artwork
   alias MusicBox.Issues.Rules
 
   @album %{
@@ -24,13 +23,11 @@ defmodule MusicBox.Issues.RulesTest do
       assert codes(Rules.album(%{@album | is_unknown: true})) == [:album_missing]
     end
 
-    test "only reports missing artwork once the last fetcher was tried" do
+    test "only reports missing artwork once the fetchers ran" do
       album = %{@album | artwork_path: nil, artwork_width: nil, artwork_height: nil}
-      last_fetcher = List.last(Artwork.fetchers())
 
-      assert Rules.album(%{album | artwork_fetcher: :embedded}) == []
       assert Rules.album(%{album | artwork_fetcher: nil}) == []
-      assert codes(Rules.album(%{album | artwork_fetcher: last_fetcher})) == [:artwork_missing]
+      assert codes(Rules.album(%{album | artwork_fetcher: :embedded})) == [:artwork_missing]
     end
 
     test "finds non-square and low resolution artwork" do

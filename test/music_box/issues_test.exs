@@ -47,14 +47,11 @@ defmodule MusicBox.IssuesTest do
              ]
     end
 
-    test "only reports missing artwork once all fetchers were tried" do
+    test "only reports missing artwork once the fetchers ran" do
       [album] = Repo.all(Album)
-      last_fetcher = List.last(Albums.Artwork.fetchers())
-
-      set_artwork(album, %{fetcher: :embedded})
       assert %{entries: []} = Issues.list()
 
-      set_artwork(album, %{fetcher: last_fetcher})
+      set_artwork(album, %{fetcher: :embedded})
 
       assert %{entries: [%{issues: [%{code: :artwork_missing}]}]} = Issues.list()
     end

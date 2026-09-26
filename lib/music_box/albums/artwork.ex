@@ -7,8 +7,8 @@ defmodule MusicBox.Albums.Artwork do
 
   @type t :: %__MODULE__{}
 
-  @type fetcher :: :embedded | :custom_api | :music_brainz
-  @fetchers ~w(embedded custom_api music_brainz)a
+  @type fetcher :: :embedded
+  @fetchers ~w(embedded)a
 
   @primary_key {:album_id, :binary_id, autogenerate: false}
   @foreign_key_type :binary_id

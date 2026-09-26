@@ -11,7 +11,7 @@ defmodule MusicBox.Artwork.Fetcher do
   alias MusicBox.Albums.Album
   require Logger
 
-  @type find_error :: :skip | :not_found | :retry_later
+  @type find_error :: :not_found | :failed_to_write
   @callback find(album :: Album.t()) :: {:ok, String.t()} | {:error, find_error()}
 
   @spec save_artwork(Album.t(), binary()) :: {:ok, String.t()} | {:error, :failed_to_write}

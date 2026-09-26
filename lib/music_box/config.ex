@@ -65,23 +65,13 @@ defmodule MusicBox.Config do
   └────────────────────────────────┴───────────┴───────────────────────────────────────────┘
 
   ## Artwork Settings
-  By default it will attempt to get embedded artwork from your media files. If
-  none is found it can try to use either a custom api or MusicBrainz.
+  Artwork is read from the artwork embedded in your media files.
 
   ┌────────────────────────────────┬───────────┬───────────────────────────────────────────┐
   │      Environment Variable      │ Required? │               Description                 │
   ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
   │ MB_ARTWORK_PATH                │ Yes       │ The full path to a directory where the    │
   │                                │           │ application will store album artwork.     │
-  ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
-  │ MB_ARTWORK_CUSTOM_API          │ No        │ When configured this can be used to find  │
-  │                                │           │ artwork based on artist/album/track info  │
-  │                                │           │ but requires a custom implementation.     │
-  │                                │           │ e.g. http://localhost:4000/find_artwork   │
-  ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
-  │ MB_ARTWORK_ENABLE_MUSICBRAINZ  │ No        │ Allow automated lookups to MusicBrainz    │
-  │                                │           │ to find artwork. Can be inaccurate so it  │
-  │                                │           │ is disabled by default.                   │
   └────────────────────────────────┴───────────┴───────────────────────────────────────────┘
   """
 
@@ -94,12 +84,6 @@ defmodule MusicBox.Config do
   # Artwork settings
   @spec artwork_path() :: String.t()
   def artwork_path, do: config(Artwork, :artwork_path)
-
-  @spec artwork_musicbrainz?() :: boolean()
-  def artwork_musicbrainz?, do: config(Artwork, :use_music_brainz)
-
-  @spec artwork_custom_api() :: String.t() | nil
-  def artwork_custom_api, do: config(Artwork, :custom_api)
 
   # Transcoder settings
   @spec transcode_cache_path() :: String.t()

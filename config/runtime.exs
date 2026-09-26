@@ -65,14 +65,6 @@ if config_env() == :prod do
       For example: /tmp/artwork/
       """
 
-  music_brainz_enabled? =
-    System.get_env("MB_ARTWORK_ENABLE_MUSICBRAINZ", "false")
-    |> String.downcase()
-    |> case do
-      truthy when truthy in ~w(1 yes on enabled true) -> true
-      _ -> false
-    end
-
   web_enabled? =
     System.get_env("MB_DISABLE_WEB", "false")
     |> String.downcase()
@@ -156,10 +148,7 @@ if config_env() == :prod do
     database: database_path,
     pool_size: String.to_integer(System.get_env("MB_SQLITE_POOL_SIZE") || "1")
 
-  config :music_box, MusicBox.Artwork,
-    artwork_path: Path.absname(artwork_path),
-    custom_api: System.get_env("MB_ARTWORK_CUSTOM_API"),
-    use_music_brainz: music_brainz_enabled?
+  config :music_box, MusicBox.Artwork, artwork_path: Path.absname(artwork_path)
 
   config :music_box, MusicBox.Transcoder,
     max_concurrency: String.to_integer(System.get_env("MB_TRANSCODE_MAX_CONCURRENCY") || "3"),

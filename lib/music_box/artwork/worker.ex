@@ -62,21 +62,14 @@ defmodule MusicBox.Artwork.Worker do
   end
 
   defp get_next_batch(len, exclude_ids) do
-    available_fetchers = MusicBox.Albums.Artwork.fetchers()
-    last_fetcher = List.last(available_fetchers)
-
     from(
       al in Album,
       left_join: art in assoc(al, :artwork),
       left_join: artist in assoc(al, :artist),
-      where: is_nil(art.path) and (is_nil(art.fetcher) or art.fetcher != ^last_fetcher),
+      where: is_nil(art.album_id),
       where: al.id not in ^exclude_ids,
       preload: [artwork: art],
-      order_by: [
-        asc_nulls_first: art.last_fetch_attempt,
-        asc: artist.sort_name,
-        asc: al.sort_name
-      ],
+      order_by: [asc: artist.sort_name, asc: al.sort_name],
       limit: ^len
     )
     |> Repo.all()
