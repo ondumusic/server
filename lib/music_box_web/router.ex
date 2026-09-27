@@ -50,7 +50,7 @@ defmodule MusicBoxWeb.Router do
   scope "/", MusicBoxWeb do
     pipe_through [:browser, :api]
 
-    get "/artwork/:album_id/:filename", ArtworkController, :show
+    get "/artwork/:album_id/:hash/:filename", ArtworkController, :show
     get "/download/:track_id", StreamController, :download
     get "/stream/:track_id", StreamController, :stream
   end

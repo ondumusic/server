@@ -41,6 +41,30 @@ defmodule MusicBox.ArtworkTest do
       refute File.exists?(Fetcher.source_path(album))
     end
 
+    test "touches the album so clients sync the new artwork urls" do
+      album = Repo.one!(Album)
+      update_record(album, %{updated_at: ~U[2000-01-01 00:00:00Z]})
+
+      assert {:ok, _artwork} = Artwork.find(album)
+      assert Repo.reload!(album).updated_at != ~U[2000-01-01 00:00:00Z]
+    end
+
+    test "re-import artwork stored without a hash (for old library migrations)" do
+      album = Repo.one!(Album)
+
+      {:ok, _artwork} =
+        Albums.update_artwork(album, %{
+          path: Artwork.artwork_dir(album.id),
+          width: 800,
+          height: 800,
+          fetcher: :embedded,
+          last_fetch_attempt: DateTime.utc_now()
+        })
+
+      assert {:ok, %{hash: hash}} = Artwork.find(album)
+      assert is_binary(hash)
+    end
+
     @tag capture_log: true
     test "does not store path when resizing fails" do
       stub(MusicBox.Tool.ExtractArtworkMock, :exec, fn _path -> :crypto.strong_rand_bytes(128) end)
@@ -49,6 +73,7 @@ defmodule MusicBox.ArtworkTest do
 
       assert {:ok, artwork} = Artwork.find(album)
       assert artwork.path == nil
+      assert artwork.hash == nil
       assert artwork.width == nil
       assert Path.wildcard(Path.join(MusicBox.Config.artwork_path(), "**/*.*")) == []
     end
@@ -100,6 +125,27 @@ defmodule MusicBox.ArtworkTest do
       for album <- Repo.all(from(al in Album, preload: :artwork)) do
         assert File.exists?(album.artwork.path)
       end
+    end
+
+    test "processes artwork that was stored without a hash" do
+      # Every album has versioned artwork except "Album 1".
+      for album <- Repo.all(Album) do
+        Albums.update_artwork(album, %{
+          path: Artwork.artwork_dir(album.id),
+          hash: if(album.name == "Album 1", do: nil, else: "existing"),
+          fetcher: :embedded,
+          last_fetch_attempt: DateTime.utc_now()
+        })
+      end
+
+      album_id = Repo.one!(from(al in Album, where: al.name == "Album 1", select: al.id))
+
+      start_supervised!(Artwork.Worker)
+
+      assert_receive %{event: "processed", payload: %{albums: [^album_id]}}
+      refute_receive %{event: "processed"}, 200
+      assert %{hash: hash} = Repo.get!(Albums.Artwork, album_id)
+      assert hash not in [nil, "existing"]
     end
 
     @tag capture_log: true

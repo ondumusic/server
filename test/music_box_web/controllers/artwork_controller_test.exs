@@ -20,6 +20,7 @@ defmodule MusicBoxWeb.ArtworkControllerTest do
     {:ok, _artwork} =
       Albums.update_artwork(album, %{
         path: Artwork.artwork_dir(album.id),
+        hash: "abc123",
         width: 450,
         height: 400,
         fetcher: :embedded,
@@ -31,18 +32,33 @@ defmodule MusicBoxWeb.ArtworkControllerTest do
 
   describe "show" do
     test "serves each artwork variant", %{conn: conn, album: album} do
-      conn = get(conn, ~p"/artwork/#{album.id}/thumbnail.jpg")
+      conn = get(conn, ~p"/artwork/#{album.id}/abc123/thumbnail.jpg")
       assert response(conn, 200) == "thumbnail bytes"
       assert response_content_type(conn, :jpg)
 
-      assert get(conn, ~p"/artwork/#{album.id}/large.jpg") |> response(200) == "large bytes"
+      assert get(conn, ~p"/artwork/#{album.id}/abc123/large.jpg") |> response(200) ==
+               "large bytes"
+    end
+
+    test "serves the current artwork for any version", %{conn: conn, album: album} do
+      assert get(conn, ~p"/artwork/#{album.id}/old-hash/large.jpg") |> response(200) ==
+               "large bytes"
+    end
+
+    test "caches versioned artwork forever", %{conn: conn, album: album} do
+      conn = get(conn, ~p"/artwork/#{album.id}/abc123/large.jpg")
+      assert get_resp_header(conn, "cache-control") == ["public, max-age=31536000, immutable"]
+
+      # Artwork without a hash can still change at the same url.
+      conn = get(build_conn(), ~p"/artwork/#{album.id}/0/large.jpg")
+      refute get_resp_header(conn, "cache-control") == ["public, max-age=31536000, immutable"]
     end
 
     test "returns not found for unknown files", %{conn: conn, album: album} do
-      assert get(conn, ~p"/artwork/#{album.id}/source.jpg") |> response(404)
-      assert get(conn, ~p"/artwork/#{album.id}/..") |> response(404)
-      assert get(conn, ~p"/artwork/not-a-uuid/large.jpg") |> response(404)
-      assert get(conn, ~p"/artwork/#{Ecto.UUID.generate()}/large.jpg") |> response(404)
+      assert get(conn, ~p"/artwork/#{album.id}/abc123/source.jpg") |> response(404)
+      assert get(conn, ~p"/artwork/#{album.id}/abc123/..") |> response(404)
+      assert get(conn, ~p"/artwork/not-a-uuid/abc123/large.jpg") |> response(404)
+      assert get(conn, ~p"/artwork/#{Ecto.UUID.generate()}/abc123/large.jpg") |> response(404)
     end
   end
 
@@ -59,8 +75,19 @@ defmodule MusicBoxWeb.ArtworkControllerTest do
                |> get(~p"/api/albums/#{album.id}")
                |> api_response(200, "Album")
 
-      assert thumbnail_url =~ ~r"/artwork/#{album.id}/thumbnail.jpg$"
-      assert large_url =~ ~r"/artwork/#{album.id}/large.jpg$"
+      assert thumbnail_url =~ ~r"/artwork/#{album.id}/abc123/thumbnail.jpg$"
+      assert large_url =~ ~r"/artwork/#{album.id}/abc123/large.jpg$"
+    end
+
+    test "uses a fixed version for artwork without a hash", %{conn: conn, album: album} do
+      album |> Repo.preload(:artwork) |> Map.get(:artwork) |> update_record(%{hash: nil})
+
+      assert %{"artworkUrl" => large_url} =
+               conn
+               |> get(~p"/api/albums/#{album.id}")
+               |> api_response(200, "Album")
+
+      assert large_url =~ ~r"/artwork/#{album.id}/0/large.jpg$"
     end
 
     test "has no artwork before it was resized", %{conn: conn, album: album} do

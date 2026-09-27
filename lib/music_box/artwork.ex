@@ -7,6 +7,8 @@ defmodule MusicBox.Artwork do
   alias MusicBox.Repo
   alias MusicBox.Tool
 
+  import Ecto.Query
+
   @type variant :: :thumbnail | :large
 
   # Maximum size (in pixels) of each square variant we will generate
@@ -47,8 +49,11 @@ defmodule MusicBox.Artwork do
     album = Repo.preload(album, [:artwork])
 
     case album do
-      %{artwork: %{path: path}} when is_binary(path) -> {:ok, album.artwork}
-      _ -> find_and_update(album)
+      %{artwork: %{path: path, hash: hash}} when is_binary(path) and is_binary(hash) ->
+        {:ok, album.artwork}
+
+      _ ->
+        find_and_update(album)
     end
   end
 
@@ -61,8 +66,28 @@ defmodule MusicBox.Artwork do
         :not_found -> %{fetcher: List.last(fetchers)}
       end
 
-    Albums.update_artwork(album, Map.put(params, :last_fetch_attempt, DateTime.utc_now()))
+    Repo.transact(fn -> store(album, params) end)
     |> tap(&broadcast/1)
+  end
+
+  defp store(album, params) do
+    params = Map.put(params, :last_fetch_attempt, DateTime.utc_now())
+
+    with {:ok, artwork} <- Albums.update_artwork(album, params) do
+      if changed?(album.artwork, artwork), do: touch_album(album)
+      {:ok, artwork}
+    end
+  end
+
+  defp changed?(%Albums.Artwork{path: path, hash: hash}, %{path: path, hash: hash}), do: false
+  defp changed?(nil, %{path: nil}), do: false
+  defp changed?(_old_artwork, _new_artwork), do: true
+
+  # We'll bump the album updated_at so they will be updated with the next
+  # client sync and return with the new artwork.
+  defp touch_album(album) do
+    from(al in Album, where: al.id == ^album.id)
+    |> Repo.update_all(set: [updated_at: DateTime.utc_now(:second)])
   end
 
   defp find_artwork(_album, []), do: :not_found
@@ -85,15 +110,21 @@ defmodule MusicBox.Artwork do
       for {variant, size} <- @variants,
           do: {variant_path(album.id, variant), size}
 
-    result = Tool.resize_artwork(%{album: album, path: source_path, variants: variants})
+    result =
+      with {:ok, hash} <- calculate_hash(source_path),
+           {:ok, %{width: width, height: height}} <-
+             Tool.resize_artwork(%{album: album, path: source_path, variants: variants}) do
+        {:ok, %{path: artwork_dir(album.id), hash: hash, width: width, height: height}}
+      end
+
     File.rm(source_path)
+    result
+  end
 
-    case result do
-      {:ok, %{width: width, height: height}} ->
-        {:ok, %{path: artwork_dir(album.id), width: width, height: height}}
-
-      {:error, _reason} = error ->
-        error
+  defp calculate_hash(source_path) do
+    with {:ok, bytes} <- File.read(source_path) do
+      hash = :crypto.hash(:sha256, bytes) |> Base.encode16(case: :lower)
+      {:ok, binary_part(hash, 0, 16)}
     end
   end
 
@@ -101,5 +132,5 @@ defmodule MusicBox.Artwork do
     MusicBoxWeb.Endpoint.broadcast!("library:sync", "processed", %{albums: [artwork.album_id]})
   end
 
-  defp broadcast(_error_or_no_art), do: :noop
+  defp broadcast(_other), do: :noop
 end

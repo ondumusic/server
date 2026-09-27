@@ -127,9 +127,13 @@ defmodule MusicBoxWeb.LibraryJSON do
   # Ordered from smallest to largest.
   defp artwork(%{id: album_id, artwork: %{path: path, width: width} = artwork})
        when is_binary(path) and is_integer(width) do
+    # For artwork without a hash (old libraries that have not updated yet) we
+    # will default version to 0
+    version = artwork.hash || "0"
+
     for {variant, size} <- MusicBox.Artwork.variant_sizes(artwork) do
       filename = "#{variant}.jpg"
-      %{url: url(~p"/artwork/#{album_id}/#{filename}"), width: size, height: size}
+      %{url: url(~p"/artwork/#{album_id}/#{version}/#{filename}"), width: size, height: size}
     end
   end
 
