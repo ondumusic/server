@@ -6,6 +6,7 @@ defmodule MusicBox.Artwork.Worker do
   alias MusicBox.Albums.Album
   alias MusicBox.Artwork
   alias MusicBox.Repo
+  alias MusicBox.Tracks.Track
   import Ecto.Query
 
   @max_concurrency 2
@@ -61,18 +62,50 @@ defmodule MusicBox.Artwork.Worker do
     end
   end
 
+  # Newly found albums should come first, changed albums last.
   defp get_next_batch(len, exclude_ids) do
+    new_albums = albums_query(exclude_ids, missing_artwork()) |> limit(^len) |> Repo.all()
+    remaining = len - length(new_albums)
+
+    if remaining > 0 do
+      stale_albums = albums_query(exclude_ids, changed_files()) |> limit(^remaining)
+      new_albums ++ Repo.all(stale_albums)
+    else
+      new_albums
+    end
+  end
+
+  defp albums_query(exclude_ids, condition) do
     from(
       al in Album,
+      as: :album,
       left_join: art in assoc(al, :artwork),
+      as: :artwork,
       left_join: artist in assoc(al, :artist),
-      where: is_nil(art.album_id) or (not is_nil(art.path) and is_nil(art.hash)),
+      where: ^condition,
       where: al.id not in ^exclude_ids,
       preload: [artwork: art],
-      order_by: [asc: artist.sort_name, asc: al.sort_name],
-      limit: ^len
+      order_by: [asc: artist.sort_name, asc: al.sort_name]
     )
-    |> Repo.all()
+  end
+
+  defp missing_artwork do
+    dynamic(
+      [artwork: art],
+      is_nil(art.album_id) or (not is_nil(art.path) and is_nil(art.hash))
+    )
+  end
+
+  defp changed_files do
+    changed_files =
+      from(t in Track,
+        join: f in assoc(t, :file),
+        where: t.album_id == parent_as(:album).id,
+        where: f.content_changed_at > parent_as(:artwork).last_fetch_attempt,
+        select: 1
+      )
+
+    dynamic([artwork: art], not is_nil(art.album_id) and exists(changed_files))
   end
 
   defp start_async_fetcher(album) do

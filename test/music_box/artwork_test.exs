@@ -19,7 +19,16 @@ defmodule MusicBox.ArtworkTest do
         stderr_to_stdout: true
       )
 
-    [artwork_bytes: File.read!(source_path)]
+    other_source_path = Path.absname("./tmp/test/artwork_other_source.jpg")
+
+    {_, 0} =
+      System.cmd(
+        "ffmpeg",
+        ~w(-y -f lavfi -i color=c=blue:s=600x600 -frames:v 1) ++ [other_source_path],
+        stderr_to_stdout: true
+      )
+
+    [artwork_bytes: File.read!(source_path), other_artwork_bytes: File.read!(other_source_path)]
   end
 
   setup %{artwork_bytes: artwork_bytes} do
@@ -63,6 +72,52 @@ defmodule MusicBox.ArtworkTest do
 
       assert {:ok, %{hash: hash}} = Artwork.find(album)
       assert is_binary(hash)
+    end
+
+    test "keeps the artwork when the source did not change" do
+      album = Repo.one!(Album)
+      assert {:ok, artwork} = Artwork.find(album)
+
+      album = update_record(album, %{updated_at: ~U[2000-01-01 00:00:00Z]})
+      # A resize would create this file again.
+      File.rm!(Artwork.variant_path(album.id, :large))
+      Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:sync")
+
+      assert {:ok, %{hash: hash}} = Artwork.find(album)
+      assert hash == artwork.hash
+      refute File.exists?(Artwork.variant_path(album.id, :large))
+      assert Repo.reload!(album).updated_at == ~U[2000-01-01 00:00:00Z]
+      refute_received %{event: "processed"}
+    end
+
+    test "replaces the artwork when the source changed", %{other_artwork_bytes: other_bytes} do
+      album = Repo.one!(Album)
+      assert {:ok, artwork} = Artwork.find(album)
+
+      album = update_record(album, %{updated_at: ~U[2000-01-01 00:00:00Z]})
+      stub(MusicBox.Tool.ExtractArtworkMock, :exec, fn _path -> other_bytes end)
+
+      assert {:ok, new_artwork} = Artwork.find(album)
+      assert new_artwork.hash != artwork.hash
+      assert {new_artwork.width, new_artwork.height} == {600, 600}
+      assert Repo.reload!(album).updated_at != ~U[2000-01-01 00:00:00Z]
+    end
+
+    test "clears the artwork when it is no longer found" do
+      album = Repo.one!(Album)
+      assert {:ok, _artwork} = Artwork.find(album)
+
+      album = update_record(album, %{updated_at: ~U[2000-01-01 00:00:00Z]})
+      stub(MusicBox.Tool.ExtractArtworkMock, :exec, fn _path -> {:error, :not_found} end)
+      Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:sync")
+
+      assert {:ok, artwork} = Artwork.find(album)
+      assert {artwork.path, artwork.hash, artwork.width} == {nil, nil, nil}
+      refute File.exists?(Artwork.artwork_dir(album.id))
+      assert Repo.reload!(album).updated_at != ~U[2000-01-01 00:00:00Z]
+
+      album_id = album.id
+      assert_received %{event: "processed", payload: %{albums: [^album_id]}}
     end
 
     @tag capture_log: true
@@ -146,6 +201,38 @@ defmodule MusicBox.ArtworkTest do
       refute_receive %{event: "processed"}, 200
       assert %{hash: hash} = Repo.get!(Albums.Artwork, album_id)
       assert hash not in [nil, "existing"]
+    end
+
+    test "looks up artwork again when a file of the album changed after the last lookup" do
+      for album <- Repo.all(Album) do
+        Albums.update_artwork(album, %{
+          path: Artwork.artwork_dir(album.id),
+          hash: "existing",
+          fetcher: :embedded,
+          last_fetch_attempt: ~U[2026-01-01 00:00:00Z]
+        })
+      end
+
+      Repo.update_all(MusicBox.Files.File, set: [content_changed_at: ~U[2025-12-01 00:00:00Z]])
+
+      album_id = Repo.one!(from(al in Album, where: al.name == "Album 2", select: al.id))
+
+      file_ids =
+        from(t in MusicBox.Tracks.Track, where: t.album_id == ^album_id, select: t.file_id)
+
+      from(f in MusicBox.Files.File, where: f.id in subquery(file_ids))
+      |> Repo.update_all(set: [content_changed_at: ~U[2026-02-01 00:00:00Z]])
+
+      start_supervised!(Artwork.Worker)
+
+      assert_receive %{event: "processed", payload: %{albums: [^album_id]}}
+      refute_receive %{event: "processed"}, 200
+
+      assert %{hash: hash, last_fetch_attempt: last_fetch_attempt} =
+               Repo.get!(Albums.Artwork, album_id)
+
+      assert hash != "existing"
+      assert DateTime.after?(last_fetch_attempt, ~U[2026-02-01 00:00:00Z])
     end
 
     @tag capture_log: true

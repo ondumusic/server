@@ -47,32 +47,28 @@ defmodule MusicBox.Artwork do
   @spec find(Album.t()) :: Repo.result(Albums.Artwork.t())
   def find(%Album{} = album) do
     album = Repo.preload(album, [:artwork])
-
-    case album do
-      %{artwork: %{path: path, hash: hash}} when is_binary(path) and is_binary(hash) ->
-        {:ok, album.artwork}
-
-      _ ->
-        find_and_update(album)
-    end
-  end
-
-  defp find_and_update(album) do
+    started_at = DateTime.utc_now(:second)
     fetchers = Albums.Artwork.fetchers()
 
     params =
       case find_artwork(album, fetchers) do
         {:ok, fetcher, params} -> Map.put(params, :fetcher, fetcher)
-        :not_found -> %{fetcher: List.last(fetchers)}
+        :not_found -> %{fetcher: List.last(fetchers), path: nil, hash: nil}
       end
 
-    Repo.transact(fn -> store(album, params) end)
-    |> tap(&broadcast/1)
+    with {:ok, artwork} <-
+           Repo.transact(fn -> store(album, Map.put(params, :last_fetch_attempt, started_at)) end) do
+      if changed?(album.artwork, artwork) do
+        artwork
+        |> cleanup()
+        |> broadcast()
+      end
+
+      {:ok, artwork}
+    end
   end
 
   defp store(album, params) do
-    params = Map.put(params, :last_fetch_attempt, DateTime.utc_now())
-
     with {:ok, artwork} <- Albums.update_artwork(album, params) do
       if changed?(album.artwork, artwork), do: touch_album(album)
       {:ok, artwork}
@@ -106,19 +102,30 @@ defmodule MusicBox.Artwork do
   end
 
   defp resize(album, source_path) do
-    variants =
-      for {variant, size} <- @variants,
-          do: {variant_path(album.id, variant), size}
-
     result =
-      with {:ok, hash} <- calculate_hash(source_path),
-           {:ok, %{width: width, height: height}} <-
-             Tool.resize_artwork(%{album: album, path: source_path, variants: variants}) do
-        {:ok, %{path: artwork_dir(album.id), hash: hash, width: width, height: height}}
+      with {:ok, hash} <- calculate_hash(source_path) do
+        case album.artwork do
+          %{path: path, hash: ^hash, width: width, height: height} when is_binary(path) ->
+            {:ok, %{path: path, hash: hash, width: width, height: height}}
+
+          _artwork ->
+            resize_variants(album, source_path, hash)
+        end
       end
 
     File.rm(source_path)
     result
+  end
+
+  defp resize_variants(album, source_path, hash) do
+    variants =
+      for {variant, size} <- @variants,
+          do: {variant_path(album.id, variant), size}
+
+    with {:ok, %{width: width, height: height}} <-
+           Tool.resize_artwork(%{album: album, path: source_path, variants: variants}) do
+      {:ok, %{path: artwork_dir(album.id), hash: hash, width: width, height: height}}
+    end
   end
 
   defp calculate_hash(source_path) do
@@ -128,9 +135,13 @@ defmodule MusicBox.Artwork do
     end
   end
 
-  defp broadcast({:ok, %{path: path} = artwork}) when not is_nil(path) do
-    MusicBoxWeb.Endpoint.broadcast!("library:sync", "processed", %{albums: [artwork.album_id]})
+  defp cleanup(artwork) do
+    if is_nil(artwork.path), do: File.rm_rf(artwork_dir(artwork.album_id))
+    artwork
   end
 
-  defp broadcast(_other), do: :noop
+  defp broadcast(artwork) do
+    MusicBoxWeb.Endpoint.broadcast!("library:sync", "processed", %{albums: [artwork.album_id]})
+    artwork
+  end
 end
