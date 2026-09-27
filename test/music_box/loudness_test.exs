@@ -51,6 +51,27 @@ defmodule MusicBox.LoudnessTest do
       assert %{tracks: %{entries: []}} = MusicBox.Sync.get_entities(%{"cursor" => cursor})
     end
 
+    test "does not touch the track when re-measuring gives the same values" do
+      file = Repo.one!(from(f in File, limit: 1))
+      {:ok, _loudness} = Loudness.measure(file)
+
+      cursor = sync_cursor_in_the_past()
+
+      assert {:ok, _loudness} = Loudness.measure(Repo.reload!(file))
+      assert %{tracks: %{entries: []}} = MusicBox.Sync.get_entities(%{"cursor" => cursor})
+    end
+
+    test "touches the track when re-measuring gives different values" do
+      file = Repo.one!(from(f in File, limit: 1))
+      {:ok, _loudness} = Loudness.measure(file)
+
+      cursor = sync_cursor_in_the_past()
+      stub(MusicBox.Tool.LoudnessMock, :exec, fn _path -> {:ok, %{lufs: -12.0, peak: -1.0}} end)
+
+      assert {:ok, _loudness} = Loudness.measure(Repo.reload!(file))
+      assert %{tracks: %{entries: [_track]}} = MusicBox.Sync.get_entities(%{"cursor" => cursor})
+    end
+
     test "does not store the measurement when the file changed meanwhile" do
       file = Repo.one!(from(f in File, limit: 1))
       Repo.update_all(from(f in File, where: f.id == ^file.id), inc: [size: 1])
@@ -105,6 +126,28 @@ defmodule MusicBox.LoudnessTest do
         uri = MusicBox.Storage.get_uri(path)
         assert_received {:measured, ^uri}
         refute_received {:measured, ^uri}
+      end
+    end
+
+    test "measures files again when their content changed and keeps the old loudness meanwhile" do
+      old = %MusicBox.Files.Loudness{
+        lufs: -20.0,
+        peak: -3.0,
+        measured_at: ~U[2026-01-01 00:00:00Z]
+      }
+
+      Repo.update_all(File, set: [loudness: old, content_changed_at: ~U[2025-12-01 00:00:00Z]])
+
+      [changed | _] = Repo.all(from(f in File, order_by: f.path))
+      update_record(changed, %{content_changed_at: ~U[2026-02-01 00:00:00Z]})
+
+      start_supervised!(Loudness.Worker)
+
+      assert_eventually(fn -> Repo.reload!(changed).loudness.lufs == -9.5 end, 500)
+
+      # Files that did not change after they were measured are not measured again.
+      for file <- Repo.all(from(f in File, where: f.id != ^changed.id)) do
+        assert file.loudness.lufs == -20.0
       end
     end
 

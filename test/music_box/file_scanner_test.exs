@@ -93,25 +93,30 @@ defmodule MusicBox.FileScannerTest do
       assert [_artist_id] = payload.artists
     end
 
-    test "keeps loudness of unchanged files on a full scan" do
+    test "keeps loudness on a full scan and marks when the content changed" do
       alias MusicBox.Files.{File, Loudness}
 
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
 
+      scanned = from(f in File, where: not is_nil(f.last_scanned_at))
+      assert Enum.all?(Repo.all(scanned), &match?(%DateTime{}, &1.content_changed_at))
+
       loudness = %Loudness{lufs: -14.0, peak: -1.0, measured_at: DateTime.utc_now(:second)}
-      Repo.update_all(File, set: [loudness: loudness])
+      first_seen_at = ~U[2026-01-01 00:00:00Z]
+      Repo.update_all(File, set: [loudness: loudness, content_changed_at: first_seen_at])
 
       # Pretend one file changed on disk since it was measured
-      scanned = from(f in File, where: not is_nil(f.last_scanned_at))
       [changed | _] = Repo.all(scanned)
       Repo.update_all(from(f in File, where: f.id == ^changed.id), inc: [size: 1])
 
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
 
       for file <- Repo.all(scanned) do
+        assert file.loudness == loudness
+
         if file.id == changed.id,
-          do: assert(is_nil(file.loudness)),
-          else: assert(file.loudness == loudness)
+          do: assert(DateTime.after?(file.content_changed_at, first_seen_at)),
+          else: assert(file.content_changed_at == first_seen_at)
       end
     end
 

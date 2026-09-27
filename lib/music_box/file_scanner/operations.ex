@@ -123,38 +123,38 @@ defmodule MusicBox.FileScanner.Operations do
         |> Map.take(file_fields)
         |> Map.put(:metadata, metadata)
       end)
-      |> Enum.map(&add_timestamps(&1, [:last_scanned_at]))
+      |> Enum.map(&add_timestamps(&1, [:last_scanned_at, :content_changed_at]))
 
-    reset_changed_loudness(repo, files)
+    mark_content_changed(repo, changed_file_ids(repo, files))
 
     {_num, files} =
       repo.insert_all(File, entries,
         returning: true,
         conflict_target: [:path],
-        # Loudness is written by the loudness worker, see reset_changed_loudness/2
-        on_conflict: {:replace_all_except, [:id, :inserted_at, :loudness]}
+        on_conflict: {:replace_all_except, [:id, :inserted_at, :loudness, :content_changed_at]}
       )
 
     {:ok, files}
   end
 
-  # A full scan re-analyzes unchanged files too. We never write loudness for
-  # those, so we can't overwrite a measurement the loudness worker stores in the
-  # meantime. Only when the file itself changed the measurement is outdated.
-  defp reset_changed_loudness(repo, files) do
+  # This returns file ids of for already known files that have changed on disk
+  # since they were last scanned.
+  defp changed_file_ids(repo, files) do
     lookup = Map.new(files, &{&1.path, {&1.size, &1.last_modified_at}})
     paths = Map.keys(lookup)
 
-    changed_ids =
-      from(f in File,
-        where: f.path in ^paths and not is_nil(f.loudness),
-        select: {f.id, f.path, f.size, f.last_modified_at}
-      )
-      |> repo.all()
-      |> Enum.reject(fn {_id, path, size, mtime} -> Map.get(lookup, path) == {size, mtime} end)
-      |> Enum.map(fn {id, _path, _size, _mtime} -> id end)
+    from(f in File,
+      where: f.path in ^paths,
+      select: {f.id, f.path, f.size, f.last_modified_at}
+    )
+    |> repo.all()
+    |> Enum.reject(fn {_id, path, size, mtime} -> Map.get(lookup, path) == {size, mtime} end)
+    |> Enum.map(fn {id, _path, _size, _mtime} -> id end)
+  end
 
-    repo.update_all(from(f in File, where: f.id in ^changed_ids), set: [loudness: nil])
+  defp mark_content_changed(repo, file_ids) do
+    from(f in File, where: f.id in ^file_ids)
+    |> repo.update_all(set: [content_changed_at: DateTime.utc_now(:second)])
   end
 
   defp maybe_create_artists(repo, %{files: files, settings: settings}) do

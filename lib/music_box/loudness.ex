@@ -16,12 +16,7 @@ defmodule MusicBox.Loudness do
   Measures the loudness of a file and stores it.
 
   A failed measurement is stored too (without values) so we don't retry it until
-  the file changes. The result is only stored if the file did not change while
-  we were measuring, otherwise the scanner already reset it and we would store a
-  measurement of the old file.
-
-  A successful measurement also touches the track so clients pick it up on their
-  next sync.
+  the file changes.
   """
   @spec measure(File.t()) :: {:ok, Loudness.t()} | {:error, :file_changed}
   def measure(%File{} = file) do
@@ -45,15 +40,22 @@ defmodule MusicBox.Loudness do
 
     case Repo.update_all(unchanged_file_query(file), set: [loudness: loudness, updated_at: now]) do
       {1, _} ->
-        # Clients sync tracks by updated_at, a failed measurement changes
-        # nothing they can see so it doesn't need to be synced.
-        if loudness.lufs, do: touch_tracks(file, now)
+        # If the values changed we need to update the Track.updated_at as well so
+        # our syncing logic will inform clients to pick up the latest version.
+        if is_float(loudness.lufs) and values_changed?(file.loudness, loudness),
+          do: touch_tracks(file, now)
+
         {:ok, loudness}
 
       {0, _} ->
         {:error, :file_changed}
     end
   end
+
+  defp values_changed?(%Loudness{lufs: lufs, peak: peak}, %Loudness{lufs: lufs, peak: peak}),
+    do: false
+
+  defp values_changed?(_old, _new), do: true
 
   defp touch_tracks(file, now) do
     from(t in Track, where: t.file_id == ^file.id)

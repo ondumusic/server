@@ -18,13 +18,19 @@ defmodule MusicBox.Files.File do
 
     embeds_one :metadata, FileMetadata, on_replace: :delete
 
-    # Written by the loudness worker, the scanner only resets it when the file changed
     embeds_one :loudness, Loudness, on_replace: :update
 
     has_one :track, Track
 
     field :last_scanned_at, :utc_datetime
+
+    # The mtime of the file, the scanner uses it (with the size) to detect changes.
     field :last_modified_at, :utc_datetime
+
+    # The content changed is used to tell workers like artwork, loudness that it
+    # needs to re-check this file only when actual content changed.
+    field :content_changed_at, :utc_datetime
+
     timestamps(type: :utc_datetime)
   end
 

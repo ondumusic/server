@@ -1,11 +1,10 @@
 defmodule MusicBox.Loudness.Worker do
   @moduledoc """
-  Measures the loudness of all files that have not been measured yet.
+  Measures the loudness of all files that have not been measured yet, or whose
+  content changed after they were measured.
 
-  Files are picked in path order so the tracks of an album are measured
-  together. A file is never measured concurrently. When measuring crashes (e.g.
-  ffmpeg is missing) we skip the file until the next restart instead of storing
-  a failed measurement, as the file itself is probably fine.
+  It always does new files first, then files are picked in path order so the
+  tracks of an album are usually measured together
   """
 
   use GenServer
@@ -69,8 +68,11 @@ defmodule MusicBox.Loudness.Worker do
 
   defp get_next_batch(len, exclude_ids) do
     from(f in File,
-      where: is_nil(f.loudness) and f.id not in ^exclude_ids,
-      order_by: [asc: f.path],
+      where:
+        is_nil(f.loudness) or
+          fragment("json_extract(?, '$.measured_at') < ?", f.loudness, f.content_changed_at),
+      where: f.id not in ^exclude_ids,
+      order_by: [desc: is_nil(f.loudness), asc: f.path],
       limit: ^len
     )
     |> Repo.all()
