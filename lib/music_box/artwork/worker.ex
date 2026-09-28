@@ -33,6 +33,12 @@ defmodule MusicBox.Artwork.Worker do
     {:noreply, state}
   end
 
+  # Cover files are only compared once a scan completed, which might not have
+  # changed any albums itself.
+  def handle_info(%{topic: "library:sync", event: "completed"}, state) do
+    {:noreply, next_batch(state)}
+  end
+
   def handle_info(:next_batch, state) do
     {:noreply, next_batch(state)}
   end

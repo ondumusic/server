@@ -5,7 +5,7 @@ defmodule MusicBox.FileScanner.Operations do
   import Phoenix.Channel.Server, only: [broadcast: 4]
 
   alias Ecto.Multi
-  alias MusicBox.Albums.{Album, Artwork}
+  alias MusicBox.Albums.{Album, Artwork, CoverFile}
   alias MusicBox.Artists.Artist
   alias MusicBox.DeletionLog
   alias MusicBox.Files.{File, FileMetadata}
@@ -188,14 +188,44 @@ defmodule MusicBox.FileScanner.Operations do
     invalidate_artworks(repo, changed_files.previous_album_ids ++ current_album_ids)
   end
 
+  @doc """
+  Compares the cover files found in a complete walk of the music path with the
+  best cover file each album directory had during its last fetch attempt. Albums
+  of which a cover file was added, changed or removed are invalidated.
+  """
+  @spec invalidate_cover_files([Storage.file_entry()]) :: {:ok, non_neg_integer()}
+  def invalidate_cover_files(cover_files) do
+    cover_files_by_dir = Enum.group_by(cover_files, &Path.dirname(&1.path))
+
+    # Same as the fetcher, the cover file is found across all album directories.
+    current_cover = fn dirs ->
+      dirs |> Enum.flat_map(&Map.get(cover_files_by_dir, &1, [])) |> CoverFile.find()
+    end
+
+    # Find all album ids that have artwork in one of these directories
+    album_ids =
+      from(aw in Artwork, where: not is_nil(aw.dirs), select: {aw.album_id, aw.dirs, aw.cover})
+      |> Repo.all()
+      |> Enum.reject(fn {_album_id, dirs, cover} -> current_cover.(dirs) == cover end)
+      |> Enum.map(fn {album_id, _dirs, _cover} -> album_id end)
+
+    invalidate_artworks(Repo, album_ids)
+  end
+
   defp invalidate_artworks(repo, album_ids) do
-    album_ids = album_ids |> Enum.reject(&is_nil/1) |> Enum.uniq()
+    now = DateTime.utc_now(:second)
 
-    {count, _} =
-      from(aw in Artwork, where: aw.album_id in ^album_ids)
-      |> repo.update_all(set: [invalidated_at: DateTime.utc_now(:second)])
+    album_ids
+    |> Enum.reject(&is_nil/1)
+    |> Enum.uniq()
+    |> Enum.chunk_every(1_000)
+    |> Enum.reduce({:ok, 0}, fn ids, {:ok, count} ->
+      {updated, _} =
+        from(aw in Artwork, where: aw.album_id in ^ids)
+        |> repo.update_all(set: [invalidated_at: now])
 
-    {:ok, count}
+      {:ok, count + updated}
+    end)
   end
 
   defp maybe_create_artists(repo, %{files: files, settings: settings}) do

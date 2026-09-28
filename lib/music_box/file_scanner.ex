@@ -44,7 +44,9 @@ defmodule MusicBox.FileScanner do
     Operations.find_deleted_files()
 
     # NOTE: / is relative to settings.music_path
-    walker = MusicBox.Storage.walk("/")
+    walker =
+      MusicBox.Storage.walk("/")
+      |> handle_cover_files()
 
     walker =
       if scan_type == :quick,
@@ -76,6 +78,25 @@ defmodule MusicBox.FileScanner do
     error ->
       Agent.stop()
       error
+  end
+
+  # Cover files are not analyzed like music files, they are collected and dealt
+  # with once the walk has completed using `Stream.transform/5`.
+  defp handle_cover_files(walker) do
+    Stream.transform(
+      walker,
+      fn -> [] end,
+      fn entry, cover_files ->
+        if MusicBox.Utils.cover_file?(entry.path),
+          do: {[], [entry | cover_files]},
+          else: {[entry], cover_files}
+      end,
+      fn cover_files ->
+        Operations.invalidate_cover_files(cover_files)
+        {[], cover_files}
+      end,
+      fn _cover_files -> :ok end
+    )
   end
 
   defp skip_existing_files(enum) do
