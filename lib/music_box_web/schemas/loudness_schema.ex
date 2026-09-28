@@ -6,8 +6,8 @@ defmodule MusicBoxWeb.Schemas.Loudness do
   OpenApiSpex.schema(%{
     title: "Loudness",
     description: """
-    The measured loudness of a track (ITU-R BS.1770 / EBU R128), clients can use
-    this for volume normalization. To normalize to a target loudness apply a gain
+    The measured loudness of a track or album (ITU-R BS.1770 / EBU R128), clients
+    can use this for volume normalization. To normalize to a target loudness apply a gain
     of `target - lufs` dB, and when boosting keep it below `-peak` dB to avoid
     clipping.
     """,

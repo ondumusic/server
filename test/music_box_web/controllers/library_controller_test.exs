@@ -325,6 +325,23 @@ defmodule MusicBoxWeb.LibraryControllerTest do
                |> api_response(200, "AlbumPage")
     end
 
+    test "album loudness once all tracks are measured", %{conn: conn} do
+      album = MusicBox.Repo.get_by(MusicBox.Albums.Album, slug: "with-the-beatles")
+
+      loudness = %MusicBox.Files.Loudness{
+        lufs: -12.0,
+        peak: -0.5,
+        measured_at: DateTime.utc_now()
+      }
+
+      MusicBox.Repo.update_all(MusicBox.Files.File, set: [loudness: loudness])
+
+      assert %{"loudness" => %{"lufs" => -12.0, "peak" => -0.5}} =
+               conn
+               |> get(~p"/api/albums/#{album.id}")
+               |> api_response(200, "Album")
+    end
+
     test "get album details", %{conn: conn} do
       album = MusicBox.Repo.get_by(MusicBox.Albums.Album, slug: "with-the-beatles")
 

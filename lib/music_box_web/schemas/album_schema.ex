@@ -44,6 +44,15 @@ defmodule MusicBoxWeb.Schemas.Album do
         "Use `artwork` instead, this is the url of the largest version but will be removed in future versions."
     },
     releaseYear: %Schema{type: :integer, example: 2, nullable: true},
+    loudness: %Schema{
+      allOf: [Schemas.Loudness],
+      nullable: true,
+      description: """
+      The loudness of the whole album, to use one gain for all tracks when the
+      album is played in sequence. Approximated from the loudness of the tracks,
+      null until all tracks are measured.
+      """
+    },
     trackCount: %Schema{type: :integer, example: 14},
     isUnknown: %Schema{type: :boolean, example: false},
     insertedAt: %Schema{type: :string, format: :"date-time"}
@@ -59,6 +68,7 @@ defmodule MusicBoxWeb.Schemas.Album do
     :artwork,
     :artworkUrl,
     :releaseYear,
+    :loudness,
     :trackCount,
     :isUnknown,
     :insertedAt

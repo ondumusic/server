@@ -64,6 +64,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       trackCount: album.track_count,
       artwork: artwork,
       artworkUrl: artwork |> List.last(%{}) |> Map.get(:url),
+      loudness: album_loudness(album),
       insertedAt: album.inserted_at
     }
 
@@ -123,6 +124,12 @@ defmodule MusicBoxWeb.LibraryJSON do
   # as not measured yet.
   defp loudness(%{lufs: lufs, peak: peak}) when is_float(lufs), do: %{lufs: lufs, peak: peak}
   defp loudness(_loudness), do: nil
+
+  # Derived from the tracks, which are not loaded everywhere albums are rendered.
+  defp album_loudness(%{tracks: tracks}) when is_list(tracks),
+    do: MusicBox.Loudness.album_loudness(tracks)
+
+  defp album_loudness(_album), do: nil
 
   # Ordered from smallest to largest.
   defp artwork(%{id: album_id, artwork: %{hash: hash, width: width} = artwork})

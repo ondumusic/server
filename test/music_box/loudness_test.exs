@@ -28,6 +28,19 @@ defmodule MusicBox.LoudnessTest do
       assert %{lufs: nil, measured_at: %DateTime{}} = Repo.reload!(file).loudness
     end
 
+    test "touches the album so clients pick up its loudness on their next sync" do
+      cursor = sync_cursor_in_the_past()
+      file = Repo.one!(from(f in File, limit: 1))
+      track = Repo.get_by!(MusicBox.Tracks.Track, file_id: file.id)
+
+      assert {:ok, _loudness} = Loudness.measure(file)
+
+      assert %{albums: %{entries: [%{id: album_id}]}} =
+               MusicBox.Sync.get_entities(%{"cursor" => cursor})
+
+      assert album_id == track.album_id
+    end
+
     test "touches the track so clients pick it up on their next sync" do
       cursor = sync_cursor_in_the_past()
       file = Repo.one!(from(f in File, limit: 1))
@@ -81,17 +94,53 @@ defmodule MusicBox.LoudnessTest do
     end
   end
 
-  # Moves all tracks back in time and returns a sync cursor after all of them,
-  # so anything touched from now on shows up in the next sync.
+  # Moves all tracks and albums back in time and returns a sync cursor after all
+  # of them, so anything touched from now on shows up in the next sync.
   defp sync_cursor_in_the_past do
     past = DateTime.add(DateTime.utc_now(:second), -1, :hour)
     Repo.update_all(MusicBox.Tracks.Track, set: [updated_at: past])
+    Repo.update_all(MusicBox.Albums.Album, set: [updated_at: past])
 
     params = %{"limit" => 10_000}
     result = MusicBox.Sync.get_entities(params)
     refute result.tracks.has_more?
 
     MusicBox.Sync.encode_cursor(result, params)
+  end
+
+  describe "album_loudness/1" do
+    test "is the energy average of the tracks weighted by duration" do
+      tracks = [track(100.0, -10.0, -1.0), track(100.0, -20.0, -3.0)]
+
+      # 10 * log10((10^-1 + 10^-2) / 2)
+      assert %{lufs: -12.6, peak: -1.0} = Loudness.album_loudness(tracks)
+
+      # A longer quiet track pulls the album down more.
+      assert %{lufs: lufs} =
+               Loudness.album_loudness([track(100.0, -10.0, -1.0), track(300.0, -20.0, -3.0)])
+
+      assert lufs < -12.6
+    end
+
+    test "ignores tracks without a peak (digital silence) for the peak" do
+      tracks = [track(100.0, -10.0, nil), track(100.0, -10.0, -2.5)]
+      assert %{lufs: -10.0, peak: -2.5} = Loudness.album_loudness(tracks)
+    end
+
+    test "is nil until all tracks are measured" do
+      assert Loudness.album_loudness([]) == nil
+      assert Loudness.album_loudness([track(100.0, -10.0, -1.0), track(100.0, nil, nil)]) == nil
+
+      unmeasured = %MusicBox.Tracks.Track{duration: 100.0, file: %File{loudness: nil}}
+      assert Loudness.album_loudness([track(100.0, -10.0, -1.0), unmeasured]) == nil
+    end
+
+    defp track(duration, lufs, peak) do
+      %MusicBox.Tracks.Track{
+        duration: duration,
+        file: %File{loudness: %MusicBox.Files.Loudness{lufs: lufs, peak: peak}}
+      }
+    end
   end
 
   describe "worker" do
