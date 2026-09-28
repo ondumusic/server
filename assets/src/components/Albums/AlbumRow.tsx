@@ -1,8 +1,8 @@
 import { memo } from "react";
 import { Marquee } from "../../components/Marquee";
 import type { Album } from "../../types";
-import { artworkThumbnailUrl } from "../../utils/artwork";
 import { classNames } from "../../utils/classNames";
+import { AlbumArtwork } from "../AlbumArtwork";
 
 interface Props {
   album: Album;
@@ -19,14 +19,11 @@ export const AlbumRow = memo(({ album, isSelected = false }: Props) => {
           "bg-sidebar-inactive-bg text-sidebar-inactive-fg [.selectable-list:focus_&]:bg-sidebar-active-bg [.selectable-list:focus_&]:shadow-sm [.selectable-list:focus_&]:text-sidebar-active-fg",
       ])}
     >
-      <div
-        className="relative w-10 h-10 aspect-square bg-cover bg-center shadow-md rounded-md bg-stone-900 flex-shrink-0"
-        style={{
-          contentVisibility: "auto",
-          ...(artworkThumbnailUrl(album) && {
-            backgroundImage: `url(${artworkThumbnailUrl(album)})`,
-          }),
-        }}
+      <AlbumArtwork
+        album={album}
+        size="thumbnail"
+        className="w-10 h-10 aspect-square shadow-md rounded-md bg-stone-900 flex-shrink-0"
+        style={{ contentVisibility: "auto" }}
       />
       <div className="py-2.5 max-w-full overflow-auto">
         <Marquee delay={500} text={album.name} />

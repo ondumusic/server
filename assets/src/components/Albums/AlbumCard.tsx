@@ -1,6 +1,6 @@
 import type { Album } from "../../types";
-import { artworkUrl } from "../../utils/artwork";
 import { classNames } from "../../utils/classNames";
+import { AlbumArtwork } from "../AlbumArtwork";
 
 export function AlbumCard({
   album,
@@ -11,19 +11,16 @@ export function AlbumCard({
 }) {
   return (
     <div className="text-center w-full">
-      <div
-        className="relative w-full aspect-square bg-cover bg-center shadow-md rounded-md bg-stone-900"
-        style={{
-          contentVisibility: "auto",
-          ...(artworkUrl(album) && {
-            backgroundImage: `url(${artworkUrl(album)})`,
-          }),
-        }}
+      <AlbumArtwork
+        album={album}
+        size="large"
+        className="w-full aspect-square shadow-md rounded-md bg-stone-900"
+        style={{ contentVisibility: "auto" }}
       >
         {isSelected && (
           <div className="absolute top-0 left-0 right-0 bottom-0 border-2 border-accent-400 [.selectable-list:focus_&]:border-accent-500 rounded-md bg-accent-400/20 [.selectable-list:focus_&]:bg-accent-500/30" />
         )}
-      </div>
+      </AlbumArtwork>
       <div className="pt-1.5 text-xs leading-2">
         <span
           className={classNames([

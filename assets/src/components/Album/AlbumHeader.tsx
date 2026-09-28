@@ -1,21 +1,17 @@
 import { Trans } from "react-i18next";
-import { artworkUrl } from "../../utils/artwork";
 import { formatTotalDuration } from "../../utils/formatTotalDuration";
+import { AlbumArtwork } from "../AlbumArtwork";
 import type { HeaderItem } from "./types";
 
 export function AlbumHeader({ album, tracks }: HeaderItem) {
   return (
     <header className="mt-18 md:mt-4 lg:mt-8 @md:pb-4 @md:mb-8 flex items-start gap-6">
-      <div className="max-w-36 flex-shrink-0">
-        <div className="w-full shadow-lg aspect-square rounded-sm overflow-hidden bg-linear-to-br from-stone-50 to-stone-200">
-          {artworkUrl(album) && (
-            <img
-              src={artworkUrl(album)}
-              alt=""
-              className="w-full aspect-square object-cover object-center"
-            />
-          )}
-        </div>
+      <div className="w-36 flex-shrink-0">
+        <AlbumArtwork
+          album={album}
+          size="large"
+          className="w-full shadow-lg aspect-square rounded-sm bg-linear-to-br from-stone-50 to-stone-200"
+        />
       </div>
 
       <div className="pt-4">

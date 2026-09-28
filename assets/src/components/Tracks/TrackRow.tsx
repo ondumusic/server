@@ -2,9 +2,9 @@ import { useTranslation } from "react-i18next";
 import { AnimatedWaveform } from "../../components/icons/AnimatedWaveform";
 import { PlayIcon } from "../../components/icons/PlayIcon";
 import type { Track } from "../../types";
-import { artworkThumbnailUrl } from "../../utils/artwork";
 import { classNames } from "../../utils/classNames";
 import { formatDuration } from "../../utils/formatDuration";
+import { AlbumArtwork } from "../AlbumArtwork";
 
 interface Props {
   track: Track;
@@ -90,21 +90,14 @@ export function TrackRow({
           )}
         </div>
 
-        {showAlbumArtwork && artworkThumbnailUrl(track?.album) ? (
-          <div
-            className="w-8 h-8 overflow-hidden bg-contain bg-center lg:rounded-sm overflow-hidden lg:shadow-sm flex-shrink-0"
-            style={{
-              backgroundImage: `url(${artworkThumbnailUrl(track?.album)})`,
-            }}
-          />
-        ) : (
-          <div
-            className={classNames([
-              "w-8 h-8 overflow-hidden bg-linear-to-br from-stone-50 to-stone-200 lg:rounded-sm lg:shadow-sm flex-shrink-0",
-              !showAlbumArtwork && "hidden",
-            ])}
-          ></div>
-        )}
+        <AlbumArtwork
+          album={track?.album}
+          size="thumbnail"
+          className={classNames([
+            "w-8 h-8 bg-linear-to-br from-stone-50 to-stone-200 lg:rounded-sm lg:shadow-sm flex-shrink-0",
+            !showAlbumArtwork && "hidden",
+          ])}
+        />
 
         <div>
           <div

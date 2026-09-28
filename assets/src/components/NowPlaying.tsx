@@ -1,4 +1,5 @@
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
+import { AlbumArtwork } from "../components/AlbumArtwork";
 import { Marquee } from "../components/Marquee";
 import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
@@ -65,16 +66,12 @@ export function NowPlaying() {
 
   return (
     <div className="flex flex-wrap pr-10 lg:pr-0 gap-2 lg:block w-full cursor-default flex-shrink-0 lg:px-2">
-      {artworkUrl(currentAlbum) ? (
-        <img
-          src={artworkUrl(currentAlbum)}
-          alt=""
-          className="w-20 lg:w-full aspect-square object-cover object-center lg:rounded-md overflow-hidden lg:shadow-md lg:mb-4"
-          onLoad={(e) => updateBackgroundColor(e.target as HTMLImageElement)}
-        />
-      ) : (
-        <div className="w-20 aspect-square bg-linear-to-tl from-mist-600 to-mist-700 lg:rounded-md lg:w-full lg:shadow-md lg:mb-4"></div>
-      )}
+      <AlbumArtwork
+        album={currentAlbum}
+        size="large"
+        className="w-20 lg:w-full flex-shrink-0 aspect-square bg-linear-to-tl from-mist-600 to-mist-700 lg:rounded-md lg:shadow-md lg:mb-4"
+        onLoad={updateBackgroundColor}
+      />
 
       <div className="text-left w-[calc(100%-120px)] lg:w-full lg:text-center overflow-hidden pt-2 lg:pt-0 mb-4">
         <Marquee
