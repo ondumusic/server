@@ -179,6 +179,34 @@ defmodule MusicBox.FileScannerTest do
       assert %DateTime{} = invalidated_at.(test_album)
     end
 
+    test "compares cover files with the album artwork once the walk completed" do
+      alias MusicBox.Albums.{Album, Artwork}
+
+      music_path = Path.absname("./tmp/test/scanner_cover_files")
+      File.rm_rf!(music_path)
+      File.mkdir_p!(Path.join(music_path, "Album"))
+      File.cp!(Path.join(@fixtures_path, "without_tags/sample.mp3"), "#{music_path}/Album/01.mp3")
+      Settings.set(%{music_path: music_path})
+
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+      album = Repo.get_by!(Album, name: "Test Album")
+
+      # Looked up before there was a cover file.
+      MusicBox.Albums.update_artwork(album, %{
+        fetcher: :embedded,
+        last_fetch_attempt: ~U[2026-01-01 00:00:00Z],
+        dirs: ["Album"],
+        cover: nil
+      })
+
+      File.write!("#{music_path}/Album/cover.jpg", "cover")
+      assert {:ok, :scan_completed} = FileScanner.scan(:quick)
+
+      # Cover files are not analyzed as music files.
+      refute Repo.exists?(from(f in MusicBox.Files.File, where: f.path == "Album/cover.jpg"))
+      assert %DateTime{} = Repo.get!(Artwork, album.id).invalidated_at
+    end
+
     test "can start async" do
       {:ok, :scan_started} = FileScanner.scan_async(:full)
       assert_receive %{topic: "library:sync", event: "processed", payload: payload}
