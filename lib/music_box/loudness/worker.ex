@@ -26,7 +26,7 @@ defmodule MusicBox.Loudness.Worker do
   @impl true
   def init(_) do
     Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:sync")
-    {:ok, next_batch(%{running: %{}, crashed: MapSet.new()})}
+    {:ok, next_batch(%{running: %{}, crashed: []})}
   end
 
   @impl true
@@ -47,7 +47,7 @@ defmodule MusicBox.Loudness.Worker do
     else
       # Delay so a crashing environment (e.g. missing ffmpeg) does not spin
       Process.send_after(self(), :next_batch, @retry_after)
-      {:noreply, %{state | crashed: MapSet.put(state.crashed, file_id)}}
+      {:noreply, %{state | crashed: [file_id | state.crashed]}}
     end
   end
 
@@ -55,7 +55,7 @@ defmodule MusicBox.Loudness.Worker do
 
   defp next_batch(state) do
     batch_size = max(0, @max_concurrency - map_size(state.running))
-    exclude_ids = Map.values(state.running) ++ MapSet.to_list(state.crashed)
+    exclude_ids = Map.values(state.running) ++ state.crashed
     new_batch = if batch_size == 0, do: [], else: get_next_batch(batch_size, exclude_ids)
 
     running =

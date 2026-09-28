@@ -171,7 +171,7 @@ defmodule MusicBox.LoudnessTest do
       )
 
       assert_eventually(fn -> map_size(:sys.get_state(worker_pid).running) == 0 end)
-      assert MapSet.member?(:sys.get_state(worker_pid).crashed, crashing.id)
+      assert crashing.id in :sys.get_state(worker_pid).crashed
     end
   end
 end
