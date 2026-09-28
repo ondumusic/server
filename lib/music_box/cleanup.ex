@@ -10,6 +10,7 @@ defmodule MusicBox.Cleanup do
     update_fts
     unused
     sort_names
+    transcode_cache
   )a
 
   def work_async(steps \\ :all) do

@@ -50,6 +50,11 @@ defmodule MusicBox.Config do
   │                                │           │ application will store transcoded files.  │
   │                                │           │ (When using S3 this is the key prefix)    │
   ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
+  │ MB_TRANSCODE_CACHE_MAX_SIZE    │ No        │ Maximum size of the transcoded files in   │
+  │                                │           │ megabytes, the oldest are removed after a │
+  │                                │           │ library scan. Use 0 for no limit.         │
+  │                                │           │ Defaults to 10240 (10GB)                  │
+  ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
   │ MB_TRANSCODE_QUEUE_SIZE        │ No        │ How many transcode requests can be sent   │
   │                                │           │ to the queue while waiting for available  │
   │                                │           │ slots (waiting for other transcodes to    │
@@ -94,6 +99,9 @@ defmodule MusicBox.Config do
 
   @spec transcode_max_queue_size() :: non_neg_integer()
   def transcode_max_queue_size, do: config(Transcoder, :max_queue_size)
+
+  @spec transcode_max_cache_size() :: pos_integer() | nil
+  def transcode_max_cache_size, do: config(Transcoder, :max_cache_size)
 
   defp config(mod, key) do
     conf = Application.get_env(:music_box, mod) || []

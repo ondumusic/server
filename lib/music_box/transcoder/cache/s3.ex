@@ -3,7 +3,7 @@ defmodule MusicBox.Transcoder.Cache.S3 do
 
   @behaviour MusicBox.Transcoder.Cache
 
-  alias MusicBox.Transcoder.{Preset, Result, Utils}
+  alias MusicBox.Transcoder.{Cache, Preset, Result, Utils}
 
   @impl true
   def get_meta(file_id, preset) do
@@ -86,6 +86,48 @@ defmodule MusicBox.Transcoder.Cache.S3 do
   end
 
   @impl true
+  def entries do
+    prefix =
+      MusicBox.Config.transcode_cache_path()
+      |> ensure_prefix()
+      |> ensure_trailing_slash()
+
+    config(:bucket)
+    |> ExAws.S3.list_objects_v2(prefix: prefix, delimiter: "/")
+    |> ExAws.stream!(region: config(:region))
+    |> Enum.flat_map(fn object ->
+      case Cache.parse_filename(Path.basename(object.key)) do
+        {:ok, file_id, preset_id} ->
+          [
+            %{
+              key: object.key,
+              file_id: file_id,
+              preset_id: preset_id,
+              size: String.to_integer(object.size),
+              completed_at: parse_s3_timestamp(object.last_modified)
+            }
+          ]
+
+        :error ->
+          []
+      end
+    end)
+  end
+
+  # S3 deletes at most 1000 objects per request.
+  @impl true
+  def delete_entries(entries) do
+    entries
+    |> Enum.map(& &1.key)
+    |> Enum.chunk_every(1000)
+    |> Enum.each(fn keys ->
+      config(:bucket)
+      |> ExAws.S3.delete_multiple_objects(keys)
+      |> ExAws.request(region: config(:region))
+    end)
+  end
+
+  @impl true
   def delete(file_id, preset) do
     config(:bucket)
     |> ExAws.S3.delete_object(cache_file_key(file_id, preset))
@@ -109,6 +151,12 @@ defmodule MusicBox.Transcoder.Cache.S3 do
   end
 
   defp ensure_prefix(key), do: String.trim_leading(key, "/")
+
+  defp ensure_trailing_slash(""), do: ""
+
+  defp ensure_trailing_slash(key) do
+    if String.ends_with?(key, "/"), do: key, else: key <> "/"
+  end
 
   defp parse_s3_timestamp(timestamp) do
     {:ok, dt, _offset} = DateTime.from_iso8601(timestamp)

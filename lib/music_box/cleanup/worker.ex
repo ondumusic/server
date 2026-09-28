@@ -11,6 +11,7 @@ defmodule MusicBox.Cleanup.Worker do
   alias MusicBox.Repo
   alias MusicBox.Settings
   alias MusicBox.Tracks.Track
+  alias MusicBox.Transcoder.CacheCleanup
 
   import Ecto.Query
 
@@ -53,6 +54,10 @@ defmodule MusicBox.Cleanup.Worker do
   end
 
   def handle_info(_payload, state), do: {:noreply, state}
+
+  def do_step(:transcode_cache) do
+    CacheCleanup.run()
+  end
 
   def do_step(:sort_names) do
     settings = Settings.get()

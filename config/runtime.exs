@@ -150,10 +150,18 @@ if config_env() == :prod do
 
   config :music_box, MusicBox.Artwork, artwork_path: Path.absname(artwork_path)
 
+  # In megabytes, 0 for no limit.
+  transcode_max_cache_size =
+    case String.to_integer(System.get_env("MB_TRANSCODE_CACHE_MAX_SIZE") || "10240") do
+      0 -> nil
+      megabytes -> megabytes * 1024 * 1024
+    end
+
   config :music_box, MusicBox.Transcoder,
     max_concurrency: String.to_integer(System.get_env("MB_TRANSCODE_MAX_CONCURRENCY") || "3"),
     max_queue_size: String.to_integer(System.get_env("MB_TRANSCODE_QUEUE_SIZE") || "10"),
-    cache_path: Path.absname(transcode_cache_path)
+    cache_path: Path.absname(transcode_cache_path),
+    max_cache_size: transcode_max_cache_size
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you

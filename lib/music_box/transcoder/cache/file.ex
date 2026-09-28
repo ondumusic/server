@@ -4,7 +4,7 @@ defmodule MusicBox.Transcoder.Cache.File do
   @behaviour MusicBox.Transcoder.Cache
 
   alias MusicBox.Storage
-  alias MusicBox.Transcoder.{Preset, Result, Utils}
+  alias MusicBox.Transcoder.{Cache, Preset, Result, Utils}
 
   @impl true
   def get_meta(file_id, preset) do
@@ -51,6 +51,43 @@ defmodule MusicBox.Transcoder.Cache.File do
   def get_bytes(file_id, preset, start_byte, bytes_to_read) do
     path = cache_file_path(file_id, preset)
     Storage.File.get_bytes(path, start_byte, bytes_to_read)
+  end
+
+  @impl true
+  def entries do
+    cache_path = MusicBox.Config.transcode_cache_path()
+
+    case File.ls(cache_path) do
+      {:ok, names} ->
+        Enum.flat_map(names, &entry(cache_path, &1))
+
+      {:error, _reason} ->
+        []
+    end
+  end
+
+  defp entry(cache_path, name) do
+    path = Path.join(cache_path, name)
+
+    with {:ok, file_id, preset_id} <- Cache.parse_filename(name),
+         {:ok, %File.Stat{type: :regular} = stat} <- File.stat(path, time: :posix) do
+      [
+        %{
+          key: path,
+          file_id: file_id,
+          preset_id: preset_id,
+          size: stat.size,
+          completed_at: DateTime.from_unix!(stat.mtime)
+        }
+      ]
+    else
+      _other -> []
+    end
+  end
+
+  @impl true
+  def delete_entries(entries) do
+    Enum.each(entries, &File.rm(&1.key))
   end
 
   @impl true

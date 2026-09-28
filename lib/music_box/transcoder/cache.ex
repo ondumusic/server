@@ -40,6 +40,42 @@ defmodule MusicBox.Transcoder.Cache do
   def get_bytes(file_id, preset, start_byte, bytes_to_read),
     do: impl().get_bytes(file_id, preset, start_byte, bytes_to_read)
 
+  @typedoc "A cached transcode, the key is the path (or S3 key) of the cached file."
+  @type entry :: %{
+          key: String.t(),
+          file_id: String.t(),
+          preset_id: String.t(),
+          size: non_neg_integer(),
+          completed_at: DateTime.t()
+        }
+
+  @doc """
+  Lists all cached transcodes, files that are not named like a cached transcode
+  are skipped.
+  """
+  @callback entries() :: [entry()]
+  @spec entries() :: [entry()]
+  def entries, do: impl().entries()
+
+  @doc """
+  Deletes the given cached transcodes.
+  """
+  @callback delete_entries([entry()]) :: :ok
+  @spec delete_entries([entry()]) :: :ok
+  def delete_entries(entries), do: impl().delete_entries(entries)
+
+  @doc """
+  Parses a cached file name (`{file_id}-{preset_id}.{ext}`) into the file id and
+  preset id.
+  """
+  @spec parse_filename(String.t()) :: {:ok, String.t(), String.t()} | :error
+  def parse_filename(filename) do
+    case Regex.run(~r/\A([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})-(\w+)\.\w+\z/, filename) do
+      [_match, file_id, preset_id] -> {:ok, file_id, preset_id}
+      nil -> :error
+    end
+  end
+
   @doc """
   Deletes the cached file for a given file/preset, if there is one.
   """
