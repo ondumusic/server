@@ -46,11 +46,11 @@ defmodule MusicBox.Issues.Rules do
   defp unknown_album(%{is_unknown: true}), do: [issue(:album_missing)]
   defp unknown_album(_album), do: []
 
-  defp artwork(%{artwork_path: nil, artwork_fetcher: fetcher}) when not is_nil(fetcher),
+  defp artwork(%{artwork_hash: nil, artwork_fetcher: fetcher}) when not is_nil(fetcher),
     do: [issue(:artwork_missing)]
 
-  defp artwork(%{artwork_path: path, artwork_width: width, artwork_height: height})
-       when is_binary(path) and is_integer(width) and is_integer(height) do
+  defp artwork(%{artwork_hash: hash, artwork_width: width, artwork_height: height})
+       when is_binary(hash) and is_integer(width) and is_integer(height) do
     dimensions = %{width: width, height: height}
     not_square(dimensions) ++ low_res(dimensions)
   end

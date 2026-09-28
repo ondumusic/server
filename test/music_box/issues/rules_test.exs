@@ -7,7 +7,7 @@ defmodule MusicBox.Issues.RulesTest do
     id: "album-id",
     release_year: 2000,
     is_unknown: false,
-    artwork_path: "/artwork/album-id",
+    artwork_hash: "4f1c2a9d8e7b6c5a",
     artwork_fetcher: :embedded,
     artwork_width: 600,
     artwork_height: 600
@@ -24,7 +24,7 @@ defmodule MusicBox.Issues.RulesTest do
     end
 
     test "only reports missing artwork once the fetchers ran" do
-      album = %{@album | artwork_path: nil, artwork_width: nil, artwork_height: nil}
+      album = %{@album | artwork_hash: nil, artwork_width: nil, artwork_height: nil}
 
       assert Rules.album(%{album | artwork_fetcher: nil}) == []
       assert codes(Rules.album(%{album | artwork_fetcher: :embedded})) == [:artwork_missing]

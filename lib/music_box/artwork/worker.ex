@@ -74,9 +74,7 @@ defmodule MusicBox.Artwork.Worker do
       al in Album,
       left_join: art in assoc(al, :artwork),
       left_join: artist in assoc(al, :artist),
-      where:
-        is_nil(art.album_id) or (not is_nil(art.path) and is_nil(art.hash)) or
-          art.invalidated_at > art.last_fetch_attempt,
+      where: is_nil(art.album_id) or art.invalidated_at > art.last_fetch_attempt,
       where: al.id not in ^exclude_ids,
       preload: [artwork: art],
       order_by: [desc: is_nil(art.album_id), asc: artist.sort_name, asc: al.sort_name],

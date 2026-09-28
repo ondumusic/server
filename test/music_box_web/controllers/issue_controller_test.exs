@@ -13,7 +13,7 @@ defmodule MusicBoxWeb.IssueControllerTest do
 
       {:ok, _artwork} =
         Albums.update_artwork(album, %{
-          path: "/artwork",
+          hash: "4f1c2a9d8e7b6c5a",
           width: 640,
           height: 571,
           fetcher: :embedded,

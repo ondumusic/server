@@ -13,7 +13,7 @@ defmodule MusicBox.Issues.Query do
         id: al.id,
         release_year: al.release_year,
         is_unknown: al.is_unknown,
-        artwork_path: aw.path,
+        artwork_hash: aw.hash,
         artwork_fetcher: aw.fetcher,
         artwork_width: aw.width,
         artwork_height: aw.height

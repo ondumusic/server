@@ -56,7 +56,7 @@ defmodule MusicBox.Artwork do
     params =
       case find_artwork(album, fetchers, context) do
         {:ok, fetcher, params} -> Map.put(params, :fetcher, fetcher)
-        :not_found -> %{fetcher: List.last(fetchers), path: nil, hash: nil, source_path: nil}
+        :not_found -> %{fetcher: List.last(fetchers), hash: nil, source_path: nil}
       end
       |> Map.merge(context)
 
@@ -79,8 +79,8 @@ defmodule MusicBox.Artwork do
     end
   end
 
-  defp changed?(%Albums.Artwork{path: path, hash: hash}, %{path: path, hash: hash}), do: false
-  defp changed?(nil, %{path: nil}), do: false
+  defp changed?(%Albums.Artwork{hash: hash}, %{hash: hash}), do: false
+  defp changed?(nil, %{hash: nil}), do: false
   defp changed?(_old_artwork, _new_artwork), do: true
 
   # We'll bump the album updated_at so they will be updated with the next
@@ -122,8 +122,8 @@ defmodule MusicBox.Artwork do
     result =
       with {:ok, hash} <- calculate_hash(source_path) do
         case album.artwork do
-          %{path: path, hash: ^hash, width: width, height: height} when is_binary(path) ->
-            {:ok, %{path: path, hash: hash, width: width, height: height}}
+          %{hash: ^hash, width: width, height: height} ->
+            {:ok, %{hash: hash, width: width, height: height}}
 
           _artwork ->
             resize_variants(album, source_path, hash)
@@ -141,7 +141,7 @@ defmodule MusicBox.Artwork do
 
     with {:ok, %{width: width, height: height}} <-
            Tool.resize_artwork(%{album: album, path: source_path, variants: variants}) do
-      {:ok, %{path: artwork_dir(album.id), hash: hash, width: width, height: height}}
+      {:ok, %{hash: hash, width: width, height: height}}
     end
   end
 
@@ -153,7 +153,7 @@ defmodule MusicBox.Artwork do
   end
 
   defp cleanup(artwork) do
-    if is_nil(artwork.path), do: File.rm_rf(artwork_dir(artwork.album_id))
+    if is_nil(artwork.hash), do: File.rm_rf(artwork_dir(artwork.album_id))
     artwork
   end
 

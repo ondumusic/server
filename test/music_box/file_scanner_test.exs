@@ -131,7 +131,6 @@ defmodule MusicBox.FileScannerTest do
 
       set_artwork = fn album ->
         MusicBox.Albums.update_artwork(album, %{
-          path: "/artwork",
           hash: "existing",
           fetcher: :embedded,
           last_fetch_attempt: ~U[2026-01-01 00:00:00Z]

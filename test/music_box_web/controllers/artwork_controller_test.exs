@@ -19,7 +19,6 @@ defmodule MusicBoxWeb.ArtworkControllerTest do
 
     {:ok, _artwork} =
       Albums.update_artwork(album, %{
-        path: Artwork.artwork_dir(album.id),
         hash: "abc123",
         width: 450,
         height: 400,
@@ -48,10 +47,6 @@ defmodule MusicBoxWeb.ArtworkControllerTest do
     test "caches versioned artwork forever", %{conn: conn, album: album} do
       conn = get(conn, ~p"/artwork/#{album.id}/abc123/large.jpg")
       assert get_resp_header(conn, "cache-control") == ["public, max-age=31536000, immutable"]
-
-      # Artwork without a hash can still change at the same url.
-      conn = get(build_conn(), ~p"/artwork/#{album.id}/0/large.jpg")
-      refute get_resp_header(conn, "cache-control") == ["public, max-age=31536000, immutable"]
     end
 
     test "returns not found for unknown files", %{conn: conn, album: album} do
@@ -77,17 +72,6 @@ defmodule MusicBoxWeb.ArtworkControllerTest do
 
       assert thumbnail_url =~ ~r"/artwork/#{album.id}/abc123/thumbnail.jpg$"
       assert large_url =~ ~r"/artwork/#{album.id}/abc123/large.jpg$"
-    end
-
-    test "uses a fixed version for artwork without a hash", %{conn: conn, album: album} do
-      album |> Repo.preload(:artwork) |> Map.get(:artwork) |> update_record(%{hash: nil})
-
-      assert %{"artworkUrl" => large_url} =
-               conn
-               |> get(~p"/api/albums/#{album.id}")
-               |> api_response(200, "Album")
-
-      assert large_url =~ ~r"/artwork/#{album.id}/0/large.jpg$"
     end
 
     test "has no artwork before it was resized", %{conn: conn, album: album} do

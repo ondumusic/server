@@ -26,7 +26,7 @@ defmodule MusicBox.IssuesTest do
           ]
         })
 
-      set_artwork(album, %{path: "/artwork", width: 250, height: 200})
+      set_artwork(album, %{hash: "4f1c2a9d8e7b6c5a", width: 250, height: 200})
 
       assert %{entries: [entry], total_entries: 1} = Issues.list()
       assert entry.type == :album

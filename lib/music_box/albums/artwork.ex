@@ -16,7 +16,7 @@ defmodule MusicBox.Albums.Artwork do
   schema "album_artworks" do
     belongs_to :album, Album, define_field: false
 
-    field :path, :string
+    # A hash of the source image, only set when the album has artwork.
     field :hash, :string
     field :width, :integer
     field :height, :integer
@@ -43,7 +43,6 @@ defmodule MusicBox.Albums.Artwork do
   def changeset(%__MODULE__{} = struct, attrs) do
     struct
     |> cast(attrs, [
-      :path,
       :hash,
       :width,
       :height,
