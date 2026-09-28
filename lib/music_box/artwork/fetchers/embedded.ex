@@ -7,7 +7,7 @@ defmodule MusicBox.Artwork.Fetcher.Embedded do
   alias MusicBox.Storage
   alias MusicBox.Tool
 
-  def find(album) do
+  def find(album, _context) do
     album = Repo.preload(album, tracks: [:file])
 
     album.tracks
@@ -17,12 +17,16 @@ defmodule MusicBox.Artwork.Fetcher.Embedded do
       |> Tool.extract_artwork()
       |> case do
         {:error, :not_found} -> {:cont, result}
-        bytes -> {:halt, bytes}
+        bytes -> {:halt, {track.file.path, bytes}}
       end
     end)
     |> case do
-      nil -> {:error, :not_found}
-      bytes -> save_artwork(album, bytes)
+      nil ->
+        {:error, :not_found}
+
+      {track_path, bytes} ->
+        with {:ok, path} <- save_artwork(album, bytes),
+             do: {:ok, %{unprocessed_path: path, source_path: track_path}}
     end
   end
 end

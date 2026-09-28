@@ -3,8 +3,10 @@ defmodule MusicBox.Artwork do
 
   alias MusicBox.Albums
   alias MusicBox.Albums.Album
+  alias MusicBox.Albums.CoverFile
   alias MusicBox.Artwork.Fetcher
   alias MusicBox.Repo
+  alias MusicBox.Storage
   alias MusicBox.Tool
 
   import Ecto.Query
@@ -46,15 +48,17 @@ defmodule MusicBox.Artwork do
 
   @spec find(Album.t()) :: Repo.result(Albums.Artwork.t())
   def find(%Album{} = album) do
-    album = Repo.preload(album, [:artwork])
+    album = Repo.preload(album, [:artwork, tracks: :file])
     started_at = DateTime.utc_now(:second)
     fetchers = Albums.Artwork.fetchers()
+    context = find_context(album)
 
     params =
-      case find_artwork(album, fetchers) do
+      case find_artwork(album, fetchers, context) do
         {:ok, fetcher, params} -> Map.put(params, :fetcher, fetcher)
-        :not_found -> %{fetcher: List.last(fetchers), path: nil, hash: nil}
+        :not_found -> %{fetcher: List.last(fetchers), path: nil, hash: nil, source_path: nil}
       end
+      |> Map.merge(context)
 
     with {:ok, artwork} <-
            Repo.transact(fn -> store(album, Map.put(params, :last_fetch_attempt, started_at)) end) do
@@ -86,14 +90,27 @@ defmodule MusicBox.Artwork do
     |> Repo.update_all(set: [updated_at: DateTime.utc_now(:second)])
   end
 
-  defp find_artwork(_album, []), do: :not_found
+  defp find_context(album) do
+    # Because tracks could be organised in multiple directories (for example a
+    # cd1, cd2 directory) we want to check both of these.
+    dirs =
+      album.tracks
+      |> Enum.map(&Path.dirname(&1.file.path))
+      |> Enum.uniq()
+      |> Enum.sort()
 
-  defp find_artwork(album, [fetcher | fetchers]) do
-    with {:ok, source_path} <- fetcher_module(fetcher).find(album),
-         {:ok, params} <- resize(album, source_path) do
-      {:ok, fetcher, params}
+    cover = dirs |> Enum.flat_map(&Storage.list_dir/1) |> CoverFile.find()
+    %{dirs: dirs, cover: cover}
+  end
+
+  defp find_artwork(_album, [], _context), do: :not_found
+
+  defp find_artwork(album, [fetcher | fetchers], context) do
+    with {:ok, result} <- fetcher_module(fetcher).find(album, context),
+         {:ok, params} <- resize(album, result.unprocessed_path) do
+      {:ok, fetcher, Map.put(params, :source_path, result.source_path)}
     else
-      {:error, _reason} -> find_artwork(album, fetchers)
+      {:error, _reason} -> find_artwork(album, fetchers, context)
     end
   end
 

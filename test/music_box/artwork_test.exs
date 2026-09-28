@@ -47,7 +47,7 @@ defmodule MusicBox.ArtworkTest do
       assert {artwork.width, artwork.height} == {800, 800}
       assert File.ls!(MusicBox.Config.artwork_path()) == [album.id]
       assert Enum.sort(File.ls!(artwork.path)) == ["large.jpg", "thumbnail.jpg"]
-      refute File.exists?(Fetcher.source_path(album))
+      refute File.exists?(Fetcher.unprocessed_path(album))
     end
 
     test "touches the album so clients sync the new artwork urls" do

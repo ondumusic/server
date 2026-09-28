@@ -9,14 +9,20 @@ defmodule MusicBox.Artwork.Fetcher do
   end
 
   alias MusicBox.Albums.Album
+  alias MusicBox.Albums.CoverFile
   require Logger
 
+  @type context :: %{dirs: [String.t()], cover: CoverFile.t() | nil}
+  @type result :: %{unprocessed_path: String.t(), source_path: String.t()}
   @type find_error :: :not_found | :failed_to_write
-  @callback find(album :: Album.t()) :: {:ok, String.t()} | {:error, find_error()}
+
+  @doc "Finds the artwork of an album and saves it with `save_artwork/2`."
+  @callback find(album :: Album.t(), context :: context()) ::
+              {:ok, result()} | {:error, find_error()}
 
   @spec save_artwork(Album.t(), binary()) :: {:ok, String.t()} | {:error, :failed_to_write}
   def save_artwork(album, bytes) do
-    path = source_path(album)
+    path = unprocessed_path(album)
     tmp_path = tmp_path(path)
     File.mkdir_p!(Path.dirname(path))
 
@@ -40,8 +46,8 @@ defmodule MusicBox.Artwork.Fetcher do
   end
 
   # The unprocessed artwork, removed again once it has been resized.
-  @spec source_path(Album.t()) :: String.t()
-  def source_path(album) do
+  @spec unprocessed_path(Album.t()) :: String.t()
+  def unprocessed_path(album) do
     MusicBox.Config.artwork_path()
     |> Path.join("#{album.id}.source")
   end
