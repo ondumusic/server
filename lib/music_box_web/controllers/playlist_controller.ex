@@ -47,9 +47,11 @@ defmodule MusicBoxWeb.PlaylistController do
 
   operation :playlist_items,
     summary: "List playlist items",
-    parameters: [
-      playlist_id: [in: :path, type: Schemas.PlaylistId, required: true]
-    ],
+    parameters:
+      Schemas.Page.params() ++
+        [
+          playlist_id: [in: :path, type: Schemas.PlaylistId, required: true]
+        ],
     responses: [
       ok:
         {"Returns a list of items for the given playlist.", "application/json",

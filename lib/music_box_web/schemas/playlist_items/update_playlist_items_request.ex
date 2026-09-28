@@ -206,7 +206,7 @@ defmodule MusicBoxWeb.Schemas.UpdatePlaylistItemsError do
     discriminator: %OpenApiSpex.Discriminator{
       propertyName: "error",
       mapping: %{
-        "playlist_is_folder" => "#/components/schemas/PlaylistIsFolder",
+        "playlist_is_folder" => "#/components/schemas/PlaylistIsFolderError",
         "too_many_operations" => "#/components/schemas/TooManyOperationsError",
         "move_remove_conflict" => "#/components/schemas/MoveRemoveConflictError",
         "invalid_positions" => "#/components/schemas/InvalidPositionsError",

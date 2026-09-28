@@ -7,7 +7,6 @@ defmodule MusicBoxWeb.UserController do
   operation :update_password,
     summary: "Update your password",
     tags: ["Auth"],
-    security: [],
     request_body: {"Password params", "application/json", Schemas.UpdatePasswordRequest},
     responses: [
       ok: {"Succesfully updated password.", "application/json", Schemas.UpdatePasswordResponse},

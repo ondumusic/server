@@ -51,5 +51,18 @@ defmodule MusicBoxWeb.UserControllerTest do
                })
                |> api_response(422, "UpdatePasswordError")
     end
+
+    test "cannot change password without a password confirmation", %{conn: conn} do
+      assert %{
+               "ok" => false,
+               "fields" => %{"passwordConfirmation" => %{"message" => "does not match password"}}
+             } =
+               conn
+               |> patch(~p"/api/user/password", %{
+                 password: "mynewpassword42!",
+                 currentPassword: "itsamemario!"
+               })
+               |> api_response(422, "UpdatePasswordError")
+    end
   end
 end

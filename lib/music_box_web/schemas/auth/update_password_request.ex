@@ -13,7 +13,7 @@ defmodule MusicBoxWeb.Schemas.UpdatePasswordRequest do
       passwordConfirmation: %Schema{type: :string, minLength: 1},
       currentPassword: %Schema{type: :string, minLength: 1}
     },
-    required: [:password, :psaswordConfirmation, :updatePassword]
+    required: [:currentPassword, :password, :passwordConfirmation]
   })
 end
 
