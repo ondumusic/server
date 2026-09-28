@@ -40,6 +40,13 @@ defmodule MusicBox.Transcoder.Cache do
   def get_bytes(file_id, preset, start_byte, bytes_to_read),
     do: impl().get_bytes(file_id, preset, start_byte, bytes_to_read)
 
+  @doc """
+  Deletes the cached file for a given file/preset, if there is one.
+  """
+  @callback delete(file_id :: String.t(), preset :: Preset.t()) :: :ok | {:error, term()}
+  @spec delete(file_id :: String.t(), preset :: Preset.t()) :: :ok | {:error, term()}
+  def delete(file_id, preset), do: impl().delete(file_id, preset)
+
   defp impl,
     do: Application.get_env(:music_box, MusicBox.Transcoder) |> Keyword.fetch!(:cache_impl)
 end

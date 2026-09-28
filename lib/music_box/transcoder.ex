@@ -35,10 +35,18 @@ defmodule MusicBox.Transcoder do
   end
 
   @spec get_meta(File.t(), Preset.t()) :: Result.t() | nil
-  def get_meta(%File{id: file_id}, preset) do
+  def get_meta(%File{id: file_id} = file, preset) do
     case Cache.get_meta(file_id, preset) do
       {:ok, result} ->
-        result
+        if outdated?(result, file) do
+          # The file changed after it was transcoded (e.g. replaced with a
+          # better version), so it is transcoded again.
+          Cache.delete(file_id, preset)
+          cleanup_lookup_key({file_id, preset.id})
+          nil
+        else
+          result
+        end
 
       {:error, :not_found} ->
         lookup_key = {file_id, preset.id}
@@ -269,6 +277,15 @@ defmodule MusicBox.Transcoder do
       GenServer.reply(from, reply)
     end)
   end
+
+  # Both timestamps come from our own clock (the cache file is written by us),
+  # with second precision.
+  defp outdated?(%Result{completed_at: %DateTime{} = completed_at}, %File{
+         content_changed_at: %DateTime{} = content_changed_at
+       }),
+       do: DateTime.before?(completed_at, content_changed_at)
+
+  defp outdated?(_result, _file), do: false
 
   defp cleanup_lookup_key(lookup_key) do
     {file_id, preset_id} = lookup_key

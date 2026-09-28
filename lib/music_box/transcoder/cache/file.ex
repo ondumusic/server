@@ -53,6 +53,15 @@ defmodule MusicBox.Transcoder.Cache.File do
     Storage.File.get_bytes(path, start_byte, bytes_to_read)
   end
 
+  @impl true
+  def delete(file_id, preset) do
+    case File.rm(cache_file_path(file_id, preset)) do
+      :ok -> :ok
+      {:error, :enoent} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   def cache_file_path(file_id, %Preset{} = preset) do
     filename = "#{file_id}-#{preset.id}.#{preset.ext}"
     Path.join(MusicBox.Config.transcode_cache_path(), filename)

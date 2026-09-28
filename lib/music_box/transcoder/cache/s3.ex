@@ -85,6 +85,17 @@ defmodule MusicBox.Transcoder.Cache.S3 do
     |> Map.fetch!(:body)
   end
 
+  @impl true
+  def delete(file_id, preset) do
+    config(:bucket)
+    |> ExAws.S3.delete_object(cache_file_key(file_id, preset))
+    |> ExAws.request(region: config(:region))
+    |> case do
+      {:ok, _response} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   defp config(key),
     do: Application.get_env(:music_box, __MODULE__) |> Keyword.get(key)
 

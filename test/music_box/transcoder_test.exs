@@ -118,6 +118,33 @@ defmodule MusicBox.TranscoderTest do
       assert {:ok, ^chunk} = Transcoder.request_chunk(track.file, preset, 0)
     end
 
+    test "transcodes a file again when its content changed after it was transcoded", %{
+      track: track
+    } do
+      preset = Transcoder.Preset.default_preset()
+      cache_path = Transcoder.Cache.File.cache_file_path(track.file.id, preset)
+
+      assert {:ok, _chunk} = Transcoder.request_chunk(track.file, preset, 0)
+      assert_receive {:transcode_called, _args}
+
+      assert_eventually(fn ->
+        match?(%{persisted: true}, Transcoder.get_meta(track.file, preset))
+      end)
+
+      # Unchanged files keep their transcode.
+      file = %{track.file | content_changed_at: ~U[2000-01-01 00:00:00Z]}
+      assert %{persisted: true} = Transcoder.get_meta(file, preset)
+      assert File.exists?(cache_path)
+
+      # Changed after it was transcoded.
+      file = %{track.file | content_changed_at: DateTime.add(DateTime.utc_now(:second), 60)}
+      refute Transcoder.get_meta(file, preset)
+      refute File.exists?(cache_path)
+
+      assert {:ok, _chunk} = Transcoder.request_chunk(file, preset, 0)
+      assert_receive {:transcode_called, _args}
+    end
+
     test "concurrency with multiple files" do
       # Lets prepare some more tracks with real fixture files
       tracks =
