@@ -120,6 +120,17 @@ defmodule MusicBox.ArtworkTest do
       assert_received %{event: "processed", payload: %{albums: [^album_id]}}
     end
 
+    test "does not reset the invalidation when storing a lookup" do
+      album = Repo.one!(Album)
+      assert {:ok, _artwork} = Artwork.find(album)
+
+      from(aw in Albums.Artwork, where: aw.album_id == ^album.id)
+      |> Repo.update_all(set: [invalidated_at: ~U[2030-01-01 00:00:00Z]])
+
+      assert {:ok, _artwork} = Artwork.find(album)
+      assert Repo.get!(Albums.Artwork, album.id).invalidated_at == ~U[2030-01-01 00:00:00Z]
+    end
+
     @tag capture_log: true
     test "does not store path when resizing fails" do
       stub(MusicBox.Tool.ExtractArtworkMock, :exec, fn _path -> :crypto.strong_rand_bytes(128) end)
@@ -203,7 +214,7 @@ defmodule MusicBox.ArtworkTest do
       assert hash not in [nil, "existing"]
     end
 
-    test "looks up artwork again when a file of the album changed after the last lookup" do
+    test "looks up artwork again when it was invalidated after the last lookup" do
       for album <- Repo.all(Album) do
         Albums.update_artwork(album, %{
           path: Artwork.artwork_dir(album.id),
@@ -213,15 +224,13 @@ defmodule MusicBox.ArtworkTest do
         })
       end
 
-      Repo.update_all(MusicBox.Files.File, set: [content_changed_at: ~U[2025-12-01 00:00:00Z]])
+      # Invalidated before the last lookup, so already seen.
+      Repo.update_all(Albums.Artwork, set: [invalidated_at: ~U[2025-12-01 00:00:00Z]])
 
       album_id = Repo.one!(from(al in Album, where: al.name == "Album 2", select: al.id))
 
-      file_ids =
-        from(t in MusicBox.Tracks.Track, where: t.album_id == ^album_id, select: t.file_id)
-
-      from(f in MusicBox.Files.File, where: f.id in subquery(file_ids))
-      |> Repo.update_all(set: [content_changed_at: ~U[2026-02-01 00:00:00Z]])
+      from(aw in Albums.Artwork, where: aw.album_id == ^album_id)
+      |> Repo.update_all(set: [invalidated_at: ~U[2026-02-01 00:00:00Z]])
 
       start_supervised!(Artwork.Worker)
 

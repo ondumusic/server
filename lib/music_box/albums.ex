@@ -47,6 +47,6 @@ defmodule MusicBox.Albums do
       album_id: album_id
     }
     |> Artwork.changeset(attrs)
-    |> Repo.insert(on_conflict: :replace_all)
+    |> Repo.insert(on_conflict: {:replace_all_except, [:album_id, :invalidated_at]})
   end
 end

@@ -21,6 +21,10 @@ defmodule MusicBox.Albums.Artwork do
     field :height, :integer
     field :fetcher, Ecto.Enum, values: @fetchers
     field :last_fetch_attempt, :utc_datetime
+
+    # Set by the scanner when a file inside the album changed and we should
+    # refetch so see if the artwork has been updated/replaced.
+    field :invalidated_at, :utc_datetime
   end
 
   @spec changeset(t(), map()) :: Ecto.Changeset.t()

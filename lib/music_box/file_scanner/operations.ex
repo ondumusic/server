@@ -5,7 +5,7 @@ defmodule MusicBox.FileScanner.Operations do
   import Phoenix.Channel.Server, only: [broadcast: 4]
 
   alias Ecto.Multi
-  alias MusicBox.Albums.Album
+  alias MusicBox.Albums.{Album, Artwork}
   alias MusicBox.Artists.Artist
   alias MusicBox.DeletionLog
   alias MusicBox.Files.{File, FileMetadata}
@@ -37,11 +37,13 @@ defmodule MusicBox.FileScanner.Operations do
     |> Multi.run(:settings, fn _repo, _multi ->
       {:ok, Settings.get()}
     end)
+    |> Multi.run(:changed_files, &find_changed_files(&1, files, &2))
     |> Multi.run(:files, &maybe_create_files(&1, files, &2))
     |> Multi.run(:artists, &maybe_create_artists/2)
     |> Multi.run(:albums, &maybe_create_albums/2)
     |> Multi.run(:tracks, &maybe_create_tracks/2)
     |> Multi.run(:album_years, &update_album_release_years/2)
+    |> Multi.run(:invalidated_artworks, &invalidate_changed_artworks/2)
     |> Repo.transact()
   end
 
@@ -108,7 +110,7 @@ defmodule MusicBox.FileScanner.Operations do
     |> Enum.map(& &1.path)
   end
 
-  defp maybe_create_files(repo, files, _results) do
+  defp maybe_create_files(repo, files, %{changed_files: changed_files}) do
     file_fields = File.__schema__(:fields) -- [:metadata]
 
     entries =
@@ -125,7 +127,7 @@ defmodule MusicBox.FileScanner.Operations do
       end)
       |> Enum.map(&add_timestamps(&1, [:last_scanned_at, :content_changed_at]))
 
-    mark_content_changed(repo, changed_file_ids(repo, files))
+    mark_content_changed(repo, changed_files.file_ids)
 
     {_num, files} =
       repo.insert_all(File, entries,
@@ -137,24 +139,63 @@ defmodule MusicBox.FileScanner.Operations do
     {:ok, files}
   end
 
-  # This returns file ids of for already known files that have changed on disk
-  # since they were last scanned.
-  defp changed_file_ids(repo, files) do
+  # This returns new or modified files since last scan, and it also attempts to
+  # return previously known album ids when possible (as a metadata change could
+  # have resulted in it being associated with a different album now).
+  defp find_changed_files(repo, files, _results) do
     lookup = Map.new(files, &{&1.path, {&1.size, &1.last_modified_at}})
     paths = Map.keys(lookup)
 
-    from(f in File,
-      where: f.path in ^paths,
-      select: {f.id, f.path, f.size, f.last_modified_at}
-    )
-    |> repo.all()
-    |> Enum.reject(fn {_id, path, size, mtime} -> Map.get(lookup, path) == {size, mtime} end)
-    |> Enum.map(fn {id, _path, _size, _mtime} -> id end)
+    known_files =
+      from(f in File,
+        left_join: t in assoc(f, :track),
+        where: f.path in ^paths,
+        select: %{
+          id: f.id,
+          path: f.path,
+          size: f.size,
+          mtime: f.last_modified_at,
+          album_id: t.album_id
+        }
+      )
+      |> repo.all()
+
+    changed = Enum.reject(known_files, &(Map.get(lookup, &1.path) == {&1.size, &1.mtime}))
+    new_paths = paths -- Enum.map(known_files, & &1.path)
+
+    {:ok,
+     %{
+       file_ids: Enum.map(changed, & &1.id),
+       paths: Enum.map(changed, & &1.path) ++ new_paths,
+       previous_album_ids: Enum.map(changed, & &1.album_id)
+     }}
   end
 
   defp mark_content_changed(repo, file_ids) do
     from(f in File, where: f.id in ^file_ids)
     |> repo.update_all(set: [content_changed_at: DateTime.utc_now(:second)])
+  end
+
+  defp invalidate_changed_artworks(repo, %{changed_files: changed_files}) do
+    current_album_ids =
+      from(t in Track,
+        join: f in assoc(t, :file),
+        where: f.path in ^changed_files.paths,
+        select: t.album_id
+      )
+      |> repo.all()
+
+    invalidate_artworks(repo, changed_files.previous_album_ids ++ current_album_ids)
+  end
+
+  defp invalidate_artworks(repo, album_ids) do
+    album_ids = album_ids |> Enum.reject(&is_nil/1) |> Enum.uniq()
+
+    {count, _} =
+      from(aw in Artwork, where: aw.album_id in ^album_ids)
+      |> repo.update_all(set: [invalidated_at: DateTime.utc_now(:second)])
+
+    {:ok, count}
   end
 
   defp maybe_create_artists(repo, %{files: files, settings: settings}) do
@@ -399,11 +440,17 @@ defmodule MusicBox.FileScanner.Operations do
   end
 
   defp delete_files_reducer(file_ids, {deleted_acc, error_acc}) do
+    # Get the album ids for any deleted files so we can invalidate their artwork
+    album_ids =
+      from(t in Track, where: t.file_id in ^file_ids, select: t.album_id)
+      |> Repo.all()
+
     File
     |> where([f], f.id in ^file_ids)
     |> Repo.delete_all()
     |> case do
       {count, _} ->
+        invalidate_artworks(Repo, album_ids)
         {deleted_acc + count, error_acc}
 
       _ ->

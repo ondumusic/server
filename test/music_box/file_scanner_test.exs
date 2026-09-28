@@ -120,6 +120,65 @@ defmodule MusicBox.FileScannerTest do
       end
     end
 
+    test "invalidates the artwork of albums with new, changed or deleted files" do
+      alias MusicBox.Albums.{Album, Artwork}
+      alias MusicBox.Files.File
+      alias MusicBox.Tracks.Track
+
+      beatles = Repo.get_by!(Album, slug: "with-the-beatles")
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+      test_album = Repo.get_by!(Album, name: "Test Album")
+
+      set_artwork = fn album ->
+        MusicBox.Albums.update_artwork(album, %{
+          path: "/artwork",
+          hash: "existing",
+          fetcher: :embedded,
+          last_fetch_attempt: ~U[2026-01-01 00:00:00Z]
+        })
+      end
+
+      invalidated_at = fn album -> Repo.get!(Artwork, album.id).invalidated_at end
+
+      set_artwork.(test_album)
+      set_artwork.(beatles)
+
+      # A track of which the file no longer exists in the music path.
+      gone = TestSeeds.insert_track(nil, beatles, %{name: "Gone"})
+      Repo.update_all(from(f in File, where: f.id == ^gone.file_id), set: [path: "gone.mp3"])
+
+      # Unchanged files don't invalidate anything, even when a full scan
+      # analyzes them again.
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+      assert is_nil(invalidated_at.(test_album))
+
+      # Deleted files invalidate the album they belonged to.
+      refute Repo.get(File, gone.file_id)
+      assert %DateTime{} = invalidated_at.(beatles)
+
+      # Changed files invalidate their album.
+      [changed | _] =
+        Repo.all(
+          from(f in File,
+            join: t in Track,
+            on: t.file_id == f.id,
+            where: t.album_id == ^test_album.id
+          )
+        )
+
+      Repo.update_all(from(f in File, where: f.id == ^changed.id), inc: [size: 1])
+
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+      assert %DateTime{} = invalidated_at.(test_album)
+
+      # New files invalidate their album.
+      set_artwork.(test_album)
+      Repo.delete_all(from(f in File, where: f.id == ^changed.id))
+
+      assert {:ok, :scan_completed} = FileScanner.scan(:quick)
+      assert %DateTime{} = invalidated_at.(test_album)
+    end
+
     test "can start async" do
       {:ok, :scan_started} = FileScanner.scan_async(:full)
       assert_receive %{topic: "library:sync", event: "processed", payload: payload}
