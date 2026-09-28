@@ -5,6 +5,7 @@ export interface DropdownOption<T> {
   value: T;
   label: string;
   sublabel?: string;
+  badge?: string | number;
 }
 
 export function FloatingDropdown<T>({
@@ -101,7 +102,12 @@ export function FloatingDropdown<T>({
               onClick={() => selectOption(option.value)}
               onKeyDown={() => selectOption(option.value)}
             >
-              {option.label}
+              <span className="flex items-center justify-between gap-4">
+                {option.label}
+                {option.badge !== undefined && (
+                  <DropdownBadge>{option.badge}</DropdownBadge>
+                )}
+              </span>
               {option.sublabel && option.value === currentValue && (
                 <span className="block text-xs text-muted group-hover/option:text-white">
                   {option.sublabel}
@@ -112,5 +118,13 @@ export function FloatingDropdown<T>({
         </div>
       )}
     </div>
+  );
+}
+
+export function DropdownBadge({ children }: PropsWithChildren) {
+  return (
+    <span className="rounded-full px-1.5 min-w-5 text-xs leading-5 text-center bg-black/5 dark:bg-white/10 group-hover/option:bg-white/25">
+      {children}
+    </span>
   );
 }
