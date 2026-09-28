@@ -87,22 +87,14 @@ defmodule MusicBox.Storage.File do
 
         [current | rest] ->
           cond do
-            File.regular?(current) and Utils.valid_extname?(current) -> {[current], rest}
+            File.regular?(current) and walk_file?(current) -> {[current], rest}
             File.dir?(current) -> walk_dir(current, rest)
             true -> {[], rest}
           end
       end,
       fn _ -> :ok end
     )
-    |> Stream.map(fn path ->
-      %File.Stat{size: size, mtime: mtime} = File.stat!(path, time: :posix)
-
-      %{
-        path: path,
-        size: size,
-        mtime: DateTime.from_unix!(mtime)
-      }
-    end)
+    |> Stream.map(&file_entry(&1, File.stat!(&1, time: :posix)))
   end
 
   defp walk_dir(path, rest) do
@@ -122,5 +114,33 @@ defmodule MusicBox.Storage.File do
         Logger.error("failed to read directory: #{path} (#{reason})")
         {[], rest}
     end
+  end
+
+  defp walk_file?(path), do: Utils.valid_extname?(path) or Utils.cover_file?(path)
+
+  @impl true
+  def list_dir(path) do
+    case File.ls(path) do
+      {:ok, names} ->
+        names
+        |> Enum.sort()
+        |> Enum.flat_map(&maybe_file_entry(path, &1))
+
+      {:error, _reason} ->
+        []
+    end
+  end
+
+  defp maybe_file_entry(path, name) do
+    full_path = Path.join(path, name)
+
+    case File.stat(full_path, time: :posix) do
+      {:ok, %File.Stat{type: :regular} = stat} -> [file_entry(full_path, stat)]
+      _other -> []
+    end
+  end
+
+  defp file_entry(path, %File.Stat{size: size, mtime: mtime}) do
+    %{path: path, size: size, mtime: DateTime.from_unix!(mtime)}
   end
 end

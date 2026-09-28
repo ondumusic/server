@@ -52,14 +52,30 @@ defmodule MusicBox.Storage.S3 do
     config(:bucket)
     |> ExAws.S3.list_objects(prefix: prefix_key)
     |> ExAws.stream!()
-    |> Stream.map(fn object ->
-      %{
-        path: object.key,
-        size: String.to_integer(object.size),
-        mtime: parse_s3_timestamp(object.last_modified)
-      }
-    end)
-    |> Stream.filter(&Utils.valid_extname?(&1.path))
+    |> Stream.map(&file_entry/1)
+    |> Stream.filter(&(Utils.valid_extname?(&1.path) or Utils.cover_file?(&1.path)))
+  end
+
+  @impl true
+  def list_dir(prefix_key) do
+    prefix_key =
+      prefix_key
+      |> ensure_prefix()
+      |> ensure_trailing_slash()
+
+    # The delimiter keeps S3 from listing the objects in "subdirectories".
+    config(:bucket)
+    |> ExAws.S3.list_objects(prefix: prefix_key, delimiter: "/")
+    |> ExAws.stream!()
+    |> Enum.map(&file_entry/1)
+  end
+
+  defp file_entry(object) do
+    %{
+      path: object.key,
+      size: String.to_integer(object.size),
+      mtime: parse_s3_timestamp(object.last_modified)
+    }
   end
 
   @impl true

@@ -24,7 +24,7 @@ defmodule MusicBox.Storage do
   end
 
   @doc """
-  Finds all music file paths inside the given path.
+  Finds all music file (and cover image) paths inside the given path.
   Path should be relative to Settings.music_path.
   """
   @type file_entry :: %{
@@ -37,6 +37,17 @@ defmodule MusicBox.Storage do
   def walk(path) do
     impl().walk(absolute(path))
     |> Stream.map(&strip_prefix/1)
+  end
+
+  @doc """
+  Lists the files directly inside the given directory (not recursive).
+  Path should be relative to Settings.music_path.
+  """
+  @callback list_dir(path :: String.t()) :: [file_entry()]
+  @spec list_dir(path :: String.t()) :: [file_entry()]
+  def list_dir(path) do
+    impl().list_dir(absolute(path))
+    |> Enum.map(&strip_prefix/1)
   end
 
   @doc """
