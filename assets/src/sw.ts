@@ -7,6 +7,11 @@ interface PrewarmMessage {
   urls: string[];
 }
 
+interface PruneMessage {
+  type: "PRUNE";
+  urls: string[];
+}
+
 const CACHE_NAME = "artwork-v2";
 const PREWARM_CONCURRENCY = 3;
 
@@ -70,12 +75,44 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("message", (event: ExtendableMessageEvent) => {
-  const data = event.data as PrewarmMessage | undefined;
+  const data = event.data as PrewarmMessage | PruneMessage | undefined;
   if (data?.type === "PREWARM") {
     console.log("prewarm", data);
     event.waitUntil(prewarm(data.urls));
+  } else if (data?.type === "PRUNE") {
+    event.waitUntil(prune(data.urls));
   }
 });
+
+// Artwork urls look like /artwork/{albumId}/{hash}/{variant}.jpg, returns
+// "{albumId}/{hash}" or null for urls in another format (e.g. from before the
+// artwork had a hash).
+function artworkHash(url: string): string | null {
+  const parts = new URL(url, self.location.origin).pathname.split("/");
+  const [, prefix, albumId, hash, variant] = parts;
+
+  return parts.length === 5 &&
+    prefix === "artwork" &&
+    albumId &&
+    hash &&
+    variant
+    ? `${albumId}/${hash}`
+    : null;
+}
+
+// Removes cached artwork that is no longer current, urls should contain the
+// current artwork of all albums.
+async function prune(urls: string[]): Promise<void> {
+  const cache = await getCache();
+  const current = new Set(urls.map(artworkHash));
+
+  for (const request of await cache.keys()) {
+    const hash = artworkHash(request.url);
+    if (!hash || !current.has(hash)) {
+      await cache.delete(request);
+    }
+  }
+}
 
 async function prewarm(urls: string[]): Promise<void> {
   const cache = await getCache();

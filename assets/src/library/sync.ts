@@ -210,7 +210,22 @@ class SyncClient {
     const albums = await repo.query<Album>("albums", {
       sortBy: [["releaseYear", "desc"]],
     });
+    await this.#pruneArtwork(albums);
     await this.#prewarmArtwork(albums);
+  }
+
+  // Removes outdated artwork (older hashes) from the cache, needs all albums.
+  async #pruneArtwork(albums: Album[]) {
+    const urls = albums.flatMap(
+      (album) => album.artwork?.map((image) => image.url) ?? [],
+    );
+    const sw = await navigator.serviceWorker?.ready;
+    if (sw?.active) {
+      sw.active.postMessage({
+        type: "PRUNE",
+        urls,
+      });
+    }
   }
 
   async #updateMissingData() {
