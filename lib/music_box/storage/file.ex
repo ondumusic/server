@@ -68,9 +68,12 @@ defmodule MusicBox.Storage.File do
     paths
     |> Task.async_stream(
       fn path ->
+        # Symlinks are not followed, so if a file changed into a symlink we
+        # will mark it as missing.
         status =
-          case File.stat(path) do
-            {:ok, _stat} -> :exists
+          case File.lstat(path) do
+            {:ok, %File.Stat{type: :regular}} -> :exists
+            {:ok, _symlink_or_other} -> :missing
             {:error, :enoent} -> :missing
             {:error, reason} -> {:error, reason}
           end
@@ -101,39 +104,44 @@ defmodule MusicBox.Storage.File do
   @impl true
   def walk(path) do
     Stream.resource(
-      fn -> [path] end,
+      fn -> list_paths(path) end,
       fn
         [] ->
           {:halt, []}
 
         [current | rest] ->
-          cond do
-            File.regular?(current) and walk_file?(current) -> {[current], rest}
-            File.dir?(current) -> walk_dir(current, rest)
-            true -> {[], rest}
-          end
+          walk_path(current, rest)
       end,
       fn _ -> :ok end
     )
-    |> Stream.map(&file_entry(&1, File.stat!(&1, time: :posix)))
   end
 
-  defp walk_dir(path, rest) do
-    case File.ls(path) do
-      {:ok, []} ->
+  defp walk_path(path, rest) do
+    # lstat does not follow symlinks which is good, because we dont want to.
+    # it will either result in duplicates or in links to files outside of the
+    # music path so there is no benefit to supporting them.
+    case File.lstat(path, time: :posix) do
+      {:ok, %File.Stat{type: :regular} = stat} ->
+        if walk_file?(path), do: {[file_entry(path, stat)], rest}, else: {[], rest}
+
+      {:ok, %File.Stat{type: :directory}} ->
+        {[], list_paths(path) ++ rest}
+
+      _symlink_or_error ->
         {[], rest}
+    end
+  end
 
+  defp list_paths(path) do
+    case File.ls(path) do
       {:ok, entries} ->
-        new_paths =
-          entries
-          |> Enum.sort()
-          |> Enum.map(&Path.join(path, &1))
-
-        {[], new_paths ++ rest}
+        entries
+        |> Enum.sort()
+        |> Enum.map(&Path.join(path, &1))
 
       {:error, reason} ->
         Logger.error("failed to read directory: #{path} (#{reason})")
-        {[], rest}
+        []
     end
   end
 
@@ -155,7 +163,8 @@ defmodule MusicBox.Storage.File do
   defp maybe_file_entry(path, name) do
     full_path = Path.join(path, name)
 
-    case File.stat(full_path, time: :posix) do
+    # Symlinks are not followed.
+    case File.lstat(full_path, time: :posix) do
       {:ok, %File.Stat{type: :regular} = stat} -> [file_entry(full_path, stat)]
       _other -> []
     end
