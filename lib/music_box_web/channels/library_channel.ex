@@ -8,17 +8,30 @@ defmodule MusicBoxWeb.LibraryChannel do
   alias MusicBox.Playlists.Playlist
   alias MusicBox.Playlists.PlaylistItem
   alias MusicBox.Repo
+  alias MusicBox.Sessions
   alias MusicBoxWeb.{LibraryJSON, PlaylistJSON}
 
   import Ecto.Query
 
-  intercept ["processed"]
+  intercept ["processed", "deleted", "completed"]
 
   def join("library:sync", _message, socket) do
     {:ok, socket}
   end
 
-  def handle_out("processed", changes, socket) do
+  # Sessions can be logged out while connected (e.g. by changing the password),
+  # so check the session before every push. Disconnecting makes the client
+  # reconnect with its current session token, if it has one.
+  def handle_out(event, payload, socket) do
+    if Sessions.get_user_by_session_token(socket.assigns.session_token) do
+      push_event(event, payload, socket)
+    else
+      MusicBoxWeb.Endpoint.broadcast(socket.id, "disconnect", %{})
+      {:noreply, socket}
+    end
+  end
+
+  defp push_event("processed", changes, socket) do
     json_changes =
       changes
       |> Enum.map(fn
@@ -37,6 +50,11 @@ defmodule MusicBoxWeb.LibraryChannel do
       |> Map.new()
 
     push(socket, "processed", json_changes)
+    {:noreply, socket}
+  end
+
+  defp push_event(event, payload, socket) do
+    push(socket, event, payload)
     {:noreply, socket}
   end
 

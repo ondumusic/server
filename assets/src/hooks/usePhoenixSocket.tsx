@@ -46,7 +46,9 @@ export const PhoenixSocketProvider = ({ children }: PropsWithChildren) => {
 
     // Connect socket
     socketRef.current = new Socket("/socket", {
-      authToken: auth.sessionToken ?? undefined,
+      // A function so reconnects use the current session token, e.g. after
+      // changing the password. The types are outdated, it can be a function.
+      authToken: (() => auth.sessionToken ?? "") as unknown as string,
     });
     socketRef.current.connect();
 
