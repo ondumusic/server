@@ -58,7 +58,9 @@ defmodule MusicBox.FileScanner do
       &safe_apply({Analyzer, :analyze, [&1]}),
       max_concurrency: 5,
       ordered: false,
-      timeout: 5_000,
+      # This timeout is only used as a fallback, the probing tool has its own
+      # shorter timeout which also stops ffprobe.
+      timeout: 10_000,
       on_timeout: :kill_task
     )
     |> Stream.flat_map(&discard_errors/1)

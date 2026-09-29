@@ -24,7 +24,7 @@ defmodule MusicBox.Loudness do
     measured_at = DateTime.utc_now(:second)
 
     loudness =
-      case Tool.loudness(Storage.get_uri(file.path)) do
+      case Tool.loudness(Storage.get_uri(file.path), timeout(file)) do
         {:ok, %{lufs: lufs, peak: peak}} ->
           %Loudness{lufs: lufs, peak: peak, measured_at: measured_at}
 
@@ -35,6 +35,13 @@ defmodule MusicBox.Loudness do
 
     Repo.transact(fn -> store(file, loudness) end)
   end
+
+  # Generate a timeout based on the duration (if known) instead of a fixed one,
+  # as a 3 minute track vs a 90 minute track could have different processing times.
+  defp timeout(%File{metadata: %{duration: duration}}) when is_number(duration),
+    do: round(duration * 500) + :timer.minutes(1)
+
+  defp timeout(_file), do: :timer.minutes(10)
 
   @doc """
   Approximates the loudness of an album from its (preloaded) tracks, so clients

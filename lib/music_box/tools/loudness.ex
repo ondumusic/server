@@ -16,7 +16,7 @@ defmodule MusicBox.Tool.Loudness do
   @peak_regex Regex.compile!("True peak:\\s+Peak:\\s+#{@number} dBFS")
 
   @impl true
-  def exec(path) do
+  def exec(path: path, timeout: timeout) do
     ffmpeg_path = System.find_executable("ffmpeg") || throw(:ffmpeg_not_found)
     args = [ffmpeg_path | ffmpeg_args(path)]
 
@@ -28,8 +28,9 @@ defmodule MusicBox.Tool.Loudness do
         nice_path -> {nice_path, ["-n", "19" | args]}
       end
 
-    case System.cmd(cmd, args, stderr_to_stdout: true) do
+    case MusicBox.Tool.cmd(cmd, args, timeout: timeout, stderr_to_stdout: true) do
       {output, 0} -> parse(output)
+      {:error, :timeout} -> {:error, :timeout}
       _ -> {:error, :measure_failed}
     end
   end
@@ -53,7 +54,7 @@ defmodule MusicBox.Tool.Loudness do
   end
 
   defp ffmpeg_args(path) do
-    ~w(-hide_banner -nostats -i) ++
+    ~w(-nostdin -hide_banner -nostats -i) ++
       [path] ++
       ~w(
         -map 0:a:0

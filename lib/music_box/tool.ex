@@ -4,7 +4,7 @@ defmodule MusicBox.Tool do
 
   def cat(path), do: impl(:cat_tool).exec(path)
   def probe(path), do: impl(:probe_tool).exec(path)
-  def loudness(path), do: impl(:loudness_tool).exec(path)
+  def loudness(path, timeout), do: impl(:loudness_tool).exec(path: path, timeout: timeout)
   def transcode(args), do: impl(:transcode_tool).exec(args)
   def extract_artwork(path), do: impl(:extract_artwork_tool).exec(path)
   def resize_artwork(opts), do: impl(:resize_artwork_tool).exec(opts)
@@ -54,8 +54,15 @@ defmodule MusicBox.Tool do
       System.cmd("sh", ["-c", "kill -KILL #{os_pid}"], stderr_to_stdout: true)
     end
 
-    # No messages are received once closed, flush the ones already received.
-    if Port.info(port), do: Port.close(port)
+    # The port closes by itself once the process exited, which can happen right
+    # after killing it. No messages are received once closed, so flush the ones
+    # that were already received.
+    try do
+      Port.close(port)
+    rescue
+      ArgumentError -> :ok
+    end
+
     flush(port)
   end
 

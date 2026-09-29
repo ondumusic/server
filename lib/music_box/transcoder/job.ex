@@ -96,7 +96,7 @@ defmodule MusicBox.Transcoder.Job do
         raise "ffmpeg exited with unexpected status code (#{status})"
     after
       timeout ->
-        if Port.info(port), do: Port.close(port)
+        Tool.kill(port)
         raise "ffmpeg time out"
     end
   end
@@ -117,7 +117,7 @@ defmodule MusicBox.Transcoder.Job do
         raise "ffmpeg exited with unexpected status code (#{status})"
     after
       timeout ->
-        if Port.info(port), do: Port.close(port)
+        Tool.kill(port)
         raise "ffmpeg time out"
     end
   end

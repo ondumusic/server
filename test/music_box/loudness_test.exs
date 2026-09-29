@@ -20,6 +20,23 @@ defmodule MusicBox.LoudnessTest do
     end
 
     @tag capture_log: true
+    test "allows half of the duration plus a minute to measure" do
+      pid = self()
+
+      stub(MusicBox.Tool.LoudnessMock, :exec, fn [path: _path, timeout: timeout] ->
+        send(pid, {:timeout, timeout})
+        {:ok, %{lufs: -9.5, peak: -0.4}}
+      end)
+
+      file = Repo.one!(from(f in File, limit: 1))
+
+      file =
+        update_record(file, %{metadata: %{Map.from_struct(file.metadata) | duration: 3600.0}})
+
+      Loudness.measure(file)
+      assert_received {:timeout, 1_860_000}
+    end
+
     test "stores a failed measurement without values" do
       stub(MusicBox.Tool.LoudnessMock, :exec, fn _path -> {:error, :measure_failed} end)
       file = Repo.one!(from(f in File, limit: 1))
@@ -148,7 +165,7 @@ defmodule MusicBox.LoudnessTest do
       pid = self()
       in_progress = :ets.new(:in_progress, [:public])
 
-      stub(MusicBox.Tool.LoudnessMock, :exec, fn path ->
+      stub(MusicBox.Tool.LoudnessMock, :exec, fn [path: path, timeout: _timeout] ->
         if :ets.update_counter(in_progress, path, 1, {path, 0}) > 1,
           do: send(pid, {:concurrent_measure, path})
 
@@ -206,8 +223,8 @@ defmodule MusicBox.LoudnessTest do
       crashing_uri = MusicBox.Storage.get_uri(crashing.path)
 
       stub(MusicBox.Tool.LoudnessMock, :exec, fn
-        ^crashing_uri -> raise "boom"
-        _path -> {:ok, %{lufs: -9.5, peak: -0.4}}
+        [path: ^crashing_uri, timeout: _timeout] -> raise "boom"
+        _args -> {:ok, %{lufs: -9.5, peak: -0.4}}
       end)
 
       worker_pid = start_supervised!(Loudness.Worker)

@@ -15,7 +15,7 @@ defmodule MusicBox.Tool.Transcode do
           :exit_status,
           :use_stdio,
           :stderr_to_stdout,
-          args: args
+          args: ["-nostdin" | args]
         ]
       )
 

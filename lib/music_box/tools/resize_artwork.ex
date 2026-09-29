@@ -7,6 +7,8 @@ defmodule MusicBox.Tool.ResizeArtwork do
 
   # We will limit the maximum dimensions of our image to avoid high memory usage
   @max_dimension 10_000
+  @probe_timeout :timer.seconds(10)
+  @resize_timeout :timer.seconds(60)
 
   @impl true
   def exec(opts) when is_list(opts), do: exec(Map.new(opts))
@@ -26,7 +28,10 @@ defmodule MusicBox.Tool.ResizeArtwork do
          :ok <- check_dimensions(dimensions),
          :ok <- mkdir_outputs(outputs),
          {_stdout, 0} <-
-           System.cmd(ffmpeg_path, ffmpeg_args(path, outputs), stderr_to_stdout: true),
+           MusicBox.Tool.cmd(ffmpeg_path, ffmpeg_args(path, outputs),
+             timeout: @resize_timeout,
+             stderr_to_stdout: true
+           ),
          :ok <- rename_outputs(outputs) do
       {:ok, dimensions}
     else
@@ -54,7 +59,7 @@ defmodule MusicBox.Tool.ResizeArtwork do
     args =
       ~w(-v quiet -select_streams v:0 -show_entries stream=width,height -of csv=p=0) ++ [path]
 
-    with {stdout, 0} <- System.cmd(ffprobe_path, args),
+    with {stdout, 0} <- MusicBox.Tool.cmd(ffprobe_path, args, timeout: @probe_timeout),
          [width, height] <- stdout |> String.trim() |> String.split(","),
          {width, ""} when width > 0 <- Integer.parse(width),
          {height, ""} when height > 0 <- Integer.parse(height) do
@@ -106,7 +111,7 @@ defmodule MusicBox.Tool.ResizeArtwork do
         ["-map", "[out#{i}]", "-q:v", "2", "-update", "1", tmp_path]
       end)
 
-    ["-y", "-i", path, "-filter_complex", Enum.join([split | scales], ";")] ++ maps
+    ["-nostdin", "-y", "-i", path, "-filter_complex", Enum.join([split | scales], ";")] ++ maps
   end
 
   # Fit within `size` without upscaling, then pad to a square with white.

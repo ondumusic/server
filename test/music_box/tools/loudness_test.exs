@@ -18,7 +18,7 @@ defmodule MusicBox.Tool.LoudnessTest do
       test "measures #{fixture}" do
         path = Path.join(@fixtures_path, unquote(fixture))
 
-        assert {:ok, %{lufs: lufs, peak: peak}} = Loudness.exec(path)
+        assert {:ok, %{lufs: lufs, peak: peak}} = Loudness.exec(path: path, timeout: 60_000)
         assert lufs < 0 and lufs > -70
         assert is_float(peak) and peak < 3
       end
@@ -26,7 +26,7 @@ defmodule MusicBox.Tool.LoudnessTest do
 
     test "returns an error for non-audio files" do
       path = Path.expand("../../support/fixtures/random.bin", __DIR__)
-      assert {:error, :measure_failed} = Loudness.exec(path)
+      assert {:error, :measure_failed} = Loudness.exec(path: path, timeout: 60_000)
     end
   end
 
