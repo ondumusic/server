@@ -38,6 +38,10 @@ defmodule MusicBoxWeb.Router do
     get "/onboarding/:step", PageController, :react
   end
 
+  scope "/", MusicBoxWeb do
+    get "/health", HealthController, :show
+  end
+
   scope "/" do
     pipe_through [:api, MusicBoxWeb.Plugs.DocsEnabled]
     get "/openapi", OpenApiSpex.Plug.RenderSpec, :openapi
