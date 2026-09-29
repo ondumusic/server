@@ -74,8 +74,13 @@ defmodule MusicBox.Tool.ResizeArtworkTest do
   defp red_image(dir, width, height, ext \\ "png") do
     path = Path.join(dir, "source.#{ext}")
 
+    # Force rgb24 on the source: older ffmpeg (6.x) rounds odd sizes down to even when the
+    # color source negotiates a chroma subsampled format. Keep jpegs 4:2:0 like real artwork.
+    pix_fmt = if ext == "jpg", do: ~w(-pix_fmt yuvj420p), else: []
+
     ffmpeg(
-      ~w(-y -v quiet -f lavfi -i color=c=red:s=#{width}x#{height} -frames:v 1 -update 1) ++ [path]
+      ~w(-y -v quiet -f lavfi -i color=c=red:s=#{width}x#{height},format=rgb24 -frames:v 1 -update 1) ++
+        pix_fmt ++ [path]
     )
 
     path
