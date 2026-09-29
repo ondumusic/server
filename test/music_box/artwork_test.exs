@@ -128,6 +128,26 @@ defmodule MusicBox.ArtworkTest do
     end
   end
 
+  describe "size limits" do
+    @tag capture_log: true
+    test "does not store artwork that is too large", %{artwork_bytes: artwork_bytes} do
+      # A valid image, padded beyond the maximum size.
+      too_large = artwork_bytes <> :binary.copy(<<0>>, Fetcher.max_size())
+      stub(MusicBox.Tool.ExtractArtworkMock, :exec, fn _path -> too_large end)
+
+      assert {:ok, %{hash: nil}} = Artwork.find(Repo.one!(Album))
+      assert Path.wildcard(Path.join(MusicBox.Config.artwork_path(), "**/*.*")) == []
+    end
+
+    @tag capture_log: true
+    test "does not read cover files that are too large" do
+      cover = %Albums.CoverFile{path: "does/not/exist.jpg", size: Fetcher.max_size() + 1}
+
+      assert {:error, :too_large} =
+               Fetcher.CoverFile.find(Repo.one!(Album), %{dirs: [], cover: cover})
+    end
+  end
+
   describe "variant_sizes/1" do
     test "fits the source within each variant without upscaling" do
       assert Artwork.variant_sizes(%Albums.Artwork{width: 1215, height: 1030}) ==
@@ -206,9 +226,16 @@ defmodule MusicBox.ArtworkTest do
     end
 
     @tag capture_log: true
-    test "keeps processing when a fetch crashes", %{artwork_bytes: artwork_bytes} do
+    test "skips albums of which the fetch crashed", %{artwork_bytes: artwork_bytes} do
+      pid = self()
+
       stub(MusicBox.Tool.ExtractArtworkMock, :exec, fn path ->
-        if path =~ "Track 1.", do: raise("boom"), else: artwork_bytes
+        if path =~ "Track 1." do
+          send(pid, :crashed)
+          raise("boom")
+        else
+          artwork_bytes
+        end
       end)
 
       worker_pid = start_supervised!(Artwork.Worker)
@@ -220,7 +247,12 @@ defmodule MusicBox.ArtworkTest do
         assert_receive %{event: "processed", payload: %{albums: [^album_id]}}
       end
 
-      assert_eventually(fn -> :sys.get_state(worker_pid) == %{} end)
+      assert_receive :crashed
+      assert_eventually(fn -> :sys.get_state(worker_pid).running == %{} end)
+
+      # Not picked up again, e.g. when the retry delay passed.
+      send(worker_pid, :next_batch)
+      refute_receive :crashed, 200
     end
   end
 

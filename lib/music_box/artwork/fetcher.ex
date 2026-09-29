@@ -14,13 +14,27 @@ defmodule MusicBox.Artwork.Fetcher do
 
   @type context :: %{dirs: [String.t()], cover: CoverFile.t() | nil}
   @type result :: %{unprocessed_path: String.t(), source_path: String.t()}
-  @type find_error :: :not_found | :failed_to_write
+  @type find_error :: :not_found | :failed_to_write | :too_large
+
+  # We'll limit the artwork images in file size because the larger they get the
+  # more memory they'll cost to process, and it is unlikely we will ever really
+  # hit this limit under normal use.
+  @max_size 25 * 1024 * 1024
 
   @doc "Finds the artwork of an album and saves it with `save_artwork/2`."
   @callback find(album :: Album.t(), context :: context()) ::
               {:ok, result()} | {:error, find_error()}
 
-  @spec save_artwork(Album.t(), binary()) :: {:ok, String.t()} | {:error, :failed_to_write}
+  @spec max_size() :: pos_integer()
+  def max_size, do: @max_size
+
+  @spec save_artwork(Album.t(), binary()) ::
+          {:ok, String.t()} | {:error, :failed_to_write | :too_large}
+  def save_artwork(album, bytes) when byte_size(bytes) > @max_size do
+    Logger.warning("Artwork of album #{album.id} is too large (#{byte_size(bytes)} bytes)")
+    {:error, :too_large}
+  end
+
   def save_artwork(album, bytes) do
     path = unprocessed_path(album)
     tmp_path = tmp_path(path)

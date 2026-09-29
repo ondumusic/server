@@ -5,6 +5,9 @@ defmodule MusicBox.Tool.ResizeArtwork do
   alias MusicBox.Artwork.Fetcher
   require Logger
 
+  # We will limit the maximum dimensions of our image to avoid high memory usage
+  @max_dimension 10_000
+
   @impl true
   def exec(opts) when is_list(opts), do: exec(Map.new(opts))
 
@@ -20,6 +23,7 @@ defmodule MusicBox.Tool.ResizeArtwork do
 
     with true <- File.exists?(path),
          {:ok, dimensions} <- probe_dimensions(ffprobe_path, path),
+         :ok <- check_dimensions(dimensions),
          :ok <- mkdir_outputs(outputs),
          {_stdout, 0} <-
            System.cmd(ffmpeg_path, ffmpeg_args(path, outputs), stderr_to_stdout: true),
@@ -29,6 +33,10 @@ defmodule MusicBox.Tool.ResizeArtwork do
       false ->
         Logger.error("Failed to resize artwork for album #{album.id}, file not found?")
         {:error, :file_not_found}
+
+      {:error, :too_large} ->
+        Logger.warning("Artwork of album #{album.id} is too large to resize (file: #{path})")
+        {:error, :too_large}
 
       {:error, reason} ->
         cleanup_outputs(outputs)
@@ -54,6 +62,10 @@ defmodule MusicBox.Tool.ResizeArtwork do
     else
       _ -> {:error, :probe_failed}
     end
+  end
+
+  defp check_dimensions(%{width: width, height: height}) do
+    if max(width, height) > @max_dimension, do: {:error, :too_large}, else: :ok
   end
 
   defp mkdir_outputs(outputs) do

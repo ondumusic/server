@@ -18,9 +18,8 @@ defmodule MusicBox.Artwork.Worker do
 
   @impl true
   def init(_) do
-    default_state = %{}
     Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:sync")
-    {:ok, next_batch(default_state)}
+    {:ok, next_batch(%{running: %{}, crashed: []})}
   end
 
   @impl true
@@ -44,27 +43,33 @@ defmodule MusicBox.Artwork.Worker do
   end
 
   def handle_info({:DOWN, ref, :process, _pid, reason}, state) do
-    new_state = Map.delete(state, ref)
+    {album_id, running} = Map.pop(state.running, ref)
+    state = %{state | running: running}
 
     if reason == :normal do
-      {:noreply, next_batch(new_state)}
+      {:noreply, next_batch(state)}
     else
-      # Delay so a crashing album does not immediately get picked up again.
+      # If the process crashed we will skip this album until the server has
+      # been restarted, this should avoid infinite crash loops. Maybe we'll
+      # do a more permanent solution at a later time.
       Process.send_after(self(), :next_batch, @retry_after)
-      {:noreply, new_state}
+      {:noreply, %{state | crashed: [album_id | state.crashed]}}
     end
   end
 
   def handle_info(_payload, state), do: {:noreply, state}
 
   defp next_batch(state) do
-    batch_size = max(0, @max_concurrency - map_size(state))
-    in_progress_ids = Enum.map(state, fn {_ref, album} -> album.id end)
-    new_batch = if batch_size == 0, do: [], else: get_next_batch(batch_size, in_progress_ids)
+    batch_size = max(0, @max_concurrency - map_size(state.running))
+    exclude_ids = Map.values(state.running) ++ state.crashed
+    new_batch = if batch_size == 0, do: [], else: get_next_batch(batch_size, exclude_ids)
 
-    for album <- new_batch, into: state do
-      {start_async_fetcher(album), album}
-    end
+    running =
+      for album <- new_batch, into: state.running do
+        {start_async_fetcher(album), album.id}
+      end
+
+    %{state | running: running}
   end
 
   # The batcher sorts albums without artwork first, then invalidated artwork

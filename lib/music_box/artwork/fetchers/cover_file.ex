@@ -6,7 +6,14 @@ defmodule MusicBox.Artwork.Fetcher.CoverFile do
   alias MusicBox.Storage
   require Logger
 
+  @max_size MusicBox.Artwork.Fetcher.max_size()
+
   def find(_album, %{cover: nil}), do: {:error, :not_found}
+
+  def find(album, %{cover: %{size: size} = cover}) when size > @max_size do
+    Logger.warning("Cover file #{cover.path} of album #{album.id} is too large (#{size} bytes)")
+    {:error, :too_large}
+  end
 
   def find(album, %{cover: cover}) do
     bytes = cover.path |> Storage.stream!() |> Enum.join()

@@ -27,6 +27,14 @@ defmodule MusicBox.Tool.ResizeArtworkTest do
       assert red?(pixel(large, 5, 320))
     end
 
+    @tag capture_log: true
+    test "refuses artwork larger than 10000 pixels", %{dir: dir} do
+      source = red_image(dir, 10_001, 10)
+
+      assert {:error, :too_large} = resize(source, dir)
+      assert Path.wildcard(Path.join(dir, "*.jpg")) == []
+    end
+
     test "does not upscale small artwork", %{dir: dir} do
       source = red_image(dir, 100, 60)
 
