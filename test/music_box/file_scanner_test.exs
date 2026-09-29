@@ -120,6 +120,21 @@ defmodule MusicBox.FileScannerTest do
       end
     end
 
+    test "keeps album and track counts on a full scan" do
+      alias MusicBox.Albums.Album
+      alias MusicBox.Artists.Artist
+
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+
+      Repo.update_all(Artist, set: [album_count: 3])
+      Repo.update_all(Album, set: [track_count: 7])
+
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+
+      assert Enum.all?(Repo.all(Artist), &(&1.album_count == 3))
+      assert Enum.all?(Repo.all(Album), &(&1.track_count == 7))
+    end
+
     test "invalidates the artwork of albums with new, changed or deleted files" do
       alias MusicBox.Albums.{Album, Artwork}
       alias MusicBox.Files.File

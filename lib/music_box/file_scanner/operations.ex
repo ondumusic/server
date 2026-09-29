@@ -250,7 +250,8 @@ defmodule MusicBox.FileScanner.Operations do
       repo.insert_all(Artist, entries,
         returning: true,
         conflict_target: [:slug],
-        on_conflict: {:replace_all_except, [:id, :inserted_at]}
+        # Counts are maintained separately, keep them.
+        on_conflict: {:replace_all_except, [:id, :inserted_at, :album_count]}
       )
 
     {:ok, artists}
@@ -311,7 +312,8 @@ defmodule MusicBox.FileScanner.Operations do
       repo.insert_all(Album, entries,
         returning: true,
         conflict_target: [:artist_id, :slug],
-        on_conflict: {:replace_all_except, [:id, :inserted_at]}
+        # Counts are maintained separately, keep them.
+        on_conflict: {:replace_all_except, [:id, :inserted_at, :track_count]}
       )
 
     {:ok, albums}
