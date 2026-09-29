@@ -97,9 +97,14 @@ defmodule MusicBox.Transcoder.Utils do
 
   def parse_range_header(_), do: {:error, :invalid_range}
 
+  # Temporary files are kept next to the cache, so they can be moved into it and
+  # leftovers (e.g. after a crash) can be cleaned up.
+  @spec tmp_dir() :: String.t()
+  def tmp_dir, do: Path.join(MusicBox.Config.transcode_cache_path(), "tmp")
+
   @spec tmp_file_path(file_id :: String.t(), preset :: Preset.t()) :: String.t()
   def tmp_file_path(file_id, %Preset{} = preset) do
     filename = "#{file_id}-#{preset.id}.#{preset.ext}.tmp"
-    Path.join(System.tmp_dir!(), filename)
+    Path.join(tmp_dir(), filename)
   end
 end

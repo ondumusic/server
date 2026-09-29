@@ -25,26 +25,35 @@ defmodule MusicBox.Transcoder.Cache.File do
     end
   end
 
+  # Written to a temporary file first, so an incomplete file (e.g. when the disk
+  # is full or the server stopped) is never mistaken for a completed transcode.
   @impl true
   def persist(file_id, preset, callback) do
     path = cache_file_path(file_id, preset)
-    File.mkdir_p!(Path.dirname(path))
 
-    case File.open(path, [:write, :binary, :exclusive]) do
-      {:ok, file} ->
-        callback.()
-        |> Enum.each(fn chunk ->
-          :ok = IO.binwrite(file, chunk)
-        end)
+    tmp_path =
+      Path.join(Utils.tmp_dir(), "#{Path.basename(path)}.#{System.unique_integer([:positive])}")
 
-        File.close(file)
-
-      {:error, :eexist} ->
+    with false <- File.exists?(path),
+         :ok <- File.mkdir_p(Utils.tmp_dir()),
+         :ok <- write_chunks(tmp_path, callback.()),
+         :ok <- File.rename(tmp_path, path) do
+      :ok
+    else
+      true ->
         {:error, :already_exists}
 
-      _ ->
+      _error ->
+        File.rm(tmp_path)
         {:error, :failed_to_persist}
     end
+  end
+
+  defp write_chunks(path, chunks) do
+    File.open!(path, [:write, :binary], fn file -> Enum.each(chunks, &IO.binwrite(file, &1)) end)
+  rescue
+    # e.g. when the disk is full
+    error in [File.Error, ErlangError] -> {:error, error}
   end
 
   @impl true

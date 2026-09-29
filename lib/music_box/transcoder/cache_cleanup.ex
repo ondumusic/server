@@ -3,7 +3,8 @@ defmodule MusicBox.Transcoder.CacheCleanup do
   Removes cached transcodes that are no longer useful: of files that were
   deleted, of files that changed after they were transcoded and of presets that
   no longer exist. When the cache is still larger than the maximum size the
-  oldest transcodes are removed as well.
+  oldest transcodes are removed as well. Leftover temporary files of transcodes
+  are removed too.
 
   Transcodes completed in the last hour are always kept, they might still be
   streamed.
@@ -11,7 +12,7 @@ defmodule MusicBox.Transcoder.CacheCleanup do
 
   alias MusicBox.Files.File
   alias MusicBox.Repo
-  alias MusicBox.Transcoder.{Cache, Preset}
+  alias MusicBox.Transcoder.{Cache, Preset, Utils}
 
   import Ecto.Query
 
@@ -29,9 +30,35 @@ defmodule MusicBox.Transcoder.CacheCleanup do
     content_changed_at = content_changed_at(old)
     {unused, used} = Enum.split_with(old, &unused?(&1, content_changed_at))
     oldest = oldest_over_max_size(used, recent, max_size)
+    stale_tmp_files = stale_tmp_files(cutoff)
 
     Cache.delete_entries(unused ++ oldest)
-    {:ok, length(unused) + length(oldest)}
+    Enum.each(stale_tmp_files, &Elixir.File.rm/1)
+    {:ok, length(unused) + length(oldest) + length(stale_tmp_files)}
+  end
+
+  # Returns a list of temporary files for transcodes that failed or were
+  # interrupted (e.g. by a restart), these are stored locally despite the
+  # configured cache driver.
+  defp stale_tmp_files(cutoff) do
+    tmp_dir = Utils.tmp_dir()
+
+    case Elixir.File.ls(tmp_dir) do
+      {:ok, names} ->
+        names
+        |> Enum.map(&Path.join(tmp_dir, &1))
+        |> Enum.filter(&stale_tmp_file?(&1, DateTime.to_unix(cutoff)))
+
+      {:error, _reason} ->
+        []
+    end
+  end
+
+  defp stale_tmp_file?(path, cutoff) do
+    case Elixir.File.lstat(path, time: :posix) do
+      {:ok, %Elixir.File.Stat{type: :regular, mtime: mtime}} -> mtime < cutoff
+      _other -> false
+    end
   end
 
   defp unused?(entry, content_changed_at) do

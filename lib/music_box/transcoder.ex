@@ -209,6 +209,7 @@ defmodule MusicBox.Transcoder do
   def handle_info({:transcoding_failed, %Job{} = job}, state) do
     %{file: file} = job
     upsert_meta(job, %{failed_at: Utils.timestamp()})
+    Elixir.File.rm(Utils.tmp_file_path(file.id, job.preset))
 
     # Notify all pending requests for this file (any chunk)
     state.requests

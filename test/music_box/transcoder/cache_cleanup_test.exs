@@ -2,7 +2,7 @@ defmodule MusicBox.Transcoder.CacheCleanupTest do
   use MusicBox.DataCase, async: false
 
   alias MusicBox.Files.File, as: MediaFile
-  alias MusicBox.Transcoder.CacheCleanup
+  alias MusicBox.Transcoder.{CacheCleanup, Utils}
 
   @now ~U[2026-06-01 12:00:00Z]
   @old ~U[2026-06-01 10:00:00Z]
@@ -72,6 +72,21 @@ defmodule MusicBox.Transcoder.CacheCleanupTest do
 
     assert {:ok, 0} = CacheCleanup.run(now: @now, max_size: nil)
     assert length(File.ls!(cache_path)) == 2
+  end
+
+  test "removes temporary files once they are old enough", %{cache_path: cache_path} do
+    tmp_dir = Utils.tmp_dir()
+    File.mkdir_p!(tmp_dir)
+
+    for {name, time} <- [{"stale.tmp", @old}, {"in-progress.tmp", @recent}] do
+      path = Path.join(tmp_dir, name)
+      File.write!(path, "incomplete")
+      File.touch!(path, DateTime.to_unix(time))
+    end
+
+    assert {:ok, 1} = CacheCleanup.run(now: @now, max_size: nil)
+    assert File.ls!(tmp_dir) == ["in-progress.tmp"]
+    assert File.ls!(cache_path) == ["tmp"]
   end
 
   defp write_transcode(file_id, preset_id, size, completed_at) do
