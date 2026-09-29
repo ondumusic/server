@@ -1,5 +1,6 @@
 {
   "type": "module",
+  "packageManager": "pnpm@11.0.8",
   "scripts": {
     "dev": "NODE_ENV=development vite",
     "dev:watch": "NODE_ENV=development vite build --mode dev --watch",

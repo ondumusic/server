@@ -39,6 +39,14 @@
 # Generated on crash by the VM
 erl_crash.dump
 
+# Local files that should not end up in an image (e.g. macOS folder metadata
+# would be served as a static file)
+.envrc
+/db/
+**/.DS_Store
+**/.expert
+/assets/.tanstack/
+
 # Static artifacts - These should be fetched and built inside the Docker image
 # https://hexdocs.pm/phoenix/Mix.Tasks.Phx.Gen.Release.html#module-docker
 /assets/node_modules/

@@ -106,20 +106,38 @@ ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 ENV MIX_ENV="prod"
 
-# Install software and configure locale
+# Distribution isn't needed, so disable cookie generation
+# (the generated cookie would be hardcoded in the resulting image, but since
+# we dont need it we can just skip it altogether.)
+ENV RELEASE_DISTRIBUTION="none"
+
+# Everything that needs to be kept is stored in /data, mount a volume there.
+ENV MB_DATABASE_PATH="/data/musicbox.db"
+ENV MB_ARTWORK_PATH="/data/artwork"
+ENV MB_TRANSCODE_CACHE_PATH="/data/transcode-cache"
+
+# The application files are read-only, the release writes tmp files to here.
+ENV RELEASE_TMP="/tmp"
+
+# Install software and configure locale (curl is used for the health check)
 RUN apt-get update \
   && apt-get install --fix-missing -y --no-install-recommends \
     libstdc++6 openssl libncurses6 locales \
-    ca-certificates ffmpeg \
+    ca-certificates ffmpeg curl \
   && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
   && locale-gen \
   && rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man
 
-
-# Copy the compiled application
+# Copy the compiled application, owned by root so it can't be modified when the
+# application is compromised.
 WORKDIR "/app"
-RUN chown nobody /app
-COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/music_box ./
+COPY --from=builder /app/_build/${MIX_ENV}/rel/music_box ./
+
+RUN mkdir /data && chown nobody /data
+VOLUME ["/data"]
+
+EXPOSE 4000
+HEALTHCHECK --start-period=30s CMD curl --fail --silent http://localhost:4000/health || exit 1
 
 USER nobody
 CMD ["/app/bin/server"]

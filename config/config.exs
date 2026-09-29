@@ -29,6 +29,9 @@ config :logger, :console,
 
 # Use new native JSON module for JSON parsing in Phoenix
 config :phoenix, :json_library, JSON
+
+# Keeps e.g. the session token of socket connections out of the logs.
+config :phoenix, :filter_parameters, ["password", "token", "Token"]
 config :ecto, :json_library, JSON
 config :ecto_sqlite3, :json_library, JSON
 

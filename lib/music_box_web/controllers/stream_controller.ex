@@ -213,7 +213,10 @@ defmodule MusicBoxWeb.StreamController do
         }
       },
       unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
-      not_found: {"Track not found.", "application/json", Schemas.Error}
+      not_found: {"Track not found.", "application/json", Schemas.Error},
+      requested_range_not_satisfiable:
+        {"The requested range starts beyond the end of the file.", "text/plain",
+         %OpenApiSpex.Schema{type: :string}}
     ]
 
   def download(conn, %{"transcode" => "1"}) do
@@ -308,7 +311,10 @@ defmodule MusicBoxWeb.StreamController do
         }
       },
       unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
-      not_found: {"Track not found.", "application/json", Schemas.Error}
+      not_found: {"Track not found.", "application/json", Schemas.Error},
+      requested_range_not_satisfiable:
+        {"The requested range starts beyond the end of the file.", "text/plain",
+         %OpenApiSpex.Schema{type: :string}}
     ]
 
   def stream(conn, %{"transcode" => "1"}) do
