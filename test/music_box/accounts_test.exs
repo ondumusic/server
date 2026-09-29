@@ -203,6 +203,27 @@ defmodule MusicBox.AccountsTest do
     end
   end
 
+  describe "reset_user_password/1" do
+    setup do
+      %{user: user_fixture()}
+    end
+
+    test "sets a new random password", %{user: user} do
+      assert {:ok, password} = Accounts.reset_user_password(user)
+      assert Accounts.get_user_by_username_and_password(user.username, password)
+      refute Accounts.get_user_by_username_and_password(user.username, valid_user_password())
+
+      assert {:ok, other_password} = Accounts.reset_user_password(user)
+      assert other_password != password
+    end
+
+    test "deletes all tokens for the given user", %{user: user} do
+      _ = Sessions.generate_user_session_token(user)
+      {:ok, _password} = Accounts.reset_user_password(user)
+      refute Repo.get_by(Session, user_id: user.id)
+    end
+  end
+
   describe "inspect/2 for the User module" do
     test "does not include password" do
       refute inspect(%User{password: "123456"}) =~ "password: \"123456\""

@@ -43,13 +43,31 @@ defmodule MusicBox.Accounts do
   end
 
   @spec update_user_password(User.t(), map()) :: Repo.result(User.t())
-  @dialyzer {:no_opaque, update_user_password: 2}
   def update_user_password(user, attrs) do
     changeset =
       user
       |> User.password_changeset(attrs)
       |> User.validate_current_password()
 
+    update_password_and_delete_sessions(user, changeset)
+  end
+
+  @doc """
+  Sets a new random password for the user and logs out all their sessions,
+  returns the new password.
+  """
+  @spec reset_user_password(User.t()) :: {:ok, String.t()} | {:error, Ecto.Changeset.t()}
+  def reset_user_password(user) do
+    password = 18 |> :crypto.strong_rand_bytes() |> Base.url_encode64()
+    attrs = %{password: password, password_confirmation: password}
+
+    with {:ok, _user} <-
+           update_password_and_delete_sessions(user, User.password_changeset(user, attrs)),
+         do: {:ok, password}
+  end
+
+  @dialyzer {:no_opaque, update_password_and_delete_sessions: 2}
+  defp update_password_and_delete_sessions(user, changeset) do
     Multi.new()
     |> Multi.update(:user, changeset)
     |> Multi.delete_all(:sessions, Session.by_user_and_contexts_query(user, :all))
