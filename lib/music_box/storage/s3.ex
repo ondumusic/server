@@ -100,12 +100,13 @@ defmodule MusicBox.Storage.S3 do
   end
 
   @impl true
-  def stream!(key) do
+  def stream!(key, range) do
     url = get_uri(key)
+    headers = if range, do: [range: "bytes=#{range.first}-#{range.last}"], else: []
 
     Stream.resource(
       fn ->
-        Req.get!(url, into: :self, receive_timeout: 60_000)
+        Req.get!(url, into: :self, receive_timeout: 60_000, headers: headers)
       end,
       fn resp ->
         ref = resp.body.ref

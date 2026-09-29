@@ -65,13 +65,13 @@ defmodule MusicBox.Storage do
   end
 
   @doc """
-  Returns a streaming Enumerable for the given path.
-  Path should be relative to Settings.music_path.
+  Returns a streaming Enumerable for the given path, or only for the given range
+  of bytes. Path should be relative to Settings.music_path.
   """
-  @callback stream!(path :: String.t()) :: Enumerable.t()
-  @spec stream!(path :: String.t()) :: Enumerable.t()
-  def stream!(path) do
-    impl().stream!(absolute(path))
+  @callback stream!(path :: String.t(), range :: Range.t() | nil) :: Enumerable.t()
+  @spec stream!(path :: String.t(), range :: Range.t() | nil) :: Enumerable.t()
+  def stream!(path, range \\ nil) do
+    impl().stream!(absolute(path), range)
   end
 
   @doc """

@@ -296,18 +296,21 @@ defmodule MusicBoxWeb.StreamController do
     %{track: %{file: file}} = conn.assigns
     content_type = MusicBox.Files.File.mimetype(file)
 
-    case parse_range(conn) do
+    case conn |> parse_range() |> fit_range(file.size) do
       {:ok, start_byte, end_byte} ->
-        end_byte = if end_byte == :infinity, do: file.size - 1, else: end_byte
-        length = end_byte - start_byte + 1
-
         conn
         |> put_resp_header("content-type", content_type)
         |> put_resp_header("accept-ranges", "bytes")
         |> put_resp_header("content-range", "bytes #{start_byte}-#{end_byte}/#{file.size}")
-        |> put_resp_header("content-length", "#{length}")
+        |> put_resp_header("content-length", "#{end_byte - start_byte + 1}")
         |> send_chunked(:partial_content)
-        |> stream_data(Storage.get_bytes(file.path, start_byte, length))
+        |> stream_data(Storage.stream!(file.path, start_byte..end_byte))
+
+      {:error, :unsatisfiable_range} ->
+        conn
+        |> put_status(416)
+        |> put_resp_header("content-range", "bytes */#{file.size}")
+        |> text("Range Not Satisfiable")
 
       _ ->
         conn
@@ -381,6 +384,18 @@ defmodule MusicBoxWeb.StreamController do
     |> get_req_header("range")
     |> Utils.parse_range_header()
   end
+
+  # Ranges can end beyond the file (e.g. "bytes=0-" is the whole file) but have to
+  # start within it. Ranges that end before they start are invalid and ignored.
+  defp fit_range({:ok, start_byte, _end_byte}, size) when start_byte >= size,
+    do: {:error, :unsatisfiable_range}
+
+  defp fit_range({:ok, start_byte, end_byte}, size) do
+    end_byte = if end_byte == :infinity, do: size - 1, else: min(end_byte, size - 1)
+    if start_byte <= end_byte, do: {:ok, start_byte, end_byte}, else: {:error, :invalid_range}
+  end
+
+  defp fit_range(range, _size), do: range
 
   defp disable_range_for_adts(_range, %{ffmpeg_preset: :adts}), do: {:error, :no_range}
   defp disable_range_for_adts(range, _preset), do: range

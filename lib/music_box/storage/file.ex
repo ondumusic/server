@@ -11,9 +11,30 @@ defmodule MusicBox.Storage.File do
     "file://" <> path
   end
 
+  @chunk_size 65_536
+
   @impl true
-  def stream!(path) do
-    File.stream!(path, 4096)
+  def stream!(path, nil), do: File.stream!(path, @chunk_size)
+
+  def stream!(path, first..last//1) do
+    Stream.resource(
+      fn ->
+        file = File.open!(path, [:binary, :read])
+        {:ok, _position} = :file.position(file, first)
+        {file, last - first + 1}
+      end,
+      fn
+        {file, 0} ->
+          {:halt, {file, 0}}
+
+        {file, remaining} ->
+          case IO.binread(file, min(remaining, @chunk_size)) do
+            data when is_binary(data) -> {[data], {file, remaining - byte_size(data)}}
+            _eof -> {:halt, {file, 0}}
+          end
+      end,
+      fn {file, _remaining} -> File.close(file) end
+    )
   end
 
   @impl true
