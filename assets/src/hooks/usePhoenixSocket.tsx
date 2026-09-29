@@ -46,7 +46,7 @@ export const PhoenixSocketProvider = ({ children }: PropsWithChildren) => {
 
     // Connect socket
     socketRef.current = new Socket("/socket", {
-      params: { sessionToken: auth.sessionToken },
+      authToken: auth.sessionToken ?? undefined,
     });
     socketRef.current.connect();
 

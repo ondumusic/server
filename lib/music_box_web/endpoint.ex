@@ -5,7 +5,8 @@ defmodule MusicBoxWeb.Endpoint do
 
   socket "/socket", MusicBoxWeb.UserSocket,
     websocket: true,
-    longpoll: false
+    longpoll: false,
+    auth_token: true
 
   # Serve at "/" the static files from "priv/static" directory.
   #
