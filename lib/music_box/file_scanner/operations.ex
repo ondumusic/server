@@ -7,6 +7,7 @@ defmodule MusicBox.FileScanner.Operations do
   alias Ecto.Multi
   alias MusicBox.Albums.{Album, Artwork, CoverFile}
   alias MusicBox.Artists.Artist
+  alias MusicBox.Counters
   alias MusicBox.DeletionLog
   alias MusicBox.Files.{File, FileMetadata}
   alias MusicBox.FileScanner.{Analyzer, Utils}
@@ -26,7 +27,8 @@ defmodule MusicBox.FileScanner.Operations do
                artists: [Artist],
                albums: [Album],
                tracks: [Track],
-               files: [File]
+               files: [File],
+               counts: %{artists: [Ecto.UUID.t()], albums: [Ecto.UUID.t()]}
              }}
           | Ecto.Multi.failure()
   @dialyzer {:no_opaque, batch_insert: 1}
@@ -43,18 +45,17 @@ defmodule MusicBox.FileScanner.Operations do
     |> Multi.run(:albums, &maybe_create_albums/2)
     |> Multi.run(:tracks, &maybe_create_tracks/2)
     |> Multi.run(:album_years, &update_album_release_years/2)
+    |> Multi.run(:counts, &update_counts/2)
     |> Multi.run(:invalidated_artworks, &invalidate_changed_artworks/2)
     |> Repo.transact()
   end
 
   def broadcast(:batch, results) do
     changes =
-      results
-      |> Map.take([:artists, :albums])
-      |> Enum.map(fn {key, items} ->
-        {key, Enum.map(items, & &1.id)}
+      Map.new([:artists, :albums], fn key ->
+        ids = Enum.map(results[key], & &1.id) ++ results.counts[key]
+        {key, Enum.uniq(ids)}
       end)
-      |> Map.new()
 
     broadcast(MusicBox.PubSub, "library:sync", "processed", changes)
   end
@@ -168,6 +169,21 @@ defmodule MusicBox.FileScanner.Operations do
        file_ids: Enum.map(changed, & &1.id),
        paths: Enum.map(changed, & &1.path) ++ new_paths,
        previous_album_ids: Enum.map(changed, & &1.album_id)
+     }}
+  end
+
+  # Keeps the counts up to date while scanning and finding new entries, any
+  # deletions will be dealt with in the cleanup worker.
+  defp update_counts(_repo, %{albums: albums, changed_files: changed_files}) do
+    album_ids =
+      Enum.map(albums, & &1.id) ++ Enum.reject(changed_files.previous_album_ids, &is_nil/1)
+
+    artist_ids = Enum.map(albums, & &1.artist_id)
+
+    {:ok,
+     %{
+       artists: Counters.update(Artist, :album_count, Album, :artist_id, Enum.uniq(artist_ids)),
+       albums: Counters.update(Album, :track_count, Track, :album_id, Enum.uniq(album_ids))
      }}
   end
 

@@ -120,19 +120,47 @@ defmodule MusicBox.FileScannerTest do
       end
     end
 
-    test "keeps album and track counts on a full scan" do
+    test "updates album and track counts while scanning" do
       alias MusicBox.Albums.Album
       alias MusicBox.Artists.Artist
+      alias MusicBox.Files.File
+      alias MusicBox.Tracks.Track
+
+      track_count = fn album -> Repo.aggregate(where(Track, album_id: ^album.id), :count) end
 
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
+      artist = Repo.get_by!(Artist, name: "Test Artist")
+      test_album = Repo.get_by!(Album, name: "Test Album")
 
-      Repo.update_all(Artist, set: [album_count: 3])
-      Repo.update_all(Album, set: [track_count: 7])
+      assert artist.album_count == 1
+      assert test_album.track_count == track_count.(test_album)
+      assert_receive %{topic: "library:sync", event: "processed", payload: payload}
+      assert artist.id in payload.artists
+
+      # A changed file of which the album tag changed moves to another album.
+      [moved | _] =
+        Repo.all(
+          from(f in File,
+            join: t in Track,
+            on: t.file_id == f.id,
+            where: t.album_id == ^test_album.id
+          )
+        )
+
+      Repo.update_all(from(f in File, where: f.id == ^moved.id), inc: [size: 1])
+
+      stub_probe(fn "file://" <> path ->
+        album = if String.ends_with?(path, moved.path), do: "Other Album", else: "Test Album"
+        tags = %{artist: "Test Artist", album: album, title: "Test Title", track: "1"}
+        {:ok, %{format: %{duration: "3.4", tags: tags}}}
+      end)
 
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
+      other_album = Repo.get_by!(Album, name: "Other Album")
 
-      assert Enum.all?(Repo.all(Artist), &(&1.album_count == 3))
-      assert Enum.all?(Repo.all(Album), &(&1.track_count == 7))
+      assert Repo.reload!(artist).album_count == 2
+      assert other_album.track_count == 1
+      assert Repo.reload!(test_album).track_count == test_album.track_count - 1
     end
 
     test "invalidates the artwork of albums with new, changed or deleted files" do
