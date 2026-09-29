@@ -2,7 +2,9 @@ defmodule MusicBoxWeb.AuthController do
   use MusicBoxWeb, :controller
 
   alias MusicBox.Accounts
+  alias MusicBox.Accounts.User
   alias MusicBox.Sessions
+  alias MusicBoxWeb.LoginLimiter
   alias MusicBoxWeb.PlayToken
   alias MusicBoxWeb.UserAuth
 
@@ -14,23 +16,34 @@ defmodule MusicBoxWeb.AuthController do
     responses: [
       ok: {"Succesful login attempt.", "application/json", Schemas.LoginResponse},
       unauthorized: {"Failed to authenticate.", "application/json", Schemas.Error},
-      unprocessable_entity: {"Validation failed.", "application/json", Schemas.LoginError}
+      unprocessable_entity: {"Validation failed.", "application/json", Schemas.LoginError},
+      too_many_requests:
+        {"Too many failed login attempts.", "application/json", Schemas.LoginError}
     ]
 
   def login(conn, %{"username" => username, "password" => password}) do
-    if user = Accounts.get_user_by_username_and_password(username, password) do
+    with :ok <- LoginLimiter.check(),
+         %User{} = user <- Accounts.get_user_by_username_and_password(username, password) do
+      LoginLimiter.succeeded()
+
       conn
       |> UserAuth.log_in_user(user)
       |> render(:logged_in)
     else
-      conn
-      |> put_status(:unprocessable_entity)
-      |> json(%{
-        ok: false,
-        fields: %{
-          password: %{message: "Invalid username or password"}
-        }
-      })
+      {:error, retry_after} ->
+        minutes = ceil(retry_after / 60)
+
+        conn
+        |> put_status(:too_many_requests)
+        |> put_resp_header("retry-after", "#{retry_after}")
+        |> login_error("Too many failed login attempts, try again in #{minutes} minute(s)")
+
+      nil ->
+        LoginLimiter.failed()
+
+        conn
+        |> put_status(:unprocessable_entity)
+        |> login_error("Invalid username or password")
     end
   end
 
@@ -124,5 +137,9 @@ defmodule MusicBoxWeb.AuthController do
       expiresIn: PlayToken.max_age(),
       playToken: play_token
     })
+  end
+
+  defp login_error(conn, message) do
+    json(conn, %{ok: false, fields: %{password: %{message: message}}})
   end
 end

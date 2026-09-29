@@ -14,6 +14,7 @@ defmodule MusicBox.Application do
        repos: Application.fetch_env!(:music_box, :ecto_repos), skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:music_box, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: MusicBox.PubSub},
+      MusicBoxWeb.LoginLimiter,
       # Start to serve requests, typically the last entry
       MusicBoxWeb.Endpoint
     ]

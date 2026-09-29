@@ -45,6 +45,23 @@ defmodule MusicBoxWeb.AuthControllerTest do
                })
                |> api_response(422, "LoginError")
     end
+
+    test "refuses logins after too many failed attempts", %{conn: conn} do
+      on_exit(&MusicBoxWeb.LoginLimiter.succeeded/0)
+      for _ <- 1..10, do: MusicBoxWeb.LoginLimiter.failed()
+
+      conn =
+        post(conn, ~p"/api/auth/login", %{
+          username: "testuser",
+          password: "testtest123!"
+        })
+
+      assert %{"ok" => false, "fields" => %{"password" => %{"message" => "Too many" <> _}}} =
+               api_response(conn, 429, "LoginError")
+
+      assert [retry_after] = get_resp_header(conn, "retry-after")
+      assert String.to_integer(retry_after) in 1..900
+    end
   end
 
   describe "logout" do
