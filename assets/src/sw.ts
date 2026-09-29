@@ -77,7 +77,6 @@ self.addEventListener("fetch", (event) => {
 self.addEventListener("message", (event: ExtendableMessageEvent) => {
   const data = event.data as PrewarmMessage | PruneMessage | undefined;
   if (data?.type === "PREWARM") {
-    console.log("prewarm", data);
     event.waitUntil(prewarm(data.urls));
   } else if (data?.type === "PRUNE") {
     event.waitUntil(prune(data.urls));
@@ -117,7 +116,6 @@ async function prune(urls: string[]): Promise<void> {
 async function prewarm(urls: string[]): Promise<void> {
   const cache = await getCache();
   const exists = new Set((await cache.keys()).map((r) => r.url));
-  console.log(exists);
   const queue = urls.filter(
     (u) => !exists.has(new URL(u, self.location.origin).href),
   );
