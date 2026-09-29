@@ -65,6 +65,13 @@ function SettingsLayout() {
         defaultValue: "Library",
       }),
     },
+    {
+      id: "issues",
+      current: matchRoute({ to: "/settings/issues/" }) !== false,
+      label: i18next.t("settings.issues.title", {
+        defaultValue: "Issues",
+      }),
+    },
   ];
 
   const renderItem = (item: ListItem, state: ListItemState) => (

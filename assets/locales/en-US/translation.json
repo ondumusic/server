@@ -59,6 +59,37 @@
     "minutes_one": "{{ count }} minute",
     "minutes_other": "{{ count }} minutes"
   },
+  "issues": {
+    "code": {
+      "albumMissing": "No album",
+      "artistMissing": "Untagged tracks",
+      "artworkLowRes": "Low resolution artwork",
+      "artworkMissing": "No artwork",
+      "artworkNotSquare": "Artwork not square",
+      "releaseYearMissing": "No release year",
+      "titleMissing": "No title",
+      "trackNumberDuplicate": "Duplicate track numbers",
+      "trackNumberGap": "Gaps in track numbers",
+      "trackNumberMissing": "No track number"
+    },
+    "issue": {
+      "albumMissing": "Tracks without an album tag",
+      "artistMissing": "No artist, album or title",
+      "artworkLowRes": "Low resolution artwork ({{width}}×{{height}})",
+      "artworkMissing": "No artwork found",
+      "artworkNotSquare": "Artwork is not square ({{width}}×{{height}})",
+      "releaseYearMissing": "No release year",
+      "titleMissing": "No title",
+      "titleMissingTracks_one": "{{count}} track without a title",
+      "titleMissingTracks_other": "{{count}} tracks without a title",
+      "trackNumberDuplicate": "Track {{numbers}} used more than once",
+      "trackNumberDuplicateDisc": "Track {{numbers}} used more than once on disc {{disc}}",
+      "trackNumberGap": "Numbering skips {{numbers}}",
+      "trackNumberGapDisc": "Numbering skips {{numbers}} on disc {{disc}}",
+      "trackNumberMissing_one": "{{count}} track without a track number",
+      "trackNumberMissing_other": "{{count}} tracks without a track number"
+    }
+  },
   "loading": {
     "text": "Loading"
   },
@@ -152,6 +183,23 @@
       "resetUserSettings": "Reset User Settings",
       "subtitle": "Change user preferences",
       "title": "General"
+    },
+    "issues": {
+      "albumCount_one": "{{count}} album",
+      "albumCount_other": "{{count}} albums",
+      "allIssues": "All issues",
+      "copyPath": "Copy path",
+      "empty": "No problems found, your library looks great.",
+      "emptyFilter": "No more issues for “{{filter}}”.",
+      "error": "Could not load the issues, try again later.",
+      "loading": "Loading…",
+      "none": "No issues",
+      "rescan": "Rescan library",
+      "scanning": "Scanning…",
+      "showAll": "Show all issues",
+      "title": "Issues",
+      "trackCount_one": "{{count}} track",
+      "trackCount_other": "{{count}} tracks"
     },
     "library": {
       "save": "Save Changes",
@@ -250,6 +298,7 @@
     "addedToPlayShuffled_one": "Shuffling {{ count }} tracks",
     "addedToPlayShuffled_other": "Shuffling {{ count }} tracks",
     "completedLibraryScan": "Library scan completed",
+    "copiedPath": "Copied file path",
     "defaultLinkTitle": "View",
     "librarySettingsSaved": "Updated library settings",
     "removedFromPlaylist_one": "Removed {{ count }} tracks from playlist",

@@ -33,6 +33,7 @@ defmodule MusicBoxWeb.Router do
     get "/settings", PageController, :react
     get "/settings/library", PageController, :react
     get "/settings/security", PageController, :react
+    get "/settings/issues", PageController, :react
 
     get "/onboarding/:step", PageController, :react
   end

@@ -158,7 +158,7 @@ export namespace PlaylistItem {
 
 export interface Page<T> {
   __type: "page";
-  __subtype: "artist" | "album" | "track";
+  __subtype: "artist" | "album" | "track" | "issues";
   pageNumber: number;
   pageSize: number;
   totalPages: number;

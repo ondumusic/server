@@ -4,6 +4,14 @@ export { authApi } from "./auth";
 export { client } from "./client";
 export { ClientError } from "./errors";
 export {
+  type AlbumIssues,
+  type Issue,
+  type IssueCode,
+  type IssueEntry,
+  issueApi,
+  type TrackIssues,
+} from "./issues";
+export {
   type AddOp,
   type MoveOp,
   type PlaylistOperations,
