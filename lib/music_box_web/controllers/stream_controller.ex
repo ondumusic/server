@@ -65,7 +65,8 @@ defmodule MusicBoxWeb.StreamController do
             schema: %OpenApiSpex.Schema{
               type: :string,
               description: """
-              SSE stream which eventually returns the transcoded filesize.
+              SSE stream which eventually returns the transcoded filesize, or
+              an `error` event when transcoding failed.
               """,
               example: "1024"
             }
@@ -73,7 +74,11 @@ defmodule MusicBoxWeb.StreamController do
         }
       },
       unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
-      not_found: {"Track not found.", "application/json", Schemas.Error}
+      not_found: {"Track not found.", "application/json", Schemas.Error},
+      internal_server_error: {"Transcoding failed.", "application/json", Schemas.Error},
+      service_unavailable:
+        {"Too many transcodes, try again later.", "text/plain",
+         %OpenApiSpex.Schema{type: :string}}
     ]
 
   def transcode(conn, %{"async" => "1"}) do
@@ -84,24 +89,51 @@ defmodule MusicBoxWeb.StreamController do
 
   def transcode(conn, _params) do
     %{track: %{file: file}, preset: preset} = conn.assigns
-    Transcoder.request_chunk(file, preset, 0)
 
-    conn
-    |> put_resp_content_type("text/event-stream")
-    |> send_chunked(:ok)
-    |> await_transcode(file, preset)
+    # Waits for the first chunk, so the transcode has started (or completed).
+    case Transcoder.request_chunk(file, preset, 0) do
+      {:ok, _chunk} ->
+        conn
+        |> put_resp_content_type("text/event-stream")
+        |> send_chunked(:ok)
+        |> await_transcode(file, preset)
+
+      {:error, :server_busy} ->
+        send_busy(conn)
+
+      {:error, _reason} ->
+        conn
+        |> put_status(:internal_server_error)
+        |> json(%{error: "Transcoding failed"})
+    end
   end
 
+  # Every transcode ends up either completed or failed (ffmpeg has a timeout),
+  # failed transcodes are removed after a while so no meta means failed too.
   defp await_transcode(conn, file, preset) do
     case Transcoder.get_meta(file, preset) do
       %{completed_at: completed, file_size: size} when not is_nil(completed) ->
-        chunk(conn, "data: #{JSON.encode!(%{size: size})}\n\n")
-        conn
+        send_event(conn, "data: #{JSON.encode!(%{size: size})}")
 
-      _ ->
-        chunk(conn, ":\n\n")
-        Process.sleep(500)
-        await_transcode(conn, file, preset)
+      %{failed_at: nil} ->
+        case chunk(conn, ":\n\n") do
+          {:ok, conn} ->
+            Process.sleep(500)
+            await_transcode(conn, file, preset)
+
+          {:error, :closed} ->
+            conn
+        end
+
+      _failed ->
+        send_event(conn, "event: error\ndata: #{JSON.encode!(%{error: "Transcoding failed"})}")
+    end
+  end
+
+  defp send_event(conn, event) do
+    case chunk(conn, event <> "\n\n") do
+      {:ok, conn} -> conn
+      {:error, :closed} -> conn
     end
   end
 

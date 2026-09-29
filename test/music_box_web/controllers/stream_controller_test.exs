@@ -2,6 +2,7 @@ defmodule MusicBoxWeb.StreamControllerTest do
   use MusicBoxWeb.ConnCase, async: false
 
   alias MusicBox.Tracks.Track
+  alias MusicBox.Transcoder
 
   setup do
     track = Repo.all(Track.preloaded()) |> Enum.random()
@@ -67,6 +68,70 @@ defmodule MusicBoxWeb.StreamControllerTest do
 
     test "ignores invalid ranges", %{conn: conn, track: track, contents: contents} do
       assert get_range(conn, track, "bytes=20-10") |> response(200) == contents
+    end
+  end
+
+  describe "transcode" do
+    setup :register_and_log_in_user
+    setup :set_mox_global
+
+    setup do
+      # Completed transcodes are persisted, start without them.
+      File.rm_rf!("./tmp/test/transcode")
+      :ok
+    end
+
+    # Pretends to be ffmpeg, the shell script runs with the input path as $1.
+    defp stub_transcode(script) do
+      stub(MusicBox.Tool.TranscodeMock, :exec, fn args ->
+        "file://" <> input = Enum.at(args, Enum.find_index(args, &(&1 == "-i")) + 1)
+
+        port =
+          Port.open({:spawn_executable, System.find_executable("sh")}, [
+            :binary,
+            :exit_status,
+            args: ["-c", script, "sh", input]
+          ])
+
+        {:ok, port}
+      end)
+    end
+
+    test "returns the size once transcoded", %{conn: conn, track: track} do
+      start_supervised!(Transcoder)
+      stub_transcode(~s(cat "$1"))
+
+      conn = get(conn, ~p"/api/tracks/#{track}/transcode")
+
+      assert response(conn, 200) =~ ~r/^data: {"size":\d+}$/m
+    end
+
+    test "returns an error event when transcoding fails", %{conn: conn, track: track} do
+      start_supervised!(Transcoder)
+      # Fails after the first chunk was transcoded.
+      stub_transcode("head -c #{Transcoder.Utils.chunk_size() * 2} /dev/zero; exit 1")
+
+      conn = get(conn, ~p"/api/tracks/#{track}/transcode")
+
+      assert response(conn, 200) =~ ~s(event: error\ndata: {"error":"Transcoding failed"})
+    end
+
+    test "returns an error when transcoding fails right away", %{conn: conn, track: track} do
+      start_supervised!(Transcoder)
+      stub_transcode("exit 1")
+
+      conn = get(conn, ~p"/api/tracks/#{track}/transcode")
+
+      assert %{"error" => "Transcoding failed"} = json_response(conn, 500)
+    end
+
+    test "returns busy when too many transcodes are running", %{conn: conn, track: track} do
+      start_supervised!({Transcoder, max_concurrency: 0, max_queue_size: 0})
+
+      conn = get(conn, ~p"/api/tracks/#{track}/transcode")
+
+      assert response(conn, 503)
+      assert get_resp_header(conn, "retry-after") == ["5"]
     end
   end
 

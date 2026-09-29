@@ -68,7 +68,8 @@ defmodule MusicBox.Transcoder do
     :ok
   end
 
-  @type chunk_error :: :unknown_chunk | :transcoding_failed | :no_longer_available
+  @type chunk_error ::
+          :unknown_chunk | :transcoding_failed | :no_longer_available | :server_busy
   @spec request_chunk(File.t(), Preset.t(), non_neg_integer()) ::
           {:ok, binary()} | {:error, chunk_error()}
   def request_chunk(file, preset, chunk_index) do
