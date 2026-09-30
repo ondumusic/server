@@ -32,6 +32,7 @@ defmodule MusicBox.Playlists.Operations do
           | {:error, {:missing_items, [String.t()]}}
           | {:error, {:missing_tracks, [String.t()]}}
           | {:error, {:conflict_items, [String.t()]}}
+          | {:error, {:duplicate_items, [String.t()]}}
           | {:error, {:invalid_positions, [position()]}}
           | {:error, :playlist_is_folder}
 
@@ -56,9 +57,8 @@ defmodule MusicBox.Playlists.Operations do
 
     with :ok <- validate_batch_size(adds, moves, removes),
          :ok <- validate_item_id_conflicts(moves, removes),
-         :ok <- validate_unique_items(:move, Enum.map(moves, & &1["item_id"])),
-         :ok <- validate_unique_items(:remove, removes),
-         :ok <- validate_item_positions(adds, moves),
+         :ok <- validate_unique_items(Enum.map(moves, & &1["item_id"])),
+         :ok <- validate_unique_items(removes),
          :ok <- validate_positions(adds, moves),
          :ok <- validate_tracks(adds),
          existing_items <- get_existing_items(playlist, combined_ids),
@@ -101,23 +101,13 @@ defmodule MusicBox.Playlists.Operations do
     end
   end
 
-  defp validate_unique_items(_op, items) do
+  defp validate_unique_items(items) do
     duplicates = find_duplicates(items)
 
     if duplicates == [] do
       :ok
     else
-      {:error, {:conflict_items, duplicates}}
-    end
-  end
-
-  defp validate_item_positions(adds, moves) do
-    conflict_positions = find_duplicates_by(adds, moves, "position")
-
-    if conflict_positions == [] do
-      :ok
-    else
-      {:error, {:conflict_items, conflict_positions}}
+      {:error, {:duplicate_items, duplicates}}
     end
   end
 
@@ -139,56 +129,47 @@ defmodule MusicBox.Playlists.Operations do
     end
   end
 
+  # Positions are unique within a playlist. A requested position that is taken,
+  # by an existing item or by an earlier operation in this request, gets a new
+  # position right after it (the response contains the positions used).
   defp ensure_unique_positions(playlist, adds, moves) do
-    combined_positions =
-      List.flatten([
-        adds,
-        moves
-      ])
-      |> Enum.map(& &1["position"])
+    requested = Enum.map(adds ++ moves, & &1["position"])
 
-    conflicts =
+    taken =
       from(i in PlaylistItem,
-        where: i.playlist_id == ^playlist.id and i.position in ^combined_positions,
+        where: i.playlist_id == ^playlist.id and i.position in ^requested,
         select: i.position
       )
       |> Repo.all()
 
-    if conflicts == [] do
+    if taken == [] and find_duplicates(requested) == [] do
       {:ok, %{adds: adds, moves: moves}}
     else
-      lowest_conflict = Enum.min(conflicts, fn -> nil end)
-
-      # Get all positions above the lowest known conflict, we need them all so we
-      # can try to find new positions in similar spots.
-      used_positions =
+      used =
         from(i in PlaylistItem,
-          where: i.playlist_id == ^playlist.id and i.position > ^lowest_conflict,
+          where: i.playlist_id == ^playlist.id,
           order_by: [asc: i.position],
           select: i.position
         )
         |> Repo.all()
 
-      {:ok,
-       %{
-         adds: do_fix_positions(adds, conflicts, used_positions),
-         moves: do_fix_positions(moves, conflicts, used_positions)
-       }}
+      {adds, used} = fix_positions(adds, used)
+      {moves, _used} = fix_positions(moves, used)
+      {:ok, %{adds: adds, moves: moves}}
     end
   end
 
-  defp do_fix_positions([], _conflicts, _used), do: []
+  # Used positions are kept sorted, to find the next position after a taken one.
+  defp fix_positions(items, used) do
+    Enum.map_reduce(items, used, fn item, used ->
+      position = item["position"]
 
-  defp do_fix_positions(items, conflicts, used) do
-    Enum.map(items, fn item ->
-      next = Enum.find(used, fn p -> p > item["position"] end)
+      position =
+        if position in used,
+          do: generate_new_position(position, Enum.find(used, &(&1 > position)), used),
+          else: position
 
-      if item["position"] in conflicts do
-        new_position = generate_new_position(item["position"], next, used)
-        Map.put(item, "position", new_position)
-      else
-        item
-      end
+      {Map.put(item, "position", position), Enum.sort([position | used])}
     end)
   end
 
@@ -381,10 +362,5 @@ defmodule MusicBox.Playlists.Operations do
     |> Enum.frequencies()
     |> Enum.filter(fn {_item, count} -> count >= 2 end)
     |> Enum.map(fn {item, _count} -> item end)
-  end
-
-  defp find_duplicates_by(list1, list2, key) do
-    keys2 = MapSet.new(list2, &Map.get(&1, key))
-    Enum.filter(list1, fn m -> MapSet.member?(keys2, Map.get(m, key)) end)
   end
 end

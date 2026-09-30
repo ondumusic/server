@@ -136,6 +136,25 @@ defmodule MusicBoxWeb.Schemas.UpdatePlaylistItemsError do
     })
   end
 
+  defmodule DuplicateItems do
+    require OpenApiSpex
+    @moduledoc false
+
+    OpenApiSpex.schema(%{
+      title: "DuplicateItemsError",
+      description: "The same item is moved, or removed, more than once.",
+      type: :object,
+      required: [:error, :itemIds],
+      properties: %{
+        ok: %Schema{type: :boolean, example: false},
+        error: %Schema{type: :string, enum: ["duplicate_items"]},
+        itemIds: %Schema{type: :array, items: %Schema{type: :string}}
+      },
+      example: %{"error" => "duplicate_items", "itemIds" => ["a1"]},
+      additionalProperties: false
+    })
+  end
+
   defmodule InvalidPositions do
     require OpenApiSpex
     @moduledoc false
@@ -199,6 +218,7 @@ defmodule MusicBoxWeb.Schemas.UpdatePlaylistItemsError do
       PlaylistIsFolder,
       TooManyOperations,
       MoveRemoveConflict,
+      DuplicateItems,
       InvalidPositions,
       UnknownItems,
       UnknownTracks
@@ -209,6 +229,7 @@ defmodule MusicBoxWeb.Schemas.UpdatePlaylistItemsError do
         "playlist_is_folder" => "#/components/schemas/PlaylistIsFolderError",
         "too_many_operations" => "#/components/schemas/TooManyOperationsError",
         "move_remove_conflict" => "#/components/schemas/MoveRemoveConflictError",
+        "duplicate_items" => "#/components/schemas/DuplicateItemsError",
         "invalid_positions" => "#/components/schemas/InvalidPositionsError",
         "unknown_items" => "#/components/schemas/UnknownItemsError",
         "unknown_tracks" => "#/components/schemas/UnknownTracksError"

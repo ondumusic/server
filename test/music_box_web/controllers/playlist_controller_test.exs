@@ -572,6 +572,50 @@ defmodule MusicBoxWeb.PlaylistControllerTest do
       assert Enum.at(entries, 3).position == "a2"
     end
 
+    test "gives operations that request the same position unique positions", %{
+      conn: conn,
+      playlist: playlist
+    } do
+      [track1, track2, track3] = MusicBox.Tracks.paginate_tracks(%{}).entries |> Enum.take(3)
+      item = List.first(playlist.items)
+
+      assert %{"ok" => true, "added" => added, "moved" => [moved]} =
+               conn
+               |> patch(~p"/api/playlists/#{playlist.id}/items", %{
+                 # The same new position twice, and twice an existing position.
+                 add: [
+                   %{position: "a5", trackId: track1.id},
+                   %{position: "a5", trackId: track2.id},
+                   %{position: "a1", trackId: track3.id}
+                 ],
+                 move: [%{position: "a1", itemId: item.id}]
+               })
+               |> api_response(200, "UpdatePlaylistItemsResponse")
+
+      positions = Enum.map(added ++ [moved], & &1["position"])
+      assert ["a5", second, third, fourth] = positions
+      assert second > "a5"
+      assert third > "a1" and fourth > "a1"
+      assert Enum.uniq(positions) == positions
+    end
+
+    test "refuses items that are moved or removed more than once", %{
+      conn: conn,
+      playlist: playlist
+    } do
+      item_id = List.first(playlist.items).id
+
+      for changes <- [
+            %{move: [%{position: "q", itemId: item_id}, %{position: "r", itemId: item_id}]},
+            %{remove: [item_id, item_id]}
+          ] do
+        assert %{"ok" => false, "error" => "duplicate_items", "itemIds" => [^item_id]} =
+                 conn
+                 |> patch(~p"/api/playlists/#{playlist.id}/items", changes)
+                 |> api_response(422, "UpdatePlaylistItemsError")
+      end
+    end
+
     @tag :skip_playlist
     test "ensures positions are unique (next calculated also taken)", %{conn: conn} do
       tracks = MusicBox.Tracks.paginate_tracks(%{}).entries

@@ -80,6 +80,14 @@ defmodule MusicBoxWeb.PlaylistJSON do
     }
   end
 
+  def batch_error(%{error: {:duplicate_items, ids}}) do
+    %{
+      ok: false,
+      error: "duplicate_items",
+      itemIds: ids
+    }
+  end
+
   def batch_error(%{error: {:conflict_items, ids}}) do
     %{
       ok: false,
