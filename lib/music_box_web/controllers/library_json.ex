@@ -63,7 +63,6 @@ defmodule MusicBoxWeb.LibraryJSON do
       isUnknown: album.is_unknown,
       trackCount: album.track_count,
       artwork: artwork,
-      artworkUrl: artwork |> List.last(%{}) |> Map.get(:url),
       loudness: album_loudness(album),
       insertedAt: album.inserted_at
     }

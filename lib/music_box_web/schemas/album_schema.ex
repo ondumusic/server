@@ -34,15 +34,6 @@ defmodule MusicBoxWeb.Schemas.Album do
       items: Schemas.ArtworkImage,
       description: "Available variants of the artwork."
     },
-    artworkUrl: %Schema{
-      type: :string,
-      example:
-        "https://example.com/artwork/7c388624-2362-45e2-ae94-ee9aa7a65cb6/4f1c2a9d8e7b6c5a/large.jpg",
-      nullable: true,
-      deprecated: true,
-      description:
-        "Use `artwork` instead, this is the url of the largest version but will be removed in future versions."
-    },
     releaseYear: %Schema{type: :integer, example: 2, nullable: true},
     loudness: %Schema{
       allOf: [Schemas.Loudness],
@@ -66,7 +57,6 @@ defmodule MusicBoxWeb.Schemas.Album do
     :sortName,
     :slug,
     :artwork,
-    :artworkUrl,
     :releaseYear,
     :loudness,
     :trackCount,

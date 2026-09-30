@@ -63,8 +63,7 @@ defmodule MusicBoxWeb.ArtworkControllerTest do
                "artwork" => [
                  %{"url" => thumbnail_url, "width" => 128, "height" => 128},
                  %{"url" => large_url, "width" => 450, "height" => 450}
-               ],
-               "artworkUrl" => large_url
+               ]
              } =
                conn
                |> get(~p"/api/albums/#{album.id}")
@@ -80,7 +79,7 @@ defmodule MusicBoxWeb.ArtworkControllerTest do
         last_fetch_attempt: DateTime.utc_now()
       })
 
-      assert %{"artwork" => [], "artworkUrl" => nil} =
+      assert %{"artwork" => []} =
                conn
                |> get(~p"/api/albums/#{album.id}")
                |> api_response(200, "Album")
