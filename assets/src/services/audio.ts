@@ -1,5 +1,6 @@
 import { authApi } from "../api";
 import type { Track } from "../types";
+import { playRecorder } from "./plays";
 
 interface AudioEvent {
   duration: number;
@@ -37,6 +38,9 @@ export class AudioService {
     this.#audioRef.addEventListener("pause", this.#handlePauseEvent);
 
     this.#refreshPlayToken();
+
+    // Plays that could not be sent before, e.g. while offline.
+    playRecorder.flush();
   }
 
   destroy() {
@@ -55,6 +59,7 @@ export class AudioService {
 
   stop() {
     this.#currentTrack = undefined;
+    playRecorder.stop();
     clearTimeout(this.#endedTimer);
     this.#audioRef.pause();
   }
@@ -82,6 +87,9 @@ export class AudioService {
     const isCurrentTrack =
       this.#currentTrack?.id === audioTrack.id &&
       this.#currentTrack?.queueIndex === audioTrack.queueIndex;
+
+    // Playing a track again from the start counts as a new play.
+    playRecorder.start(audioTrack);
 
     if (isCurrentTrack) {
       this.scrubTo(0, true);
@@ -250,6 +258,11 @@ export class AudioService {
     };
 
     this.#emit("timeupdate", audioEvent);
+    playRecorder.progress(
+      audioEvent.currentTime,
+      audioEvent.isPlaying,
+      audioEvent.duration,
+    );
 
     if (event.type === "ended") {
       this.#log("event ended");

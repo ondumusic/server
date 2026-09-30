@@ -7,6 +7,7 @@ import { useDialog } from "../../hooks/useDialog";
 import { useTheme } from "../../hooks/useTheme";
 import i18next from "../../i18next";
 import { repo } from "../../library";
+import { playRecorder } from "../../services/plays";
 import {
   getAccentColor,
   updateAccentColor,
@@ -51,6 +52,7 @@ const Setting = ({
 
 function GeneralSettings() {
   const [color, setColor] = useState(getAccentColor());
+  const [recordPlays, setRecordPlays] = useState(playRecorder.enabled);
   const { theme, setTheme } = useTheme();
   const { promptConfirm } = useDialog();
 
@@ -81,6 +83,7 @@ function GeneralSettings() {
     localStorage.removeItem("albumSortDir");
     localStorage.removeItem("baseAccentColor");
     localStorage.removeItem("theme");
+    localStorage.removeItem("recordPlays");
     location.reload();
   };
 
@@ -126,6 +129,37 @@ function GeneralSettings() {
                 setColor(newColor);
               }}
             />
+          </Setting>
+        </Section>
+
+        <Section
+          title={i18next.t("settings.playHistory.title", {
+            defaultValue: "Play History",
+          })}
+          subtitle={i18next.t("settings.playHistory.summary", {
+            defaultValue:
+              "Record and sync your play history to the MusicBox Server.",
+          })}
+        >
+          <Setting
+            label={i18next.t("settings.playHistory.record", {
+              defaultValue: "Enabled",
+            })}
+          >
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="accent-accent-500"
+                checked={recordPlays}
+                onChange={(e) => {
+                  playRecorder.enabled = e.target.checked;
+                  setRecordPlays(e.target.checked);
+                }}
+              />
+              <Trans i18nKey="settings.playHistory.recordInBrowser">
+                Yes, record and sync play history.
+              </Trans>
+            </label>
           </Setting>
         </Section>
 

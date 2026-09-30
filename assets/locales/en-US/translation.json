@@ -213,6 +213,12 @@
     "password": {
       "save": "Update Password"
     },
+    "playHistory": {
+      "record": "Enabled",
+      "recordInBrowser": "Yes, record and sync play history.",
+      "summary": "Record and sync your play history to the MusicBox Server.",
+      "title": "Play History"
+    },
     "security": {
       "subtitle": "Change your password",
       "title": "Security"
