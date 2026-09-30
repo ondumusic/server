@@ -81,21 +81,28 @@ if config_env() == :prod do
       _ -> false
     end
 
-  file_storage_impl =
-    System.get_env("MB_STORAGE_DRIVER", "file")
-    |> String.downcase()
-    |> case do
-      "s3" -> MusicBox.Storage.S3
-      _ -> MusicBox.Storage.File
+  # Drivers are either "file" (the default) or "s3".
+  get_driver = fn name, file_impl, s3_impl ->
+    case System.get_env(name, "file") |> String.downcase() do
+      "file" -> file_impl
+      "s3" -> s3_impl
+      other -> raise "environment variable #{name} should be file or s3, got: #{inspect(other)}"
     end
+  end
+
+  file_storage_impl =
+    get_driver.(
+      "MB_STORAGE_DRIVER",
+      MusicBox.Storage.File,
+      MusicBox.Storage.S3
+    )
 
   transcoder_cache_impl =
-    System.get_env("MB_TRANSCODE_CACHE_DRIVER", "cache")
-    |> String.downcase()
-    |> case do
-      "s3" -> MusicBox.Transcoder.Cache.S3
-      _ -> MusicBox.Transcoder.Cache.File
-    end
+    get_driver.(
+      "MB_TRANSCODE_CACHE_DRIVER",
+      MusicBox.Transcoder.Cache.File,
+      MusicBox.Transcoder.Cache.S3
+    )
 
   if file_storage_impl == MusicBox.Storage.S3 do
     bucket =
