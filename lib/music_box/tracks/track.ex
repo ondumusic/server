@@ -17,6 +17,8 @@ defmodule MusicBox.Tracks.Track do
     field :duration, :float
     field :number, :integer
     field :disc, :integer, default: 1
+    field :play_count, :integer, default: 0
+    field :last_played_at, :utc_datetime
 
     belongs_to :artist, Artist
     belongs_to :album, Album

@@ -93,6 +93,8 @@ defmodule MusicBoxWeb.LibraryJSON do
       number: track.number,
       duration: track.duration,
       loudness: loudness(track.file.loudness),
+      playCount: track.play_count,
+      lastPlayedAt: track.last_played_at,
       mimetype: mimetype,
       insertedAt: track.inserted_at,
       downloadUrl: url(~p"/download/#{track}"),

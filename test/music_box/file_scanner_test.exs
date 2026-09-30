@@ -163,6 +163,19 @@ defmodule MusicBox.FileScannerTest do
       assert Repo.reload!(test_album).track_count == test_album.track_count - 1
     end
 
+    test "keeps play counts on a full scan" do
+      alias MusicBox.Tracks.Track
+
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+      Repo.update_all(Track, set: [play_count: 3, last_played_at: ~U[2026-09-01 10:00:00Z]])
+
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+
+      for track <- Repo.all(Track) do
+        assert %{play_count: 3, last_played_at: ~U[2026-09-01 10:00:00Z]} = track
+      end
+    end
+
     test "invalidates the artwork of albums with new, changed or deleted files" do
       alias MusicBox.Albums.{Album, Artwork}
       alias MusicBox.Files.File

@@ -411,7 +411,8 @@ defmodule MusicBox.FileScanner.Operations do
       repo.insert_all(Track, entries,
         returning: true,
         conflict_target: [:file_id],
-        on_conflict: {:replace_all_except, [:id, :inserted_at]}
+        # Plays are kept track of separately, keep them.
+        on_conflict: {:replace_all_except, [:id, :inserted_at, :play_count, :last_played_at]}
       )
 
     {:ok, tracks}

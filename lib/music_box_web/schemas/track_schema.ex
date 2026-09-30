@@ -37,6 +37,13 @@ defmodule MusicBoxWeb.Schemas.Track do
       nullable: true,
       description: "The measured loudness, null until measured (or when measuring failed)"
     },
+    playCount: %Schema{type: :integer, example: 3, description: "How often it was played"},
+    lastPlayedAt: %Schema{
+      type: :string,
+      format: :"date-time",
+      nullable: true,
+      description: "When it was last played, null when never played"
+    },
     mimetype: %Schema{type: :string, example: "audio/mp3"},
     downloadUrl: %Schema{type: :string, example: "https://example.com/download/..."},
     streamUrl: %Schema{type: :string, example: "https://example.com/stream/..."},
@@ -61,6 +68,8 @@ defmodule MusicBoxWeb.Schemas.Track do
     :number,
     :duration,
     :loudness,
+    :playCount,
+    :lastPlayedAt,
     :mimetype,
     :downloadUrl,
     :streamUrl,
