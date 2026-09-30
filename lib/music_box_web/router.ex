@@ -72,6 +72,7 @@ defmodule MusicBoxWeb.Router do
     pipe_through [:api, :require_authenticated_user]
 
     get "/auth/me", AuthController, :current_user
+    get "/info", InfoController, :info
     get "/auth/playtoken", AuthController, :play_token
     get "/settings", SettingsController, :show
     patch "/settings", SettingsController, :update
