@@ -1,158 +1,185 @@
 defmodule MusicBox.Artwork do
-  @moduledoc false
+  @moduledoc """
+  This module deals with different kinds of artwork (e.g. albums) and their
+  resizing and storing. Every kind can have their own config.
+  """
 
   alias MusicBox.Albums
   alias MusicBox.Albums.Album
-  alias MusicBox.Albums.CoverFile
-  alias MusicBox.Artwork.Fetcher
   alias MusicBox.Repo
-  alias MusicBox.Storage
   alias MusicBox.Tool
 
   import Ecto.Query
 
+  @type kind :: :albums
   @type variant :: :thumbnail | :large
 
-  # Maximum size (in pixels) of each square variant we will generate
-  # NOTE: That this will never upscale images.
+  # The artwork schema of each kind has a changeset/2, updating artwork keeps the
+  # fields in `keep` (e.g. set by others).
+  @kinds %{
+    albums: %{parent: Album, artwork: Albums.Artwork, fit: :square, keep: [:invalidated_at]}
+  }
+
+  # Maximum size (in pixels) of each variant, artwork is never upscaled.
   @variants [thumbnail: 128, large: 640]
   @variant_names Keyword.keys(@variants)
+
+  # Restrict the maximum file size because the bigger the file the more memory
+  # it will use to resize images, and realistically we don't expect such large
+  # images under normal use.
+  @max_size 25 * 1024 * 1024
+
+  defp kind!(kind), do: Map.fetch!(@kinds, kind)
 
   @spec variants() :: [{variant(), pos_integer()}]
   def variants, do: @variants
 
-  @spec artwork_dir(String.t()) :: String.t()
-  def artwork_dir(album_id), do: Path.join(albums_path(), album_id)
+  @spec max_size() :: pos_integer()
+  def max_size, do: @max_size
 
-  defp albums_path, do: Path.join(MusicBox.Config.artwork_path(), "albums")
+  @spec dir(kind(), String.t()) :: String.t()
+  def dir(kind, id) when is_map_key(@kinds, kind),
+    do: Path.join([MusicBox.Config.artwork_path(), to_string(kind), id])
 
-  @spec variant_path(String.t(), variant()) :: String.t()
-  def variant_path(album_id, variant) when variant in @variant_names do
-    album_id
-    |> artwork_dir()
-    |> Path.join("#{variant}.jpg")
+  @spec variant_path(kind(), String.t(), variant()) :: String.t()
+  def variant_path(kind, id, variant) when variant in @variant_names,
+    do: Path.join(dir(kind, id), "#{variant}.jpg")
+
+  @doc """
+  Returns the actual width and height of each variant.
+  """
+  @spec variant_sizes(kind(), %{
+          :width => pos_integer(),
+          :height => pos_integer(),
+          optional(atom()) => any()
+        }) ::
+          [{variant(), pos_integer(), pos_integer()}]
+  def variant_sizes(kind, %{width: width, height: height})
+      when is_integer(width) and is_integer(height) do
+    fit = kind!(kind).fit
+
+    for {variant, size} <- @variants do
+      {width, height} = variant_size(fit, width, height, size)
+      {variant, width, height}
+    end
+  end
+
+  # Fitted within the size and padded to a square.
+  defp variant_size(:square, width, height, size) do
+    size = min(max(width, height), size)
+    {size, size}
   end
 
   @doc """
-  Returns the actual size of each variant for artwork of the given source
-  dimensions, the source is fitted within the variant size and padded to a square.
+  Stores the resized image at the given path as the artwork for the parent (e.g.
+  an album), together with the given params. Resizing is skipped when the image
+  did not change (hash is identical)
   """
-  @spec variant_sizes(Albums.Artwork.t()) :: [{variant(), pos_integer()}]
-  def variant_sizes(%Albums.Artwork{width: width, height: height})
-      when is_integer(width) and is_integer(height) do
-    for {variant, max_size} <- @variants do
-      {variant, min(max(width, height), max_size)}
+  @spec put(kind(), struct(), String.t(), map()) ::
+          Repo.result(struct()) | {:error, :too_large | :invalid_image}
+  def put(kind, parent, path, params \\ %{}) do
+    current = Repo.get(kind!(kind).artwork, parent.id)
+
+    with :ok <- check_size(path),
+         {:ok, hash} <- file_hash(path),
+         {:ok, dimensions} <- resize(kind, parent, path, hash, current) do
+      save(kind, parent, current, Map.merge(params, Map.put(dimensions, :hash, hash)))
     end
   end
 
-  @spec find(Album.t()) :: Repo.result(Albums.Artwork.t())
-  def find(%Album{} = album) do
-    album = Repo.preload(album, [:artwork, tracks: :file])
-    started_at = DateTime.utc_now(:second)
-    fetchers = Albums.Artwork.fetchers()
-    context = find_context(album)
-
-    params =
-      case find_artwork(album, fetchers, context) do
-        {:ok, fetcher, params} -> Map.put(params, :fetcher, fetcher)
-        :not_found -> %{fetcher: List.last(fetchers), hash: nil, source_path: nil}
-      end
-      |> Map.merge(context)
-
-    with {:ok, artwork} <-
-           Repo.transact(fn -> store(album, Map.put(params, :last_fetch_attempt, started_at)) end) do
-      if changed?(album.artwork, artwork) do
-        artwork
-        |> cleanup()
-        |> broadcast()
-      end
-
+  @doc """
+  Saves the artwork for the parent, when it changed the parent is touched so
+  clients sync it. Its variants are removed when it no longer has artwork.
+  """
+  @spec save(kind(), struct(), struct() | nil, map()) :: Repo.result(struct())
+  def save(kind, parent, current, params) do
+    with {:ok, artwork} <- Repo.transact(fn -> store(kind, parent, current, params) end) do
+      if changed?(current, artwork), do: after_change(kind, parent, artwork)
       {:ok, artwork}
     end
   end
 
-  defp store(album, params) do
-    with {:ok, artwork} <- Albums.update_artwork(album, params) do
-      if changed?(album.artwork, artwork), do: touch_album(album)
+  @doc "Inserts or updates the artwork row of the parent."
+  @spec upsert(kind(), struct(), map()) :: Repo.result(struct())
+  def upsert(kind, parent, params) do
+    %{artwork: schema, keep: keep} = kind!(kind)
+    [key] = schema.__schema__(:primary_key)
+
+    schema
+    |> struct([{key, parent.id}])
+    |> schema.changeset(params)
+    |> Repo.insert(on_conflict: {:replace_all_except, [key | keep]}, conflict_target: key)
+  end
+
+  defp store(kind, parent, current, params) do
+    with {:ok, artwork} <- upsert(kind, parent, params) do
+      if changed?(current, artwork), do: touch(kind, parent)
       {:ok, artwork}
     end
   end
 
-  defp changed?(%Albums.Artwork{hash: hash}, %{hash: hash}), do: false
+  defp check_size(path) do
+    case File.stat(path) do
+      {:ok, %{size: size}} when size > 0 and size <= @max_size -> :ok
+      {:ok, %{size: 0}} -> {:error, :invalid_image}
+      {:ok, _stat} -> {:error, :too_large}
+      {:error, _reason} -> {:error, :invalid_image}
+    end
+  end
+
+  defp resize(_kind, _parent, _path, hash, %{hash: hash, width: width, height: height}),
+    do: {:ok, %{width: width, height: height}}
+
+  defp resize(kind, parent, path, _hash, _current) do
+    variants =
+      for {variant, size} <- @variants, do: {variant_path(kind, parent.id, variant), size}
+
+    opts = %{id: parent.id, path: path, variants: variants, fit: kind!(kind).fit}
+
+    case Tool.resize_artwork(opts) do
+      {:ok, %{width: width, height: height}} -> {:ok, %{width: width, height: height}}
+      {:error, :too_large} -> {:error, :too_large}
+      {:error, _reason} -> {:error, :invalid_image}
+    end
+  end
+
+  defp changed?(%{hash: hash}, %{hash: hash}), do: false
   defp changed?(nil, %{hash: nil}), do: false
   defp changed?(_old_artwork, _new_artwork), do: true
 
-  # We'll bump the album updated_at so they will be updated with the next
+  # We'll bump the parent its updated_at so it will be updated with the next
   # client sync and return with the new artwork.
-  defp touch_album(album) do
-    from(al in Album, where: al.id == ^album.id)
+  defp touch(kind, parent) do
+    from(p in kind!(kind).parent, where: p.id == ^parent.id)
     |> Repo.update_all(set: [updated_at: DateTime.utc_now(:second)])
   end
 
-  defp find_context(album) do
-    # Because tracks could be organised in multiple directories (for example a
-    # cd1, cd2 directory) we want to check both of these.
-    dirs =
-      album.tracks
-      |> Enum.map(&Path.dirname(&1.file.path))
-      |> Enum.uniq()
-      |> Enum.sort()
-
-    cover = dirs |> Enum.flat_map(&Storage.list_dir/1) |> CoverFile.find()
-    %{dirs: dirs, cover: cover}
+  defp after_change(kind, parent, artwork) do
+    if is_nil(artwork.hash), do: File.rm_rf(dir(kind, parent.id))
+    broadcast(kind, parent)
   end
 
-  defp find_artwork(_album, [], _context), do: :not_found
-
-  defp find_artwork(album, [fetcher | fetchers], context) do
-    with {:ok, result} <- fetcher_module(fetcher).find(album, context),
-         {:ok, params} <- resize(album, result.unprocessed_path) do
-      {:ok, fetcher, Map.put(params, :source_path, result.source_path)}
-    else
-      {:error, _reason} -> find_artwork(album, fetchers, context)
-    end
+  defp broadcast(kind, parent) do
+    MusicBoxWeb.Endpoint.broadcast!("library:sync", "processed", %{kind => [parent.id]})
   end
 
-  defp fetcher_module(fetcher) do
-    Module.safe_concat(Fetcher, Macro.camelize(to_string(fetcher)))
-  end
-
-  defp resize(album, source_path) do
-    result =
-      with {:ok, hash} <- calculate_hash(source_path) do
-        case album.artwork do
-          %{hash: ^hash, width: width, height: height} ->
-            {:ok, %{hash: hash, width: width, height: height}}
-
-          _artwork ->
-            resize_variants(album, source_path, hash)
-        end
-      end
-
-    File.rm(source_path)
-    result
-  end
-
-  defp resize_variants(album, source_path, hash) do
-    variants =
-      for {variant, size} <- @variants,
-          do: {variant_path(album.id, variant), size}
-
-    with {:ok, %{width: width, height: height}} <-
-           Tool.resize_artwork(%{id: album.id, path: source_path, variants: variants}) do
-      {:ok, %{hash: hash, width: width, height: height}}
-    end
-  end
-
-  defp calculate_hash(source_path) do
+  @doc "A short hash of a file, used in artwork urls."
+  @spec file_hash(String.t()) :: {:ok, String.t()} | {:error, File.posix()}
+  def file_hash(source_path) do
     with {:ok, bytes} <- File.read(source_path) do
       hash = :crypto.hash(:sha256, bytes) |> Base.encode16(case: :lower)
       {:ok, binary_part(hash, 0, 16)}
     end
   end
 
+  @spec tmp_path(String.t()) :: String.t()
+  def tmp_path(path) do
+    Path.rootname(path) <> ".#{System.unique_integer([:positive])}.tmp" <> Path.extname(path)
+  end
+
   @doc """
-  Removes the artwork for albums that no longer exist in the database.
+  Removes the artwork of parents (e.g. albums) that no longer exist in the
+  database.
 
   It will attempt to do this based on the directory names (UUID) because if we
   query the database for all known artwork it will not have the deleted entries
@@ -160,35 +187,31 @@ defmodule MusicBox.Artwork do
   """
   @spec remove_orphaned() :: non_neg_integer()
   def remove_orphaned do
-    album_ids =
-      case File.ls(albums_path()) do
-        {:ok, names} -> Enum.filter(names, &album_id?/1)
+    @kinds
+    |> Enum.map(fn {kind, %{parent: parent}} -> remove_orphaned(kind, parent) end)
+    |> Enum.sum()
+  end
+
+  defp remove_orphaned(kind, parent) do
+    ids =
+      case File.ls(Path.join(MusicBox.Config.artwork_path(), to_string(kind))) do
+        {:ok, names} -> Enum.filter(names, &id?/1)
         {:error, _reason} -> []
       end
 
     existing =
-      album_ids
+      ids
       |> Enum.chunk_every(1000)
-      |> Enum.flat_map(&Repo.all(from(al in Album, where: al.id in ^&1, select: al.id)))
+      |> Enum.flat_map(&Repo.all(from(p in parent, where: p.id in ^&1, select: p.id)))
       |> MapSet.new()
 
-    orphaned = Enum.reject(album_ids, &MapSet.member?(existing, &1))
-    Enum.each(orphaned, &File.rm_rf(artwork_dir(&1)))
+    orphaned = Enum.reject(ids, &MapSet.member?(existing, &1))
+    Enum.each(orphaned, &File.rm_rf(dir(kind, &1)))
     length(orphaned)
   end
 
-  # Only folders named exactly like an album id (uuid).
+  # Only folders named exactly like an id (uuid).
   # NOTE that cast always returns lowercase, but our server also only creates
-  # lowercase uuid folders for albums so other casing should be ignored.
-  defp album_id?(name), do: Ecto.UUID.cast(name) == {:ok, name}
-
-  defp cleanup(artwork) do
-    if is_nil(artwork.hash), do: File.rm_rf(artwork_dir(artwork.album_id))
-    artwork
-  end
-
-  defp broadcast(artwork) do
-    MusicBoxWeb.Endpoint.broadcast!("library:sync", "processed", %{albums: [artwork.album_id]})
-    artwork
-  end
+  # lowercase uuid folders so other casing should be ignored.
+  defp id?(name), do: Ecto.UUID.cast(name) == {:ok, name}
 end

@@ -3,8 +3,8 @@ defmodule MusicBox.Artwork.Worker do
 
   use GenServer
 
+  alias MusicBox.Albums
   alias MusicBox.Albums.Album
-  alias MusicBox.Artwork
   alias MusicBox.Repo
   import Ecto.Query
 
@@ -89,7 +89,7 @@ defmodule MusicBox.Artwork.Worker do
   end
 
   defp start_async_fetcher(album) do
-    {_pid, ref} = spawn_monitor(fn -> Artwork.find(album) end)
+    {_pid, ref} = spawn_monitor(fn -> Albums.find_cover(album) end)
     ref
   end
 end

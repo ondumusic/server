@@ -2,7 +2,6 @@ defmodule MusicBox.Tool.ResizeArtwork do
   @moduledoc false
   @behaviour MusicBox.Tool
 
-  alias MusicBox.Artwork.Fetcher
   require Logger
 
   # We will limit the maximum dimensions of our image to avoid high memory usage
@@ -25,7 +24,7 @@ defmodule MusicBox.Tool.ResizeArtwork do
 
     outputs =
       for {variant_path, size} <- variants,
-          do: {variant_path, Fetcher.tmp_path(variant_path), size}
+          do: {variant_path, MusicBox.Artwork.tmp_path(variant_path), size}
 
     with true <- File.exists?(path),
          {:ok, dimensions} <- probe_dimensions(ffprobe_path, path),

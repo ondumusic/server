@@ -6,7 +6,7 @@ defmodule MusicBox.Artwork.Fetcher.CoverFile do
   alias MusicBox.Storage
   require Logger
 
-  @max_size MusicBox.Artwork.Fetcher.max_size()
+  @max_size MusicBox.Artwork.max_size()
 
   def find(_album, %{cover: nil}), do: {:error, :not_found}
 

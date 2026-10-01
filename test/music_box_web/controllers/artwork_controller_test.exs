@@ -12,7 +12,7 @@ defmodule MusicBoxWeb.ArtworkControllerTest do
     album = Repo.get_by!(Album, slug: "with-the-beatles")
 
     for {variant, _size} <- Artwork.variants() do
-      path = Artwork.variant_path(album.id, variant)
+      path = Artwork.variant_path(:albums, album.id, variant)
       File.mkdir_p!(Path.dirname(path))
       File.write!(path, "#{variant} bytes")
     end

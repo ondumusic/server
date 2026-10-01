@@ -41,12 +41,12 @@ defmodule MusicBox.ArtworkTest do
     test "saves resized artwork variants" do
       album = Repo.one!(Album)
 
-      assert {:ok, artwork} = Artwork.find(album)
+      assert {:ok, artwork} = Albums.find_cover(album)
       assert artwork.fetcher == :embedded
       assert is_binary(artwork.hash)
       assert {artwork.width, artwork.height} == {800, 800}
-      assert File.ls!(Path.dirname(Artwork.artwork_dir(album.id))) == [album.id]
-      assert Enum.sort(File.ls!(Artwork.artwork_dir(album.id))) == ["large.jpg", "thumbnail.jpg"]
+      assert File.ls!(Path.dirname(Artwork.dir(:albums, album.id))) == [album.id]
+      assert Enum.sort(File.ls!(Artwork.dir(:albums, album.id))) == ["large.jpg", "thumbnail.jpg"]
       refute File.exists?(Fetcher.unprocessed_path(album))
     end
 
@@ -54,34 +54,34 @@ defmodule MusicBox.ArtworkTest do
       album = Repo.one!(Album)
       update_record(album, %{updated_at: ~U[2000-01-01 00:00:00Z]})
 
-      assert {:ok, _artwork} = Artwork.find(album)
+      assert {:ok, _artwork} = Albums.find_cover(album)
       assert Repo.reload!(album).updated_at != ~U[2000-01-01 00:00:00Z]
     end
 
     test "keeps the artwork when the source did not change" do
       album = Repo.one!(Album)
-      assert {:ok, artwork} = Artwork.find(album)
+      assert {:ok, artwork} = Albums.find_cover(album)
 
       album = update_record(album, %{updated_at: ~U[2000-01-01 00:00:00Z]})
       # A resize would create this file again.
-      File.rm!(Artwork.variant_path(album.id, :large))
+      File.rm!(Artwork.variant_path(:albums, album.id, :large))
       Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:sync")
 
-      assert {:ok, %{hash: hash}} = Artwork.find(album)
+      assert {:ok, %{hash: hash}} = Albums.find_cover(album)
       assert hash == artwork.hash
-      refute File.exists?(Artwork.variant_path(album.id, :large))
+      refute File.exists?(Artwork.variant_path(:albums, album.id, :large))
       assert Repo.reload!(album).updated_at == ~U[2000-01-01 00:00:00Z]
       refute_received %{event: "processed"}
     end
 
     test "replaces the artwork when the source changed", %{other_artwork_bytes: other_bytes} do
       album = Repo.one!(Album)
-      assert {:ok, artwork} = Artwork.find(album)
+      assert {:ok, artwork} = Albums.find_cover(album)
 
       album = update_record(album, %{updated_at: ~U[2000-01-01 00:00:00Z]})
       stub(MusicBox.Tool.ExtractArtworkMock, :exec, fn _path -> other_bytes end)
 
-      assert {:ok, new_artwork} = Artwork.find(album)
+      assert {:ok, new_artwork} = Albums.find_cover(album)
       assert new_artwork.hash != artwork.hash
       assert {new_artwork.width, new_artwork.height} == {600, 600}
       assert Repo.reload!(album).updated_at != ~U[2000-01-01 00:00:00Z]
@@ -89,15 +89,15 @@ defmodule MusicBox.ArtworkTest do
 
     test "clears the artwork when it is no longer found" do
       album = Repo.one!(Album)
-      assert {:ok, _artwork} = Artwork.find(album)
+      assert {:ok, _artwork} = Albums.find_cover(album)
 
       album = update_record(album, %{updated_at: ~U[2000-01-01 00:00:00Z]})
       stub(MusicBox.Tool.ExtractArtworkMock, :exec, fn _path -> {:error, :not_found} end)
       Phoenix.PubSub.subscribe(MusicBox.PubSub, "library:sync")
 
-      assert {:ok, artwork} = Artwork.find(album)
+      assert {:ok, artwork} = Albums.find_cover(album)
       assert {artwork.hash, artwork.width} == {nil, nil}
-      refute File.exists?(Artwork.artwork_dir(album.id))
+      refute File.exists?(Artwork.dir(:albums, album.id))
       assert Repo.reload!(album).updated_at != ~U[2000-01-01 00:00:00Z]
 
       album_id = album.id
@@ -106,12 +106,12 @@ defmodule MusicBox.ArtworkTest do
 
     test "does not reset the invalidation when storing a lookup" do
       album = Repo.one!(Album)
-      assert {:ok, _artwork} = Artwork.find(album)
+      assert {:ok, _artwork} = Albums.find_cover(album)
 
       from(aw in Albums.Artwork, where: aw.album_id == ^album.id)
       |> Repo.update_all(set: [invalidated_at: ~U[2030-01-01 00:00:00Z]])
 
-      assert {:ok, _artwork} = Artwork.find(album)
+      assert {:ok, _artwork} = Albums.find_cover(album)
       assert Repo.get!(Albums.Artwork, album.id).invalidated_at == ~U[2030-01-01 00:00:00Z]
     end
 
@@ -121,7 +121,7 @@ defmodule MusicBox.ArtworkTest do
 
       album = Repo.one!(Album)
 
-      assert {:ok, artwork} = Artwork.find(album)
+      assert {:ok, artwork} = Albums.find_cover(album)
       assert artwork.hash == nil
       assert artwork.width == nil
       assert Path.wildcard(Path.join(MusicBox.Config.artwork_path(), "**/*.*")) == []
@@ -132,29 +132,29 @@ defmodule MusicBox.ArtworkTest do
     test "removes the artwork of albums that no longer exist" do
       album = Repo.one!(Album)
       orphaned_id = Ecto.UUID.generate()
-      albums_path = Path.dirname(Artwork.artwork_dir(album.id))
+      albums_path = Path.dirname(Artwork.dir(:albums, album.id))
 
-      for id <- [album.id, orphaned_id], do: File.mkdir_p!(Artwork.artwork_dir(id))
+      for id <- [album.id, orphaned_id], do: File.mkdir_p!(Artwork.dir(:albums, id))
       File.write!(Path.join(albums_path, "other.txt"), "not artwork")
       # Ecto.UUID.cast/1 would accept 16 characters as a raw uuid.
       File.mkdir_p!(Path.join(albums_path, "sixteen-chars-xx"))
 
       assert Artwork.remove_orphaned() == 1
-      assert File.dir?(Artwork.artwork_dir(album.id))
-      refute File.exists?(Artwork.artwork_dir(orphaned_id))
+      assert File.dir?(Artwork.dir(:albums, album.id))
+      refute File.exists?(Artwork.dir(:albums, orphaned_id))
       assert File.exists?(Path.join(albums_path, "other.txt"))
       assert File.dir?(Path.join(albums_path, "sixteen-chars-xx"))
     end
 
     test "is part of removing unused albums" do
       album = Repo.one!(Album)
-      File.mkdir_p!(Artwork.artwork_dir(album.id))
+      File.mkdir_p!(Artwork.dir(:albums, album.id))
       Repo.delete_all(from(t in MusicBox.Tracks.Track, where: t.album_id == ^album.id))
 
       MusicBox.Cleanup.Worker.do_step(:unused)
 
       refute Repo.get(Album, album.id)
-      refute File.exists?(Artwork.artwork_dir(album.id))
+      refute File.exists?(Artwork.dir(:albums, album.id))
     end
   end
 
@@ -162,32 +162,32 @@ defmodule MusicBox.ArtworkTest do
     @tag capture_log: true
     test "does not store artwork that is too large", %{artwork_bytes: artwork_bytes} do
       # A valid image, padded beyond the maximum size.
-      too_large = artwork_bytes <> :binary.copy(<<0>>, Fetcher.max_size())
+      too_large = artwork_bytes <> :binary.copy(<<0>>, Artwork.max_size())
       stub(MusicBox.Tool.ExtractArtworkMock, :exec, fn _path -> too_large end)
 
-      assert {:ok, %{hash: nil}} = Artwork.find(Repo.one!(Album))
+      assert {:ok, %{hash: nil}} = Albums.find_cover(Repo.one!(Album))
       assert Path.wildcard(Path.join(MusicBox.Config.artwork_path(), "**/*.*")) == []
     end
 
     @tag capture_log: true
     test "does not read cover files that are too large" do
-      cover = %Albums.CoverFile{path: "does/not/exist.jpg", size: Fetcher.max_size() + 1}
+      cover = %Albums.CoverFile{path: "does/not/exist.jpg", size: Artwork.max_size() + 1}
 
       assert {:error, :too_large} =
                Fetcher.CoverFile.find(Repo.one!(Album), %{dirs: [], cover: cover})
     end
   end
 
-  describe "variant_sizes/1" do
-    test "fits the source within each variant without upscaling" do
-      assert Artwork.variant_sizes(%Albums.Artwork{width: 1215, height: 1030}) ==
-               [thumbnail: 128, large: 640]
+  describe "variant_sizes/2" do
+    test "fits album artwork within each variant without upscaling" do
+      assert Artwork.variant_sizes(:albums, %{width: 1215, height: 1030}) ==
+               [{:thumbnail, 128, 128}, {:large, 640, 640}]
 
-      assert Artwork.variant_sizes(%Albums.Artwork{width: 450, height: 400}) ==
-               [thumbnail: 128, large: 450]
+      assert Artwork.variant_sizes(:albums, %{width: 450, height: 400}) ==
+               [{:thumbnail, 128, 128}, {:large, 450, 450}]
 
-      assert Artwork.variant_sizes(%Albums.Artwork{width: 90, height: 100}) ==
-               [thumbnail: 100, large: 100]
+      assert Artwork.variant_sizes(:albums, %{width: 90, height: 100}) ==
+               [{:thumbnail, 100, 100}, {:large, 100, 100}]
     end
   end
 
@@ -222,7 +222,7 @@ defmodule MusicBox.ArtworkTest do
       refute_received {:concurrent_fetch, _path}
 
       for album <- Repo.all(from(al in Album, preload: :artwork)) do
-        assert File.exists?(Artwork.artwork_dir(album.id))
+        assert File.exists?(Artwork.dir(:albums, album.id))
       end
     end
 

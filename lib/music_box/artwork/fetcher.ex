@@ -16,17 +16,11 @@ defmodule MusicBox.Artwork.Fetcher do
   @type result :: %{unprocessed_path: String.t(), source_path: String.t()}
   @type find_error :: :not_found | :failed_to_write | :too_large
 
-  # We'll limit the artwork images in file size because the larger they get the
-  # more memory they'll cost to process, and it is unlikely we will ever really
-  # hit this limit under normal use.
-  @max_size 25 * 1024 * 1024
+  @max_size MusicBox.Artwork.max_size()
 
   @doc "Finds the artwork of an album and saves it with `save_artwork/2`."
   @callback find(album :: Album.t(), context :: context()) ::
               {:ok, result()} | {:error, find_error()}
-
-  @spec max_size() :: pos_integer()
-  def max_size, do: @max_size
 
   @spec save_artwork(Album.t(), binary()) ::
           {:ok, String.t()} | {:error, :failed_to_write | :too_large}
@@ -37,7 +31,7 @@ defmodule MusicBox.Artwork.Fetcher do
 
   def save_artwork(album, bytes) do
     path = unprocessed_path(album)
-    tmp_path = tmp_path(path)
+    tmp_path = MusicBox.Artwork.tmp_path(path)
     File.mkdir_p!(Path.dirname(path))
 
     with {:ok, file} <- File.open(tmp_path, [:write, :binary, :raw]),
@@ -64,10 +58,5 @@ defmodule MusicBox.Artwork.Fetcher do
   def unprocessed_path(album) do
     MusicBox.Config.artwork_path()
     |> Path.join("#{album.id}.source")
-  end
-
-  @spec tmp_path(String.t()) :: String.t()
-  def tmp_path(path) do
-    Path.rootname(path) <> ".#{System.unique_integer([:positive])}.tmp" <> Path.extname(path)
   end
 end

@@ -75,7 +75,7 @@ defmodule MusicBox.CoverFilesTest do
     test "prefers a cover file over embedded artwork", context do
       write(context.music_path, "Album/cover.jpg", context.cover_bytes)
 
-      assert {:ok, artwork} = Artwork.find(insert_album("Album"))
+      assert {:ok, artwork} = Albums.find_cover(insert_album("Album"))
       assert artwork.fetcher == :cover_file
       assert artwork.source_path == "Album/cover.jpg"
       assert {artwork.width, artwork.height} == {500, 500}
@@ -85,7 +85,7 @@ defmodule MusicBox.CoverFilesTest do
     end
 
     test "uses embedded artwork without a cover file" do
-      assert {:ok, artwork} = Artwork.find(insert_album("Album"))
+      assert {:ok, artwork} = Albums.find_cover(insert_album("Album"))
       assert artwork.fetcher == :embedded
       assert artwork.source_path == "Album/One.mp3"
       assert {artwork.width, artwork.height} == {300, 300}
@@ -96,7 +96,7 @@ defmodule MusicBox.CoverFilesTest do
     test "finds a cover file in any of the album directories", context do
       write(context.music_path, "Multi/CD2/cover.jpg", context.cover_bytes)
 
-      assert {:ok, artwork} = Artwork.find(insert_album(["Multi/CD1", "Multi/CD2"]))
+      assert {:ok, artwork} = Albums.find_cover(insert_album(["Multi/CD1", "Multi/CD2"]))
       assert artwork.fetcher == :cover_file
       assert artwork.source_path == "Multi/CD2/cover.jpg"
       assert artwork.dirs == ["Multi/CD1", "Multi/CD2"]
@@ -106,7 +106,7 @@ defmodule MusicBox.CoverFilesTest do
       write(context.music_path, "Multi/CD1/cover.jpg", context.cover_bytes)
       write(context.music_path, "Multi/CD2/cover.jpg", context.cover_bytes)
 
-      assert {:ok, artwork} = Artwork.find(insert_album(["Multi/CD2", "Multi/CD1"]))
+      assert {:ok, artwork} = Albums.find_cover(insert_album(["Multi/CD2", "Multi/CD1"]))
       assert artwork.source_path == "Multi/CD1/cover.jpg"
     end
 
@@ -114,7 +114,7 @@ defmodule MusicBox.CoverFilesTest do
     test "falls back to embedded artwork when the cover file is broken", context do
       write(context.music_path, "Album/cover.jpg", :crypto.strong_rand_bytes(128))
 
-      assert {:ok, artwork} = Artwork.find(insert_album("Album"))
+      assert {:ok, artwork} = Albums.find_cover(insert_album("Album"))
       assert artwork.fetcher == :embedded
 
       # Still stored, so the scanner does not invalidate it again until it changes.
@@ -194,7 +194,7 @@ defmodule MusicBox.CoverFilesTest do
 
       # All albums (including the seeded ones) have artwork, so there is
       # nothing to do when the worker starts.
-      for album <- Repo.all(Album), do: {:ok, _artwork} = Artwork.find(album)
+      for album <- Repo.all(Album), do: {:ok, _artwork} = Albums.find_cover(album)
       start_supervised!(Artwork.Worker)
 
       from(aw in Albums.Artwork, where: aw.album_id == ^album.id)
