@@ -62,16 +62,35 @@ defmodule MusicBox.Tool.ResizeArtworkTest do
       assert File.ls!(dir) == ["source"]
     end
 
+    test "keeps the aspect ratio with fit: :shortest_side", %{dir: dir} do
+      source = red_image(dir, 1215, 1030)
+
+      assert {:ok, %{width: 1215, height: 1030}} = resize(source, dir, :shortest_side)
+
+      assert dimensions(Path.join(dir, "thumbnail.jpg")) == {151, 128}
+      assert dimensions(Path.join(dir, "large.jpg")) == {755, 640}
+    end
+
+    test "does not upscale or change odd sizes with fit: :shortest_side", %{dir: dir} do
+      source = red_image(dir, 531, 459, "jpg")
+
+      assert {:ok, _dimensions} = resize(source, dir, :shortest_side)
+
+      assert dimensions(Path.join(dir, "thumbnail.jpg")) == {148, 128}
+      assert dimensions(Path.join(dir, "large.jpg")) == {531, 459}
+    end
+
     @tag capture_log: true
     test "returns an error when the source does not exist", %{dir: dir} do
       assert {:error, :file_not_found} = resize(Path.join(dir, "missing"), dir)
     end
   end
 
-  defp resize(source, dir) do
+  defp resize(source, dir, fit \\ :square) do
     ResizeArtwork.exec(
-      album: %{id: "album-id"},
+      id: "artwork-id",
       path: source,
+      fit: fit,
       variants: [
         {Path.join(dir, "thumbnail.jpg"), 128},
         {Path.join(dir, "large.jpg"), 640}

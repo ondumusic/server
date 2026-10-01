@@ -139,7 +139,7 @@ defmodule MusicBox.Artwork do
           do: {variant_path(album.id, variant), size}
 
     with {:ok, %{width: width, height: height}} <-
-           Tool.resize_artwork(%{album: album, path: source_path, variants: variants}) do
+           Tool.resize_artwork(%{id: album.id, path: source_path, variants: variants}) do
       {:ok, %{hash: hash, width: width, height: height}}
     end
   end

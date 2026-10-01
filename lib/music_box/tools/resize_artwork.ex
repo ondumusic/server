@@ -13,8 +13,12 @@ defmodule MusicBox.Tool.ResizeArtwork do
   @impl true
   def exec(opts) when is_list(opts), do: exec(Map.new(opts))
 
-  def exec(%{album: album, path: path, variants: variants}) do
-    Logger.debug("Resizing artwork for album #{album.id}, file: #{path}")
+  # Variants are either constrained andpadded to a white square # (`fit: :square`,
+  # the default), or keep their aspect ratio with the shortest side scaled to
+  # the size (`fit: :shortest_side`). We never upscale.
+  def exec(%{id: id, path: path, variants: variants} = opts) do
+    Logger.debug("Resizing artwork #{id}, file: #{path}")
+    fit = Map.get(opts, :fit, :square)
 
     ffmpeg_path = System.find_executable("ffmpeg") || throw(:ffmpeg_not_found)
     ffprobe_path = System.find_executable("ffprobe") || throw(:ffprobe_not_found)
@@ -28,7 +32,7 @@ defmodule MusicBox.Tool.ResizeArtwork do
          :ok <- check_dimensions(dimensions),
          :ok <- mkdir_outputs(outputs),
          {_stdout, 0} <-
-           MusicBox.Tool.cmd(ffmpeg_path, ffmpeg_args(path, outputs),
+           MusicBox.Tool.cmd(ffmpeg_path, ffmpeg_args(path, outputs, fit, dimensions),
              timeout: @resize_timeout,
              stderr_to_stdout: true
            ),
@@ -36,21 +40,21 @@ defmodule MusicBox.Tool.ResizeArtwork do
       {:ok, dimensions}
     else
       false ->
-        Logger.error("Failed to resize artwork for album #{album.id}, file not found?")
+        Logger.error("Failed to resize artwork #{id}, file not found?")
         {:error, :file_not_found}
 
       {:error, :too_large} ->
-        Logger.warning("Artwork of album #{album.id} is too large to resize (file: #{path})")
+        Logger.warning("Artwork #{id} is too large to resize (file: #{path})")
         {:error, :too_large}
 
       {:error, reason} ->
         cleanup_outputs(outputs)
-        Logger.error("Failed to resize artwork for album #{album.id} (reason: #{reason})")
+        Logger.error("Failed to resize artwork #{id} (reason: #{reason})")
         {:error, :failed_to_resize}
 
       {_stdout, exitcode} ->
         cleanup_outputs(outputs)
-        Logger.error("Failed to resize artwork for album #{album.id}, exit code #{exitcode}")
+        Logger.error("Failed to resize artwork #{id}, exit code #{exitcode}")
         {:error, :failed_to_resize}
     end
   end
@@ -98,13 +102,24 @@ defmodule MusicBox.Tool.ResizeArtwork do
     for {_path, tmp_path, _size} <- outputs, do: File.rm(tmp_path)
   end
 
-  defp ffmpeg_args(path, outputs) do
+  @doc """
+  The size of a variant that keeps the aspect ratio, with the shortest side
+  scaled to the given size (but never upscaled).
+  """
+  @spec shortest_side_size(pos_integer(), pos_integer(), pos_integer()) ::
+          {pos_integer(), pos_integer()}
+  def shortest_side_size(width, height, size) do
+    scale = min(1, size / min(width, height))
+    {max(1, round(width * scale)), max(1, round(height * scale))}
+  end
+
+  defp ffmpeg_args(path, outputs, fit, dimensions) do
     outputs = Enum.with_index(outputs, 1)
     split = "[0:v]split=#{length(outputs)}" <> Enum.map_join(outputs, fn {_, i} -> "[in#{i}]" end)
 
     scales =
       for {{_path, _tmp_path, size}, i} <- outputs,
-          do: "[in#{i}]" <> square_filter(size) <> "[out#{i}]"
+          do: "[in#{i}]" <> filter(fit, size, dimensions) <> "[out#{i}]"
 
     maps =
       Enum.flat_map(outputs, fn {{_path, tmp_path, _size}, i} ->
@@ -114,8 +129,13 @@ defmodule MusicBox.Tool.ResizeArtwork do
     ["-nostdin", "-y", "-i", path, "-filter_complex", Enum.join([split | scales], ";")] ++ maps
   end
 
+  defp filter(:shortest_side, size, %{width: width, height: height}) do
+    {width, height} = shortest_side_size(width, height, size)
+    "scale=#{width}:#{height}:flags=lanczos,format=yuv420p"
+  end
+
   # Fit within `size` without upscaling, then pad to a square with white.
-  defp square_filter(size) do
+  defp filter(:square, size, _dimensions) do
     "scale='min(iw,#{size})':'min(ih,#{size})':force_original_aspect_ratio=decrease:flags=lanczos," <>
       "format=yuv444p,pad='max(iw,ih)':'max(iw,ih)':'(ow-iw)/2':'(oh-ih)/2':color=white," <>
       "format=yuv420p"
