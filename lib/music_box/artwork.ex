@@ -6,18 +6,34 @@ defmodule MusicBox.Artwork do
 
   alias MusicBox.Albums
   alias MusicBox.Albums.Album
+  alias MusicBox.Artists
+  alias MusicBox.Artists.Artist
   alias MusicBox.Repo
   alias MusicBox.Tool
 
   import Ecto.Query
 
-  @type kind :: :albums
+  @type kind :: :albums | :artists
   @type variant :: :thumbnail | :large
 
   # The artwork schema of each kind has a changeset/2, updating artwork keeps the
-  # fields in `keep` (e.g. set by others).
+  # fields in `keep` (e.g. set by others). Originals are only kept when they can't
+  # be found again, like uploads (album artwork is found in the music files).
   @kinds %{
-    albums: %{parent: Album, artwork: Albums.Artwork, fit: :square, keep: [:invalidated_at]}
+    albums: %{
+      parent: Album,
+      artwork: Albums.Artwork,
+      fit: :square,
+      keep: [:invalidated_at],
+      keep_original: false
+    },
+    artists: %{
+      parent: Artist,
+      artwork: Artists.Artwork,
+      fit: :shortest_side,
+      keep: [:inserted_at],
+      keep_original: true
+    }
   }
 
   # Maximum size (in pixels) of each variant, artwork is never upscaled.
@@ -45,6 +61,9 @@ defmodule MusicBox.Artwork do
   def variant_path(kind, id, variant) when variant in @variant_names,
     do: Path.join(dir(kind, id), "#{variant}.jpg")
 
+  @spec original_path(kind(), String.t()) :: String.t()
+  def original_path(kind, id), do: Path.join(dir(kind, id), "original")
+
   @doc """
   Returns the actual width and height of each variant.
   """
@@ -70,13 +89,17 @@ defmodule MusicBox.Artwork do
     {size, size}
   end
 
+  # Keeps the aspect ratio, with the shortest side scaled to the size.
+  defp variant_size(:shortest_side, width, height, size),
+    do: Tool.ResizeArtwork.shortest_side_size(width, height, size)
+
   @doc """
   Stores the resized image at the given path as the artwork for the parent (e.g.
   an album), together with the given params. Resizing is skipped when the image
   did not change (hash is identical)
   """
   @spec put(kind(), struct(), String.t(), map()) ::
-          Repo.result(struct()) | {:error, :too_large | :invalid_image}
+          Repo.result(struct()) | {:error, :too_large | :invalid_image | :failed_to_write}
   def put(kind, parent, path, params \\ %{}) do
     current = Repo.get(kind!(kind).artwork, parent.id)
 
@@ -97,6 +120,23 @@ defmodule MusicBox.Artwork do
       if changed?(current, artwork), do: after_change(kind, parent, artwork)
       {:ok, artwork}
     end
+  end
+
+  @doc "Removes the artwork of the parent."
+  @spec delete(kind(), struct()) :: :ok
+  def delete(kind, parent) do
+    schema = kind!(kind).artwork
+    [key] = schema.__schema__(:primary_key)
+
+    {count, _} = Repo.delete_all(from(a in schema, where: field(a, ^key) == ^parent.id))
+    File.rm_rf(dir(kind, parent.id))
+
+    if count > 0 do
+      touch(kind, parent)
+      broadcast(kind, parent)
+    end
+
+    :ok
   end
 
   @doc "Inserts or updates the artwork row of the parent."
@@ -136,10 +176,35 @@ defmodule MusicBox.Artwork do
 
     opts = %{id: parent.id, path: path, variants: variants, fit: kind!(kind).fit}
 
+    with {:ok, %{width: width, height: height}} <- resize_artwork(opts),
+         :ok <- maybe_keep_original(kind, parent, path) do
+      {:ok, %{width: width, height: height}}
+    end
+  end
+
+  defp resize_artwork(opts) do
     case Tool.resize_artwork(opts) do
-      {:ok, %{width: width, height: height}} -> {:ok, %{width: width, height: height}}
+      {:ok, dimensions} -> {:ok, dimensions}
       {:error, :too_large} -> {:error, :too_large}
       {:error, _reason} -> {:error, :invalid_image}
+    end
+  end
+
+  defp maybe_keep_original(kind, parent, path) do
+    if kind!(kind).keep_original do
+      original_path = original_path(kind, parent.id)
+      tmp_path = tmp_path(original_path)
+
+      with :ok <- File.cp(path, tmp_path),
+           :ok <- File.rename(tmp_path, original_path) do
+        :ok
+      else
+        _error ->
+          File.rm(tmp_path)
+          {:error, :failed_to_write}
+      end
+    else
+      :ok
     end
   end
 
