@@ -1,9 +1,13 @@
 defmodule MusicBoxWeb.ArtworkControllerTest do
   use MusicBoxWeb.ConnCase, async: false
 
+  import Ecto.Query
+
   alias MusicBox.Albums
   alias MusicBox.Albums.Album
+  alias MusicBox.Artists.Artist
   alias MusicBox.Artwork
+  alias MusicBox.Tracks.Track
 
   setup :register_and_log_in_user
 
@@ -85,6 +89,49 @@ defmodule MusicBoxWeb.ArtworkControllerTest do
                conn
                |> get(~p"/api/albums/#{album.id}")
                |> api_response(200, "Album")
+    end
+  end
+
+  describe "artist" do
+    setup %{album: album} do
+      artist = Repo.get!(Artist, album.artist_id)
+      source = Path.absname("./tmp/test/artist_photo.png")
+
+      {_, 0} =
+        System.cmd("ffmpeg", ~w(-y -f lavfi -i color=c=red:s=800x500 -frames:v 1 #{source}),
+          stderr_to_stdout: true
+        )
+
+      {:ok, artwork} = Artwork.put(:artists, artist, source)
+      [artist: artist, hash: artwork.hash]
+    end
+
+    test "lists the artwork variants of artists", %{conn: conn, artist: artist, hash: hash} do
+      assert %{"artwork" => [thumbnail, large]} =
+               conn |> get(~p"/api/artists/#{artist.id}") |> api_response(200, "Artist")
+
+      assert %{"width" => 205, "height" => 128, "url" => url} = thumbnail
+      assert url =~ ~r"/artwork/artists/#{artist.id}/#{hash}/thumbnail.jpg$"
+      assert %{"width" => 800, "height" => 500} = large
+    end
+
+    test "includes the artwork of artists in sync and tracks", %{conn: conn, artist: artist} do
+      assert %{"artists" => artists} = conn |> get(~p"/api/sync") |> api_response(200)
+      assert %{"artwork" => [_, _]} = Enum.find(artists, &(&1["id"] == artist.id))
+
+      track = Repo.one!(from(t in Track, where: t.artist_id == ^artist.id, limit: 1))
+
+      # The album of the track has artwork too.
+      assert %{"artist" => %{"artwork" => [_, _]}, "album" => %{"artwork" => [_, _]}} =
+               conn |> get(~p"/api/tracks/#{track.id}") |> api_response(200, "Track")
+    end
+
+    test "serves the artwork of artists", %{conn: conn, artist: artist, hash: hash} do
+      conn = get(conn, ~p"/artwork/artists/#{artist.id}/#{hash}/large.jpg")
+
+      assert response(conn, 200)
+      assert get_resp_header(conn, "content-type") == ["image/jpeg"]
+      assert get(conn, ~p"/artwork/playlists/#{artist.id}/#{hash}/large.jpg") |> response(404)
     end
   end
 end

@@ -4,6 +4,7 @@ defmodule MusicBox.Artists.Artist do
   use MusicBox.Schema
 
   alias MusicBox.Albums.Album
+  alias MusicBox.Artists.Artwork
   alias MusicBox.Tracks.Track
 
   @type t :: %__MODULE__{}
@@ -19,6 +20,7 @@ defmodule MusicBox.Artists.Artist do
 
     has_many :albums, Album
     has_many :tracks, Track
+    has_one :artwork, Artwork
 
     timestamps(type: :utc_datetime)
   end
@@ -31,5 +33,7 @@ defmodule MusicBox.Artists.Artist do
         else: from(a in __MODULE__, as: :artist)
 
     query
+    |> join(:left, [artist: a], aw in assoc(a, :artwork), as: :artist_artwork)
+    |> preload([artist_artwork: aw], artwork: aw)
   end
 end

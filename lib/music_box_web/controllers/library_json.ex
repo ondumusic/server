@@ -21,6 +21,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       sortName: artist.sort_name,
       slug: artist.slug,
       albumCount: artist.album_count,
+      artwork: artwork(:artists, artist.id, artist.artwork),
       insertedAt: artist.inserted_at
     }
   end
@@ -50,7 +51,7 @@ defmodule MusicBoxWeb.LibraryJSON do
   end
 
   def album(%{album: album} = assigns) do
-    artwork = artwork(album)
+    artwork = artwork(:albums, album.id, album.artwork)
 
     item = %{
       __type: "album",
@@ -133,18 +134,13 @@ defmodule MusicBoxWeb.LibraryJSON do
   defp album_loudness(_album), do: nil
 
   # Ordered from smallest to largest.
-  defp artwork(%{id: album_id, artwork: %{hash: hash, width: width} = artwork})
+  defp artwork(kind, id, %{hash: hash, width: width} = artwork)
        when is_binary(hash) and is_integer(width) do
-    for {variant, width, height} <- MusicBox.Artwork.variant_sizes(:albums, artwork) do
+    for {variant, width, height} <- MusicBox.Artwork.variant_sizes(kind, artwork) do
       filename = "#{variant}.jpg"
-
-      %{
-        url: url(~p"/artwork/albums/#{album_id}/#{hash}/#{filename}"),
-        width: width,
-        height: height
-      }
+      %{url: url(~p"/artwork/#{kind}/#{id}/#{hash}/#{filename}"), width: width, height: height}
     end
   end
 
-  defp artwork(_album), do: []
+  defp artwork(_kind, _id, _artwork), do: []
 end

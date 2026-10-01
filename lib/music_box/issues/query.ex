@@ -85,7 +85,7 @@ defmodule MusicBox.Issues.Query do
   end
 
   def albums(album_ids) do
-    from(al in Album, where: al.id in ^album_ids, preload: [:artist, :artwork])
+    from(al in Album, where: al.id in ^album_ids, preload: [:artwork, artist: :artwork])
   end
 
   def tracks(track_ids) do

@@ -18,7 +18,7 @@ defmodule MusicBox.Sync do
     limit = Map.get(params, "limit")
 
     %{
-      artists: get_new_entities(Artist, cursor["artists"], limit: limit),
+      artists: get_new_entities(Artist.preloaded(), cursor["artists"], limit: limit),
       albums: get_new_entities(Album.preloaded(), cursor["albums"], limit: limit),
       tracks: get_new_entities(Track.preloaded(), cursor["tracks"], limit: limit),
       playlists: get_new_entities(Playlist.preloaded(), cursor["playlists"], limit: limit),

@@ -33,12 +33,17 @@ defmodule MusicBoxWeb.Schemas.Artist do
       sortName: %Schema{type: :string, example: "Beatles"},
       slug: %Schema{type: :string, example: "the-beatles"},
       albumCount: %Schema{type: :integer, example: 2},
+      artwork: %Schema{
+        type: :array,
+        items: MusicBoxWeb.Schemas.ArtworkImage,
+        description: "Available variants of the uploaded artwork, empty without artwork."
+      },
       insertedAt: %Schema{type: :string, format: :"date-time"}
     },
-    required: [:__type, :id, :name, :sortName, :slug, :albumCount, :insertedAt]
+    required: [:__type, :id, :name, :sortName, :slug, :albumCount, :artwork, :insertedAt]
   })
 
-  def fields, do: [:__type, :id, :name, :sortName, :slug, :albumCount, :insertedAt]
+  def fields, do: [:__type, :id, :name, :sortName, :slug, :albumCount, :artwork, :insertedAt]
 end
 
 defmodule MusicBoxWeb.Schemas.ArtistPage do

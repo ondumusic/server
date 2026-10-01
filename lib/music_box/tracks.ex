@@ -14,5 +14,6 @@ defmodule MusicBox.Tracks do
   end
 
   @spec get_track!(Ecto.UUID.t()) :: Track.t()
-  def get_track!(id), do: Repo.get!(Track, id) |> Repo.preload([:artist, :album, :file])
+  def get_track!(id),
+    do: Repo.get!(Track, id) |> Repo.preload([:file, artist: :artwork, album: :artwork])
 end
