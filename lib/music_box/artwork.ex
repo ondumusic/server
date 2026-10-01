@@ -152,6 +152,39 @@ defmodule MusicBox.Artwork do
     end
   end
 
+  @doc """
+  Removes the artwork for albums that no longer exist in the database.
+
+  It will attempt to do this based on the directory names (UUID) because if we
+  query the database for all known artwork it will not have the deleted entries
+  anymore and the files stay orphaned.
+  """
+  @spec remove_orphaned() :: non_neg_integer()
+  def remove_orphaned do
+    artwork_path = MusicBox.Config.artwork_path()
+
+    album_ids =
+      case File.ls(artwork_path) do
+        {:ok, names} -> Enum.filter(names, &album_id?/1)
+        {:error, _reason} -> []
+      end
+
+    existing =
+      album_ids
+      |> Enum.chunk_every(1000)
+      |> Enum.flat_map(&Repo.all(from(al in Album, where: al.id in ^&1, select: al.id)))
+      |> MapSet.new()
+
+    orphaned = Enum.reject(album_ids, &MapSet.member?(existing, &1))
+    Enum.each(orphaned, &File.rm_rf(artwork_dir(&1)))
+    length(orphaned)
+  end
+
+  # Only folders named exactly like an album id (uuid).
+  # NOTE that cast always returns lowercase, but our server also only creates
+  # lowercase uuid folders for albums so other casing should be ignored.
+  defp album_id?(name), do: Ecto.UUID.cast(name) == {:ok, name}
+
   defp cleanup(artwork) do
     if is_nil(artwork.hash), do: File.rm_rf(artwork_dir(artwork.album_id))
     artwork

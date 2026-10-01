@@ -128,6 +128,36 @@ defmodule MusicBox.ArtworkTest do
     end
   end
 
+  describe "remove_orphaned/0" do
+    test "removes the artwork of albums that no longer exist" do
+      album = Repo.one!(Album)
+      orphaned_id = Ecto.UUID.generate()
+      artwork_path = MusicBox.Config.artwork_path()
+
+      for id <- [album.id, orphaned_id], do: File.mkdir_p!(Artwork.artwork_dir(id))
+      File.write!(Path.join(artwork_path, "other.txt"), "not artwork")
+      # Ecto.UUID.cast/1 would accept 16 characters as a raw uuid.
+      File.mkdir_p!(Path.join(artwork_path, "sixteen-chars-xx"))
+
+      assert Artwork.remove_orphaned() == 1
+      assert File.dir?(Artwork.artwork_dir(album.id))
+      refute File.exists?(Artwork.artwork_dir(orphaned_id))
+      assert File.exists?(Path.join(artwork_path, "other.txt"))
+      assert File.dir?(Path.join(artwork_path, "sixteen-chars-xx"))
+    end
+
+    test "is part of removing unused albums" do
+      album = Repo.one!(Album)
+      File.mkdir_p!(Artwork.artwork_dir(album.id))
+      Repo.delete_all(from(t in MusicBox.Tracks.Track, where: t.album_id == ^album.id))
+
+      MusicBox.Cleanup.Worker.do_step(:unused)
+
+      refute Repo.get(Album, album.id)
+      refute File.exists?(Artwork.artwork_dir(album.id))
+    end
+  end
+
   describe "size limits" do
     @tag capture_log: true
     test "does not store artwork that is too large", %{artwork_bytes: artwork_bytes} do

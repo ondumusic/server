@@ -5,6 +5,7 @@ defmodule MusicBox.Cleanup.Worker do
 
   alias MusicBox.Albums.Album
   alias MusicBox.Artists.Artist
+  alias MusicBox.Artwork
   alias MusicBox.Cleanup
   alias MusicBox.Counters
   alias MusicBox.FileScanner.Utils
@@ -69,6 +70,7 @@ defmodule MusicBox.Cleanup.Worker do
   def do_step(:unused) do
     cleanup_unused_albums()
     cleanup_unused_artists()
+    Artwork.remove_orphaned()
   end
 
   def do_step(:update_album_counts) do
