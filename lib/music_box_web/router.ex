@@ -79,6 +79,8 @@ defmodule MusicBoxWeb.Router do
 
     get "/artists", LibraryController, :artists
     get "/artists/:artist_id", LibraryController, :artist
+    put "/artists/:artist_id/artwork", ArtistArtworkController, :update
+    delete "/artists/:artist_id/artwork", ArtistArtworkController, :delete
     get "/artists/:artist_id/albums", LibraryController, :artist_albums
     get "/artists/:artist_id/albums/:album_id", LibraryController, :artist_album
 

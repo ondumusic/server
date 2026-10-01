@@ -19,8 +19,11 @@ defmodule MusicBox.ArtistArtworkTest do
   defp image(dir, name, size) do
     path = Path.join(dir, name)
 
+    # rgb24, older ffmpeg (6.x) rounds odd sizes down otherwise.
     {_, 0} =
-      System.cmd("ffmpeg", ~w(-y -f lavfi -i color=c=red:s=#{size} -frames:v 1 -update 1 #{path}),
+      System.cmd(
+        "ffmpeg",
+        ~w(-y -f lavfi -i color=c=red:s=#{size},format=rgb24 -frames:v 1 -update 1 #{path}),
         stderr_to_stdout: true
       )
 

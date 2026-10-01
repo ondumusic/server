@@ -29,7 +29,9 @@ defmodule MusicBoxWeb.Endpoint do
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
   plug Plug.Parsers,
-    parsers: [:urlencoded, :multipart, :json],
+    # Artwork can be uploaded (up to 25MB), Plug limits multipart bodies to 8MB
+    # by default. Some extra room for the rest of the multipart body.
+    parsers: [:urlencoded, {:multipart, length: MusicBox.Artwork.max_size() + 1_000_000}, :json],
     pass: ["*/*"],
     json_decoder: Phoenix.json_library()
 
