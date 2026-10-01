@@ -31,29 +31,31 @@ defmodule MusicBoxWeb.ArtworkControllerTest do
 
   describe "show" do
     test "serves each artwork variant", %{conn: conn, album: album} do
-      conn = get(conn, ~p"/artwork/#{album.id}/abc123/thumbnail.jpg")
+      conn = get(conn, ~p"/artwork/albums/#{album.id}/abc123/thumbnail.jpg")
       assert response(conn, 200) == "thumbnail bytes"
       assert response_content_type(conn, :jpg)
 
-      assert get(conn, ~p"/artwork/#{album.id}/abc123/large.jpg") |> response(200) ==
+      assert get(conn, ~p"/artwork/albums/#{album.id}/abc123/large.jpg") |> response(200) ==
                "large bytes"
     end
 
     test "serves the current artwork for any version", %{conn: conn, album: album} do
-      assert get(conn, ~p"/artwork/#{album.id}/old-hash/large.jpg") |> response(200) ==
+      assert get(conn, ~p"/artwork/albums/#{album.id}/old-hash/large.jpg") |> response(200) ==
                "large bytes"
     end
 
     test "caches versioned artwork forever", %{conn: conn, album: album} do
-      conn = get(conn, ~p"/artwork/#{album.id}/abc123/large.jpg")
+      conn = get(conn, ~p"/artwork/albums/#{album.id}/abc123/large.jpg")
       assert get_resp_header(conn, "cache-control") == ["public, max-age=31536000, immutable"]
     end
 
     test "returns not found for unknown files", %{conn: conn, album: album} do
-      assert get(conn, ~p"/artwork/#{album.id}/abc123/source.jpg") |> response(404)
-      assert get(conn, ~p"/artwork/#{album.id}/abc123/..") |> response(404)
-      assert get(conn, ~p"/artwork/not-a-uuid/abc123/large.jpg") |> response(404)
-      assert get(conn, ~p"/artwork/#{Ecto.UUID.generate()}/abc123/large.jpg") |> response(404)
+      assert get(conn, ~p"/artwork/albums/#{album.id}/abc123/source.jpg") |> response(404)
+      assert get(conn, ~p"/artwork/albums/#{album.id}/abc123/..") |> response(404)
+      assert get(conn, ~p"/artwork/albums/not-a-uuid/abc123/large.jpg") |> response(404)
+
+      assert get(conn, ~p"/artwork/albums/#{Ecto.UUID.generate()}/abc123/large.jpg")
+             |> response(404)
     end
   end
 
@@ -69,8 +71,8 @@ defmodule MusicBoxWeb.ArtworkControllerTest do
                |> get(~p"/api/albums/#{album.id}")
                |> api_response(200, "Album")
 
-      assert thumbnail_url =~ ~r"/artwork/#{album.id}/abc123/thumbnail.jpg$"
-      assert large_url =~ ~r"/artwork/#{album.id}/abc123/large.jpg$"
+      assert thumbnail_url =~ ~r"/artwork/albums/#{album.id}/abc123/thumbnail.jpg$"
+      assert large_url =~ ~r"/artwork/albums/#{album.id}/abc123/large.jpg$"
     end
 
     test "has no artwork before it was resized", %{conn: conn, album: album} do

@@ -22,10 +22,9 @@ defmodule MusicBox.Artwork do
   def variants, do: @variants
 
   @spec artwork_dir(String.t()) :: String.t()
-  def artwork_dir(album_id) do
-    MusicBox.Config.artwork_path()
-    |> Path.join(album_id)
-  end
+  def artwork_dir(album_id), do: Path.join(albums_path(), album_id)
+
+  defp albums_path, do: Path.join(MusicBox.Config.artwork_path(), "albums")
 
   @spec variant_path(String.t(), variant()) :: String.t()
   def variant_path(album_id, variant) when variant in @variant_names do
@@ -161,10 +160,8 @@ defmodule MusicBox.Artwork do
   """
   @spec remove_orphaned() :: non_neg_integer()
   def remove_orphaned do
-    artwork_path = MusicBox.Config.artwork_path()
-
     album_ids =
-      case File.ls(artwork_path) do
+      case File.ls(albums_path()) do
         {:ok, names} -> Enum.filter(names, &album_id?/1)
         {:error, _reason} -> []
       end

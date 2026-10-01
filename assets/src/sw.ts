@@ -83,19 +83,20 @@ self.addEventListener("message", (event: ExtendableMessageEvent) => {
   }
 });
 
-// Artwork urls look like /artwork/{albumId}/{hash}/{variant}.jpg, returns
-// "{albumId}/{hash}" or null for urls in another format (e.g. from before the
-// artwork had a hash).
+// Artwork urls look like /artwork/{kind}/{id}/{hash}/{variant}.jpg (e.g. kind
+// "albums"), returns "{kind}/{id}/{hash}" or null for urls in another format
+// (e.g. from before the artwork had a hash).
 function artworkHash(url: string): string | null {
   const parts = new URL(url, self.location.origin).pathname.split("/");
-  const [, prefix, albumId, hash, variant] = parts;
+  const [, prefix, kind, id, hash, variant] = parts;
 
-  return parts.length === 5 &&
+  return parts.length === 6 &&
     prefix === "artwork" &&
-    albumId &&
+    kind &&
+    id &&
     hash &&
     variant
-    ? `${albumId}/${hash}`
+    ? `${kind}/${id}/${hash}`
     : null;
 }
 

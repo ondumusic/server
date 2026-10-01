@@ -137,7 +137,7 @@ defmodule MusicBoxWeb.LibraryJSON do
        when is_binary(hash) and is_integer(width) do
     for {variant, size} <- MusicBox.Artwork.variant_sizes(artwork) do
       filename = "#{variant}.jpg"
-      %{url: url(~p"/artwork/#{album_id}/#{hash}/#{filename}"), width: size, height: size}
+      %{url: url(~p"/artwork/albums/#{album_id}/#{hash}/#{filename}"), width: size, height: size}
     end
   end
 
