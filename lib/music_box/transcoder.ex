@@ -52,7 +52,7 @@ defmodule MusicBox.Transcoder do
         lookup_key = {file_id, preset.id}
 
         case :ets.lookup(@meta_table, lookup_key) do
-          # it claims to be persisted but cache_impl did not return it
+          # it claims to be persisted but the cache did not return it
           # so it cannot exist.
           [{^lookup_key, %{persisted: true}}] -> nil
           [{^lookup_key, %{} = meta}] -> meta

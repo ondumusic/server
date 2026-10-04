@@ -81,28 +81,17 @@ if config_env() == :prod do
       _ -> false
     end
 
-  # Drivers are either "file" (the default) or "s3".
-  get_driver = fn name, file_impl, s3_impl ->
-    case System.get_env(name, "file") |> String.downcase() do
-      "file" -> file_impl
-      "s3" -> s3_impl
-      other -> raise "environment variable #{name} should be file or s3, got: #{inspect(other)}"
-    end
-  end
-
   file_storage_impl =
-    get_driver.(
-      "MB_STORAGE_DRIVER",
-      MusicBox.Storage.File,
-      MusicBox.Storage.S3
-    )
+    case System.get_env("MB_STORAGE_DRIVER", "file") |> String.downcase() do
+      "file" ->
+        MusicBox.Storage.File
 
-  transcoder_cache_impl =
-    get_driver.(
-      "MB_TRANSCODE_CACHE_DRIVER",
-      MusicBox.Transcoder.Cache.File,
-      MusicBox.Transcoder.Cache.S3
-    )
+      "s3" ->
+        MusicBox.Storage.S3
+
+      other ->
+        raise "environment variable MB_STORAGE_DRIVER should be file or s3, got: #{inspect(other)}"
+    end
 
   if file_storage_impl == MusicBox.Storage.S3 do
     bucket =
@@ -124,32 +113,10 @@ if config_env() == :prod do
       region: region
   end
 
-  if transcoder_cache_impl == MusicBox.Transcoder.Cache.S3 do
-    bucket =
-      System.get_env("MB_TRANSCODE_S3_BUCKET") ||
-        raise """
-        environment variable MB_TRANSCODE_S3_BUCKET is missing.
-        For example: my-s3-bucket-name
-        """
-
-    region =
-      System.get_env("MB_TRANSCODE_S3_REGION") ||
-        raise """
-        environment variable MB_TRANSCODE_S3_REGION is missing.
-        For example: us-east-1
-        """
-
-    config :music_box, MusicBox.Transcoder.Cache.S3,
-      bucket: bucket,
-      region: region
-  end
-
   config :music_box, web_enabled: web_enabled?
   config :music_box, docs_enabled: docs_enabled?
 
   config :music_box, storage_impl: file_storage_impl
-
-  config :music_box, MusicBox.Transcoder, cache_impl: transcoder_cache_impl
 
   config :music_box, MusicBox.Repo,
     database: database_path,

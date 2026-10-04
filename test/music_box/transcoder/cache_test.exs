@@ -1,4 +1,4 @@
-defmodule MusicBox.Transcoder.CacheFileTest do
+defmodule MusicBox.Transcoder.CacheTest do
   use ExUnit.Case, async: false
 
   alias MusicBox.Transcoder.Cache
@@ -10,19 +10,19 @@ defmodule MusicBox.Transcoder.CacheFileTest do
 
     file_id = Ecto.UUID.generate()
     preset = Preset.default_preset()
-    [file_id: file_id, preset: preset, path: Cache.File.cache_file_path(file_id, preset)]
+    [file_id: file_id, preset: preset, path: Cache.cache_file_path(file_id, preset)]
   end
 
   test "stores the transcode", %{file_id: file_id, preset: preset, path: path} do
-    assert :ok = Cache.File.persist(file_id, preset, fn -> ["a", "b"] end)
+    assert :ok = Cache.persist(file_id, preset, fn -> ["a", "b"] end)
     assert File.read!(path) == "ab"
     assert File.ls!(Utils.tmp_dir()) == []
   end
 
   test "keeps an existing transcode", %{file_id: file_id, preset: preset, path: path} do
-    :ok = Cache.File.persist(file_id, preset, fn -> ["a"] end)
+    :ok = Cache.persist(file_id, preset, fn -> ["a"] end)
 
-    assert {:error, :already_exists} = Cache.File.persist(file_id, preset, fn -> ["b"] end)
+    assert {:error, :already_exists} = Cache.persist(file_id, preset, fn -> ["b"] end)
     assert File.read!(path) == "a"
   end
 
@@ -33,8 +33,8 @@ defmodule MusicBox.Transcoder.CacheFileTest do
         2 -> raise "interrupted"
       end)
 
-    assert_raise RuntimeError, fn -> Cache.File.persist(file_id, preset, fn -> chunks end) end
+    assert_raise RuntimeError, fn -> Cache.persist(file_id, preset, fn -> chunks end) end
     refute File.exists?(path)
-    assert {:error, :not_found} = Cache.File.get_meta(file_id, preset)
+    assert {:error, :not_found} = Cache.get_meta(file_id, preset)
   end
 end

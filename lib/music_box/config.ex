@@ -42,13 +42,8 @@ defmodule MusicBox.Config do
   ┌────────────────────────────────┬───────────┬───────────────────────────────────────────┐
   │      Environment Variable      │ Required? │               Description                 │
   ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
-  │ MB_TRANSCODE_CACHE_DRIVER      │ No        │ What storage medium to use for transcoded │
-  │                                │           │ files. Either `file` or `s3`.             │
-  │                                │           │ Defaults to `file`                        │
-  ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
   │ MB_TRANSCODE_CACHE_PATH        │ Yes       │ The full path to a directory where the    │
   │                                │           │ application will store transcoded files.  │
-  │                                │           │ (When using S3 this is the key prefix)    │
   ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
   │ MB_TRANSCODE_CACHE_MAX_SIZE    │ No        │ Maximum size of the transcoded files in   │
   │                                │           │ megabytes, the oldest are removed after a │
@@ -63,10 +58,6 @@ defmodule MusicBox.Config do
   │ MB_TRANSCODE_MAX_CONCURRENCY   │ No        │ How many transcodes can run at the same   │
   │                                │           │ time. Basically, how many ffmpegs can be  │
   │                                │           │ started concurrently. Defaults to 3       │
-  ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
-  │ MB_TRANSCODE_S3_BUCKET         │ Using S3  │ The S3 bucket name to use for transcodes. │
-  ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
-  │ MB_TRANSCODE_S3_REGION         │ Using S3  │ The S3 bucket AWS region.                 │
   └────────────────────────────────┴───────────┴───────────────────────────────────────────┘
 
   ## Artwork Settings

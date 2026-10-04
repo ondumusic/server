@@ -122,7 +122,7 @@ defmodule MusicBox.TranscoderTest do
       track: track
     } do
       preset = Transcoder.Preset.default_preset()
-      cache_path = Transcoder.Cache.File.cache_file_path(track.file.id, preset)
+      cache_path = Transcoder.Cache.cache_file_path(track.file.id, preset)
 
       assert {:ok, _chunk} = Transcoder.request_chunk(track.file, preset, 0)
       assert_receive {:transcode_called, _args}
@@ -498,7 +498,7 @@ defmodule MusicBox.TranscoderTest do
       File.cp!(absolute(track.file.path), tmp_file)
       file = update_record(track.file, %{path: tmp_file})
 
-      transcoded_file = MusicBox.Transcoder.Cache.File.cache_file_path(file.id, preset)
+      transcoded_file = MusicBox.Transcoder.Cache.cache_file_path(file.id, preset)
       refute File.exists?(transcoded_file)
       refute Transcoder.get_meta(file, preset)
 
