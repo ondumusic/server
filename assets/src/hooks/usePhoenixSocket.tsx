@@ -9,6 +9,7 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import { sync } from "../library/sync";
 import { auth } from "../services/auth";
+import { notices } from "../services/notices";
 import type { Album } from "../types";
 
 export type OnInitialDataCallback = () => void;
@@ -75,6 +76,7 @@ export const PhoenixSocketProvider = ({ children }: PropsWithChildren) => {
         playlistItems: data.playlistItems,
       });
     });
+    channel.on("notices", (data) => notices.set(data.notices));
     channel.on("completed", (_data) => {
       if (!scanCallback.current) return;
       scanCallback.current();

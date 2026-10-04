@@ -1,4 +1,6 @@
 import { ClientError, client } from "../api";
+import type { Notice } from "../api/notices";
+import { notices } from "../services/notices";
 import type { Album, Artist, Playlist, PlaylistItem, Track } from "../types";
 import { artworkThumbnailUrl } from "../utils/artwork";
 import { notifyChanges } from "./events";
@@ -22,6 +24,7 @@ interface SyncResponse {
   playlists: Playlist[];
   playlistItems: PlaylistItem[];
   deletions: SyncDeletion[];
+  notices: Notice[];
   cursor: string;
   complete: boolean;
 }
@@ -170,6 +173,7 @@ class SyncClient {
       });
 
       this.pushChanges(result);
+      notices.set(result.notices);
 
       // Fetch next page unless completed.
       if (result.complete) {
