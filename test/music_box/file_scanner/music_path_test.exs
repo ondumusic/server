@@ -39,6 +39,16 @@ defmodule MusicBox.FileScanner.MusicPathTest do
       assert Repo.aggregate(MediaFile, :count) == 14
     end
 
+    @tag capture_log: true
+    test "raises a notice while there is no music", %{music_path: music_path, files: files} do
+      assert {:error, :music_path_unavailable} = FileScanner.scan(:full)
+      assert [%{code: :library_unavailable}] = MusicBox.Notices.active()
+
+      restore(music_path, files)
+      assert {:ok, :scan_completed} = FileScanner.scan(:quick)
+      assert MusicBox.Notices.active() == []
+    end
+
     test "scans an empty music path for an empty library" do
       Repo.delete_all(MediaFile)
 

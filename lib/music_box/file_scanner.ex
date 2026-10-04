@@ -6,6 +6,7 @@ defmodule MusicBox.FileScanner do
   alias MusicBox.FileScanner.Analyzer
   alias MusicBox.FileScanner.Operations
   alias MusicBox.FileScanner.PeriodicWorker
+  alias MusicBox.Notices
   alias MusicBox.Repo
   alias MusicBox.Settings
   alias MusicBox.Storage
@@ -50,8 +51,10 @@ defmodule MusicBox.FileScanner do
   defp ensure_music_path_available do
     if Repo.exists?(File) and not has_music?() do
       Logger.warning("No music found in the music path, not scanning in case it is unavailable")
+      Notices.raise_notice(:library_unavailable)
       {:error, :music_path_unavailable}
     else
+      Notices.resolve_notice(:library_unavailable)
       :ok
     end
   end
