@@ -10,7 +10,7 @@ defmodule MusicBoxWeb.NoticeControllerTest do
     id = notice.id
 
     assert %{"notices" => [%{"id" => ^id, "code" => "library_unavailable", "level" => "warning"}]} =
-             conn |> get(~p"/api/sync") |> json_response(200)
+             conn |> get(~p"/api/sync") |> api_response(200, "SyncResponse")
 
     # Also with a cursor, notices are not part of the cursor.
     %{"cursor" => cursor} = conn |> get(~p"/api/sync") |> json_response(200)

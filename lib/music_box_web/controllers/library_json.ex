@@ -72,7 +72,11 @@ defmodule MusicBoxWeb.LibraryJSON do
       Map.put(
         item,
         :tracks,
-        json_map(assigns, [:album, :tracks], :track, include: [:album, :render_album])
+        # Tracks of an album are always flat, without their album and artist.
+        json_map(assigns, [:album, :tracks], :track,
+          include: [:album],
+          as: &track(Map.merge(&1, %{render_album: false, render_artist: false}))
+        )
       )
     else
       item
@@ -110,7 +114,7 @@ defmodule MusicBoxWeb.LibraryJSON do
       end
 
     item =
-      if assigns[:render_album] != false do
+      if assigns[:render_artist] != false do
         Map.put(item, :artist, artist(%{artist: track.artist}))
       else
         item
@@ -119,8 +123,8 @@ defmodule MusicBoxWeb.LibraryJSON do
     item
   end
 
-  def track(%{track: %{album: album} = track}),
-    do: track(%{track: track, album: album})
+  def track(%{track: %{album: album}} = assigns),
+    do: track(Map.put(assigns, :album, album))
 
   # A failed measurement is stored without values, for clients that is the same
   # as not measured yet.
