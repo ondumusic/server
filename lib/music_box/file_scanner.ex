@@ -74,7 +74,7 @@ defmodule MusicBox.FileScanner do
     started_at = DateTime.utc_now()
 
     # Missing files are found before the walk and only deleted after it.
-    missing_file_ids = Operations.find_missing_files()
+    missing_file_ids = Operations.find_missing_files() |> MapSet.new()
 
     # NOTE: / is relative to settings.music_path
     walker =
@@ -98,12 +98,10 @@ defmodule MusicBox.FileScanner do
     )
     |> Stream.flat_map(&discard_errors/1)
     |> Stream.chunk_every(20)
-    |> Stream.map(&safe_apply({Operations, :batch_insert, [&1]}))
-    |> Stream.flat_map(&discard_errors/1)
-    |> Stream.each(&safe_apply({Operations, :broadcast, [:batch, &1]}))
-    |> Stream.run()
+    |> Enum.reduce(missing_file_ids, &batch_insert/2)
+    |> MapSet.to_list()
+    |> Operations.delete_files()
 
-    Operations.delete_files(missing_file_ids)
     Operations.broadcast(:deleted, started_at)
 
     Agent.stop()
@@ -114,6 +112,17 @@ defmodule MusicBox.FileScanner do
     error ->
       Agent.stop()
       error
+  end
+
+  defp batch_insert(batch, missing_file_ids) do
+    case safe_apply({Operations, :batch_insert, [batch, missing_file_ids]}) do
+      {:ok, results} ->
+        safe_apply({Operations, :broadcast, [:batch, results]})
+        MapSet.difference(missing_file_ids, MapSet.new(results.moved_files))
+
+      _error ->
+        missing_file_ids
+    end
   end
 
   # Cover files are not analyzed like music files, they are collected and dealt
