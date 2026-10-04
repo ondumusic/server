@@ -73,7 +73,8 @@ defmodule MusicBox.FileScanner do
 
     started_at = DateTime.utc_now()
 
-    Operations.find_deleted_files()
+    # Missing files are found before the walk and only deleted after it.
+    missing_file_ids = Operations.find_missing_files()
 
     # NOTE: / is relative to settings.music_path
     walker =
@@ -102,6 +103,7 @@ defmodule MusicBox.FileScanner do
     |> Stream.each(&safe_apply({Operations, :broadcast, [:batch, &1]}))
     |> Stream.run()
 
+    Operations.delete_files(missing_file_ids)
     Operations.broadcast(:deleted, started_at)
 
     Agent.stop()

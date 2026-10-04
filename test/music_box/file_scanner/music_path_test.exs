@@ -46,7 +46,7 @@ defmodule MusicBox.FileScanner.MusicPathTest do
     end
   end
 
-  describe "find_deleted_files/1" do
+  describe "find_missing_files/1" do
     test "deletes all missing files, also over several pages", %{
       music_path: music_path,
       files: files
@@ -54,7 +54,9 @@ defmodule MusicBox.FileScanner.MusicPathTest do
       {missing, existing} = Enum.split(files, 4)
       restore(music_path, existing)
 
-      assert {:ok, 4} = Operations.find_deleted_files(batch_size: 2)
+      missing_ids = Operations.find_missing_files(batch_size: 2)
+      assert Enum.sort(missing_ids) == Enum.sort(Enum.map(missing, & &1.id))
+      assert {:ok, 4} = Operations.delete_files(missing_ids)
 
       assert Enum.sort(Repo.all(from(f in MediaFile, select: f.id))) ==
                Enum.sort(Enum.map(existing, & &1.id))

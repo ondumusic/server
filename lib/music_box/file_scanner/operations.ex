@@ -457,13 +457,9 @@ defmodule MusicBox.FileScanner.Operations do
     end
   end
 
-  @spec find_deleted_files(Keyword.t()) :: {:ok, non_neg_integer()}
-  def find_deleted_files(opts \\ []) do
-    # All files are checked before deleting any of them.
-    opts
-    |> missing_file_ids()
-    |> delete_files()
-  end
+  @doc "Returns the ids of files that no longer exist in the music path."
+  @spec find_missing_files(Keyword.t()) :: [Ecto.UUID.t()]
+  def find_missing_files(opts \\ []), do: missing_file_ids(opts)
 
   # Checks a batch of files at a time, continuing after the last checked id.
   defp missing_file_ids(opts, last_id \\ nil) do
@@ -488,7 +484,8 @@ defmodule MusicBox.FileScanner.Operations do
     Repo.all(query)
   end
 
-  defp delete_files(file_ids) do
+  @spec delete_files([Ecto.UUID.t()]) :: {:ok, non_neg_integer()}
+  def delete_files(file_ids) do
     {deleted, errored} =
       file_ids
       |> Enum.chunk_every(50)
