@@ -44,6 +44,8 @@ defmodule MusicBox.FileScanner.PeriodicWorker do
     case FileScanner.scan(scan_type) do
       {:ok, :scan_completed} -> schedule_worker(state)
       {:error, :already_running} -> schedule_worker(state)
+      # Retried with the next regular scan, not right away.
+      {:error, :music_path_unavailable} -> schedule_worker(state)
       _error -> schedule_worker(state, 5_000)
     end
   end

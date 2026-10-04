@@ -457,35 +457,48 @@ defmodule MusicBox.FileScanner.Operations do
     end
   end
 
+  @spec find_deleted_files(Keyword.t()) :: {:ok, non_neg_integer()}
   def find_deleted_files(opts \\ []) do
+    # All files are checked before deleting any of them.
+    opts
+    |> missing_file_ids()
+    |> delete_files()
+  end
+
+  # Checks a batch of files at a time, continuing after the last checked id.
+  defp missing_file_ids(opts, last_id \\ nil) do
     batch_size = Keyword.get(opts, :batch_size, 500)
-    base_query = from(f in File, select: {f.id, f.path}, order_by: [asc: :updated_at])
-    file_count = Repo.aggregate(base_query, :count)
 
-    # NOTE: Repo.stream is useless with SQLite so let's do our own batching.
-    for page <- 0..div(file_count, batch_size) do
-      base_query
-      |> offset(^(page * batch_size))
-      |> limit(^batch_size)
-      |> Repo.all()
-      |> Stream.chunk_every(50)
-      |> Stream.flat_map(&verify_files/1)
-      |> Stream.filter(fn {_, _, status} -> status == :missing end)
-      |> Stream.map(&elem(&1, 0))
-      |> Stream.chunk_every(50)
-      |> Enum.reduce({0, 0}, &delete_files_reducer(&1, &2))
-      |> case do
-        {_deleted, 0} ->
-          :noop
+    case files_after(last_id, batch_size) do
+      [] ->
+        []
 
-        {_deleted, errored} ->
-          Logger.warning("failed to delete #{errored} files")
-      end
+      files ->
+        {last_id, _path} = List.last(files)
+        missing = files |> Enum.chunk_every(50) |> Enum.flat_map(&verify_files/1)
+        Enum.map(missing, &elem(&1, 0)) ++ missing_file_ids(opts, last_id)
     end
+  end
+
+  # NOTE: Repo.stream is useless with SQLite so let's do our own batching, by id
+  # rather than offset so changes to the table can't make it skip files.
+  defp files_after(last_id, limit) do
+    query = from(f in File, select: {f.id, f.path}, order_by: f.id, limit: ^limit)
+    query = if last_id, do: where(query, [f], f.id > ^last_id), else: query
+    Repo.all(query)
+  end
+
+  defp delete_files(file_ids) do
+    {deleted, errored} =
+      file_ids
+      |> Enum.chunk_every(50)
+      |> Enum.reduce({0, 0}, &delete_files_reducer(&1, &2))
+
+    if errored > 0, do: Logger.warning("failed to delete #{errored} files")
 
     # The results of deletions are not important, they are marked as deleted
     # through SQLite triggers.
-    :ok
+    {:ok, deleted}
   end
 
   defp delete_files_reducer(file_ids, {deleted_acc, error_acc}) do

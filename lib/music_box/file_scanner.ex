@@ -1,22 +1,31 @@
 defmodule MusicBox.FileScanner do
   @moduledoc false
 
+  alias MusicBox.Files.File
   alias MusicBox.FileScanner.Agent
   alias MusicBox.FileScanner.Analyzer
   alias MusicBox.FileScanner.Operations
   alias MusicBox.FileScanner.PeriodicWorker
+  alias MusicBox.Repo
   alias MusicBox.Settings
+  alias MusicBox.Storage
+  alias MusicBox.Utils
+
+  require Logger
 
   @type scan_type :: :full | :quick | nil
-  @type scan_error :: :missing_music_path | :already_running | :unknown_error
+  @type scan_error ::
+          :music_path_missing | :music_path_unavailable | :already_running | :unknown_error
   @spec scan(scan_type :: scan_type()) :: {:ok, :scan_completed} | {:error, scan_error()}
   def scan(scan_type \\ nil) do
     with %Settings{music_path: "" <> _path} <- Settings.get(),
-         {:agent, false} <- {:agent, Agent.running?()} do
+         {:agent, false} <- {:agent, Agent.running?()},
+         :ok <- ensure_music_path_available() do
       do_start(scan_type)
     else
-      %Settings{} -> {:error, :missing_music_path}
+      %Settings{} -> {:error, :music_path_missing}
       {:agent, true} -> {:error, :already_running}
+      {:error, :music_path_unavailable} = error -> error
     end
   end
 
@@ -27,10 +36,33 @@ defmodule MusicBox.FileScanner do
          :ok <- PeriodicWorker.scan(scan_type) do
       {:ok, :scan_started}
     else
-      %Settings{} -> {:error, :missing_music_path}
+      %Settings{} -> {:error, :music_path_missing}
       {:agent, true} -> {:error, :already_running}
       _error -> {:error, :unknown_error}
     end
+  end
+
+  # When the music path is not available (e.g. an unmounted network share) it is
+  # usually an empty directory and the scanner would mark all files as deleted.
+  # This would also delete all data linked to them (plays, playlist items, ...)
+  # because putting the files back would make them new files with new ids. So
+  # when there is no music at all, but there was before, nothing is scanned.
+  defp ensure_music_path_available do
+    if Repo.exists?(File) and not has_music?() do
+      Logger.warning("No music found in the music path, not scanning in case it is unavailable")
+      {:error, :music_path_unavailable}
+    else
+      :ok
+    end
+  end
+
+  # Walks the music path until it finds the first music file, if it finds one
+  # we assume the music path is present/available.
+  defp has_music? do
+    Storage.walk("/")
+    |> Stream.filter(&Utils.valid_extname?(&1.path))
+    |> Enum.take(1)
+    |> Enum.any?()
   end
 
   defp do_start(scan_type) do
@@ -45,7 +77,7 @@ defmodule MusicBox.FileScanner do
 
     # NOTE: / is relative to settings.music_path
     walker =
-      MusicBox.Storage.walk("/")
+      Storage.walk("/")
       |> handle_cover_files()
 
     walker =

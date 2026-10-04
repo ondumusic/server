@@ -14,7 +14,7 @@ defmodule MusicBox.FileScannerTest do
 
   test "cannot start scan if music_path not configured" do
     MusicBox.Repo.delete_all(Settings)
-    assert {:error, :missing_music_path} = FileScanner.scan()
+    assert {:error, :music_path_missing} = FileScanner.scan()
   end
 
   setup do
