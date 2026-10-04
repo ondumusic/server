@@ -43,4 +43,14 @@ defmodule MusicBoxWeb.LibraryChannelTest do
     topic = socket.id
     assert_receive %Phoenix.Socket.Broadcast{topic: ^topic, event: "disconnect"}
   end
+
+  test "pushes the active notices when they change" do
+    {:ok, notice} = MusicBox.Notices.raise_notice(:library_unavailable)
+    id = notice.id
+
+    assert_push "notices", %{notices: [%{id: ^id, code: :library_unavailable}]}
+
+    MusicBox.Notices.resolve_notice(:library_unavailable)
+    assert_push "notices", %{notices: []}
+  end
 end

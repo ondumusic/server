@@ -70,6 +70,11 @@ defmodule MusicBoxWeb.Schemas.SyncResponse do
         type: :array,
         items: MusicBoxWeb.Schemas.SyncDeletion
       },
+      notices: %Schema{
+        type: :array,
+        items: MusicBoxWeb.Schemas.Notice,
+        description: "All active server notices (ignores cursor)."
+      },
       cursor: MusicBoxWeb.Schemas.SyncCursor,
       complete: %OpenApiSpex.Schema{
         type: :boolean,
@@ -84,11 +89,22 @@ defmodule MusicBoxWeb.Schemas.SyncResponse do
       :playlists,
       :playlistItems,
       :deletions,
+      :notices,
       :cursor,
       :complete
     ]
   })
 
   def fields,
-    do: [:artists, :albums, :tracks, :playlists, :playlistItems, :deletions, :cursor, :complete]
+    do: [
+      :artists,
+      :albums,
+      :tracks,
+      :playlists,
+      :playlistItems,
+      :deletions,
+      :notices,
+      :cursor,
+      :complete
+    ]
 end

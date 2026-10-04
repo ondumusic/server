@@ -1,6 +1,7 @@
 defmodule MusicBoxWeb.SyncController do
   use MusicBoxWeb, :controller
 
+  alias MusicBox.Notices
   alias MusicBox.Sync
 
   operation :sync,
@@ -37,7 +38,8 @@ defmodule MusicBoxWeb.SyncController do
   def sync(conn, params) do
     result = Sync.get_entities(params)
     new_cursor = Sync.encode_cursor(result, params)
+    notices = Notices.active()
 
-    render(conn, :result, result: result, cursor: new_cursor)
+    render(conn, :result, result: result, cursor: new_cursor, notices: notices)
   end
 end

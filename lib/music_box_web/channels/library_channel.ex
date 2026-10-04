@@ -9,11 +9,11 @@ defmodule MusicBoxWeb.LibraryChannel do
   alias MusicBox.Playlists.PlaylistItem
   alias MusicBox.Repo
   alias MusicBox.Sessions
-  alias MusicBoxWeb.{LibraryJSON, PlaylistJSON}
+  alias MusicBoxWeb.{LibraryJSON, NoticeJSON, PlaylistJSON}
 
   import Ecto.Query
 
-  intercept ["processed", "deleted", "completed"]
+  intercept ["processed", "deleted", "completed", "notices"]
 
   def join("library:sync", _message, socket) do
     {:ok, socket}
@@ -29,6 +29,12 @@ defmodule MusicBoxWeb.LibraryChannel do
       MusicBoxWeb.Endpoint.broadcast(socket.id, "disconnect", %{})
       {:noreply, socket}
     end
+  end
+
+  defp push_event("notices", _payload, socket) do
+    notices = MusicBox.Notices.active()
+    push(socket, "notices", NoticeJSON.notices(%{notices: notices}))
+    {:noreply, socket}
   end
 
   defp push_event("processed", changes, socket) do

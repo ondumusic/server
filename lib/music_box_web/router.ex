@@ -103,6 +103,7 @@ defmodule MusicBoxWeb.Router do
     patch "/user/password", UserController, :update_password
 
     get "/sync", SyncController, :sync
+    post "/notices/:notice_id/dismiss", NoticeController, :dismiss
 
     post "/scan", LibraryController, :scan
 
