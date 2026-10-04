@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { NavBar } from "../components/NavBar";
+import { NoticeBanner } from "../components/NoticeBanner";
 import { Player } from "../components/Player";
 import { useQueue } from "../hooks/useQueue";
 import { auth } from "../services/auth";
@@ -47,6 +48,7 @@ function Authenticated() {
 
   return (
     <div className="flex flex-col-reverse lg:flex-row lg:justify-center lg:items-center relative h-full">
+      <NoticeBanner />
       <div
         className={classNames([
           "flex-shrink-0 relative lg:w-84 h-20 lg:h-full left-0 overflow-hidden lg:py-6 xl:py-8 lg:px-4 xl:py-6",

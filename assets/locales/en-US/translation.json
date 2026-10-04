@@ -103,6 +103,13 @@
     },
     "title": "Login"
   },
+  "notices": {
+    "dismiss": "Dismiss",
+    "libraryUnavailable": {
+      "description": "No music was found in your music folder, it might be unavailable (e.g. an unmounted network share). Your library is not updated until it is available again.",
+      "title": "Music folder unavailable"
+    }
+  },
   "onboarding": {
     "firstLoadWait": "Finding your music..."
   },
