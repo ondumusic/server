@@ -4,6 +4,7 @@ defmodule MusicBox.Cleanup.Worker do
   use GenServer
 
   alias MusicBox.Albums.Album
+  alias MusicBox.Annotations
   alias MusicBox.Artists.Artist
   alias MusicBox.Artwork
   alias MusicBox.Cleanup
@@ -71,6 +72,7 @@ defmodule MusicBox.Cleanup.Worker do
     cleanup_unused_albums()
     cleanup_unused_artists()
     Artwork.remove_orphaned()
+    Annotations.remove_orphaned()
   end
 
   def do_step(:update_album_counts) do

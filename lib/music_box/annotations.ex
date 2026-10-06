@@ -146,4 +146,25 @@ defmodule MusicBox.Annotations do
     |> Repo.all()
     |> MapSet.new()
   end
+
+  @doc """
+  Removes orphaned annotations of entities that no longer exist. Because they
+  are not linked using foreign keys we'll need to do this manually.
+  """
+  @spec remove_orphaned() :: non_neg_integer()
+  def remove_orphaned do
+    Annotation.entity_types()
+    |> Enum.map(fn entity_type ->
+      existing_ids = from(e in Annotation.entity_schema(entity_type), select: e.id)
+
+      {count, _} =
+        from(a in Annotation,
+          where: a.entity_type == ^entity_type and a.entity_id not in subquery(existing_ids)
+        )
+        |> Repo.delete_all()
+
+      count
+    end)
+    |> Enum.sum()
+  end
 end

@@ -5,6 +5,8 @@ defmodule MusicBox.AnnotationsTest do
   alias MusicBox.Annotations
   alias MusicBox.Annotations.Annotation
   alias MusicBox.Artists.Artist
+  alias MusicBox.Cleanup
+  alias MusicBox.Tracks.Track
 
   setup do
     [artist: Artist |> first() |> Repo.one!(), album: Album |> first() |> Repo.one!()]
@@ -103,5 +105,31 @@ defmodule MusicBox.AnnotationsTest do
              Annotations.put_annotations("musicbrainz", "artists", List.duplicate(valid, 501))
 
     assert Repo.aggregate(Annotation, :count) == 0
+  end
+
+  test "removes the annotations of deleted entities", %{artist: artist, album: album} do
+    {:ok, _} =
+      Annotations.put_annotations("musicbrainz", "artists", [entry(artist, %{"id" => "a"})])
+
+    {:ok, _} =
+      Annotations.put_annotations("musicbrainz", "albums", [entry(album, %{"id" => "b"})])
+
+    Repo.delete!(album)
+
+    assert Annotations.remove_orphaned() == 1
+    assert [_artist] = list!("musicbrainz", "artists")
+    assert list!("musicbrainz", "albums") == []
+  end
+
+  test "is part of removing unused artists and albums", %{artist: artist} do
+    {:ok, _} =
+      Annotations.put_annotations("musicbrainz", "artists", [entry(artist, %{"id" => "a"})])
+
+    Repo.delete_all(Track)
+
+    Cleanup.Worker.do_step(:unused)
+
+    refute Repo.get(Artist, artist.id)
+    assert list!("musicbrainz", "artists") == []
   end
 end
