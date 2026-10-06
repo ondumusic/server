@@ -92,6 +92,9 @@ defmodule MusicBoxWeb.Router do
     get "/tracks/:track_id/transcode", StreamController, :transcode
     post "/plays", PlayController, :record_plays
 
+    get "/annotations/:namespace/:entity_type", AnnotationController, :index
+    put "/annotations/:namespace/:entity_type", AnnotationController, :update
+
     get "/playlists", PlaylistController, :playlists
     post "/playlists", PlaylistController, :create_playlist
     patch "/playlists/:playlist_id", PlaylistController, :update_playlist

@@ -33,7 +33,7 @@ defmodule MusicBox.Annotations do
           where: a.namespace == ^namespace and a.entity_type == ^entity_type,
           order_by: a.entity_id
         )
-        |> Repo.paginate(params)
+        |> Repo.paginate(params, default_limit: 500, max_limit: 1000)
 
       {:ok, page}
     end

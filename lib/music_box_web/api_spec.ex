@@ -40,6 +40,7 @@ defmodule MusicBoxWeb.ApiSpec do
         %Tag{name: "Auth", description: "Authentication and session management"},
         %Tag{name: "Info", description: "Server information"},
         %Tag{name: "Notices", description: "Notices from the server"},
+        %Tag{name: "Annotations", description: "Annotations for artists, albums"},
         %Tag{name: "Sync", description: "Library synchronization"},
         %Tag{name: "Scan", description: "Library file scanning"},
         %Tag{name: "Search", description: "Search across the library"},
