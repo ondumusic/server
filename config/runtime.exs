@@ -137,17 +137,32 @@ if config_env() == :prod do
     cache_path: Path.absname(transcode_cache_path),
     max_cache_size: transcode_max_cache_size
 
-  # The secret key base is used to sign/encrypt cookies and other secrets.
-  # A default value is used in config/dev.exs and config/test.exs but you
-  # want to use a different value for prod and you most likely don't want
-  # to check this value into version control, so we use an environment
-  # variable instead.
+  # The secret key base signs the session and play tokens, nothing is encrypted
+  # with it, so losing it only logs everyone out. Unless it's set, one is
+  # generated on the first start and stored next to the database, which also
+  # means deleting that file (and restarting) is all it takes to rotate it.
+  secret_key_path = Path.join(Path.dirname(database_path), ".secret_key_base")
+
+  if is_nil(System.get_env("ONDU_SECRET_KEY_BASE")) and not File.exists?(secret_key_path) do
+    # Written to a tmp file first, so a crash can't leave a partial secret behind.
+    tmp_path = secret_key_path <> ".tmp"
+
+    File.mkdir_p!(Path.dirname(secret_key_path))
+    File.write!(tmp_path, 64 |> :crypto.strong_rand_bytes() |> Base.encode64())
+    File.chmod!(tmp_path, 0o600)
+    File.rename!(tmp_path, secret_key_path)
+  end
+
   secret_key_base =
     System.get_env("ONDU_SECRET_KEY_BASE") ||
-      raise """
-      environment variable ONDU_SECRET_KEY_BASE is missing.
-      You can generate one by calling: mix phx.gen.secret
-      """
+      secret_key_path |> File.read!() |> String.trim()
+
+  if byte_size(secret_key_base) < 64 do
+    raise """
+    the secret key base should be at least 64 characters.
+    Set ONDU_SECRET_KEY_BASE or delete #{secret_key_path} to generate a new one.
+    """
+  end
 
   config :ondu, OnduWeb.Endpoint,
     url: [host: ondu_uri.host, port: ondu_uri.port, scheme: ondu_uri.scheme],

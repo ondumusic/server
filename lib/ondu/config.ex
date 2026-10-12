@@ -16,12 +16,17 @@ defmodule Ondu.Config do
   │ ONDU_DATABASE_PATH             │ Yes       │ The full path to store the SQLite db file │
   │                                │           │ e.g. /data/db/ondu.db                     │
   ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
-  │ ONDU_SECRET_KEY_BASE           │ Yes       │ This is used to sign and encrypt secrets  │
-  │                                │           │ and requires a minimum length of 32, but  │
-  │                                │           │ 64 characters is recommended.             │
+  │ ONDU_SECRET_KEY_BASE           │ No        │ Used to sign session and play tokens, at  │
+  │                                │           │ least 64 characters. By default one is    │
+  │                                │           │ generated and stored in the file          │
+  │                                │           │ .secret_key_base next to the database.    │
   ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
   │ ONDU_DISABLE_WEB               │ No        │ If you only want API access you can use   │
   │                                │           │ this to disable the built-in web ui.      │
+  │                                │           │ Defaults to false                         │
+  ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
+  │ ONDU_DISABLE_DOCS              │ No        │ Disables the API docs at /docs and the    │
+  │                                │           │ OpenAPI spec at /openapi.                 │
   │                                │           │ Defaults to false                         │
   ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
   │ ONDU_STORAGE_DRIVER            │ No        │ What storage medium is hosting your       │
