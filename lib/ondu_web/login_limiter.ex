@@ -15,6 +15,8 @@ defmodule OnduWeb.LoginLimiter do
 
   use GenServer
 
+  require Logger
+
   @max_failures 10
   @period_ms :timer.minutes(15)
 
@@ -64,7 +66,19 @@ defmodule OnduWeb.LoginLimiter do
 
   def handle_call(:failed, _from, state) do
     state = prune(state)
-    {:reply, :ok, %{state | failures: Enum.take([now() | state.failures], state.max_failures)}}
+    failures = Enum.take([now() | state.failures], state.max_failures)
+
+    # We only want to log when the limit is reached, not every attempt.
+    if length(failures) == state.max_failures and length(state.failures) < state.max_failures do
+      minutes = div(state.period_ms, 60_000)
+
+      Logger.warning(
+        "#{state.max_failures} failed login attempts within #{minutes} minutes, " <>
+          "logging in is blocked for up to #{minutes} minutes"
+      )
+    end
+
+    {:reply, :ok, %{state | failures: failures}}
   end
 
   def handle_call(:succeeded, _from, state) do
