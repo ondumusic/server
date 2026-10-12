@@ -26,7 +26,7 @@ defmodule OnduWeb.Endpoint do
   end
 
   plug Plug.RequestId
-  plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
+  plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint], log: {__MODULE__, :log_level, []}
 
   plug Plug.Parsers,
     # Artwork can be uploaded (up to 25MB), Plug limits multipart bodies to 8MB
@@ -38,4 +38,12 @@ defmodule OnduWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug OnduWeb.Router
+
+  # For some requests we'll only log them at the debug level because otherwise
+  # it's mostly noise. So think about health checks, artwork or audio streams.
+  def log_level(%{path_info: [path | _]}) when path in ~w(artwork stream download health),
+    do: :debug
+
+  def log_level(%{path_info: ["api", "tracks", _track_id, "transcode"]}), do: :debug
+  def log_level(_conn), do: :info
 end
