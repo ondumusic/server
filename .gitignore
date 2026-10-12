@@ -23,7 +23,7 @@ erl_crash.dump
 /tmp/
 
 # Ignore package tarball (built via "mix hex.build").
-music_box-*.tar
+ondu-*.tar
 
 # Database files
 *.db

@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.CreateNewSearchTables do
+defmodule Ondu.Repo.Migrations.CreateNewSearchTables do
   use Ecto.Migration
 
   def up do

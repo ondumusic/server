@@ -223,7 +223,7 @@
     "playHistory": {
       "record": "Enabled",
       "recordInBrowser": "Yes, record and sync play history.",
-      "summary": "Record and sync your play history to the MusicBox Server.",
+      "summary": "Record and sync your play history to your Ondu Server.",
       "title": "Play History"
     },
     "security": {
@@ -248,18 +248,18 @@
       "stripSortPrefixes": "A list of prefixes to filter out when sorting, e.g. if you want The Beatles to be sorted as Beatles you would add \"the\"."
     },
     "subtitle": "Fill in the form below to get started.",
-    "title": "Setup MusicBox"
+    "title": "Set up Ondu"
   },
   "signupForm": {
     "button": {
-      "login": "Signup"
+      "login": "Sign up"
     },
     "field": {
       "password": "Password",
       "passwordConfirmation": "Confirm Password",
       "username": "Username"
     },
-    "title": "Setup your Account"
+    "title": "Set up your account"
   },
   "sortBy": {
     "album": {

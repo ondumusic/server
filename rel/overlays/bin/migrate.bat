@@ -1,1 +1,1 @@
-call "%~dp0\music_box" eval MusicBox.Release.migrate
+call "%~dp0\ondu" eval Ondu.Release.migrate

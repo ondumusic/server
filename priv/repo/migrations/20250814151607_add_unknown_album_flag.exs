@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddUnknownAlbumFlag do
+defmodule Ondu.Repo.Migrations.AddUnknownAlbumFlag do
   use Ecto.Migration
 
   def change do

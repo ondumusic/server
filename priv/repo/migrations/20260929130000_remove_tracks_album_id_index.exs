@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.RemoveTracksAlbumIdIndex do
+defmodule Ondu.Repo.Migrations.RemoveTracksAlbumIdIndex do
   use Ecto.Migration
 
   # Lookups by album_id use tracks_album_id_disc_number_index, which starts with

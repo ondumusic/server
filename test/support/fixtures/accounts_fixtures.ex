@@ -1,4 +1,4 @@
-defmodule MusicBox.AccountsFixtures do
+defmodule Ondu.AccountsFixtures do
   @moduledoc false
 
   def unique_username, do: "user-#{System.unique_integer()}"
@@ -18,7 +18,7 @@ defmodule MusicBox.AccountsFixtures do
     {:ok, user} =
       attrs
       |> valid_user_attributes()
-      |> MusicBox.Accounts.register_user()
+      |> Ondu.Accounts.register_user()
 
     user
   end

@@ -138,7 +138,7 @@ function GeneralSettings() {
           })}
           subtitle={i18next.t("settings.playHistory.summary", {
             defaultValue:
-              "Record and sync your play history to the MusicBox Server.",
+              "Record and sync your play history to your Ondu Server.",
           })}
         >
           <Setting

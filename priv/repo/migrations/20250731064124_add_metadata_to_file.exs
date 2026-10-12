@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddMetadataToFile do
+defmodule Ondu.Repo.Migrations.AddMetadataToFile do
   use Ecto.Migration
 
   def change do

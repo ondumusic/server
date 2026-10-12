@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddDiscNumbers do
+defmodule Ondu.Repo.Migrations.AddDiscNumbers do
   use Ecto.Migration
 
   def change do

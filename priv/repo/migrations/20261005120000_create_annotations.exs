@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.CreateAnnotations do
+defmodule Ondu.Repo.Migrations.CreateAnnotations do
   use Ecto.Migration
 
   def change do

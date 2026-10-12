@@ -1,9 +1,9 @@
-defmodule MusicBox.MixProject do
+defmodule Ondu.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :music_box,
+      app: :ondu,
       version: "0.1.0",
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -19,7 +19,7 @@ defmodule MusicBox.MixProject do
   # Type `mix help compile.app` for more information.
   def application do
     [
-      mod: {MusicBox.Application, []},
+      mod: {Ondu.Application, []},
       extra_applications: [:logger, :runtime_tools]
     ]
   end
@@ -70,7 +70,7 @@ defmodule MusicBox.MixProject do
   defp aliases do
     [
       setup: ["deps.get", "ecto.setup", "assets.setup"],
-      "openapi.gen": "openapi.spec.json --spec MusicBoxWeb.ApiSpec priv/openapi.json",
+      "openapi.gen": "openapi.spec.json --spec OnduWeb.ApiSpec priv/openapi.json",
       "assets.setup": ["cmd --cd assets pnpm install"],
       "assets.build": ["cmd --cd assets pnpm run build"],
       "assets.deploy": [

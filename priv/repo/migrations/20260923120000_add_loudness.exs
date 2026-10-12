@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddLoudness do
+defmodule Ondu.Repo.Migrations.AddLoudness do
   use Ecto.Migration
 
   def change do

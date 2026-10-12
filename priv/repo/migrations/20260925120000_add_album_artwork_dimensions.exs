@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddAlbumArtworkDimensions do
+defmodule Ondu.Repo.Migrations.AddAlbumArtworkDimensions do
   use Ecto.Migration
 
   def change do

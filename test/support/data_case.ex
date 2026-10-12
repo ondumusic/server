@@ -1,4 +1,4 @@
-defmodule MusicBox.DataCase do
+defmodule Ondu.DataCase do
   @moduledoc """
   This module defines the setup for tests requiring
   access to the application's data layer.
@@ -10,7 +10,7 @@ defmodule MusicBox.DataCase do
   we enable the SQL sandbox, so changes done to the database
   are reverted at the end of every test. If you are using
   PostgreSQL, you can even run database tests asynchronously
-  by setting `use MusicBox.DataCase, async: true`, although
+  by setting `use Ondu.DataCase, async: true`, although
   this option is not recommended for other databases.
   """
 
@@ -19,20 +19,20 @@ defmodule MusicBox.DataCase do
 
   using do
     quote do
-      alias MusicBox.Repo
+      alias Ondu.Repo
 
       import Ecto
       import Ecto.Changeset
       import Ecto.Query
-      import MusicBox.DataCase
-      import MusicBox.TestHelpers
+      import Ondu.DataCase
+      import Ondu.TestHelpers
 
       import Mox
     end
   end
 
   setup tags do
-    MusicBox.DataCase.setup_sandbox(tags)
+    Ondu.DataCase.setup_sandbox(tags)
     :ok
   end
 
@@ -40,7 +40,7 @@ defmodule MusicBox.DataCase do
   Sets up the sandbox based on the test tags.
   """
   def setup_sandbox(tags) do
-    pid = Sandbox.start_owner!(MusicBox.Repo, shared: not tags[:async])
+    pid = Sandbox.start_owner!(Ondu.Repo, shared: not tags[:async])
     on_exit(fn -> Sandbox.stop_owner(pid) end)
     TestSeeds.reset()
   end
@@ -64,6 +64,6 @@ defmodule MusicBox.DataCase do
   def update_record(record, changes) do
     record
     |> Ecto.Changeset.change(changes)
-    |> MusicBox.Repo.update!()
+    |> Ondu.Repo.update!()
   end
 end

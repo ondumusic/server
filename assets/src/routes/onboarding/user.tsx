@@ -57,7 +57,7 @@ export function UserComponent() {
     <div className="h-full content-center">
       <Panel
         size="small"
-        title={t("signupForm.title", { defaultValue: "Setup your Account" })}
+        title={t("signupForm.title", { defaultValue: "Set up your account" })}
       >
         <form
           key={form.key}
@@ -93,7 +93,7 @@ export function UserComponent() {
 
           <FormActions>
             <Button disabled={form.isPending} type="submit">
-              <Trans i18nKey="signupForm.button.login">Signup</Trans>
+              <Trans i18nKey="signupForm.button.login">Sign up</Trans>
             </Button>
           </FormActions>
         </form>

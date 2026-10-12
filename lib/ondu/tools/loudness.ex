@@ -1,0 +1,65 @@
+defmodule Ondu.Tool.Loudness do
+  @moduledoc """
+  Measures integrated loudness (LUFS) and true peak (dBFS) of the first audio
+  stream using ffmpeg's `ebur128` filter (ITU-R BS.1770 / EBU R128).
+
+  The filter only reports its results as a text summary on stderr, so we parse
+  that. `loudnorm=print_format=json` would give JSON, but it is ~7x slower
+  because it upsamples to 192kHz internally.
+
+  A true peak of `-inf` (digital silence) is returned as `nil`.
+  """
+  @behaviour Ondu.Tool
+
+  @number ~S"(-?inf|-?\d+(?:\.\d+)?)"
+  @integrated_regex Regex.compile!("Integrated loudness:\\s+I:\\s+#{@number} LUFS")
+  @peak_regex Regex.compile!("True peak:\\s+Peak:\\s+#{@number} dBFS")
+
+  @impl true
+  def exec(path: path, timeout: timeout) do
+    ffmpeg_path = System.find_executable("ffmpeg") || throw(:ffmpeg_not_found)
+    args = [ffmpeg_path | ffmpeg_args(path)]
+
+    # If nice is installed we will use this to run ffmpeg at a lower priority to
+    # avoid slowing down more essential processes on smaller machines like a NAS.
+    {cmd, args} =
+      case System.find_executable("nice") do
+        nil -> {ffmpeg_path, tl(args)}
+        nice_path -> {nice_path, ["-n", "19" | args]}
+      end
+
+    case Ondu.Tool.cmd(cmd, args, timeout: timeout, stderr_to_stdout: true) do
+      {output, 0} -> parse(output)
+      {:error, :timeout} -> {:error, :timeout}
+      _ -> {:error, :measure_failed}
+    end
+  end
+
+  @doc false
+  def parse(output) do
+    with [_, integrated] <- Regex.run(@integrated_regex, output),
+         [_, peak] <- Regex.run(@peak_regex, output),
+         integrated when is_float(integrated) <- to_float(integrated) do
+      {:ok, %{lufs: integrated, peak: to_float(peak)}}
+    else
+      _ -> {:error, :measure_failed}
+    end
+  end
+
+  defp to_float(value) do
+    case Float.parse(value) do
+      {float, ""} -> float
+      _ -> nil
+    end
+  end
+
+  defp ffmpeg_args(path) do
+    ~w(-nostdin -hide_banner -nostats -i) ++
+      [path] ++
+      ~w(
+        -map 0:a:0
+        -af ebur128=peak=true:framelog=quiet
+        -f null -
+      )
+  end
+end

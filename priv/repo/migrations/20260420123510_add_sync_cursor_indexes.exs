@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddSyncCursorIndexes do
+defmodule Ondu.Repo.Migrations.AddSyncCursorIndexes do
   use Ecto.Migration
 
   def change do

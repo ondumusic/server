@@ -1,10 +1,10 @@
 import Config
 
-config :music_box, :env, :dev
+config :ondu, :env, :dev
 
 # Configure your database
-config :music_box, MusicBox.Repo,
-  database: Path.expand("../db/music_box_dev.db", __DIR__),
+config :ondu, Ondu.Repo,
+  database: Path.expand("../db/ondu_dev.db", __DIR__),
   pool_size: 1,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true
@@ -15,7 +15,7 @@ config :music_box, MusicBox.Repo,
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we can use it
 # to bundle .js and .css sources.
-config :music_box, MusicBoxWeb.Endpoint,
+config :ondu, OnduWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {0, 0, 0, 0}, port: 4000],
@@ -56,7 +56,7 @@ config :music_box, MusicBoxWeb.Endpoint,
 # different ports.
 
 # Enable dev routes for dashboard and mailbox
-config :music_box, dev_routes: true
+config :ondu, dev_routes: true
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"

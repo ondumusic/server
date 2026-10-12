@@ -101,7 +101,7 @@ export function Settings() {
     <div className="h-full content-center">
       <Panel
         size="small"
-        title={t("settingsForm.title", { defaultValue: "Setup MusicBox" })}
+        title={t("settingsForm.title", { defaultValue: "Set up Ondu" })}
       >
         <p className="mt-4 text-center text-sm leading-6 text-muted">
           <Trans i18nKey="settingsForm.subtitle">

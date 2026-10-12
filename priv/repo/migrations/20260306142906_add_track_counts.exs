@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddTrackCounts do
+defmodule Ondu.Repo.Migrations.AddTrackCounts do
   use Ecto.Migration
 
   def change do

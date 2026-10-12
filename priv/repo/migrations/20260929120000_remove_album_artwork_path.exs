@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.RemoveAlbumArtworkPath do
+defmodule Ondu.Repo.Migrations.RemoveAlbumArtworkPath do
   use Ecto.Migration
 
   # The artwork location is derived from the album id and the artwork path, the

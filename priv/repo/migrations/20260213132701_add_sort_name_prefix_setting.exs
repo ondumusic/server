@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddSortNamePrefixSetting do
+defmodule Ondu.Repo.Migrations.AddSortNamePrefixSetting do
   use Ecto.Migration
 
   def change do

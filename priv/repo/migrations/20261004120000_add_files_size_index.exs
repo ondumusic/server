@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddFilesSizeIndex do
+defmodule Ondu.Repo.Migrations.AddFilesSizeIndex do
   use Ecto.Migration
 
   def change do

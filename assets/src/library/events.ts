@@ -9,7 +9,7 @@ export type ChangeListener = (detail: ChangeDetail) => void;
 // Ideally we use a broadcast channel to update all tabs of same origin.
 const broadcast =
   typeof BroadcastChannel !== "undefined"
-    ? new BroadcastChannel("musicbox-sync")
+    ? new BroadcastChannel("ondu-sync")
     : null;
 
 broadcast?.addEventListener("message", (e) => {

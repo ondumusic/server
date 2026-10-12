@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddAlbumArtworkInvalidatedAt do
+defmodule Ondu.Repo.Migrations.AddAlbumArtworkInvalidatedAt do
   use Ecto.Migration
 
   def change do

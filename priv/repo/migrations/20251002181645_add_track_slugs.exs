@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddTrackSlugs do
+defmodule Ondu.Repo.Migrations.AddTrackSlugs do
   use Ecto.Migration
 
   def change do

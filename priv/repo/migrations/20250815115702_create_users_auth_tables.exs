@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.CreateUsersAuthTables do
+defmodule Ondu.Repo.Migrations.CreateUsersAuthTables do
   use Ecto.Migration
 
   def change do

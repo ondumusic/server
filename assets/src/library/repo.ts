@@ -282,7 +282,7 @@ export class Repo {
   }
 }
 
-export const repo = new Repo("musicbox", {
+export const repo = new Repo("ondu", {
   1: (db) => {
     const tracks = db.createObjectStore("tracks", { keyPath: "id" });
     tracks.createIndex("by_missingData", "missingData", { unique: false });

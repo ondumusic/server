@@ -101,6 +101,10 @@ RUN mix release
 # Step 3. Build final image
 ########################################
 FROM ${RUNNER_IMAGE} AS final
+
+LABEL org.opencontainers.image.title="Ondu Server"
+LABEL org.opencontainers.image.url="https://ondumusic.com"
+
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
@@ -112,9 +116,9 @@ ENV MIX_ENV="prod"
 ENV RELEASE_DISTRIBUTION="none"
 
 # Everything that needs to be kept is stored in /data, mount a volume there.
-ENV MB_DATABASE_PATH="/data/musicbox.db"
-ENV MB_ARTWORK_PATH="/data/artwork"
-ENV MB_TRANSCODE_CACHE_PATH="/data/transcode-cache"
+ENV ONDU_DATABASE_PATH="/data/ondu.db"
+ENV ONDU_ARTWORK_PATH="/data/artwork"
+ENV ONDU_TRANSCODE_CACHE_PATH="/data/transcode-cache"
 
 # The application files are read-only, the release writes tmp files to here.
 ENV RELEASE_TMP="/tmp"
@@ -131,7 +135,7 @@ RUN apt-get update \
 # Copy the compiled application, owned by root so it can't be modified when the
 # application is compromised.
 WORKDIR "/app"
-COPY --from=builder /app/_build/${MIX_ENV}/rel/music_box ./
+COPY --from=builder /app/_build/${MIX_ENV}/rel/ondu ./
 
 RUN mkdir /data && chown nobody /data
 VOLUME ["/data"]

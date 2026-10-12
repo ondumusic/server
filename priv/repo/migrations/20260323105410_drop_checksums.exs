@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.DropChecksums do
+defmodule Ondu.Repo.Migrations.DropChecksums do
   use Ecto.Migration
 
   def change do

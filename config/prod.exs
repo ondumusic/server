@@ -1,6 +1,6 @@
 import Config
 
-config :music_box, :env, :prod
+config :ondu, :env, :prod
 
 # Do not print debug messages in production
 config :logger, level: :info

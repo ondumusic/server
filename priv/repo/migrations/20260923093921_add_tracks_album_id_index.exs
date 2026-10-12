@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddTracksAlbumIdIndex do
+defmodule Ondu.Repo.Migrations.AddTracksAlbumIdIndex do
   use Ecto.Migration
 
   def change do

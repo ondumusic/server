@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddScanSettings do
+defmodule Ondu.Repo.Migrations.AddScanSettings do
   use Ecto.Migration
 
   def change do

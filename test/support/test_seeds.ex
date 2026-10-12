@@ -1,17 +1,17 @@
 defmodule TestSeeds do
   @moduledoc false
 
-  alias MusicBox.Accounts
-  alias MusicBox.Albums.Album
-  alias MusicBox.Artists.Artist
-  alias MusicBox.Cleanup
-  alias MusicBox.Files.File
-  alias MusicBox.Files.FileMetadata
-  alias MusicBox.FileScanner.Utils
-  alias MusicBox.Playlists.Playlist
-  alias MusicBox.Playlists.PlaylistItem
-  alias MusicBox.Repo
-  alias MusicBox.Tracks.Track
+  alias Ondu.Accounts
+  alias Ondu.Albums.Album
+  alias Ondu.Artists.Artist
+  alias Ondu.Cleanup
+  alias Ondu.Files.File
+  alias Ondu.Files.FileMetadata
+  alias Ondu.FileScanner.Utils
+  alias Ondu.Playlists.Playlist
+  alias Ondu.Playlists.PlaylistItem
+  alias Ondu.Repo
+  alias Ondu.Tracks.Track
 
   def reset do
     [

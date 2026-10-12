@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddFilesContentChangedAt do
+defmodule Ondu.Repo.Migrations.AddFilesContentChangedAt do
   use Ecto.Migration
 
   def up do

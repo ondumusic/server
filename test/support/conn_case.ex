@@ -1,4 +1,4 @@
-defmodule MusicBoxWeb.ConnCase do
+defmodule OnduWeb.ConnCase do
   @moduledoc """
   This module defines the test case to be used by
   tests that require setting up a connection.
@@ -11,7 +11,7 @@ defmodule MusicBoxWeb.ConnCase do
   we enable the SQL sandbox, so changes done to the database
   are reverted at the end of every test. If you are using
   PostgreSQL, you can even run database tests asynchronously
-  by setting `use MusicBoxWeb.ConnCase, async: true`, although
+  by setting `use OnduWeb.ConnCase, async: true`, although
   this option is not recommended for other databases.
   """
 
@@ -22,24 +22,24 @@ defmodule MusicBoxWeb.ConnCase do
   using do
     quote do
       # The default endpoint for testing
-      @endpoint MusicBoxWeb.Endpoint
+      @endpoint OnduWeb.Endpoint
 
-      use MusicBoxWeb, :verified_routes
+      use OnduWeb, :verified_routes
 
       # Import conveniences for testing with connections
       import Plug.Conn
       import Phoenix.ConnTest
-      import MusicBoxWeb.ConnCase
-      import MusicBox.TestHelpers
+      import OnduWeb.ConnCase
+      import Ondu.TestHelpers
 
-      alias MusicBox.Repo
+      alias Ondu.Repo
 
       import Mox
     end
   end
 
   setup tags do
-    MusicBox.DataCase.setup_sandbox(tags)
+    Ondu.DataCase.setup_sandbox(tags)
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
 
@@ -52,7 +52,7 @@ defmodule MusicBoxWeb.ConnCase do
   test context.
   """
   def register_and_log_in_user(%{conn: conn}) do
-    user = MusicBox.AccountsFixtures.user_fixture()
+    user = Ondu.AccountsFixtures.user_fixture()
     %{conn: log_in_user(conn, user), user: user}
   end
 
@@ -62,7 +62,7 @@ defmodule MusicBoxWeb.ConnCase do
   It returns an updated `conn`.
   """
   def log_in_user(conn, user) do
-    session_token = MusicBox.Sessions.generate_user_session_token(user)
+    session_token = Ondu.Sessions.generate_user_session_token(user)
 
     conn
     |> Plug.Conn.assign(:session_token, session_token)
@@ -72,7 +72,7 @@ defmodule MusicBoxWeb.ConnCase do
     body = Phoenix.ConnTest.json_response(conn, status)
 
     if schema_name do
-      assert_schema(body, schema_name, MusicBoxWeb.ApiSpec.spec())
+      assert_schema(body, schema_name, OnduWeb.ApiSpec.spec())
     end
 
     body
@@ -81,6 +81,6 @@ defmodule MusicBoxWeb.ConnCase do
   def update_record(record, changes) do
     record
     |> Ecto.Changeset.change(changes)
-    |> MusicBox.Repo.update!()
+    |> Ondu.Repo.update!()
   end
 end

@@ -12,61 +12,61 @@ import Config
 # If you use `mix release`, you need to explicitly enable the server
 # by passing the PHX_SERVER=true when you start it:
 #
-#     PHX_SERVER=true bin/music_box start
+#     PHX_SERVER=true bin/ondu start
 #
 # Alternatively, you can use `mix phx.gen.release` to generate a `bin/server`
 # script that automatically sets the env var above.
 if System.get_env("PHX_SERVER") do
-  config :music_box, MusicBoxWeb.Endpoint, server: true
+  config :ondu, OnduWeb.Endpoint, server: true
 end
 
-config :music_box, MusicBox.Repo,
+config :ondu, Ondu.Repo,
   journal_mode: :wal,
   default_transaction_mode: :immediate,
   temp_store: :memory,
   cache_size: 64_000
 
 if config_env() == :prod do
-  music_box_uri =
-    System.get_env("MB_URL") ||
+  ondu_uri =
+    System.get_env("ONDU_URL") ||
       raise """
-      environment variable MB_URL is missing.
+      environment variable ONDU_URL is missing.
       For example: https://music.example.com/
       """
 
-  music_box_uri = URI.parse(music_box_uri)
+  ondu_uri = URI.parse(ondu_uri)
 
-  if is_nil(music_box_uri.scheme) do
-    raise "MB_URL is missing scheme (example value: https://example.com)"
+  if is_nil(ondu_uri.scheme) do
+    raise "ONDU_URL is missing scheme (example value: https://example.com)"
   end
 
-  if is_nil(music_box_uri.host) do
-    raise "MB_URL is missing hostname (example value: https://example.com)"
+  if is_nil(ondu_uri.host) do
+    raise "ONDU_URL is missing hostname (example value: https://example.com)"
   end
 
   database_path =
-    System.get_env("MB_DATABASE_PATH") ||
+    System.get_env("ONDU_DATABASE_PATH") ||
       raise """
-      environment variable MB_DATABASE_PATH is missing.
-      For example: /etc/music_box/music_box.db
+      environment variable ONDU_DATABASE_PATH is missing.
+      For example: /etc/ondu/ondu.db
       """
 
   transcode_cache_path =
-    System.get_env("MB_TRANSCODE_CACHE_PATH") ||
+    System.get_env("ONDU_TRANSCODE_CACHE_PATH") ||
       raise """
-      environment variable MB_TRANSCODE_CACHE_PATH is missing.
+      environment variable ONDU_TRANSCODE_CACHE_PATH is missing.
       For example: /tmp/transcode-cache/
       """
 
   artwork_path =
-    System.get_env("MB_ARTWORK_PATH") ||
+    System.get_env("ONDU_ARTWORK_PATH") ||
       raise """
-      environment variable MB_ARTWORK_PATH is missing.
+      environment variable ONDU_ARTWORK_PATH is missing.
       For example: /tmp/artwork/
       """
 
   web_enabled? =
-    System.get_env("MB_DISABLE_WEB", "false")
+    System.get_env("ONDU_DISABLE_WEB", "false")
     |> String.downcase()
     |> case do
       falsy when falsy in ~w(0 no off disabled false) -> true
@@ -74,7 +74,7 @@ if config_env() == :prod do
     end
 
   docs_enabled? =
-    System.get_env("MB_DISABLE_DOCS", "false")
+    System.get_env("ONDU_DISABLE_DOCS", "false")
     |> String.downcase()
     |> case do
       falsy when falsy in ~w(0 no off disabled false) -> true
@@ -82,58 +82,58 @@ if config_env() == :prod do
     end
 
   file_storage_impl =
-    case System.get_env("MB_STORAGE_DRIVER", "file") |> String.downcase() do
+    case System.get_env("ONDU_STORAGE_DRIVER", "file") |> String.downcase() do
       "file" ->
-        MusicBox.Storage.File
+        Ondu.Storage.File
 
       "s3" ->
-        MusicBox.Storage.S3
+        Ondu.Storage.S3
 
       other ->
-        raise "environment variable MB_STORAGE_DRIVER should be file or s3, got: #{inspect(other)}"
+        raise "environment variable ONDU_STORAGE_DRIVER should be file or s3, got: #{inspect(other)}"
     end
 
-  if file_storage_impl == MusicBox.Storage.S3 do
+  if file_storage_impl == Ondu.Storage.S3 do
     bucket =
-      System.get_env("MB_STORAGE_S3_BUCKET") ||
+      System.get_env("ONDU_STORAGE_S3_BUCKET") ||
         raise """
-        environment variable MB_STORAGE_S3_BUCKET is missing.
+        environment variable ONDU_STORAGE_S3_BUCKET is missing.
         For example: my-s3-bucket-name
         """
 
     region =
-      System.get_env("MB_STORAGE_S3_REGION") ||
+      System.get_env("ONDU_STORAGE_S3_REGION") ||
         raise """
-        environment variable MB_STORAGE_S3_REGION is missing.
+        environment variable ONDU_STORAGE_S3_REGION is missing.
         For example: us-east-1
         """
 
-    config :music_box, MusicBox.Storage.S3,
+    config :ondu, Ondu.Storage.S3,
       bucket: bucket,
       region: region
   end
 
-  config :music_box, web_enabled: web_enabled?
-  config :music_box, docs_enabled: docs_enabled?
+  config :ondu, web_enabled: web_enabled?
+  config :ondu, docs_enabled: docs_enabled?
 
-  config :music_box, storage_impl: file_storage_impl
+  config :ondu, storage_impl: file_storage_impl
 
-  config :music_box, MusicBox.Repo,
+  config :ondu, Ondu.Repo,
     database: database_path,
-    pool_size: String.to_integer(System.get_env("MB_SQLITE_POOL_SIZE") || "1")
+    pool_size: String.to_integer(System.get_env("ONDU_SQLITE_POOL_SIZE") || "1")
 
-  config :music_box, MusicBox.Artwork, artwork_path: Path.absname(artwork_path)
+  config :ondu, Ondu.Artwork, artwork_path: Path.absname(artwork_path)
 
   # In megabytes, 0 for no limit.
   transcode_max_cache_size =
-    case String.to_integer(System.get_env("MB_TRANSCODE_CACHE_MAX_SIZE") || "10240") do
+    case String.to_integer(System.get_env("ONDU_TRANSCODE_CACHE_MAX_SIZE") || "10240") do
       0 -> nil
       megabytes -> megabytes * 1024 * 1024
     end
 
-  config :music_box, MusicBox.Transcoder,
-    max_concurrency: String.to_integer(System.get_env("MB_TRANSCODE_MAX_CONCURRENCY") || "3"),
-    max_queue_size: String.to_integer(System.get_env("MB_TRANSCODE_QUEUE_SIZE") || "10"),
+  config :ondu, Ondu.Transcoder,
+    max_concurrency: String.to_integer(System.get_env("ONDU_TRANSCODE_MAX_CONCURRENCY") || "3"),
+    max_queue_size: String.to_integer(System.get_env("ONDU_TRANSCODE_QUEUE_SIZE") || "10"),
     cache_path: Path.absname(transcode_cache_path),
     max_cache_size: transcode_max_cache_size
 
@@ -143,14 +143,14 @@ if config_env() == :prod do
   # to check this value into version control, so we use an environment
   # variable instead.
   secret_key_base =
-    System.get_env("MB_SECRET_KEY_BASE") ||
+    System.get_env("ONDU_SECRET_KEY_BASE") ||
       raise """
-      environment variable MB_SECRET_KEY_BASE is missing.
+      environment variable ONDU_SECRET_KEY_BASE is missing.
       You can generate one by calling: mix phx.gen.secret
       """
 
-  config :music_box, MusicBoxWeb.Endpoint,
-    url: [host: music_box_uri.host, port: music_box_uri.port, scheme: music_box_uri.scheme],
+  config :ondu, OnduWeb.Endpoint,
+    url: [host: ondu_uri.host, port: ondu_uri.port, scheme: ondu_uri.scheme],
     http: [
       # Enable IPv6 and bind on all interfaces.
       # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.

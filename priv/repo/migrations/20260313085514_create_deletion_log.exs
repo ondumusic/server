@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.CreateDeletionLog do
+defmodule Ondu.Repo.Migrations.CreateDeletionLog do
   use Ecto.Migration
 
   def up do

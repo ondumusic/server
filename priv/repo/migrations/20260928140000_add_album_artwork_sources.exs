@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddAlbumArtworkSources do
+defmodule Ondu.Repo.Migrations.AddAlbumArtworkSources do
   use Ecto.Migration
 
   def up do

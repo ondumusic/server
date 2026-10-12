@@ -2,5 +2,5 @@
 set -eu
 
 cd -P -- "$(dirname -- "$0")"
-./music_box eval MusicBox.Release.migrate
-PHX_SERVER=true exec ./music_box start
+./ondu eval Ondu.Release.migrate
+PHX_SERVER=true exec ./ondu start

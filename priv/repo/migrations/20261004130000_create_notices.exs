@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.CreateNotices do
+defmodule Ondu.Repo.Migrations.CreateNotices do
   use Ecto.Migration
 
   def change do

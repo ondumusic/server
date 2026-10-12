@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.UseRelativeFilePaths do
+defmodule Ondu.Repo.Migrations.UseRelativeFilePaths do
   use Ecto.Migration
 
   def up do

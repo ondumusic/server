@@ -7,19 +7,19 @@
 # General application configuration
 import Config
 
-config :music_box,
-  ecto_repos: [MusicBox.Repo],
+config :ondu,
+  ecto_repos: [Ondu.Repo],
   generators: [timestamp_type: :utc_datetime, binary_id: true]
 
 # Configures the endpoint
-config :music_box, MusicBoxWeb.Endpoint,
+config :ondu, OnduWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
-    formats: [json: MusicBoxWeb.ErrorJSON],
+    formats: [json: OnduWeb.ErrorJSON],
     layout: false
   ],
-  pubsub_server: MusicBox.PubSub,
+  pubsub_server: Ondu.PubSub,
   live_view: [signing_salt: "BRqOYVQb"]
 
 # Configures Elixir's Logger
@@ -36,27 +36,27 @@ config :ecto, :json_library, JSON
 config :ecto_sqlite3, :json_library, JSON
 
 config :ex_aws,
-  http_client: MusicBox.AWSReqClient,
+  http_client: Ondu.AWSReqClient,
   json_codec: JSON,
   region: {:system, "AWS_REGION"}
 
-config :music_box,
-  extract_artwork_tool: MusicBox.Tool.ExtractArtwork,
-  resize_artwork_tool: MusicBox.Tool.ResizeArtwork,
-  transcode_tool: MusicBox.Tool.Transcode,
-  probe_tool: MusicBox.Tool.Probe,
-  loudness_tool: MusicBox.Tool.Loudness
+config :ondu,
+  extract_artwork_tool: Ondu.Tool.ExtractArtwork,
+  resize_artwork_tool: Ondu.Tool.ResizeArtwork,
+  transcode_tool: Ondu.Tool.Transcode,
+  probe_tool: Ondu.Tool.Probe,
+  loudness_tool: Ondu.Tool.Loudness
 
-config :music_box,
-  storage_impl: MusicBox.Storage.File
+config :ondu,
+  storage_impl: Ondu.Storage.File
 
-config :music_box,
+config :ondu,
   web_enabled: true,
   docs_enabled: true
 
-config :music_box, MusicBox.Artwork, artwork_path: Path.absname("./tmp/artwork")
+config :ondu, Ondu.Artwork, artwork_path: Path.absname("./tmp/artwork")
 
-config :music_box, MusicBox.Transcoder,
+config :ondu, Ondu.Transcoder,
   max_concurrency: 3,
   max_queue_size: 10,
   cache_path: Path.absname("./tmp/transcode"),

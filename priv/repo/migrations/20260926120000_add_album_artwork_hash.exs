@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddAlbumArtworkHash do
+defmodule Ondu.Repo.Migrations.AddAlbumArtworkHash do
   use Ecto.Migration
 
   def change do

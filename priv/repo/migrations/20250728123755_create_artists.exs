@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.CreateArtists do
+defmodule Ondu.Repo.Migrations.CreateArtists do
   use Ecto.Migration
 
   def change do

@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.AddUniqueIndexes do
+defmodule Ondu.Repo.Migrations.AddUniqueIndexes do
   use Ecto.Migration
 
   def change do

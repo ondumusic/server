@@ -1,4 +1,4 @@
-defmodule MusicBox.TestHelpers do
+defmodule Ondu.TestHelpers do
   @moduledoc false
 
   import ExUnit.Assertions

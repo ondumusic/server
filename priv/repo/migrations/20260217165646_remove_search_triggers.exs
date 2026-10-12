@@ -1,4 +1,4 @@
-defmodule MusicBox.Repo.Migrations.RemoveSearchTriggers do
+defmodule Ondu.Repo.Migrations.RemoveSearchTriggers do
   use Ecto.Migration
 
   def change do
