@@ -29,6 +29,9 @@ defmodule Ondu.Config do
   │                                │           │ OpenAPI spec at /openapi.                 │
   │                                │           │ Defaults to false                         │
   ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
+  │ ONDU_LOG_LEVEL                 │ No        │ Which messages are logged, either debug,  │
+  │                                │           │ info, warning or error. Defaults to info  │
+  ├────────────────────────────────┼───────────┼───────────────────────────────────────────┤
   │ ONDU_STORAGE_DRIVER            │ No        │ What storage medium is hosting your       │
   │                                │           │ original music files. Either `file` or    │
   │                                │           │ `s3`. Defaults to `file`.                 │

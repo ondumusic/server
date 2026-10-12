@@ -93,6 +93,15 @@ if config_env() == :prod do
         raise "environment variable ONDU_STORAGE_DRIVER should be file or s3, got: #{inspect(other)}"
     end
 
+  log_level =
+    case System.get_env("ONDU_LOG_LEVEL", "info") |> String.downcase() do
+      level when level in ~w(debug info warning error) ->
+        String.to_existing_atom(level)
+
+      other ->
+        raise "environment variable ONDU_LOG_LEVEL should be debug, info, warning or error, got: #{inspect(other)}"
+    end
+
   if file_storage_impl == Ondu.Storage.S3 do
     bucket =
       System.get_env("ONDU_STORAGE_S3_BUCKET") ||
@@ -112,6 +121,8 @@ if config_env() == :prod do
       bucket: bucket,
       region: region
   end
+
+  config :logger, level: log_level
 
   config :ondu, web_enabled: web_enabled?
   config :ondu, docs_enabled: docs_enabled?
