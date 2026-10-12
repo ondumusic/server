@@ -22,14 +22,15 @@ defmodule Ondu.Artwork.Fetcher do
   @callback find(album :: Album.t(), context :: context()) ::
               {:ok, result()} | {:error, find_error()}
 
-  @spec save_artwork(Album.t(), binary()) ::
+  # The source path is the music or cover file the artwork was read from.
+  @spec save_artwork(Album.t(), binary(), String.t()) ::
           {:ok, String.t()} | {:error, :failed_to_write | :too_large}
-  def save_artwork(album, bytes) when byte_size(bytes) > @max_size do
-    Logger.warning("Artwork of album #{album.id} is too large (#{byte_size(bytes)} bytes)")
+  def save_artwork(_album, bytes, source_path) when byte_size(bytes) > @max_size do
+    Logger.warning("Artwork in #{source_path} is too large (#{byte_size(bytes)} bytes)")
     {:error, :too_large}
   end
 
-  def save_artwork(album, bytes) do
+  def save_artwork(album, bytes, _source_path) do
     path = unprocessed_path(album)
     tmp_path = Ondu.Artwork.tmp_path(path)
     File.mkdir_p!(Path.dirname(path))

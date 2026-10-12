@@ -10,19 +10,19 @@ defmodule Ondu.Artwork.Fetcher.CoverFile do
 
   def find(_album, %{cover: nil}), do: {:error, :not_found}
 
-  def find(album, %{cover: %{size: size} = cover}) when size > @max_size do
-    Logger.warning("Cover file #{cover.path} of album #{album.id} is too large (#{size} bytes)")
+  def find(_album, %{cover: %{size: size} = cover}) when size > @max_size do
+    Logger.warning("Cover file #{cover.path} is too large (#{size} bytes)")
     {:error, :too_large}
   end
 
   def find(album, %{cover: cover}) do
     bytes = cover.path |> Storage.stream!() |> Enum.join()
 
-    with {:ok, path} <- save_artwork(album, bytes),
+    with {:ok, path} <- save_artwork(album, bytes, cover.path),
          do: {:ok, %{unprocessed_path: path, source_path: cover.path}}
   rescue
     error ->
-      Logger.warning("Failed to read cover file for album #{album.id}: #{inspect(error)}")
+      Logger.warning("Failed to read cover file #{cover.path}: #{inspect(error)}")
       {:error, :not_found}
   end
 end

@@ -25,7 +25,7 @@ defmodule Ondu.Artwork.Fetcher.Embedded do
         {:error, :not_found}
 
       {track_path, bytes} ->
-        with {:ok, path} <- save_artwork(album, bytes),
+        with {:ok, path} <- save_artwork(album, bytes, track_path),
              do: {:ok, %{unprocessed_path: path, source_path: track_path}}
     end
   end
