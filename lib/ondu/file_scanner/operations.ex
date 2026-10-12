@@ -189,6 +189,8 @@ defmodule Ondu.FileScanner.Operations do
     for {missing_file, file} <- moved do
       from(f in File, where: f.id == ^missing_file.id)
       |> repo.update_all(set: [path: file.path, last_modified_at: file.last_modified_at])
+
+      Logger.info("Moved #{missing_file.path} to #{file.path}")
     end
 
     file_ids = Enum.map(moved, fn {missing_file, _file} -> missing_file.id end)

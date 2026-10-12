@@ -12,6 +12,8 @@ defmodule Ondu.FileScanner do
   alias Ondu.Storage
   alias Ondu.Utils
 
+  import Ecto.Query, only: [from: 2]
+
   require Logger
 
   @type scan_type :: :full | :quick | nil
@@ -73,6 +75,7 @@ defmodule Ondu.FileScanner do
 
     scan_type = scan_type || settings.scan_type
     Agent.start(scan_type)
+    Logger.info("Scan started (#{scan_type})")
 
     started_at = DateTime.utc_now()
 
@@ -91,19 +94,21 @@ defmodule Ondu.FileScanner do
 
     walker
     |> Task.async_stream(
-      &safe_apply({Analyzer, :analyze, [&1]}),
+      &analyze/1,
       max_concurrency: 5,
       ordered: false,
       # This timeout is only used as a fallback, the probing tool has its own
       # shorter timeout which also stops ffprobe.
       timeout: 10_000,
-      on_timeout: :kill_task
+      on_timeout: :kill_task,
+      zip_input_on_exit: true
     )
     |> Stream.flat_map(&discard_errors/1)
     |> Stream.chunk_every(20)
     |> Enum.reduce(missing_file_ids, &batch_insert/2)
     |> MapSet.to_list()
     |> Operations.delete_files()
+    |> log_summary(scan_type, started_at)
 
     Operations.broadcast(:deleted, started_at)
 
@@ -113,8 +118,9 @@ defmodule Ondu.FileScanner do
     {:ok, :scan_completed}
   rescue
     error ->
+      Logger.error("Scan failed: " <> Exception.format(:error, error, __STACKTRACE__))
       Agent.stop()
-      error
+      {:error, :unknown_error}
   end
 
   defp batch_insert(batch, missing_file_ids) do
@@ -123,10 +129,15 @@ defmodule Ondu.FileScanner do
         safe_apply({Operations, :broadcast, [:batch, results]})
         MapSet.difference(missing_file_ids, MapSet.new(results.moved_files))
 
-      _error ->
+      error ->
+        paths = Enum.map_join(batch, "\n", & &1.path)
+        Logger.error("Failed to save scanned files (#{batch_error(error)}):\n#{paths}")
         missing_file_ids
     end
   end
+
+  defp batch_error({:error, step, reason, _changes}), do: "#{step}: #{inspect(reason)}"
+  defp batch_error({:error, exception}), do: Exception.message(exception)
 
   # Cover files are not analyzed like music files, they are collected and dealt
   # with once the walk has completed using `Stream.transform/5`.
@@ -156,10 +167,42 @@ defmodule Ondu.FileScanner do
     end)
   end
 
+  # We are using a new function for this instead of `safe_apply/1` so we can add
+  # a log message when the analyzer crashes. In most cases the analyzer itself
+  # should return cleanly and log relevant things itself, so this is an edge case.
+  defp analyze(file) do
+    Analyzer.analyze(file)
+  rescue
+    error ->
+      Logger.warning("Skipped #{file.path}, analyzing failed (#{Exception.message(error)})")
+      {:error, :analyzing_failed}
+  end
+
   defp discard_errors({:ok, {:error, _error}}), do: []
   defp discard_errors({:ok, {:ok, result}}), do: [result]
-  defp discard_errors({:ok, result}), do: [result]
-  defp discard_errors({:exit, _reason}), do: []
+
+  defp discard_errors({:exit, {file, reason}}) do
+    Logger.warning("Skipped #{file.path}, analyzing did not finish (#{inspect(reason)})")
+    []
+  end
+
+  # Timestamps are stored in seconds, so this will count anything since the
+  # second the scan started and was added or updated by it.
+  defp log_summary({:ok, removed}, scan_type, started_at) do
+    since = DateTime.truncate(started_at, :second)
+    added = Repo.aggregate(from(f in File, where: f.inserted_at >= ^since), :count)
+
+    updated =
+      from(f in File, where: f.content_changed_at >= ^since and f.inserted_at < ^since)
+      |> Repo.aggregate(:count)
+
+    seconds = Float.round(DateTime.diff(DateTime.utc_now(), started_at, :millisecond) / 1000, 1)
+
+    Logger.info(
+      "Scan completed (#{scan_type}) in #{seconds}s: " <>
+        "#{added} added, #{updated} updated, #{removed} removed"
+    )
+  end
 
   defp safe_apply({m, f, a}) do
     apply(m, f, a)

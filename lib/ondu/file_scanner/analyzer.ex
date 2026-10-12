@@ -5,6 +5,8 @@ defmodule Ondu.FileScanner.Analyzer do
   alias Ondu.Storage
   alias Ondu.Tool
 
+  require Logger
+
   defmodule Metadata do
     @moduledoc false
 
@@ -54,7 +56,16 @@ defmodule Ondu.FileScanner.Analyzer do
          metadata: metadata
        }}
     else
-      {:error, _} -> {:error, :analyzing_failed}
+      {:error, :unknown} ->
+        Logger.warning(
+          "Skipped #{file.path}, the file type is unsupported or the file is damaged"
+        )
+
+        {:error, :analyzing_failed}
+
+      {:error, :probe_failed} ->
+        Logger.warning("Skipped #{file.path}, ffprobe could not read it")
+        {:error, :analyzing_failed}
     end
   end
 

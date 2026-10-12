@@ -10,6 +10,8 @@ defmodule Ondu.FileScannerTest do
   alias Ondu.Settings
   alias Ondu.Storage
 
+  import ExUnit.CaptureLog
+
   @fixtures_path Path.expand("../support/fixtures/music_files", __DIR__)
 
   test "cannot start scan if music_path not configured" do
@@ -372,7 +374,12 @@ defmodule Ondu.FileScannerTest do
       ]
 
       for path <- files do
-        assert {:error, :analyzing_failed} = Analyzer.analyze(file_result(path))
+        log =
+          capture_log(fn ->
+            assert {:error, :analyzing_failed} = Analyzer.analyze(file_result(path))
+          end)
+
+        assert log =~ "Skipped #{path}"
       end
     end
   end
