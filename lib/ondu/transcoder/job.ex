@@ -27,18 +27,21 @@ defmodule Ondu.Transcoder.Job do
         try do
           job = %{job | pid: self()}
 
-          Logger.debug("Starting transcoding file: #{job.file.id}")
+          Logger.debug("Starting transcoding #{job.file.path} (#{job.preset.id})")
           last_chunk_index = transcode_file(job, parent)
           chunk_count = last_chunk_index + 1
-          Logger.debug("Finished transcoding file: #{job.file.id} (#{chunk_count} chunks)")
+
+          Logger.debug(
+            "Finished transcoding #{job.file.path} (#{job.preset.id}, #{chunk_count} chunks)"
+          )
+
           send(parent, {:transcoding_complete, job, chunk_count})
         rescue
           error ->
             Logger.error(
-              "Failed transcoding file: #{job.file.id} - Error: #{Exception.message(error)}"
+              "Failed transcoding #{job.file.path} (#{job.preset.id}): " <>
+                Exception.format(:error, error, __STACKTRACE__)
             )
-
-            Logger.error(Exception.format_stacktrace())
 
             send(parent, {:transcoding_failed, job})
         end
@@ -170,13 +173,13 @@ defmodule Ondu.Transcoder.Job do
            AACGapless.source_valid_samples(probe_json, sample_rate),
          :ok <- AACGapless.inject_smpb(ffmpeg_output_file, valid_samples),
          :ok <- AACGapless.inject_elst(ffmpeg_output_file, valid_samples) do
-      Logger.debug("injected iTunSMPB into transcoded file: #{job.file.id}")
+      Logger.debug("Injected iTunSMPB into the transcode of #{job.file.path}")
     else
       error ->
         # NOTE: On failure we don't raise because the file can still be played
         # without this tag. Do log it though.
         Logger.warning(
-          "failed to inject iTunSMPB into transcoded file: #{job.file.id} (#{inspect(error)})"
+          "Failed to inject iTunSMPB into the transcode of #{job.file.path} (#{inspect(error)})"
         )
 
         :noop

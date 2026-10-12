@@ -262,8 +262,10 @@ defmodule Ondu.Transcoder do
   def handle_info({:DOWN, _ref, :process, pid, reason}, state) do
     case Enum.find(state.jobs, fn {_, job} -> job.pid == pid end) do
       {{_file_id, _preset_id}, active_job} ->
-        Logger.error("Failed transcoding file: #{active_job.file.id} - Error: #{inspect(reason)}")
-        Logger.error(Exception.format_stacktrace())
+        Logger.error(
+          "Failed transcoding #{active_job.file.path} (#{active_job.preset.id}): #{inspect(reason)}"
+        )
+
         upsert_meta(active_job, %{failed_at: Utils.timestamp()})
         send(self(), {:transcoding_failed, active_job})
 
