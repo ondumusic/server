@@ -468,7 +468,7 @@ defmodule Ondu.FileScannerTest do
       assert %{release_year: 1999} = Repo.get_by!(Ondu.Albums.Album, slug: "test-album")
     end
 
-    test "album release year is nil when tracks have conflicting years" do
+    test "album release year is the newest when tracks have conflicting years" do
       stub_probe_with_dates(fn
         "file://" <> path ->
           cond do
@@ -479,7 +479,22 @@ defmodule Ondu.FileScannerTest do
       end)
 
       assert {:ok, :scan_completed} = FileScanner.scan(:full)
-      assert %{release_year: nil} = Repo.get_by!(Ondu.Albums.Album, slug: "test-album")
+      assert %{release_year: 2001} = Repo.get_by!(Ondu.Albums.Album, slug: "test-album")
+    end
+
+    test "album release year is the year most tracks have" do
+      stub_probe_with_dates(fn
+        "file://" <> path ->
+          cond do
+            String.ends_with?(path, "with_tags/sample.flac") -> "2020"
+            String.ends_with?(path, "with_tags/sample.ogg") -> "1999"
+            String.ends_with?(path, "with_tags/sample.m4a") -> "1999"
+            true -> nil
+          end
+      end)
+
+      assert {:ok, :scan_completed} = FileScanner.scan(:full)
+      assert %{release_year: 1999} = Repo.get_by!(Ondu.Albums.Album, slug: "test-album")
     end
   end
 

@@ -376,7 +376,7 @@ defmodule Ondu.FileScanner.Operations do
       end)
       |> Enum.map(fn {_key, [first | _] = group} ->
         years = Enum.map(group, & &1.file.metadata.release_year)
-        Map.put(first, :release_year, find_distinct_release_year(years))
+        Map.put(first, :release_year, find_release_year(years))
       end)
 
     entries =
@@ -498,10 +498,8 @@ defmodule Ondu.FileScanner.Operations do
     {:ok, tracks}
   end
 
-  # This function tries to set the album release year if it is missing despite
-  # one of the other tracks does have the metadata and they were just batched
-  # differently so it was not included in album creation. It also clears the
-  # year again if tracks across batches have conflicting years for some reason.
+  # This sets the release years for the given albums by analysing the track tags
+  # to figure out the release year for each album, and then update it.
   defp update_album_release_years(repo, %{albums: albums}) do
     album_ids = Enum.map(albums, & &1.id)
 
@@ -509,7 +507,6 @@ defmodule Ondu.FileScanner.Operations do
       from(t in Track,
         join: f in assoc(t, :file),
         where: t.album_id in ^album_ids,
-        distinct: true,
         select: {t.album_id, f.metadata["release_year"]}
       )
       |> repo.all()
@@ -517,7 +514,7 @@ defmodule Ondu.FileScanner.Operations do
 
     # Only write albums where the year differs from what the upsert just set
     albums
-    |> Enum.map(&{&1, find_distinct_release_year(Map.get(years_by_album, &1.id, []))})
+    |> Enum.map(&{&1, find_release_year(Map.get(years_by_album, &1.id, []))})
     |> Enum.reject(fn {album, year} -> album.release_year == year end)
     |> Enum.group_by(&elem(&1, 1), &elem(&1, 0).id)
     |> Enum.each(fn {year, ids} ->
@@ -528,13 +525,17 @@ defmodule Ondu.FileScanner.Operations do
     {:ok, years_by_album}
   end
 
-  # Use the year if all tracks that have one agree, otherwise leave it unset
-  # rather than guessing between conflicting values.
-  defp find_distinct_release_year(years) do
-    case years |> Enum.reject(&is_nil/1) |> Enum.uniq() do
-      [year] -> year
-      _none_or_conflicting -> nil
-    end
+  # This find the most common release year in a list of years (which come from
+  # album tracks). For example iTunes sometimes tags a single with the original
+  # release year and then others for the album release year, which caused a
+  # conflict. Now we use the most common year, and if it's a tie we use the
+  # newest year, as that seems more likely to be the correct one.
+  defp find_release_year(years) do
+    years
+    |> Enum.reject(&is_nil/1)
+    |> Enum.frequencies()
+    |> Enum.max_by(fn {year, count} -> {count, year} end, fn -> {nil, 0} end)
+    |> elem(0)
   end
 
   @doc "Returns the ids of files that no longer exist in the music path."
