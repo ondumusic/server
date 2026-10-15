@@ -75,12 +75,26 @@ defmodule OnduWeb.AnnotationController do
       unprocessable_entity: {"Invalid annotations.", "application/json", Schemas.Error}
     ]
 
-  def update(conn, %{"namespace" => namespace, "entity_type" => entity_type} = params) do
-    case Annotations.put_annotations(namespace, entity_type, Map.get(params, "entries")) do
+  def update(conn, %{"namespace" => namespace, "entity_type" => entity_type}) do
+    # Because the API goes through the `Casex.CamelCaseDecoderPlug` plug it also
+    # ends up modifying the raw-data map for annotations. To avoid this we can
+    # read the body params directly from the `conn` instead.
+    entries =
+      case conn.body_params do
+        %{"entries" => entries} when is_list(entries) -> Enum.map(entries, &entry_params/1)
+        _body -> nil
+      end
+
+    case Annotations.put_annotations(namespace, entity_type, entries) do
       {:ok, result} -> render(conn, :result, result)
       {:error, reason} -> render_error(conn, reason)
     end
   end
+
+  defp entry_params(%{} = entry),
+    do: entry |> Map.take(["data"]) |> Map.put("entity_id", entry["entityId"])
+
+  defp entry_params(entry), do: entry
 
   defp render_error(conn, reason) do
     conn

@@ -33,6 +33,14 @@ defmodule OnduWeb.AnnotationControllerTest do
              conn |> get(~p"/api/annotations/musicbrainz/albums") |> json_response(200)
   end
 
+  test "does not transform data keys (bypass CamelCaseDecoderPlug)", %{conn: conn, artist: artist} do
+    path = ~p"/api/annotations/musicbrainz/artists"
+    data = %{"trackCount" => 1, "nested" => %{"someKey" => true}, "snake_key" => "x"}
+    put(conn, path, %{entries: [%{entityId: artist.id, data: data}]})
+
+    assert %{"entries" => [%{"data" => ^data}]} = conn |> get(path) |> json_response(200)
+  end
+
   test "removes annotations with null data", %{conn: conn, artist: artist} do
     path = ~p"/api/annotations/musicbrainz/artists"
     put(conn, path, %{entries: [%{entityId: artist.id, data: %{mbid: "x"}}]})
