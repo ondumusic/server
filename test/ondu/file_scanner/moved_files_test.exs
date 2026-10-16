@@ -98,6 +98,21 @@ defmodule Ondu.FileScanner.MovedFilesTest do
     Repo.one!(from(t in Track, join: f in assoc(t, :file), where: f.path == ^path))
   end
 
+  defp album_of(path), do: Repo.get!(Album, track_of(path).album_id)
+
+  # Stubs an album of two songs, under the given album names.
+  defp stub_album(music_path, albums) do
+    songs = [{"01 One.mp3", 180.04}, {"02 Two.mp3", 240.5}]
+
+    files =
+      for {name, duration} <- songs, {dir, album} <- albums, into: %{} do
+        tags = %{artist: "Artist", album: album, title: name, track: 1, duration: duration}
+        {"Artist/#{dir}/#{name}", tags}
+      end
+
+    stub_files(music_path, files)
+  end
+
   test "keeps a moved file and everything linked to its track", %{music_path: music_path} do
     write(music_path, "Old/song.mp3")
     scan!()
@@ -341,6 +356,86 @@ defmodule Ondu.FileScanner.MovedFilesTest do
       # Tracks has been removed, new ones inserted
       for track <- tracks, do: refute(Repo.get(Track, track.id))
       assert track_of("A/01 Song.flac")
+    end
+  end
+
+  describe "renamed albums" do
+    test "keeps the album when all of its files were moved and retagged", %{
+      music_path: music_path
+    } do
+      stub_album(music_path, [{"Albm", "Albm"}, {"Album", "Album"}])
+      write(music_path, "Artist/Albm/01 One.mp3")
+      write(music_path, "Artist/Albm/02 Two.mp3")
+      scan!()
+
+      album =
+        update_record(album_of("Artist/Albm/01 One.mp3"), %{inserted_at: ~U[2026-01-01 00:00:00Z]})
+
+      retag(music_path, "Artist/Albm/01 One.mp3", "Artist/Album/01 One.mp3")
+      retag(music_path, "Artist/Albm/02 Two.mp3", "Artist/Album/02 Two.mp3")
+      scan!()
+
+      kept = album_of("Artist/Album/01 One.mp3")
+      assert kept.id == album.id
+      assert kept.inserted_at == album.inserted_at
+      assert kept.name == "Album"
+      assert album_of("Artist/Album/02 Two.mp3").id == album.id
+    end
+
+    test "keeps the album when all of its files were retagged in place", %{
+      music_path: music_path
+    } do
+      stub_album(music_path, [{"Album", "Albm"}])
+      write(music_path, "Artist/Album/01 One.mp3")
+      write(music_path, "Artist/Album/02 Two.mp3")
+      scan!()
+      album = album_of("Artist/Album/01 One.mp3")
+
+      stub_album(music_path, [{"Album", "Album"}])
+      write(music_path, "Artist/Album/01 One.mp3", 100)
+      write(music_path, "Artist/Album/02 Two.mp3", 100)
+      scan!()
+
+      kept = album_of("Artist/Album/01 One.mp3")
+      assert kept.id == album.id
+      assert kept.name == "Album"
+      assert album_of("Artist/Album/02 Two.mp3").id == album.id
+    end
+
+    test "does not keep the album when some of its files remain", %{
+      music_path: music_path
+    } do
+      stub_album(music_path, [{"Album", "Albm"}])
+      write(music_path, "Artist/Album/01 One.mp3")
+      write(music_path, "Artist/Album/02 Two.mp3")
+      scan!()
+      album = album_of("Artist/Album/01 One.mp3")
+
+      # Only the first song is moved to a new album, the old album is still in use.
+      stub_album(music_path, [{"Album", "Albm"}, {"Other", "Other"}])
+      retag(music_path, "Artist/Album/01 One.mp3", "Artist/Other/01 One.mp3")
+      scan!()
+
+      assert album_of("Artist/Album/02 Two.mp3").id == album.id
+      assert %Album{name: "Albm"} = Repo.get!(Album, album.id)
+      refute album_of("Artist/Other/01 One.mp3").id == album.id
+    end
+
+    test "does not keep the album when its files were retagged to an existing album", %{
+      music_path: music_path
+    } do
+      stub_album(music_path, [{"Albm", "Albm"}, {"Album", "Album"}])
+      write(music_path, "Artist/Albm/01 One.mp3")
+      write(music_path, "Artist/Album/02 Two.mp3")
+      scan!()
+      existing = album_of("Artist/Album/02 Two.mp3")
+
+      # The renamed album is merged into the album that already existed.
+      retag(music_path, "Artist/Albm/01 One.mp3", "Artist/Album/01 One.mp3")
+      scan!()
+
+      assert album_of("Artist/Album/01 One.mp3").id == existing.id
+      assert %Album{name: "Album"} = Repo.get!(Album, existing.id)
     end
   end
 end
