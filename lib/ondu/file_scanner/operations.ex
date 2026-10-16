@@ -10,7 +10,8 @@ defmodule Ondu.FileScanner.Operations do
   alias Ondu.Counters
   alias Ondu.DeletionLog
   alias Ondu.Files.{File, FileMetadata}
-  alias Ondu.FileScanner.{Analyzer, Utils}
+  alias Ondu.FileScanner.{Analyzer, Replacements, Utils}
+  alias Ondu.FileScanner.Replacements.Candidate
   alias Ondu.Repo
   alias Ondu.Settings
   alias Ondu.Storage
@@ -31,6 +32,7 @@ defmodule Ondu.FileScanner.Operations do
                tracks: [Track],
                files: [File],
                moved_files: [Ecto.UUID.t()],
+               possible_replacements: [Analyzer.Result.t()],
                counts: %{artists: [Ecto.UUID.t()], albums: [Ecto.UUID.t()]}
              }}
           | Ecto.Multi.failure()
@@ -44,8 +46,12 @@ defmodule Ondu.FileScanner.Operations do
       {:ok, Settings.get()}
     end)
     |> Multi.run(:moved_files, &move_files(&1, files, missing_file_ids, &2))
-    |> Multi.run(:changed_files, &find_changed_files(&1, files, &2))
-    |> Multi.run(:files, &maybe_create_files(&1, files, &2))
+    |> Multi.run(
+      :possible_replacements,
+      &find_possible_replacements(&1, files, missing_file_ids, &2)
+    )
+    |> Multi.run(:changed_files, &find_changed_files(&1, files -- &2.possible_replacements, &2))
+    |> Multi.run(:files, &maybe_create_files(&1, files -- &2.possible_replacements, &2))
     |> Multi.run(:artists, &maybe_create_artists/2)
     |> Multi.run(:albums, &maybe_create_albums/2)
     |> Multi.run(:tracks, &maybe_create_tracks/2)
@@ -199,6 +205,83 @@ defmodule Ondu.FileScanner.Operations do
     # also mark the artwork as invalidated so it will refresh this too if needed.
     touch_moved_tracks(repo, file_ids)
     {:ok, file_ids}
+  end
+
+  # Compares missing files with any newly found files to determine whether or
+  # not this file has a possible candidate to replace the missing track. This
+  # is a process that happens after all batches have been inserted, so we
+  # collect the possible replacement to process later.
+  defp find_possible_replacements(repo, files, missing_file_ids, %{moved_files: moved_file_ids}) do
+    missing_file_ids = MapSet.difference(missing_file_ids, MapSet.new(moved_file_ids))
+
+    # No missing files? Then we have nothing to do.
+    if MapSet.size(missing_file_ids) == 0 do
+      {:ok, []}
+    else
+      file_paths = Enum.map(files, & &1.path)
+
+      known_paths =
+        from(f in File, where: f.path in ^file_paths, select: f.path)
+        |> repo.all()
+        |> MapSet.new()
+
+      new_files = Enum.reject(files, &MapSet.member?(known_paths, &1.path))
+      new_candidates = Enum.map(new_files, &to_candidate/1)
+      missing = find_missing_candidates(repo, new_candidates, missing_file_ids)
+
+      possible_replacements =
+        Enum.filter(new_files, fn file ->
+          Enum.any?(missing, &Replacements.replaced?(&1, to_candidate(file)))
+        end)
+
+      {:ok, possible_replacements}
+    end
+  end
+
+  # Attempt to load existing Track records from the missing files based on
+  # the duration (with margin). This might look weird but don't worry this
+  # is just to select likely candidates, the actual comparison happens later.
+  defp find_missing_candidates(repo, candidates, missing_file_ids) do
+    max_difference = Replacements.max_duration_difference()
+    durations = candidates |> Enum.map(& &1.duration) |> Enum.reject(&is_nil/1) |> Enum.uniq()
+
+    # Build a dynamic lookup based on all the file durations
+    similar_duration =
+      Enum.reduce(durations, dynamic(false), fn duration, conditions ->
+        min = duration - max_difference
+        max = duration + max_difference
+        dynamic([t], ^conditions or (t.duration >= ^min and t.duration <= ^max))
+      end)
+
+    from(t in Track,
+      join: f in assoc(t, :file),
+      where: ^similar_duration,
+      select: %{
+        file_id: f.id,
+        path: f.path,
+        duration: t.duration,
+        artist: f.metadata["artist"],
+        album: f.metadata["album"],
+        title: f.metadata["title"],
+        disc: f.metadata["disc"],
+        track: f.metadata["track"]
+      }
+    )
+    |> repo.all()
+    |> Enum.filter(&MapSet.member?(missing_file_ids, &1.file_id))
+    |> Enum.map(&struct!(Candidate, &1))
+  end
+
+  defp to_candidate(%Analyzer.Result{path: path, metadata: metadata}) do
+    %Candidate{
+      path: path,
+      duration: metadata.duration,
+      artist: metadata.artist,
+      album: metadata.album,
+      title: metadata.title,
+      disc: metadata.disc,
+      track: metadata.track
+    }
   end
 
   # Returns the file metadata to be used in `move_files` to compare new files

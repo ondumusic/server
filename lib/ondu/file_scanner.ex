@@ -105,7 +105,8 @@ defmodule Ondu.FileScanner do
     )
     |> Stream.flat_map(&discard_errors/1)
     |> Stream.chunk_every(20)
-    |> Enum.reduce(missing_file_ids, &batch_insert/2)
+    |> Enum.reduce({missing_file_ids, []}, &batch_insert/2)
+    |> insert_possible_replacements()
     |> MapSet.to_list()
     |> Operations.delete_files()
     |> log_summary(scan_type, started_at)
@@ -123,17 +124,32 @@ defmodule Ondu.FileScanner do
       {:error, :unknown_error}
   end
 
-  defp batch_insert(batch, missing_file_ids) do
+  # Batch insert new files, this also uses missing_file_ids to detect if any
+  # files have moved, and collects possible replacement candidates to process
+  # after all batches have been inserted.
+  defp batch_insert(batch, {missing_file_ids, possible_replacements}) do
     case safe_apply({Operations, :batch_insert, [batch, missing_file_ids]}) do
       {:ok, results} ->
         safe_apply({Operations, :broadcast, [:batch, results]})
-        MapSet.difference(missing_file_ids, MapSet.new(results.moved_files))
+        missing_file_ids = MapSet.difference(missing_file_ids, MapSet.new(results.moved_files))
+        {missing_file_ids, possible_replacements ++ results.possible_replacements}
 
       error ->
         paths = Enum.map_join(batch, "\n", & &1.path)
         Logger.error("Failed to save scanned files (#{batch_error(error)}):\n#{paths}")
-        missing_file_ids
+        {missing_file_ids, possible_replacements}
     end
+  end
+
+  # The possible replacements are inserted after all batches have been inserted
+  # in order to determine whether these were retagged or reencoded files. It
+  # returns missing_file_ids for pipeability
+  defp insert_possible_replacements({missing_file_ids, possible_replacements}) do
+    possible_replacements
+    |> Enum.chunk_every(20)
+    |> Enum.each(&batch_insert(&1, {MapSet.new(), []}))
+
+    missing_file_ids
   end
 
   defp batch_error({:error, step, reason, _changes}), do: "#{step}: #{inspect(reason)}"
