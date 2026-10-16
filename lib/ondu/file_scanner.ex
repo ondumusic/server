@@ -142,14 +142,25 @@ defmodule Ondu.FileScanner do
   end
 
   # The possible replacements are inserted after all batches have been inserted
-  # in order to determine whether these were retagged or reencoded files. It
-  # returns missing_file_ids for pipeability
+  # in order to determine whether these were retagged or reencoded files. The
+  # replaced files are no longer missing, so it returns only the remaining
+  # missing ones to be cleaned up next.
   defp insert_possible_replacements({missing_file_ids, possible_replacements}) do
+    replaced_file_ids =
+      case safe_apply({Operations, :replace_files, [possible_replacements, missing_file_ids]}) do
+        {:ok, file_ids} ->
+          file_ids
+
+        error ->
+          Logger.error("Failed to replace files (#{batch_error(error)})")
+          []
+      end
+
     possible_replacements
     |> Enum.chunk_every(20)
     |> Enum.each(&batch_insert(&1, {MapSet.new(), []}))
 
-    missing_file_ids
+    MapSet.difference(missing_file_ids, MapSet.new(replaced_file_ids))
   end
 
   defp batch_error({:error, step, reason, _changes}), do: "#{step}: #{inspect(reason)}"

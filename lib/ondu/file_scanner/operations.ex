@@ -238,6 +238,31 @@ defmodule Ondu.FileScanner.Operations do
     end
   end
 
+  @doc """
+  This will match possible replacements with missing files. For any eligible
+  replacements it will replace the path of the file entry in the database
+  instead of creating new ones.
+
+  Returns the ids of the replaced files.
+  """
+  @spec replace_files([Analyzer.Result.t()], MapSet.t(Ecto.UUID.t())) :: {:ok, [Ecto.UUID.t()]}
+  def replace_files([], _missing_file_ids), do: {:ok, []}
+
+  def replace_files(files, missing_file_ids) do
+    new = Enum.map(files, &to_candidate/1)
+    missing = find_missing_candidates(Repo, new, missing_file_ids)
+    replaced = Replacements.match(missing, new)
+
+    for {old, new} <- replaced do
+      from(f in File, where: f.id == ^old.file_id)
+      |> Repo.update_all(set: [path: new.path])
+
+      Logger.info("Replaced #{old.path} with #{new.path}")
+    end
+
+    {:ok, Enum.map(replaced, fn {old, _new} -> old.file_id end)}
+  end
+
   # Attempt to load existing Track records from the missing files based on
   # the duration (with margin). This might look weird but don't worry this
   # is just to select likely candidates, the actual comparison happens later.
