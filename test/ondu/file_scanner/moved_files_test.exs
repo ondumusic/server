@@ -316,7 +316,7 @@ defmodule Ondu.FileScanner.MovedFilesTest do
 
       # Tracks has been removed, new ones inserted
       refute Repo.get(Track, track.id)
-      assert track_of("A/01 Song.flac")
+      assert track_of("Album/01 Song.flac")
     end
 
     test "does not keep files when it is ambiguous which was upgraded", %{music_path: music_path} do

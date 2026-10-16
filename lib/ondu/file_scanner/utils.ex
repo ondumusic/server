@@ -3,7 +3,7 @@ defmodule Ondu.FileScanner.Utils do
 
   alias Ondu.FileScanner.FileTypes
 
-  @spec slugify(String.t()) :: String.t()
+  @spec slugify(String.t()) :: String.t() | nil
   def slugify(input) do
     Slug.slugify(
       input,
