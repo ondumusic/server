@@ -5,6 +5,7 @@ defmodule Ondu.FileScanner.Operations do
   import Phoenix.Channel.Server, only: [broadcast: 4]
 
   alias Ecto.Multi
+  alias Ondu.Albums
   alias Ondu.Albums.{Album, Artwork, CoverFile}
   alias Ondu.Artists.Artist
   alias Ondu.Counters
@@ -326,7 +327,7 @@ defmodule Ondu.FileScanner.Operations do
       from(t in Track, where: t.file_id in ^file_ids, select: t.album_id)
       |> repo.update_all(set: [updated_at: DateTime.utc_now(:second)])
 
-    invalidate_artworks(repo, Enum.reject(album_ids, &is_nil/1))
+    Albums.invalidate_artworks(Enum.reject(album_ids, &is_nil/1))
   end
 
   # This returns new or modified files since last scan, and it also attempts to
@@ -390,7 +391,7 @@ defmodule Ondu.FileScanner.Operations do
       )
       |> repo.all()
 
-    invalidate_artworks(repo, changed_files.previous_album_ids ++ current_album_ids)
+    Albums.invalidate_artworks(changed_files.previous_album_ids ++ current_album_ids)
   end
 
   @doc """
@@ -414,23 +415,7 @@ defmodule Ondu.FileScanner.Operations do
       |> Enum.reject(fn {_album_id, dirs, cover} -> current_cover.(dirs) == cover end)
       |> Enum.map(fn {album_id, _dirs, _cover} -> album_id end)
 
-    invalidate_artworks(Repo, album_ids)
-  end
-
-  defp invalidate_artworks(repo, album_ids) do
-    now = DateTime.utc_now(:second)
-
-    album_ids
-    |> Enum.reject(&is_nil/1)
-    |> Enum.uniq()
-    |> Enum.chunk_every(1_000)
-    |> Enum.reduce({:ok, 0}, fn ids, {:ok, count} ->
-      {updated, _} =
-        from(aw in Artwork, where: aw.album_id in ^ids)
-        |> repo.update_all(set: [invalidated_at: now])
-
-      {:ok, count + updated}
-    end)
+    Albums.invalidate_artworks(album_ids)
   end
 
   defp maybe_create_artists(repo, %{files: files, settings: settings}) do
@@ -662,7 +647,7 @@ defmodule Ondu.FileScanner.Operations do
       # We'll invalidate artwork so the artwork fetcher will check if it needs
       # to replace the current artwork.
       album_ids = Enum.map(renamed, fn {previous_album_id, _album_id} -> previous_album_id end)
-      invalidate_artworks(Repo, album_ids)
+      Albums.invalidate_artworks(album_ids)
 
       artist_ids =
         Enum.map(renamed_artists, fn {previous_artist_id, _artist_id} -> previous_artist_id end)
@@ -926,7 +911,7 @@ defmodule Ondu.FileScanner.Operations do
     |> Repo.delete_all()
     |> case do
       {count, _} ->
-        invalidate_artworks(Repo, album_ids)
+        Albums.invalidate_artworks(album_ids)
         {deleted_acc + count, error_acc}
 
       _ ->

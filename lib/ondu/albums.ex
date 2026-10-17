@@ -47,6 +47,27 @@ defmodule Ondu.Albums do
   def update_artwork(%Album{} = album, attrs), do: Ondu.Artwork.upsert(:albums, album, attrs)
 
   @doc """
+  Marks the artwork of the given albums as invalidated, so the artwork fetcher
+  checks again whether it needs to be replaced.
+  """
+  @spec invalidate_artworks([Ecto.UUID.t() | nil]) :: {:ok, non_neg_integer()}
+  def invalidate_artworks(album_ids) do
+    now = DateTime.utc_now(:second)
+
+    album_ids
+    |> Enum.reject(&is_nil/1)
+    |> Enum.uniq()
+    |> Enum.chunk_every(1_000)
+    |> Enum.reduce({:ok, 0}, fn ids, {:ok, count} ->
+      {updated, _} =
+        from(aw in Artwork, where: aw.album_id in ^ids)
+        |> Repo.update_all(set: [invalidated_at: now])
+
+      {:ok, count + updated}
+    end)
+  end
+
+  @doc """
   Looks for the cover of an album in its files (cover files next to the tracks
   or artwork embedded in the tracks) and stores it as the album artwork. Not
   finding one is stored as well, so it is only looked up again when something
