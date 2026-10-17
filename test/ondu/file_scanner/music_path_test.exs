@@ -3,7 +3,7 @@ defmodule Ondu.FileScanner.MusicPathTest do
 
   alias Ondu.Files.File, as: MediaFile
   alias Ondu.FileScanner
-  alias Ondu.FileScanner.Operations
+  alias Ondu.FileScanner.Deletions
   alias Ondu.Settings
 
   setup do
@@ -64,9 +64,9 @@ defmodule Ondu.FileScanner.MusicPathTest do
       {missing, existing} = Enum.split(files, 4)
       restore(music_path, existing)
 
-      missing_ids = Operations.find_missing_files(batch_size: 2)
+      missing_ids = Deletions.find_missing_files(batch_size: 2)
       assert Enum.sort(missing_ids) == Enum.sort(Enum.map(missing, & &1.id))
-      assert {:ok, 4} = Operations.delete_files(missing_ids)
+      assert {:ok, 4} = Deletions.delete_files(missing_ids)
 
       assert Enum.sort(Repo.all(from(f in MediaFile, select: f.id))) ==
                Enum.sort(Enum.map(existing, & &1.id))

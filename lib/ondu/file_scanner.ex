@@ -2,10 +2,12 @@ defmodule Ondu.FileScanner do
   @moduledoc false
 
   alias Ondu.Files.File
+
   alias Ondu.FileScanner.Agent
   alias Ondu.FileScanner.Analyzer
-  alias Ondu.FileScanner.Operations
+  alias Ondu.FileScanner.{Deletions, Operations, Renames}
   alias Ondu.FileScanner.PeriodicWorker
+
   alias Ondu.Notices
   alias Ondu.Repo
   alias Ondu.Settings
@@ -80,7 +82,7 @@ defmodule Ondu.FileScanner do
     started_at = DateTime.utc_now()
 
     # Missing files are found before the walk and only deleted after it.
-    missing_file_ids = Operations.find_missing_files() |> MapSet.new()
+    missing_file_ids = Deletions.find_missing_files() |> MapSet.new()
 
     # NOTE: / is relative to settings.music_path
     walker =
@@ -108,12 +110,12 @@ defmodule Ondu.FileScanner do
     |> Enum.reduce({missing_file_ids, []}, &batch_insert/2)
     |> insert_possible_replacements()
     |> MapSet.to_list()
-    |> Operations.delete_files()
+    |> Deletions.delete_files()
     |> log_summary(scan_type, started_at)
 
     # This will ensure any renamed album preserves its existing record instead
     # of the newly inserted one.
-    case safe_apply({Operations, :keep_renamed_albums, []}) do
+    case safe_apply({Renames, :keep_renamed_albums, []}) do
       {:ok, _renamed} -> :ok
       error -> Logger.error("Failed to keep renamed albums (#{batch_error(error)})")
     end
