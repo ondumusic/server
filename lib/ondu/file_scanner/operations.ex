@@ -55,6 +55,7 @@ defmodule Ondu.FileScanner.Operations do
     |> Multi.run(:artists, &maybe_create_artists/2)
     |> Multi.run(:albums, &maybe_create_albums/2)
     |> Multi.run(:tracks, &maybe_create_tracks/2)
+    |> Multi.run(:previous_albums, &mark_previous_albums/2)
     |> Multi.run(:album_years, &update_album_release_years/2)
     |> Multi.run(:counts, &update_counts/2)
     |> Multi.run(:invalidated_artworks, &invalidate_changed_artworks/2)
@@ -604,6 +605,27 @@ defmodule Ondu.FileScanner.Operations do
       )
 
     {:ok, tracks}
+  end
+
+  # Changed files could have a different album now, for example when the album
+  # name was modified (e.g. a typo was fixed). Their tracks will record the
+  # original album id so we can later correct this.
+  defp mark_previous_albums(repo, %{changed_files: changed_files}) do
+    previous_albums =
+      changed_files.file_ids
+      |> Enum.zip(changed_files.previous_album_ids)
+      |> Enum.reject(fn {_file_id, album_id} -> is_nil(album_id) end)
+      |> Enum.group_by(
+        fn {_file_id, album_id} -> album_id end,
+        fn {file_id, _album_id} -> file_id end
+      )
+
+    for {album_id, file_ids} <- previous_albums do
+      from(t in Track, where: t.file_id in ^file_ids and t.album_id != ^album_id)
+      |> repo.update_all(set: [previous_album_id: album_id])
+    end
+
+    {:ok, previous_albums}
   end
 
   # This sets the release years for the given albums by analysing the track tags
