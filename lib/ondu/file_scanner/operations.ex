@@ -636,13 +636,22 @@ defmodule Ondu.FileScanner.Operations do
   have for albums instead, and to avoid having a scenario where fixing a typo
   in the album name results in it appearing as a newly added album.
   """
-  @spec keep_renamed_albums() :: {:ok, [Ecto.UUID.t()]}
+  @spec keep_renamed_albums() :: {:ok, %{albums: [Ecto.UUID.t()], artists: [Ecto.UUID.t()]}}
   def keep_renamed_albums do
     Repo.transact(fn ->
       renamed = find_renamed_albums()
 
-      for {previous_album_id, album_id} <- renamed do
-        keep_renamed_album(previous_album_id, album_id)
+      renamed_albums =
+        Enum.map(renamed, fn {previous_album_id, album_id} ->
+          keep_renamed_album(previous_album_id, album_id)
+        end)
+
+      # When the album artist was also renamed, we'll apply the same trick
+      # to the artists.
+      renamed_artists = find_renamed_artists(renamed_albums)
+
+      for {previous_artist_id, artist_id} <- renamed_artists do
+        keep_renamed_artist(previous_artist_id, artist_id)
       end
 
       # Now every renamed album should have been preserved, so we can clear
@@ -655,11 +664,17 @@ defmodule Ondu.FileScanner.Operations do
       album_ids = Enum.map(renamed, fn {previous_album_id, _album_id} -> previous_album_id end)
       invalidate_artworks(Repo, album_ids)
 
+      artist_ids =
+        Enum.map(renamed_artists, fn {previous_artist_id, _artist_id} -> previous_artist_id end)
+
       if album_ids != [] do
-        broadcast(Ondu.PubSub, "library:sync", "processed", %{artists: [], albums: album_ids})
+        broadcast(Ondu.PubSub, "library:sync", "processed", %{
+          artists: artist_ids,
+          albums: album_ids
+        })
       end
 
-      {:ok, album_ids}
+      {:ok, %{albums: album_ids, artists: artist_ids}}
     end)
   end
 
@@ -739,6 +754,84 @@ defmodule Ondu.FileScanner.Operations do
     )
 
     Logger.info("Renamed album #{previous_album.name} to #{album.name}")
+
+    {previous_album.artist_id, album.artist_id, previous_album_id}
+  end
+
+  # This takes the list of `keep_renamed_album/2` results, which contains the
+  # previous album artist id, the new album artist id, and the previous
+  # album id. Similar to albums, it will return artist that have been replaced
+  # and no longer have any associated albums or tracks.
+  defp find_renamed_artists(renamed_albums) do
+    renamed_albums
+    |> Enum.reject(fn {previous_artist_id, artist_id, _album_id} ->
+      previous_artist_id == artist_id
+    end)
+    |> Enum.group_by(
+      fn {previous_artist_id, artist_id, _album_id} -> {previous_artist_id, artist_id} end,
+      fn {_previous_artist_id, _artist_id, album_id} -> album_id end
+    )
+    |> Enum.filter(fn {{previous_artist_id, artist_id}, album_ids} ->
+      renamed_artist?(previous_artist_id, artist_id, album_ids)
+    end)
+    |> Enum.group_by(fn {{previous_artist_id, _artist_id}, _album_ids} -> previous_artist_id end)
+    |> Enum.filter(fn {_previous_artist_id, artists} -> length(artists) == 1 end)
+    |> Enum.map(fn {previous_artist_id, [{{_previous_artist_id, artist_id}, _album_ids}]} ->
+      {previous_artist_id, artist_id}
+    end)
+  end
+
+  defp renamed_artist?(previous_artist_id, artist_id, album_ids) do
+    previous_used? =
+      Repo.exists?(from(al in Album, where: al.artist_id == ^previous_artist_id)) or
+        Repo.exists?(from(t in Track, where: t.artist_id == ^previous_artist_id))
+
+    # The artist should only have the renamed albums, nothing else
+    other_albums? =
+      from(al in Album, where: al.artist_id == ^artist_id and al.id not in ^album_ids)
+      |> Repo.exists?()
+
+    # Same with tracks, the artist should not have any associated tracks anymore
+    # that are not also related to one of the renamed albums.
+    other_tracks? =
+      from(t in Track,
+        where: t.artist_id == ^artist_id,
+        where: is_nil(t.album_id) or t.album_id not in ^album_ids
+      )
+      |> Repo.exists?()
+
+    not previous_used? and not other_albums? and not other_tracks?
+  end
+
+  # Same as albums, the albums and tracks are reverted back to the previous
+  # artist, which also gets the details of the new artist. It will then also
+  # delete the newly inserted Artist record that should no longer have any
+  # albums or tracks at this stage.
+  defp keep_renamed_artist(previous_artist_id, artist_id) do
+    artist = Repo.get!(Artist, artist_id)
+    previous_artist = Repo.get!(Artist, previous_artist_id)
+    now = DateTime.utc_now(:second)
+
+    from(al in Album, where: al.artist_id == ^artist_id)
+    |> Repo.update_all(set: [artist_id: previous_artist_id, updated_at: now])
+
+    from(t in Track, where: t.artist_id == ^artist_id)
+    |> Repo.update_all(set: [artist_id: previous_artist_id, updated_at: now])
+
+    Repo.delete!(artist)
+
+    from(a in Artist, where: a.id == ^previous_artist_id)
+    |> Repo.update_all(
+      set: [
+        name: artist.name,
+        slug: artist.slug,
+        sort_name: artist.sort_name,
+        album_count: artist.album_count,
+        updated_at: now
+      ]
+    )
+
+    Logger.info("Renamed artist #{previous_artist.name} to #{artist.name}")
   end
 
   # This sets the release years for the given albums by analysing the track tags

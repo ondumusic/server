@@ -4,6 +4,7 @@ defmodule Ondu.FileScanner.MovedFilesTest do
   setup :set_mox_global
 
   alias Ondu.Albums.{Album, Artwork}
+  alias Ondu.Artists.Artist
   alias Ondu.Files.File, as: MediaFile
   alias Ondu.FileScanner
   alias Ondu.Playlists.PlaylistItem
@@ -99,6 +100,20 @@ defmodule Ondu.FileScanner.MovedFilesTest do
   end
 
   defp album_of(path), do: Repo.get!(Album, track_of(path).album_id)
+  defp artist_of(path), do: Repo.get!(Artist, album_of(path).artist_id)
+
+  # Stubs two songs in each directory, with the given artist and album names.
+  defp stub_dirs(music_path, dirs) do
+    songs = [{"01 One.mp3", 180.04}, {"02 Two.mp3", 240.5}]
+
+    files =
+      for {name, duration} <- songs, {dir, {artist, album}} <- dirs, into: %{} do
+        tags = %{artist: artist, album: album, title: name, track: 1, duration: duration}
+        {"#{dir}/#{name}", tags}
+      end
+
+    stub_files(music_path, files)
+  end
 
   # Stubs an album of two songs, under the given album names.
   defp stub_album(music_path, albums) do
@@ -436,6 +451,79 @@ defmodule Ondu.FileScanner.MovedFilesTest do
 
       assert album_of("Artist/Album/01 One.mp3").id == existing.id
       assert %Album{name: "Album"} = Repo.get!(Album, existing.id)
+    end
+  end
+
+  describe "renamed artists" do
+    test "keeps the artist when all of its files were moved and retagged", %{
+      music_path: music_path
+    } do
+      stub_dirs(music_path, %{
+        "Artst/Album" => {"Artst", "Album"},
+        "Artist/Album" => {"Artist", "Album"}
+      })
+
+      write(music_path, "Artst/Album/01 One.mp3")
+      write(music_path, "Artst/Album/02 Two.mp3")
+      scan!()
+
+      artist =
+        update_record(artist_of("Artst/Album/01 One.mp3"), %{
+          inserted_at: ~U[2026-01-01 00:00:00Z]
+        })
+
+      retag(music_path, "Artst/Album/01 One.mp3", "Artist/Album/01 One.mp3")
+      retag(music_path, "Artst/Album/02 Two.mp3", "Artist/Album/02 Two.mp3")
+      scan!()
+
+      kept = artist_of("Artist/Album/01 One.mp3")
+      assert kept.id == artist.id
+      assert kept.inserted_at == artist.inserted_at
+      assert kept.name == "Artist"
+      assert track_of("Artist/Album/02 Two.mp3").artist_id == artist.id
+    end
+
+    test "does not keep the artist when some of its albums remain", %{music_path: music_path} do
+      stub_dirs(music_path, %{
+        "Artst/Album" => {"Artst", "Album"},
+        "Artst/Other" => {"Artst", "Other"},
+        "Artist/Album" => {"Artist", "Album"}
+      })
+
+      write(music_path, "Artst/Album/01 One.mp3")
+      write(music_path, "Artst/Other/02 Two.mp3")
+      scan!()
+      artist = artist_of("Artst/Album/01 One.mp3")
+
+      # Only one album is moved to the new artist, the old artist is still in use.
+      retag(music_path, "Artst/Album/01 One.mp3", "Artist/Album/01 One.mp3")
+      scan!()
+
+      assert artist_of("Artst/Other/02 Two.mp3").id == artist.id
+      assert %Artist{name: "Artst"} = Repo.get!(Artist, artist.id)
+      refute artist_of("Artist/Album/01 One.mp3").id == artist.id
+    end
+
+    test "does not keep the artist when its files were retagged to an existing artist", %{
+      music_path: music_path
+    } do
+      stub_dirs(music_path, %{
+        "Artst/Album" => {"Artst", "Album"},
+        "Artist/Album" => {"Artist", "Album"},
+        "Artist/Other" => {"Artist", "Other"}
+      })
+
+      write(music_path, "Artst/Album/01 One.mp3")
+      write(music_path, "Artist/Other/02 Two.mp3")
+      scan!()
+      existing = artist_of("Artist/Other/02 Two.mp3")
+
+      # The renamed artist is merged into the artist that already existed.
+      retag(music_path, "Artst/Album/01 One.mp3", "Artist/Album/01 One.mp3")
+      scan!()
+
+      assert artist_of("Artist/Album/01 One.mp3").id == existing.id
+      assert %Artist{name: "Artist"} = Repo.get!(Artist, existing.id)
     end
   end
 end
