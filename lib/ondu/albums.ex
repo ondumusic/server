@@ -68,6 +68,30 @@ defmodule Ondu.Albums do
   end
 
   @doc """
+  Compares the cover files found in a complete walk of the music path with the
+  best cover file each album directory had during its last fetch attempt. Albums
+  of which a cover file was added, changed or removed are invalidated.
+  """
+  @spec invalidate_cover_files([Storage.file_entry()]) :: {:ok, non_neg_integer()}
+  def invalidate_cover_files(cover_files) do
+    cover_files_by_dir = Enum.group_by(cover_files, &Path.dirname(&1.path))
+
+    # Same as the fetcher, the cover file is found across all album directories.
+    current_cover = fn dirs ->
+      dirs |> Enum.flat_map(&Map.get(cover_files_by_dir, &1, [])) |> CoverFile.find()
+    end
+
+    # Find all album ids that have artwork in one of these directories
+    album_ids =
+      from(aw in Artwork, where: not is_nil(aw.dirs), select: {aw.album_id, aw.dirs, aw.cover})
+      |> Repo.all()
+      |> Enum.reject(fn {_album_id, dirs, cover} -> current_cover.(dirs) == cover end)
+      |> Enum.map(fn {album_id, _dirs, _cover} -> album_id end)
+
+    invalidate_artworks(album_ids)
+  end
+
+  @doc """
   Looks for the cover of an album in its files (cover files next to the tracks
   or artwork embedded in the tracks) and stores it as the album artwork. Not
   finding one is stored as well, so it is only looked up again when something

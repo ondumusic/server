@@ -1,6 +1,7 @@
 defmodule Ondu.FileScanner do
   @moduledoc false
 
+  alias Ondu.Albums
   alias Ondu.Files.File
 
   alias Ondu.FileScanner.Agent
@@ -187,7 +188,7 @@ defmodule Ondu.FileScanner do
           else: {[entry], cover_files}
       end,
       fn cover_files ->
-        Operations.invalidate_cover_files(cover_files)
+        Albums.invalidate_cover_files(cover_files)
         {[], cover_files}
       end,
       fn _cover_files -> :ok end

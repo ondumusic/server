@@ -4,7 +4,6 @@ defmodule Ondu.CoverFilesTest do
   alias Ondu.Albums
   alias Ondu.Albums.{Album, CoverFile}
   alias Ondu.Artwork
-  alias Ondu.FileScanner.Operations
   alias Ondu.Settings
   alias Ondu.Storage
   alias Ondu.Utils
@@ -143,22 +142,22 @@ defmodule Ondu.CoverFilesTest do
     end
 
     test "keeps albums of which the cover files did not change", context do
-      Operations.invalidate_cover_files([entry("A/cover.jpg", 10)])
+      Albums.invalidate_cover_files([entry("A/cover.jpg", 10)])
       refute invalidated?(context.with_cover)
       refute invalidated?(context.without_cover)
     end
 
     test "invalidates albums of which a cover file was added", context do
-      Operations.invalidate_cover_files([entry("A/cover.jpg", 10), entry("B/cover.jpg")])
+      Albums.invalidate_cover_files([entry("A/cover.jpg", 10), entry("B/cover.jpg")])
       refute invalidated?(context.with_cover)
       assert invalidated?(context.without_cover)
     end
 
     test "invalidates albums of which a cover file was added in any directory", context do
-      Operations.invalidate_cover_files([entry("A/cover.jpg", 10)])
+      Albums.invalidate_cover_files([entry("A/cover.jpg", 10)])
       refute invalidated?(context.multi_disc)
 
-      Operations.invalidate_cover_files([
+      Albums.invalidate_cover_files([
         entry("A/cover.jpg", 10),
         entry("C/CD2/cover.jpg")
       ])
@@ -167,23 +166,23 @@ defmodule Ondu.CoverFilesTest do
     end
 
     test "invalidates albums of which the cover file changed", context do
-      Operations.invalidate_cover_files([entry("A/cover.jpg", 11)])
+      Albums.invalidate_cover_files([entry("A/cover.jpg", 11)])
       assert invalidated?(context.with_cover)
     end
 
     test "invalidates albums of which the cover file was removed", context do
-      Operations.invalidate_cover_files([])
+      Albums.invalidate_cover_files([])
       assert invalidated?(context.with_cover)
       refute invalidated?(context.without_cover)
     end
 
     test "invalidates albums when a better cover file was added", context do
       # folder.jpg is less preferred than the cover.jpg that is already used.
-      Operations.invalidate_cover_files([entry("A/cover.jpg", 10), entry("A/folder.jpg")])
+      Albums.invalidate_cover_files([entry("A/cover.jpg", 10), entry("A/folder.jpg")])
       refute invalidated?(context.with_cover)
 
       # cover.jpg was replaced by the less preferred cover.png.
-      Operations.invalidate_cover_files([entry("A/cover.png", 10)])
+      Albums.invalidate_cover_files([entry("A/cover.png", 10)])
       assert invalidated?(context.with_cover)
     end
   end
