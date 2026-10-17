@@ -5,7 +5,7 @@ defmodule Ondu.FileScanner do
 
   alias Ondu.FileScanner.Agent
   alias Ondu.FileScanner.Analyzer
-  alias Ondu.FileScanner.{Deletions, Operations, Renames}
+  alias Ondu.FileScanner.{Deletions, Operations, Renames, Replacements}
   alias Ondu.FileScanner.PeriodicWorker
 
   alias Ondu.Notices
@@ -156,7 +156,7 @@ defmodule Ondu.FileScanner do
   # missing ones to be cleaned up next.
   defp insert_possible_replacements({missing_file_ids, possible_replacements}) do
     replaced_file_ids =
-      case safe_apply({Operations, :replace_files, [possible_replacements, missing_file_ids]}) do
+      case safe_apply({Replacements, :replace_files, [possible_replacements, missing_file_ids]}) do
         {:ok, file_ids} ->
           file_ids
 
