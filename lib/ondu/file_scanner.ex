@@ -111,6 +111,13 @@ defmodule Ondu.FileScanner do
     |> Operations.delete_files()
     |> log_summary(scan_type, started_at)
 
+    # This will ensure any renamed album preserves its existing record instead
+    # of the newly inserted one.
+    case safe_apply({Operations, :keep_renamed_albums, []}) do
+      {:ok, _album_ids} -> :ok
+      error -> Logger.error("Failed to keep renamed albums (#{batch_error(error)})")
+    end
+
     Operations.broadcast(:deleted, started_at)
 
     Agent.stop()

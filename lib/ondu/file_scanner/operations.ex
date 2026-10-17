@@ -628,6 +628,119 @@ defmodule Ondu.FileScanner.Operations do
     {:ok, previous_albums}
   end
 
+  @doc """
+  This will update the existing album record with the new details, and point the
+  tracks back to the original album, and delete the newly inserted album record.
+
+  This is done to preserve all existing data (artwork, annotations, etc.) we
+  have for albums instead, and to avoid having a scenario where fixing a typo
+  in the album name results in it appearing as a newly added album.
+  """
+  @spec keep_renamed_albums() :: {:ok, [Ecto.UUID.t()]}
+  def keep_renamed_albums do
+    Repo.transact(fn ->
+      renamed = find_renamed_albums()
+
+      for {previous_album_id, album_id} <- renamed do
+        keep_renamed_album(previous_album_id, album_id)
+      end
+
+      # Now every renamed album should have been preserved, so we can clear
+      # the previous_album_ids on the tracks.
+      from(t in Track, where: not is_nil(t.previous_album_id))
+      |> Repo.update_all(set: [previous_album_id: nil])
+
+      # We'll invalidate artwork so the artwork fetcher will check if it needs
+      # to replace the current artwork.
+      album_ids = Enum.map(renamed, fn {previous_album_id, _album_id} -> previous_album_id end)
+      invalidate_artworks(Repo, album_ids)
+
+      if album_ids != [] do
+        broadcast(Ondu.PubSub, "library:sync", "processed", %{artists: [], albums: album_ids})
+      end
+
+      {:ok, album_ids}
+    end)
+  end
+
+  defp find_renamed_albums do
+    # Get all albums marked as possible replacements
+    marked =
+      from(t in Track,
+        where: not is_nil(t.previous_album_id),
+        group_by: [t.album_id, t.previous_album_id],
+        select: {t.album_id, t.previous_album_id, count(t.id)}
+      )
+      |> Repo.all()
+
+    # Combine all album ids, new and old, into one list
+    album_ids =
+      Enum.flat_map(marked, fn {album_id, previous_album_id, _count} ->
+        [album_id, previous_album_id]
+      end)
+
+    # Get the track count for every album, new and old
+    # we do this to make sure all tracks can be moved to the
+    # original album record.
+    track_counts =
+      from(t in Track,
+        where: t.album_id in ^album_ids,
+        group_by: t.album_id,
+        select: {t.album_id, count(t.id)}
+      )
+      |> Repo.all()
+      |> Map.new()
+
+    marked
+    |> Enum.filter(fn {album_id, previous_album_id, count} ->
+      # We only want to revert to the previous_album_id when all its tracks have
+      # moved to the new album, and the previous one has no tracks right now.
+      all_moved? = Map.get(track_counts, album_id) == count
+      previous_unused? = not Map.has_key?(track_counts, previous_album_id)
+      all_moved? and previous_unused?
+    end)
+    |> Enum.group_by(fn {_album_id, previous_album_id, _count} -> previous_album_id end)
+    |> Enum.filter(fn {_previous_album_id, albums} ->
+      # We also want to ensure the tracks are not split over multiple new albums,
+      # otherwise we should not revert them to the old album record.
+      length(albums) == 1
+    end)
+    |> Enum.map(fn {previous_album_id, [{album_id, _previous_album_id, _count}]} ->
+      {previous_album_id, album_id}
+    end)
+  end
+
+  # This reverts the tracks back to the previous_album_id, as well as update
+  # the album record with all the new details. The newly inserted album is also
+  # deleted as it should not have any tracks anymore.
+  defp keep_renamed_album(previous_album_id, album_id) do
+    album = Repo.get!(Album, album_id)
+    previous_album = Repo.get!(Album, previous_album_id)
+    now = DateTime.utc_now(:second)
+
+    from(t in Track, where: t.album_id == ^album_id)
+    |> Repo.update_all(set: [album_id: previous_album_id, updated_at: now])
+
+    Repo.delete!(album)
+
+    from(al in Album, where: al.id == ^previous_album_id)
+    |> Repo.update_all(
+      set: [
+        artist_id: album.artist_id,
+        name: album.name,
+        slug: album.slug,
+        sort_name: album.sort_name,
+        compilation: album.compilation,
+        release_year: album.release_year,
+        is_unknown: album.is_unknown,
+        track_count: album.track_count,
+        updated_at: now
+      ]
+    )
+
+    Logger.info("Renamed album #{previous_album.name} to #{album.name}")
+  end
+
   # This sets the release years for the given albums by analysing the track tags
   # to figure out the release year for each album, and then update it.
   defp update_album_release_years(repo, %{albums: albums}) do
