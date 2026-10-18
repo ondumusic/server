@@ -5,7 +5,7 @@ defmodule Ondu.FileScanner.PlannerTest do
 
   alias Ondu.Albums.Album
   alias Ondu.Artists.Artist
-  alias Ondu.FileScanner.{Plan, Planner}
+  alias Ondu.FileScanner.{Operations, Plan, Planner}
 
   test "does not plan if there are no files missing or found" do
     assert Planner.plan([], []) == %Plan{}
@@ -122,13 +122,36 @@ defmodule Ondu.FileScanner.PlannerTest do
     assert deletes == [missing.id]
   end
 
+  describe "needs_plan?/2" do
+    setup do
+      insert_file("Album/01 Song.flac", 100)
+      :ok
+    end
+
+    test "is true for a new file" do
+      assert needs_plan?(scanned_file("Album/02 Other.flac", 100))
+    end
+
+    test "is false for a known file with the same album and artist" do
+      refute needs_plan?(scanned_file("Album/01 Song.flac", 120, %{title: "Song (Fixed)"}))
+    end
+
+    test "is false when only the spelling of a name changed" do
+      refute needs_plan?(scanned_file("Album/01 Song.flac", 120, %{album: "ALBUM"}))
+    end
+
+    test "is true when the album, album artist or artist changed" do
+      assert needs_plan?(scanned_file("Album/01 Song.flac", 120, %{album: "Other Album"}))
+      assert needs_plan?(scanned_file("Album/01 Song.flac", 120, %{album_artist: "Other"}))
+      assert needs_plan?(scanned_file("Album/01 Song.flac", 120, %{artist: "Other"}))
+    end
+  end
+
   describe "renamed albums" do
     @typo %{album_artist: "Artist", album: "Albun"}
     @fixed %{album_artist: "Artist", album: "Album"}
     @one %{title: "One", track: 1, duration: 101.0}
     @two %{title: "Two", track: 2, duration: 102.0}
-
-    defp tags(album, track), do: Map.merge(album, track)
 
     test "renames the album when all of its files were retagged in place" do
       insert_file("Albun/01 One.flac", 100, tags(@typo, @one))
@@ -329,5 +352,12 @@ defmodule Ondu.FileScanner.PlannerTest do
 
       assert %Plan{renamed_albums: [_], renamed_artists: []} = Planner.plan(deferred, [])
     end
+  end
+
+  defp tags(album, track), do: Map.merge(album, track)
+
+  defp needs_plan?(file) do
+    known_metadata = Operations.find_known_metadata([file])
+    Planner.needs_plan?(file, known_metadata)
   end
 end

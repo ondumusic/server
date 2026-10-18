@@ -12,7 +12,7 @@ defmodule Ondu.FileScanner.Planner do
 
   alias Ondu.Albums.Album
   alias Ondu.Artists.Artist
-  alias Ondu.Files.File
+  alias Ondu.Files.{File, FileMetadata}
   alias Ondu.FileScanner.{Analyzer, Moves, Plan, Replacements, Utils}
   alias Ondu.Repo
   alias Ondu.Tracks.Track
@@ -101,6 +101,22 @@ defmodule Ondu.FileScanner.Planner do
       deleted_files: deleted_file_ids,
       saved_files: deferred
     }
+  end
+
+  @spec needs_plan?(Analyzer.Result.t(), %{String.t() => FileMetadata.t()}) :: boolean()
+  def needs_plan?(file, known_metadata) do
+    case Map.fetch(known_metadata, file.path) do
+      {:ok, metadata} -> album_or_artist_changed?(metadata, file.metadata)
+      :error -> true
+    end
+  end
+
+  defp album_or_artist_changed?(old, new) do
+    artist_changed? = Utils.slugify(old.artist) != Utils.slugify(new.artist)
+    album_artist_changed? = Utils.slugify(old.album_artist) != Utils.slugify(new.album_artist)
+    album_changed? = Utils.slugify(old.album) != Utils.slugify(new.album)
+
+    artist_changed? or album_artist_changed? or album_changed?
   end
 
   defp to_move(file_id, old, new), do: %{file_id: file_id, from: old.path, to: new.path}

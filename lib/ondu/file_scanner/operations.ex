@@ -11,7 +11,7 @@ defmodule Ondu.FileScanner.Operations do
   alias Ondu.Counters
   alias Ondu.DeletionLog
   alias Ondu.Files.{File, FileMetadata}
-  alias Ondu.FileScanner.{Analyzer, Moves, Renames, Replacements, Utils}
+  alias Ondu.FileScanner.{Analyzer, Utils}
   alias Ondu.Repo
   alias Ondu.Settings
   alias Ondu.Storage
@@ -19,45 +19,51 @@ defmodule Ondu.FileScanner.Operations do
 
   import Ecto.Query
 
-  # The missing file ids could be files that have moved to one of the new paths
-  # in this batch. If they are we can handle them as a move instead of delete.
-  @spec batch_insert([Analyzer.Result.t()], MapSet.t(Ecto.UUID.t())) ::
-          :noop
-          | {:ok,
-             %{
-               artists: [Artist],
-               albums: [Album],
-               tracks: [Track],
-               files: [File],
-               moved_files: [Ecto.UUID.t()],
-               possible_replacements: [Analyzer.Result.t()],
-               counts: %{artists: [Ecto.UUID.t()], albums: [Ecto.UUID.t()]}
-             }}
-          | Ecto.Multi.failure()
-  @dialyzer {:no_opaque, batch_insert: 2}
-  def batch_insert(files, missing_file_ids \\ MapSet.new())
-  def batch_insert([], _missing_file_ids), do: :noop
+  require Logger
 
-  def batch_insert([%Analyzer.Result{} | _] = files, missing_file_ids) do
+  @type result :: %{
+          artists: [Artist],
+          albums: [Album],
+          tracks: [Track],
+          files: [File],
+          counts: %{artists: [Ecto.UUID.t()], albums: [Ecto.UUID.t()]}
+        }
+
+  @spec save_batch([Analyzer.Result.t()]) :: :ok
+  def save_batch([]), do: :ok
+
+  def save_batch(batch) do
+    case batch_insert(batch) do
+      {:ok, results} -> broadcast(:batch, results)
+      {:error, step, reason, _changes} -> log_failed_batch(batch, "#{step}: #{inspect(reason)}")
+    end
+
+    :ok
+  rescue
+    error -> log_failed_batch(batch, Exception.message(error))
+  end
+
+  @spec batch_insert([Analyzer.Result.t()]) :: {:ok, result()} | Ecto.Multi.failure()
+  @dialyzer {:no_opaque, batch_insert: 1}
+  defp batch_insert([%Analyzer.Result{} | _] = files) do
     Multi.new()
     |> Multi.run(:settings, fn _repo, _multi ->
       {:ok, Settings.get()}
     end)
-    |> Multi.run(:moved_files, &Moves.move_files(&1, files, missing_file_ids, &2))
-    |> Multi.run(
-      :possible_replacements,
-      &Replacements.find_possible_replacements(&1, files, missing_file_ids, &2)
-    )
-    |> Multi.run(:changed_files, &find_changed_files(&1, files -- &2.possible_replacements, &2))
-    |> Multi.run(:files, &maybe_create_files(&1, files -- &2.possible_replacements, &2))
+    |> Multi.run(:changed_files, &find_changed_files(&1, files, &2))
+    |> Multi.run(:files, &maybe_create_files(&1, files, &2))
     |> Multi.run(:artists, &maybe_create_artists/2)
     |> Multi.run(:albums, &maybe_create_albums/2)
     |> Multi.run(:tracks, &maybe_create_tracks/2)
-    |> Multi.run(:previous_albums, &Renames.mark_previous_albums/2)
     |> Multi.run(:album_years, &update_album_release_years/2)
     |> Multi.run(:counts, &update_counts/2)
     |> Multi.run(:invalidated_artworks, &invalidate_changed_artworks/2)
     |> Repo.transact()
+  end
+
+  defp log_failed_batch(batch, reason) do
+    paths = Enum.map_join(batch, "\n", & &1.path)
+    Logger.error("Failed to save scanned files (#{reason}):\n#{paths}")
   end
 
   def broadcast(:batch, results) do
@@ -91,6 +97,15 @@ defmodule Ondu.FileScanner.Operations do
 
   def broadcast(:completed) do
     broadcast(Ondu.PubSub, "library:sync", "completed", %{})
+  end
+
+  @spec find_known_metadata([Analyzer.Result.t()]) :: %{String.t() => FileMetadata.t()}
+  def find_known_metadata(files) do
+    paths = Enum.map(files, & &1.path)
+
+    from(f in File, where: f.path in ^paths, select: {f.path, f.metadata})
+    |> Repo.all()
+    |> Map.new()
   end
 
   @spec find_unchanged_paths([Storage.file_entry()]) :: [String.t()]

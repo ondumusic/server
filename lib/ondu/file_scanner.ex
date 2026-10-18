@@ -6,7 +6,7 @@ defmodule Ondu.FileScanner do
 
   alias Ondu.FileScanner.Agent
   alias Ondu.FileScanner.Analyzer
-  alias Ondu.FileScanner.{Deletions, Operations, Renames, Replacements}
+  alias Ondu.FileScanner.{Applier, Deletions, Operations, Plan, Planner}
   alias Ondu.FileScanner.PeriodicWorker
 
   alias Ondu.Notices
@@ -82,11 +82,12 @@ defmodule Ondu.FileScanner do
 
     started_at = DateTime.utc_now()
 
-    # Missing files are found before the walk and only deleted after it.
-    missing_file_ids = Deletions.find_missing_files() |> MapSet.new()
+    # If the library is empty there is nothing that could have been moved, renamed
+    # etc. So we can just save everything immediately without running all the checks.
+    library_empty? = not Repo.exists?(File)
 
     scan_type
-    |> walk(missing_file_ids)
+    |> walk(library_empty?)
     |> reconcile()
     |> log_summary(scan_type, started_at)
 
@@ -103,10 +104,10 @@ defmodule Ondu.FileScanner do
       {:error, :unknown_error}
   end
 
-  # Walks the music path and analyzes every file it finds. It returns the files
-  # that are still missing, including possible replacements it detected, to be
-  # reconciled with in the next step.
-  defp walk(scan_type, missing_file_ids) do
+  # Walks the music path and analyzes every file it finds. It will then
+  # either save instantly (in batches) or defer the file for reconciliation
+  # which happens only after the initial walk has completed.
+  defp walk(scan_type, library_empty?) do
     # NOTE: / is relative to settings.music_path
     walker =
       Storage.walk("/")
@@ -130,79 +131,38 @@ defmodule Ondu.FileScanner do
     )
     |> Stream.flat_map(&discard_errors/1)
     |> Stream.chunk_every(20)
-    |> Enum.reduce({missing_file_ids, []}, &batch_insert/2)
+    |> Enum.reduce([], &save_or_defer(&1, &2, library_empty?))
+    |> Enum.reverse()
+    |> List.flatten()
   end
 
-  # Once the walk has completed it knows which files are really gone, so we can
-  # figure out what happened to them. Were they replaced, deleted or part of a
-  # renamed album?
-  defp reconcile(walk_result) do
-    deleted =
-      walk_result
-      |> insert_possible_replacements()
-      |> MapSet.to_list()
-      |> Deletions.delete_files()
-
-    keep_renamed_albums()
-
-    deleted
+  # When the library is empty we can instantly save all files in this batch.
+  defp save_or_defer(batch, deferred, true) do
+    Operations.save_batch(batch)
+    deferred
   end
 
-  # This will ensure any renamed album preserves its existing record instead
-  # of the newly inserted one.
-  defp keep_renamed_albums do
-    {:ok, _renamed} = Renames.keep_renamed_albums()
-  rescue
-    error -> Logger.error("Failed to keep renamed albums (#{Exception.message(error)})")
+  # When the library is not empty this function will check each file to
+  # determine whether or not the file needs to be deferred or can be
+  # inserted immediately.
+  defp save_or_defer(batch, deferred, false) do
+    known_metadata = Operations.find_known_metadata(batch)
+
+    {deferred_files, saved_files} =
+      Enum.split_with(batch, &Planner.needs_plan?(&1, known_metadata))
+
+    Operations.save_batch(saved_files)
+    [deferred_files | deferred]
   end
 
-  # Batch insert new files, this also uses missing_file_ids to detect if any
-  # files have moved, and collects possible replacement candidates to process
-  # after all batches have been inserted.
-  defp batch_insert(batch, {missing_file_ids, possible_replacements}) do
-    case save_batch(batch, missing_file_ids) do
-      {:ok, results} ->
-        Operations.broadcast(:batch, results)
-        missing_file_ids = MapSet.difference(missing_file_ids, MapSet.new(results.moved_files))
-        {missing_file_ids, possible_replacements ++ results.possible_replacements}
-
-      {:error, reason} ->
-        paths = Enum.map_join(batch, "\n", & &1.path)
-        Logger.error("Failed to save scanned files (#{reason}):\n#{paths}")
-        {missing_file_ids, possible_replacements}
-    end
-  end
-
-  defp save_batch(batch, missing_file_ids) do
-    case Operations.batch_insert(batch, missing_file_ids) do
-      {:ok, results} -> {:ok, results}
-      {:error, step, reason, _changes} -> {:error, "#{step}: #{inspect(reason)}"}
-    end
-  rescue
-    error -> {:error, Exception.message(error)}
-  end
-
-  # The possible replacements are inserted after all batches have been inserted
-  # in order to determine whether these were retagged or reencoded files. The
-  # replaced files are no longer missing, so it returns only the remaining
-  # missing ones to be cleaned up next.
-  defp insert_possible_replacements({missing_file_ids, possible_replacements}) do
-    replaced_file_ids = replace_files(possible_replacements, missing_file_ids)
-
-    possible_replacements
-    |> Enum.chunk_every(20)
-    |> Enum.each(&batch_insert(&1, {MapSet.new(), []}))
-
-    MapSet.difference(missing_file_ids, MapSet.new(replaced_file_ids))
-  end
-
-  defp replace_files(possible_replacements, missing_file_ids) do
-    {:ok, file_ids} = Replacements.replace_files(possible_replacements, missing_file_ids)
-    file_ids
-  rescue
-    error ->
-      Logger.error("Failed to replace files (#{Exception.message(error)})")
-      []
+  # Once the walk has completed we know which files are really gone, so we can
+  # figure out what happened to them and to the deferred files. Were they moved,
+  # replaced, deleted or part of a renamed album or artist?
+  defp reconcile(deferred) do
+    missing_file_ids = Deletions.find_missing_files()
+    plan = Planner.plan(deferred, missing_file_ids)
+    :ok = Applier.apply(plan)
+    plan
   end
 
   # Cover files are not analyzed like music files, they are collected and dealt
@@ -251,7 +211,7 @@ defmodule Ondu.FileScanner do
 
   # Timestamps are stored in seconds, so this will count anything since the
   # second the scan started and was added or updated by it.
-  defp log_summary({:ok, removed}, scan_type, started_at) do
+  defp log_summary(%Plan{} = plan, scan_type, started_at) do
     since = DateTime.truncate(started_at, :second)
     added = Repo.aggregate(from(f in File, where: f.inserted_at >= ^since), :count)
 
@@ -259,11 +219,14 @@ defmodule Ondu.FileScanner do
       from(f in File, where: f.content_changed_at >= ^since and f.inserted_at < ^since)
       |> Repo.aggregate(:count)
 
+    moved = length(plan.moved_files)
+    removed = length(plan.deleted_files)
+
     seconds = Float.round(DateTime.diff(DateTime.utc_now(), started_at, :millisecond) / 1000, 1)
 
     Logger.info(
       "Scan completed (#{scan_type}) in #{seconds}s: " <>
-        "#{added} added, #{updated} updated, #{removed} removed"
+        "#{added} added, #{updated} updated, #{moved} moved, #{removed} removed"
     )
   end
 end

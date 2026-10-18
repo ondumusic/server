@@ -24,10 +24,6 @@ defmodule Ondu.Tracks.Track do
     belongs_to :album, Album
     belongs_to :file, File
 
-    # This value could be set during a scan when we potentially are dealing
-    # with a renamed album that needs to be corrected.
-    belongs_to :previous_album, Album
-
     timestamps(type: :utc_datetime)
   end
 

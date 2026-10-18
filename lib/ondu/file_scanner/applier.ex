@@ -40,7 +40,7 @@ defmodule Ondu.FileScanner.Applier do
     # Next we can upsert our saved files
     plan.saved_files
     |> Enum.chunk_every(20)
-    |> Enum.each(&save_batch/1)
+    |> Enum.each(&Operations.save_batch/1)
 
     # And finally, delete the deleted files
     {:ok, _deleted} = Deletions.delete_files(plan.deleted_files)
@@ -142,15 +142,6 @@ defmodule Ondu.FileScanner.Applier do
     end
   end
 
-  defp save_batch(batch) do
-    case Operations.batch_insert(batch) do
-      {:ok, results} -> Operations.broadcast(:batch, results)
-      {:error, step, reason, _changes} -> log_error(batch, "#{step}: #{inspect(reason)}")
-    end
-  rescue
-    error -> log_error(batch, Exception.message(error))
-  end
-
   defp find_or_create_artist(name, settings) do
     slug = Utils.slugify(name)
 
@@ -160,10 +151,5 @@ defmodule Ondu.FileScanner.Applier do
         slug: slug,
         sort_name: Utils.sort_name(name, strip_prefixes: settings.strip_sort_prefixes)
       })
-  end
-
-  defp log_error(batch, reason) do
-    paths = Enum.map_join(batch, "\n", & &1.path)
-    Logger.error("Failed to save scanned files (#{reason}):\n#{paths}")
   end
 end
