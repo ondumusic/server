@@ -85,6 +85,28 @@ defmodule Ondu.FileScanner do
     # Missing files are found before the walk and only deleted after it.
     missing_file_ids = Deletions.find_missing_files() |> MapSet.new()
 
+    scan_type
+    |> walk(missing_file_ids)
+    |> reconcile()
+    |> log_summary(scan_type, started_at)
+
+    Operations.broadcast(:deleted, started_at)
+
+    Agent.stop()
+    Operations.broadcast(:completed)
+
+    {:ok, :scan_completed}
+  rescue
+    error ->
+      Logger.error("Scan failed: " <> Exception.format(:error, error, __STACKTRACE__))
+      Agent.stop()
+      {:error, :unknown_error}
+  end
+
+  # Walks the music path and analyzes every file it finds. It returns the files
+  # that are still missing, including possible replacements it detected, to be
+  # reconciled with in the next step.
+  defp walk(scan_type, missing_file_ids) do
     # NOTE: / is relative to settings.music_path
     walker =
       Storage.walk("/")
@@ -109,46 +131,55 @@ defmodule Ondu.FileScanner do
     |> Stream.flat_map(&discard_errors/1)
     |> Stream.chunk_every(20)
     |> Enum.reduce({missing_file_ids, []}, &batch_insert/2)
-    |> insert_possible_replacements()
-    |> MapSet.to_list()
-    |> Deletions.delete_files()
-    |> log_summary(scan_type, started_at)
+  end
 
-    # This will ensure any renamed album preserves its existing record instead
-    # of the newly inserted one.
-    case safe_apply({Renames, :keep_renamed_albums, []}) do
-      {:ok, _renamed} -> :ok
-      error -> Logger.error("Failed to keep renamed albums (#{batch_error(error)})")
-    end
+  # Once the walk has completed it knows which files are really gone, so we can
+  # figure out what happened to them. Were they replaced, deleted or part of a
+  # renamed album?
+  defp reconcile(walk_result) do
+    deleted =
+      walk_result
+      |> insert_possible_replacements()
+      |> MapSet.to_list()
+      |> Deletions.delete_files()
 
-    Operations.broadcast(:deleted, started_at)
+    keep_renamed_albums()
 
-    Agent.stop()
-    Operations.broadcast(:completed)
+    deleted
+  end
 
-    {:ok, :scan_completed}
+  # This will ensure any renamed album preserves its existing record instead
+  # of the newly inserted one.
+  defp keep_renamed_albums do
+    {:ok, _renamed} = Renames.keep_renamed_albums()
   rescue
-    error ->
-      Logger.error("Scan failed: " <> Exception.format(:error, error, __STACKTRACE__))
-      Agent.stop()
-      {:error, :unknown_error}
+    error -> Logger.error("Failed to keep renamed albums (#{Exception.message(error)})")
   end
 
   # Batch insert new files, this also uses missing_file_ids to detect if any
   # files have moved, and collects possible replacement candidates to process
   # after all batches have been inserted.
   defp batch_insert(batch, {missing_file_ids, possible_replacements}) do
-    case safe_apply({Operations, :batch_insert, [batch, missing_file_ids]}) do
+    case save_batch(batch, missing_file_ids) do
       {:ok, results} ->
-        safe_apply({Operations, :broadcast, [:batch, results]})
+        Operations.broadcast(:batch, results)
         missing_file_ids = MapSet.difference(missing_file_ids, MapSet.new(results.moved_files))
         {missing_file_ids, possible_replacements ++ results.possible_replacements}
 
-      error ->
+      {:error, reason} ->
         paths = Enum.map_join(batch, "\n", & &1.path)
-        Logger.error("Failed to save scanned files (#{batch_error(error)}):\n#{paths}")
+        Logger.error("Failed to save scanned files (#{reason}):\n#{paths}")
         {missing_file_ids, possible_replacements}
     end
+  end
+
+  defp save_batch(batch, missing_file_ids) do
+    case Operations.batch_insert(batch, missing_file_ids) do
+      {:ok, results} -> {:ok, results}
+      {:error, step, reason, _changes} -> {:error, "#{step}: #{inspect(reason)}"}
+    end
+  rescue
+    error -> {:error, Exception.message(error)}
   end
 
   # The possible replacements are inserted after all batches have been inserted
@@ -156,15 +187,7 @@ defmodule Ondu.FileScanner do
   # replaced files are no longer missing, so it returns only the remaining
   # missing ones to be cleaned up next.
   defp insert_possible_replacements({missing_file_ids, possible_replacements}) do
-    replaced_file_ids =
-      case safe_apply({Replacements, :replace_files, [possible_replacements, missing_file_ids]}) do
-        {:ok, file_ids} ->
-          file_ids
-
-        error ->
-          Logger.error("Failed to replace files (#{batch_error(error)})")
-          []
-      end
+    replaced_file_ids = replace_files(possible_replacements, missing_file_ids)
 
     possible_replacements
     |> Enum.chunk_every(20)
@@ -173,8 +196,14 @@ defmodule Ondu.FileScanner do
     MapSet.difference(missing_file_ids, MapSet.new(replaced_file_ids))
   end
 
-  defp batch_error({:error, step, reason, _changes}), do: "#{step}: #{inspect(reason)}"
-  defp batch_error({:error, exception}), do: Exception.message(exception)
+  defp replace_files(possible_replacements, missing_file_ids) do
+    {:ok, file_ids} = Replacements.replace_files(possible_replacements, missing_file_ids)
+    file_ids
+  rescue
+    error ->
+      Logger.error("Failed to replace files (#{Exception.message(error)})")
+      []
+  end
 
   # Cover files are not analyzed like music files, they are collected and dealt
   # with once the walk has completed using `Stream.transform/5`.
@@ -204,9 +233,6 @@ defmodule Ondu.FileScanner do
     end)
   end
 
-  # We are using a new function for this instead of `safe_apply/1` so we can add
-  # a log message when the analyzer crashes. In most cases the analyzer itself
-  # should return cleanly and log relevant things itself, so this is an edge case.
   defp analyze(file) do
     Analyzer.analyze(file)
   rescue
@@ -239,11 +265,5 @@ defmodule Ondu.FileScanner do
       "Scan completed (#{scan_type}) in #{seconds}s: " <>
         "#{added} added, #{updated} updated, #{removed} removed"
     )
-  end
-
-  defp safe_apply({m, f, a}) do
-    apply(m, f, a)
-  rescue
-    error -> {:error, error}
   end
 end
