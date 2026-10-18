@@ -153,10 +153,28 @@ defmodule Ondu.FileScanner.Replacements do
     |> Enum.map(&struct!(Candidate, &1))
   end
 
-  defp to_candidate(%Analyzer.Result{path: path, metadata: metadata}) do
+  @doc """
+  Returns the replacement candidate for a newly found file,
+  or of a known file with its track preloaded.
+  """
+  @spec to_candidate(Analyzer.Result.t() | File.t()) :: Candidate.t()
+  def to_candidate(%Analyzer.Result{path: path, metadata: metadata}) do
     %Candidate{
       path: path,
       duration: metadata.duration,
+      artist: metadata.artist,
+      album: metadata.album,
+      title: metadata.title,
+      disc: metadata.disc,
+      track: metadata.track
+    }
+  end
+
+  def to_candidate(%File{track: %Track{} = track, metadata: metadata} = file) do
+    %Candidate{
+      file_id: file.id,
+      path: file.path,
+      duration: track.duration,
       artist: metadata.artist,
       album: metadata.album,
       title: metadata.title,

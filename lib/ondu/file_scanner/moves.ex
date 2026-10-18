@@ -33,22 +33,16 @@ defmodule Ondu.FileScanner.Moves do
     # try to detect moved files.
     sizes = new_files |> Enum.map(& &1.size) |> Enum.uniq()
 
-    # Now we will query any files based on identical file size, and then for all
-    # that match the `missing_file_ids` we will group them by metadata.
+    # Now we will query any files based on identical file size,
+    # and only keep the ones that match the `missing_file_ids`.
     missing_files =
-      from(f in File, where: f.size in ^sizes, order_by: f.path)
+      from(f in File, where: f.size in ^sizes)
       |> repo.all()
       |> Enum.filter(&MapSet.member?(missing_file_ids, &1.id))
-      |> Enum.group_by(&{&1.size, comparable_metadata(&1.metadata)})
 
-    # Now group our newly found files by metadata as well and compare them with
-    # our `missing_files`. Any matches will be considered a move and updated
-    # immediately and touch moved tracks to indicate they have been updated.
-    moved =
-      new_files
-      |> Enum.sort_by(& &1.path)
-      |> Enum.group_by(&{&1.size, comparable_metadata(&1.metadata)})
-      |> Enum.flat_map(fn {key, files} -> Enum.zip(Map.get(missing_files, key, []), files) end)
+    # Any matches will be considered a move and updated immediately,
+    # and touch moved tracks to indicate they have been updated.
+    moved = match(missing_files, new_files)
 
     # When we update the file `path` on the existing record to the new path the
     # rest of the scanning pipeline will see it as an unchanged file instead of
@@ -68,8 +62,24 @@ defmodule Ondu.FileScanner.Moves do
     {:ok, file_ids}
   end
 
-  # Returns the file metadata to be used in `move_files` to compare new files
-  # with old ones and detect whether or not this was a moved file.
+  @doc """
+  This matches known missing files with new files that have the same size
+  and metadata, meaning it is most likely a moved file. It returns a list
+  of tuples with the missing_file and the newly found file.
+  """
+  @spec match([File.t()], [Analyzer.Result.t()]) :: [{File.t(), Analyzer.Result.t()}]
+  def match(missing_files, new_files) do
+    missing_files =
+      missing_files
+      |> Enum.sort_by(& &1.path)
+      |> Enum.group_by(&{&1.size, comparable_metadata(&1.metadata)})
+
+    new_files
+    |> Enum.sort_by(& &1.path)
+    |> Enum.group_by(&{&1.size, comparable_metadata(&1.metadata)})
+    |> Enum.flat_map(fn {key, files} -> Enum.zip(Map.get(missing_files, key, []), files) end)
+  end
+
   defp comparable_metadata(metadata) do
     %FileMetadata{}
     |> FileMetadata.changeset(Map.from_struct(metadata))
