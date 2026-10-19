@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@tanstack/react-router": "^1.170.42",
-    "@tanstack/router-cli": "^1.167.41",
+    "@tanstack/router-cli": "^1.167.44",
     "@tanstack/router-plugin": "^1.168.43",
     "culori": "^4.0.2",
     "fractional-indexing": "^4.0.0",
