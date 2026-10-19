@@ -41,7 +41,7 @@
     "@tanstack/router-plugin": "^1.168.43",
     "culori": "^4.0.2",
     "fractional-indexing": "^4.0.0",
-    "i18next": "^26.4.3",
+    "i18next": "^26.4.7",
     "phoenix": "^1.8.15",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
