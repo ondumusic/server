@@ -28,7 +28,7 @@
     "@vitest/browser": "^5.0.3",
     "@vitest/coverage-v8": "^5.0.3",
     "fishery": "^2.4.0",
-    "i18next-cli": "^1.75.2",
+    "i18next-cli": "^1.75.3",
     "playwright": "^1.64.0",
     "tailwindcss": "^4.3.3",
     "terser": "^5.51.2",
