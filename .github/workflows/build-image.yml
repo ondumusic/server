@@ -37,11 +37,14 @@ jobs:
           fi
 
       # Check if this is a new release version and should be tagged as latest,
-      # instead of possibly a fix for an older version or pre-release.
+      # instead of possibly a fix for an older version or pre-release. Until
+      # there is a stable release, latest follows the pre-releases instead.
       - name: Check if this is the latest release
         id: latest
         run: |
-          highest=$(git tag --list '[0-9]*.[0-9]*.[0-9]*' | grep -v '[-]' | sort -V | tail -n 1)
+          stable=$(git tag --list '[0-9]*.[0-9]*.[0-9]*' | grep -v '[-]' | sort -V | tail -n 1)
+          all=$(git tag --list '[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n 1)
+          highest=${stable:-$all}
           if [ "$GITHUB_REF_TYPE" = tag ] && [ "$GITHUB_REF_NAME" = "$highest" ]; then
             echo "latest=true" >> "$GITHUB_OUTPUT"
           else
