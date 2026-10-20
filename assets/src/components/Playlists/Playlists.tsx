@@ -38,6 +38,7 @@ interface PendingPlaylist {
 
 export function Playlists({
   playlistId,
+  paddingTop = 10,
   showBottomBar = false,
   allowPlayback = true,
   allowDelete = true,
@@ -47,6 +48,7 @@ export function Playlists({
   onSubmit,
 }: PropsWithChildren<{
   playlistId?: UUID;
+  paddingTop?: number;
   showBottomBar?: boolean;
   allowPlayback?: boolean;
   allowDelete?: boolean;
@@ -529,7 +531,7 @@ export function Playlists({
           onDrop={handleDrop}
           multiple={false}
           items={listItems}
-          paddingTop={10}
+          paddingTop={paddingTop}
           paddingBottom={10}
           defaultFocusId={currentPlaylist?.id}
           onTypeMatch={handleTypeMatch}
@@ -556,9 +558,9 @@ export function Playlists({
         />
       </div>
       {showBottomBar && (
-        <div className="pt-4 p-2">
+        <div className="px-2 py-2">
           <button
-            className="flex items-center gap-1 w-full rounded-md cursor-pointer py-2 px-2 justify-start text-sm font-medium bg-sidebar-bottom-bg opacity-80 hover:opacity-100 text-sidebar-bottom-fg shadow-sm text-sidebar-active-fg focus:border-0 focus:ring-0 focus:outline-0"
+            className="flex items-center gap-2 w-full rounded-md cursor-pointer py-1.5 px-2 justify-start text-sm font-medium text-accent-500 hover:text-accent-600"
             type="button"
             onClick={() => {
               setCreatingPlaylist({
@@ -566,7 +568,7 @@ export function Playlists({
               });
             }}
           >
-            <PlusIcon title="New Playlist" className="size-6" />
+            <PlusIcon title="New Playlist" className="size-5" />
             {i18next.t("contextMenu.createPlaylist", {
               defaultValue: "Create Playlist",
             })}

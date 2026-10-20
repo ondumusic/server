@@ -8,6 +8,7 @@ import { useCallback } from "react";
 import { playlistApi } from "../../api";
 import { Panel } from "../../components/Panel";
 import { Playlists } from "../../components/Playlists";
+import { sidebarTitleHeight } from "../../constants/sidebarTitleHeight";
 import { useDialog } from "../../hooks/useDialog";
 import { usePlayer } from "../../hooks/usePlayer";
 import { maybeResetPlaylistPicker } from "../../hooks/usePlaylistPicker";
@@ -100,6 +101,7 @@ function PlaylistsLayout() {
     return (
       <Playlists
         playlistId={playlistId}
+        paddingTop={sidebarTitleHeight + 10}
         showBottomBar={true}
         onCreate={handleCreate}
         onChange={handleChange}
@@ -110,7 +112,11 @@ function PlaylistsLayout() {
   }, [playlistId, handleCreate, handleChange, handleDelete, handleSubmit]);
 
   return (
-    <Panel renderSidebar={renderSidebar} mobileShowSidebar={!playlistId}>
+    <Panel
+      renderSidebar={renderSidebar}
+      mobileShowSidebar={!playlistId}
+      sidebarTitle={i18next.t("playlists.title", { defaultValue: "Playlists" })}
+    >
       <Outlet />
     </Panel>
   );

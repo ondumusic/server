@@ -360,6 +360,9 @@ export function SelectableList<T>({
     const listElement = listRef.current;
     if (!listElement) return;
     if (focusedIndex === -1) return;
+    // Wait until the height of the list is measured, otherwise it scrolls to
+    // the wrong position first (and then again to the right one).
+    if (scrollHeight === 0) return;
 
     const height = getItemHeight(items[focusedIndex]);
     const itemTop = offsets[focusedIndex] || 0;
@@ -375,7 +378,7 @@ export function SelectableList<T>({
     // Scroll to make item visible
     let scrollTo: number = 0;
     if (scrollBlockType === "center") {
-      scrollTo = itemTop - scrollHeight / 2 + height / 2;
+      scrollTo = paddingTop + itemTop - scrollHeight / 2 + height / 2;
     } else if (scrollBlockType === "start") {
       scrollTo = paddingTop + itemTop;
     } else if (scrollBlockType === "nearest") {

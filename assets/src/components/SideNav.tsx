@@ -83,7 +83,7 @@ export function SideNav() {
           className={classNames([
             "flex items-center gap-2.5 text-sm px-3 py-1.5 rounded-md cursor-pointer text-page-fg",
             state.isSelected &&
-              "font-semibold bg-accent-500 dark:bg-accent-600 text-white",
+              "font-semibold bg-accent-500 dark:bg-accent-600 text-white shadow-sm",
           ])}
         >
           <span
@@ -103,7 +103,7 @@ export function SideNav() {
 
   return (
     <nav className="flex flex-col h-full">
-      <div className="px-3 pb-1.5 text-xs font-semibold text-page-fg-muted">
+      <div className="px-3 pb-1.5 text-xs font-semibold text-page-fg-muted select-none">
         {t("sideNav.library", { defaultValue: "Library" })}
       </div>
       <div className="flex-1 min-h-0">

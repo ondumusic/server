@@ -16,6 +16,7 @@ import {
   type ListItemState,
   SelectableList,
 } from "../../components/SelectableList";
+import { sidebarTitleHeight } from "../../constants/sidebarTitleHeight";
 import { useAuth } from "../../hooks/useAuth";
 import { useDialog } from "../../hooks/useDialog";
 import { usePhoenixSocket } from "../../hooks/usePhoenixSocket";
@@ -168,16 +169,16 @@ function SettingsLayout() {
             items={settingSections}
             renderItem={renderItem}
             selectedIds={new Set([currentSection?.id ?? "general"])}
-            paddingTop={10}
+            paddingTop={sidebarTitleHeight + 10}
             onChange={handleChange}
             onContextMenu={handleContextMenu}
           />
         </div>
-        <div className="pt-4 p-2">
+        <div className="mx-2 py-2 border-t border-sidebar-divider">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center cursor-pointer gap-4 w-full rounded-md py-2 px-4 justify-between text-sm font-normal bg-sidebar-bottom-bg opacity-80 text-sidebar-bottom-fg shadow-sm text-sidebar-active-fg hover:opacity-100 focus:border-0 focus:ring-0 focus:outline-0"
+            className="flex items-center cursor-pointer gap-4 w-full rounded-md py-1.5 px-2 justify-between text-sm text-page-fg-muted hover:text-page-fg"
           >
             <span className="truncate">
               <Trans
@@ -204,7 +205,10 @@ function SettingsLayout() {
   if (!currentSection) return <Navigate to="/settings" replace />;
 
   return (
-    <Panel renderSidebar={renderSidebar}>
+    <Panel
+      renderSidebar={renderSidebar}
+      sidebarTitle={i18next.t("settings.title", { defaultValue: "Settings" })}
+    >
       <Outlet />
     </Panel>
   );
