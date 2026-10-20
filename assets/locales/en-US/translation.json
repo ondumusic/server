@@ -111,6 +111,7 @@
     }
   },
   "onboarding": {
+    "firstLoadSubtitle": "Ondu is scanning your music folder, your library will show up in a moment.",
     "firstLoadWait": "Finding your music...",
     "steps": {
       "account": "Account",

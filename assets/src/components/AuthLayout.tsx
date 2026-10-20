@@ -12,7 +12,7 @@ export function AuthLayout({
 }: PropsWithChildren<{
   title: string;
   subtitle?: string;
-  onboardingStep?: OnboardingStep;
+  onboardingStep?: OnboardingStep | "finished";
 }>) {
   const { t } = useTranslation();
 
@@ -26,9 +26,12 @@ export function AuthLayout({
       label: t("onboarding.steps.library", { defaultValue: "Library" }),
     },
   ];
-  const currentStepIndex = steps.findIndex(
-    (step) => step.id === onboardingStep,
-  );
+  // When all steps have completed we will show a "finished" step,
+  // which is the view that waits for file scanner to return the first results
+  const currentStepIndex =
+    onboardingStep === "finished"
+      ? steps.length
+      : steps.findIndex((step) => step.id === onboardingStep);
 
   return (
     <div className="h-full overflow-auto bg-page-bg text-page-fg">

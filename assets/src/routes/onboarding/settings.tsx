@@ -7,7 +7,7 @@ import { Button } from "../../components/form/Button";
 import { FormActions } from "../../components/form/FormActions";
 import { Input } from "../../components/form/Input";
 import { ArrowRightIcon } from "../../components/icons/ArrowRightIcon";
-import { Loading } from "../../components/Loading";
+import { LoadingBar } from "../../components/LoadingBar";
 import { useAuth } from "../../hooks/useAuth";
 import { type FormState, useForm } from "../../hooks/useForm";
 import { usePhoenixSocket } from "../../hooks/usePhoenixSocket";
@@ -19,6 +19,13 @@ type SettingFields = {
   scanType?: ScanType;
   pollInterval?: number;
 };
+
+// After onboarding we show a loading screen while the file scanner runs,
+// we show this view until the file scanner has started adding music to the
+// library. Because that can be very fast and we want to avoid it feeling
+// like a quick flash, we set this minimum duration that the loading view
+// should be visible to the user.
+const MIN_LOADER_DURATION = 2000;
 
 export const Route = createFileRoute("/onboarding/settings")({
   component: Settings,
@@ -59,8 +66,12 @@ export function Settings() {
       onboarding.setStep(null);
       newState.ok = true;
 
+      const start = Date.now();
       waitForUpdate(() => {
-        navigate({ to: "/" });
+        const diff = Date.now() - start;
+        const remaining = Math.max(MIN_LOADER_DURATION - diff, 0);
+
+        setTimeout(() => navigate({ to: "/" }), remaining);
       });
     } else {
       newState.ok = false;
@@ -88,13 +99,18 @@ export function Settings() {
 
   if (showLoader) {
     return (
-      <Loading>
-        <div className="text-stone-600 text-center text-sm mt-4">
-          <Trans i18nKey="onboarding.firstLoadWait">
-            Finding your music...
-          </Trans>
-        </div>
-      </Loading>
+      <AuthLayout
+        title={t("onboarding.firstLoadWait", {
+          defaultValue: "Finding your music...",
+        })}
+        subtitle={t("onboarding.firstLoadSubtitle", {
+          defaultValue:
+            "Ondu is scanning your music folder, your library will show up in a moment.",
+        })}
+        onboardingStep="finished"
+      >
+        <LoadingBar />
+      </AuthLayout>
     );
   }
 
