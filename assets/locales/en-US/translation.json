@@ -176,6 +176,10 @@
     "confirm": "Logout",
     "message": "Are you sure you want to logout?"
   },
+  "scanType": {
+    "full": "Full Scan (includes existing files)",
+    "quick": "Quick Scan (skips existing)"
+  },
   "selection": {
     "dragItems_one": "{{ count }} item",
     "dragItems_other": "{{ count }} items"
@@ -237,7 +241,7 @@
   },
   "settingsForm": {
     "button": {
-      "save": "Continue"
+      "startScan": "Start scanning"
     },
     "field": {
       "musicPath": "Music Directory",
@@ -251,8 +255,8 @@
       "scanType": "In general, a quick scan is recommended as it is much faster.",
       "stripSortPrefixes": "A list of prefixes to filter out when sorting, e.g. if you want The Beatles to be sorted as Beatles you would add \"the\"."
     },
-    "subtitle": "Fill in the form below to get started.",
-    "title": "Set up Ondu"
+    "subtitle": "Tell Ondu where your music lives.",
+    "title": "Add your music"
   },
   "signupForm": {
     "button": {
