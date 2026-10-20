@@ -10,7 +10,7 @@ interface Props {
 
 export const PlaylistHeaderRow = memo(({ item }: Props) => {
   return (
-    <header className="mt-18 md:mt-4 lg:mt-8 @md:mb-4 @md:pb-4 @md:border-b border-panel-fg-divider">
+    <header className="mt-18 md:mt-4 lg:mt-5 @md:mb-2 @md:pb-4">
       <h1 className="font-semibold text-4xl lg:text-2xl line-clamp-1">
         {item.playlist.name}
       </h1>
