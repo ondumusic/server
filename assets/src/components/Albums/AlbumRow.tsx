@@ -28,7 +28,10 @@ export const AlbumRow = memo(({ album, isSelected = false }: Props) => {
       <div className="py-2.5 max-w-full overflow-auto">
         <Marquee delay={500} text={album.name} />
         <Marquee
-          className="text-sm text-muted"
+          className={classNames([
+            "text-sm",
+            isSelected ? "opacity-70" : "text-muted",
+          ])}
           delay={500}
           text={album?.artistName ?? ""}
         />

@@ -63,7 +63,7 @@ function SecuritySettings() {
 
   return (
     <div className="h-full mx-4 lg:mx-8">
-      <header className="mt-18 md:mt-4 lg:mt-8 @md:pb-4 mb-8 @md:border-b border-panel-fg-divider">
+      <header className="mt-18 md:mt-4 lg:mt-5 @md:pb-4 mb-4">
         <h1 className="font-semibold text-4xl lg:text-2xl line-clamp-1">
           <Trans i18nKey="settings.security.title">Security</Trans>
         </h1>

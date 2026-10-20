@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { PlayIcon } from "../../components/icons/PlayIcon";
+import { classNames } from "../../utils/classNames";
 import { formatTotalDuration } from "../../utils/formatTotalDuration";
 import { AlbumArtwork } from "../AlbumArtwork";
 
@@ -20,7 +21,14 @@ export function ArtistAlbumRow({ item, onPlayAlbum }: Props) {
   );
 
   return (
-    <div className="relative flex gap-4 mb-4 z-20 mt-12">
+    <div
+      className={classNames([
+        "relative flex gap-4 mb-4 z-20",
+        !item.firstAlbumInList && "mt-12",
+        // The header has no divider, so the first album can sit closer to it
+        item.firstAlbumInList && "mt-4",
+      ])}
+    >
       <div className="relative @md:absolute top-0 left-0 w-20 flex-grow-0 flex-shrink-0 @md:w-32 @xl:w-48 group/artwork">
         <AlbumArtwork
           album={item.album}
@@ -55,7 +63,7 @@ export function ArtistAlbumRow({ item, onPlayAlbum }: Props) {
           </strong>
           <div className="flex flex-col @md:flex-row @md:gap-2">
             {item.album.releaseYear && (
-              <span className="text-panel-fg-muted text-sm">
+              <span className="text-panel-fg-muted text-sm @md:after:content-['·'] @md:after:ml-2">
                 {item.album.releaseYear}
               </span>
             )}

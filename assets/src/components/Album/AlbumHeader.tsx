@@ -5,8 +5,8 @@ import type { HeaderItem } from "./types";
 
 export function AlbumHeader({ album, tracks }: HeaderItem) {
   return (
-    <header className="mt-18 md:mt-4 lg:mt-8 @md:pb-4 @md:mb-8 flex items-start gap-6">
-      <div className="w-36 flex-shrink-0">
+    <header className="mt-18 md:mt-4 lg:mt-5 @md:pb-4 @md:mb-2 flex items-start gap-6">
+      <div className="w-28 mt-1.5 flex-shrink-0">
         <AlbumArtwork
           album={album}
           size="large"
@@ -14,13 +14,10 @@ export function AlbumHeader({ album, tracks }: HeaderItem) {
         />
       </div>
 
-      <div className="pt-4">
-        <strong
-          className="text-lg font-semibold mb-0.5 block"
-          title={album.name}
-        >
+      <div className="min-w-0">
+        <h1 className="font-semibold text-2xl line-clamp-1" title={album.name}>
           {album.name}
-        </strong>
+        </h1>
 
         <strong
           className="text-md text-muted font-normal mb-2 block"
@@ -30,7 +27,7 @@ export function AlbumHeader({ album, tracks }: HeaderItem) {
         </strong>
         <div className="flex flex-col @md:flex-row @md:gap-2">
           {album.releaseYear && (
-            <span className="text-panel-fg-muted text-sm">
+            <span className="text-panel-fg-muted text-sm @md:after:content-['·'] @md:after:ml-2">
               {album.releaseYear}
             </span>
           )}
