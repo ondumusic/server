@@ -30,6 +30,10 @@
   --text-base: var(--color-black);
   --text-selected: var(--color-black);
 
+  --page-bg: var(--color-zinc-100);
+  --page-fg: rgba(0, 0, 0, 0.9);
+  --page-fg-muted: rgba(0, 0, 0, 0.45);
+
   --panel-fg: rgba(0, 0, 0, 0.9);
   --panel-fg-muted: rgba(0, 0, 0, 0.45);
   --panel-fg-hint: rgba(0, 0, 0, 0.3);
@@ -84,6 +88,10 @@
 [data-theme="dark"] {
   --text-base: var(--color-white);
   --text-selected: var(--color-white);
+
+  --page-bg: var(--color-zinc-900);
+  --page-fg: rgba(255, 255, 255, 0.9);
+  --page-fg-muted: rgba(255, 255, 255, 0.5);
 
   --panel-fg: rgba(255, 255, 255, 0.9);
   --panel-fg-muted: rgba(255, 255, 255, 0.5);
@@ -161,6 +169,10 @@
   --color-floating-menu-bg-hover: var(--floating-menu-bg-hover);
   --color-floating-menu-fg: var(--floating-menu-fg);
   --color-floating-menu-border: var(--floating-menu-border);
+
+  --color-page-bg: var(--page-bg);
+  --color-page-fg: var(--page-fg);
+  --color-page-fg-muted: var(--page-fg-muted);
 
   --color-panel-fg: var(--panel-fg);
   --color-panel-fg-muted: var(--panel-fg-muted);
