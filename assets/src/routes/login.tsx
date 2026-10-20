@@ -2,10 +2,10 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { authApi } from "../api";
+import { AuthLayout } from "../components/AuthLayout";
 import { Button } from "../components/form/Button";
 import { FormActions } from "../components/form/FormActions";
 import { Input } from "../components/form/Input";
-import { Panel } from "../components/Panel";
 import { useAuth } from "../hooks/useAuth";
 import { type FormState, useForm } from "../hooks/useForm";
 
@@ -60,40 +60,31 @@ function Login() {
   }
 
   return (
-    <div className="h-full content-center">
-      <Panel
-        size="small"
-        title={t("loginForm.title", { defaultValue: "Login" })}
-      >
-        <form
-          key={form.key}
-          action={form.action}
-          className="space-y-8 pt-8 py-4 px-6"
-        >
-          <Input<LoginFields>
-            form={form}
-            type="text"
-            field="username"
-            label={t("loginForm.field.username", { defaultValue: "Username" })}
-            required
-            autoFocus
-          />
+    <AuthLayout title={t("loginForm.title", { defaultValue: "Welcome back" })}>
+      <form key={form.key} action={form.action} className="space-y-6">
+        <Input<LoginFields>
+          form={form}
+          type="text"
+          field="username"
+          label={t("loginForm.field.username", { defaultValue: "Username" })}
+          required
+          autoFocus
+        />
 
-          <Input<LoginFields>
-            form={form}
-            type="password"
-            field="password"
-            label={t("loginForm.field.password", { defaultValue: "Password" })}
-            required
-          />
+        <Input<LoginFields>
+          form={form}
+          type="password"
+          field="password"
+          label={t("loginForm.field.password", { defaultValue: "Password" })}
+          required
+        />
 
-          <FormActions>
-            <Button disabled={form.isPending} type="submit">
-              <Trans i18nKey="loginForm.button.login">Login</Trans>
-            </Button>
-          </FormActions>
-        </form>
-      </Panel>
-    </div>
+        <FormActions>
+          <Button disabled={form.isPending} type="submit">
+            <Trans i18nKey="loginForm.button.login">Login</Trans>
+          </Button>
+        </FormActions>
+      </form>
+    </AuthLayout>
   );
 }
