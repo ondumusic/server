@@ -7,6 +7,7 @@ import {
   type ListItemState,
   SelectableList,
 } from "../../components/SelectableList";
+import { sidebarTitleHeight } from "../../constants/sidebarTitleHeight";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { usePlayer } from "../../hooks/usePlayer";
 import { usePlaylistPicker } from "../../hooks/usePlaylistPicker";
@@ -331,30 +332,38 @@ export function Albums({
   if (loading) return <Loading />;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="relative flex flex-col h-full">
       {listStyle === "grid" && (
-        <div className="fixed top-0 right-4 flex-shrink-0 text-right z-[1000]">
-          <FloatingDropdown<SortOption>
-            onChange={(value) => {
-              if (sortBy === value) {
-                const newSortDir = sortDir === "asc" ? "desc" : "asc";
-                setSortDir(newSortDir);
-                localStorage.setItem("albumSortDir", newSortDir);
-              } else {
-                localStorage.setItem("albumSort", value);
-                setSortBy(value);
-              }
-            }}
-            value={sortBy}
-            options={sortOptions}
-          >
-            {currentSortOption?.label}
-            {sortDir === "asc" ? (
-              <SortAscIcon className="size-5" title="" />
-            ) : (
-              <SortDescIcon className="size-5" title="" />
-            )}
-          </FloatingDropdown>
+        <div
+          style={{ height: sidebarTitleHeight }}
+          className="absolute z-10 top-0 -inset-x-4 flex items-end px-4 pb-2 bg-white/85 dark:bg-zinc-800/85 backdrop-blur-sm border-b border-sidebar-divider select-none"
+        >
+          <h1 className="text-xl font-bold text-page-fg">
+            {i18next.t("albums.title", { defaultValue: "Albums" })}
+          </h1>
+          <div className="absolute right-4 top-[13px] flex">
+            <FloatingDropdown<SortOption>
+              onChange={(value) => {
+                if (sortBy === value) {
+                  const newSortDir = sortDir === "asc" ? "desc" : "asc";
+                  setSortDir(newSortDir);
+                  localStorage.setItem("albumSortDir", newSortDir);
+                } else {
+                  localStorage.setItem("albumSort", value);
+                  setSortBy(value);
+                }
+              }}
+              value={sortBy}
+              options={sortOptions}
+            >
+              {currentSortOption?.label}
+              {sortDir === "asc" ? (
+                <SortAscIcon className="size-5" title="" />
+              ) : (
+                <SortDescIcon className="size-5" title="" />
+              )}
+            </FloatingDropdown>
+          </div>
         </div>
       )}
       <div className="h-full overflow-auto">
@@ -366,7 +375,9 @@ export function Albums({
           gridGapSize={listStyle === "grid" ? 24 : 0}
           scrollOverscan={listStyle === "grid" ? 5 : 10}
           multiple={listStyle === "grid"}
-          paddingTop={listStyle === "grid" ? 58 : paddingTop}
+          paddingTop={
+            listStyle === "grid" ? sidebarTitleHeight + 16 : paddingTop
+          }
           paddingBottom={listStyle === "grid" ? 0 : 10}
           defaultFocusId={currentAlbumId}
           defaultFocusType="nearest"
