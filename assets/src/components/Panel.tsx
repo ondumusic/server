@@ -80,7 +80,7 @@ export function Panel({
                 {sidebarTitle && (
                   <div
                     style={{ height: sidebarTitleHeight }}
-                    className="absolute z-10 top-0 inset-x-0 flex items-end px-6 pb-2 text-xl font-bold text-page-fg select-none bg-sidebar-bg/60 backdrop-blur-md border-b border-sidebar-divider"
+                    className="absolute z-10 top-0 inset-x-0 flex items-end px-6 pb-2 text-xl font-bold text-page-fg select-none bg-sidebar-bg/70 backdrop-blur-sm border-b border-sidebar-divider"
                   >
                     {sidebarTitle}
                   </div>
