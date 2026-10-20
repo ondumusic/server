@@ -7,6 +7,8 @@ import {
 import { useCallback } from "react";
 import { Albums } from "../../components/Albums";
 import { Panel } from "../../components/Panel";
+import { sidebarTitleHeight } from "../../constants/sidebarTitleHeight";
+import i18next from "../../i18next";
 import type { Album, UUID } from "../../types";
 
 export const Route = createFileRoute("/_authenticated/albums")({
@@ -41,6 +43,7 @@ function AlbumsLayout() {
     return (
       <Albums
         style="list"
+        paddingTop={sidebarTitleHeight + 10}
         currentAlbumId={currentAlbumId}
         gotoAlbumDetails={handleGotoAlbumDetails}
       />
@@ -48,7 +51,10 @@ function AlbumsLayout() {
   }, [currentAlbumId, handleGotoAlbumDetails]);
 
   return (
-    <Panel renderSidebar={randerSidebar}>
+    <Panel
+      renderSidebar={randerSidebar}
+      sidebarTitle={i18next.t("albums.title", { defaultValue: "Albums" })}
+    >
       {currentAlbumId ? (
         <Outlet />
       ) : (

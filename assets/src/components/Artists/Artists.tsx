@@ -17,10 +17,12 @@ function isArtist(artist: Artist, artistId: string): boolean {
 
 export function Artists({
   artistId,
+  paddingTop = 10,
   onChange,
   onSubmit,
 }: PropsWithChildren<{
   artistId?: UUID;
+  paddingTop?: number;
   onChange?: (artist: Artist) => void;
   onSubmit?: (artist: Artist) => void;
 }>) {
@@ -137,7 +139,7 @@ export function Artists({
       allowDropFrom={[]}
       multiple={false}
       items={listItems}
-      paddingTop={10}
+      paddingTop={paddingTop}
       paddingBottom={10}
       defaultFocusId={currentArtist?.id}
       defaultFocusType="center"

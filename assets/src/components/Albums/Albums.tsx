@@ -24,10 +24,12 @@ type SortDirection = "asc" | "desc";
 export function Albums({
   currentAlbumId,
   gotoAlbumDetails,
+  paddingTop = 10,
   style: listStyle = "grid",
 }: {
   style: "grid" | "list";
   currentAlbumId?: UUID;
+  paddingTop?: number;
   gotoAlbumDetails: (album: Album) => void;
 }) {
   const gridSize = useMediaQuery("(width >= 48rem)") ? 5 : 2;
@@ -364,7 +366,7 @@ export function Albums({
           gridGapSize={listStyle === "grid" ? 24 : 0}
           scrollOverscan={listStyle === "grid" ? 5 : 10}
           multiple={listStyle === "grid"}
-          paddingTop={listStyle === "grid" ? 58 : 10}
+          paddingTop={listStyle === "grid" ? 58 : paddingTop}
           paddingBottom={listStyle === "grid" ? 0 : 10}
           defaultFocusId={currentAlbumId}
           defaultFocusType="nearest"

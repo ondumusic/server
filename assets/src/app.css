@@ -57,15 +57,13 @@
   --navbar-active-bg: rgba(255, 255, 255, 0.7);
 
   --sidebar-fg: var(--panel-fg);
-  --sidebar-bg: rgba(255, 255, 255, 0.65);
-  --sidebar-active-bg: rgba(255, 255, 255, 0.7);
-  --sidebar-active-fg: var(--color-black);
-  --sidebar-bottom-bg: rgba(220, 220, 220, 0.7);
-  --sidebar-bottom-fg: var(--color-black);
-  --sidebar-inactive-bg: rgba(20, 20, 20, 0.15);
+  --sidebar-bg: var(--color-zinc-100);
+  --sidebar-active-bg: var(--accent-500);
+  --sidebar-active-fg: var(--color-white);
+  --sidebar-inactive-bg: rgba(0, 0, 0, 0.1);
   --sidebar-inactive-fg: var(--color-black);
-  --sidebar-divider: rgba(255, 255, 255, 0.5);
-  --sidebar-divider-hover: rgba(255, 255, 255, 0.35);
+  --sidebar-divider: rgba(0, 0, 0, 0.1);
+  --sidebar-divider-hover: rgba(0, 0, 0, 0.2);
   --sidebar-divider-active: rgba(0, 0, 0, 0.25);
 
   --picker-bg: rgb(230, 230, 235);
@@ -116,12 +114,10 @@
   --navbar-active-bg: rgba(255, 255, 255, 0.18);
 
   --sidebar-fg: var(--panel-fg);
-  --sidebar-bg: rgba(40, 40, 45, 0.55);
-  --sidebar-active-bg: rgba(255, 255, 255, 0.15);
+  --sidebar-bg: var(--color-zinc-900);
+  --sidebar-active-bg: var(--accent-600);
   --sidebar-active-fg: var(--color-white);
-  --sidebar-bottom-bg: rgba(255, 255, 255, 0.15);
-  --sidebar-bottom-fg: var(--color-white);
-  --sidebar-inactive-bg: rgba(0, 0, 0, 0.3);
+  --sidebar-inactive-bg: rgba(255, 255, 255, 0.12);
   --sidebar-inactive-fg: rgba(255, 255, 255, 1);
   --sidebar-divider: rgba(255, 255, 255, 0.1);
   --sidebar-divider-hover: rgba(255, 255, 255, 0.3);
@@ -190,8 +186,6 @@
   --color-sidebar-fg: var(--sidebar-fg);
   --color-sidebar-active-bg: var(--sidebar-active-bg);
   --color-sidebar-active-fg: var(--sidebar-active-fg);
-  --color-sidebar-bottom-bg: var(--sidebar-bottom-bg);
-  --color-sidebar-bottom-fg: var(--sidebar-bottom-fg);
   --color-sidebar-inactive-bg: var(--sidebar-inactive-bg);
   --color-sidebar-inactive-fg: var(--sidebar-inactive-fg);
   --color-sidebar-divider: var(--sidebar-divider);

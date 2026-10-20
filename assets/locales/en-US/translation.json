@@ -4,9 +4,15 @@
     "trackCount_one": "{{count}} track, {{duration}}",
     "trackCount_other": "{{count}} tracks, {{duration}}"
   },
+  "albums": {
+    "title": "Albums"
+  },
   "artist": {
     "albumCount_one": "{{count}} album",
     "albumCount_other": "{{count}} albums"
+  },
+  "artists": {
+    "title": "Artists"
   },
   "button": {
     "clearUpNext": "Clear",
@@ -160,6 +166,9 @@
     },
     "emptyView": "No playlists created yet."
   },
+  "playlists": {
+    "title": "Playlists"
+  },
   "pollInterval": {
     "10min": "Every 10 minutes",
     "120min": "Every 2 hours",
@@ -238,7 +247,8 @@
     "security": {
       "subtitle": "Change your password",
       "title": "Security"
-    }
+    },
+    "title": "Settings"
   },
   "settingsForm": {
     "button": {

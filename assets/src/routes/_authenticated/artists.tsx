@@ -7,7 +7,9 @@ import {
 import { useCallback } from "react";
 import { Artists } from "../../components/Artists";
 import { Panel } from "../../components/Panel";
+import { sidebarTitleHeight } from "../../constants/sidebarTitleHeight";
 import { usePlayer } from "../../hooks/usePlayer";
+import i18next from "../../i18next";
 import type { Artist, UUID } from "../../types";
 
 export const Route = createFileRoute("/_authenticated/artists")({
@@ -51,6 +53,7 @@ function ArtistsLayout() {
     return (
       <Artists
         artistId={artistId}
+        paddingTop={sidebarTitleHeight + 10}
         onChange={handleChange}
         onSubmit={handleSubmit}
       />
@@ -58,7 +61,11 @@ function ArtistsLayout() {
   }, [artistId, handleChange, handleSubmit]);
 
   return (
-    <Panel renderSidebar={renderSidebar} mobileShowSidebar={!artistId}>
+    <Panel
+      renderSidebar={renderSidebar}
+      mobileShowSidebar={!artistId}
+      sidebarTitle={i18next.t("artists.title", { defaultValue: "Artists" })}
+    >
       <Outlet />
     </Panel>
   );

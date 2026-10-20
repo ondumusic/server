@@ -5,6 +5,7 @@ import {
   Separator,
   useDefaultLayout,
 } from "react-resizable-panels";
+import { sidebarTitleHeight } from "../constants/sidebarTitleHeight";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { ToastProvider } from "../hooks/useToast";
 import { classNames } from "../utils/classNames";
@@ -15,9 +16,11 @@ export function Panel({
   mobileShowSidebar,
   size = "large",
   title,
+  sidebarTitle,
 }: PropsWithChildren<{
   size?: "small" | "large";
   title?: string;
+  sidebarTitle?: string;
   renderSidebar?: () => ReactNode;
   mobileShowSidebar?: boolean;
 }>) {
@@ -70,11 +73,19 @@ export function Panel({
               <div
                 role="none"
                 className={classNames([
-                  "h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-                  "bg-sidebar-bg backdrop-blur-2xl backdrop-saturate-150",
+                  "relative h-full flex flex-col overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+                  "bg-sidebar-bg",
                 ])}
               >
-                {renderedSidebar}
+                {sidebarTitle && (
+                  <div
+                    style={{ height: sidebarTitleHeight }}
+                    className="absolute z-10 top-0 inset-x-0 flex items-end px-6 pb-2 text-xl font-bold text-page-fg select-none bg-sidebar-bg/60 backdrop-blur-md border-b border-sidebar-divider"
+                  >
+                    {sidebarTitle}
+                  </div>
+                )}
+                <div className="flex-1 min-h-0">{renderedSidebar}</div>
               </div>
             </ResizablePanel>
             <Separator className="w-[1px] bg-sidebar-divider [&[data-separator='hover']]:bg-sidebar-divider-hover [&[data-separator='active']]:bg-sidebar-divider-active focus:outline-none focus:bg-sidebar-divider-active" />
