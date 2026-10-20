@@ -259,6 +259,9 @@
     "subtitle": "Tell Ondu where your music lives.",
     "title": "Add your music"
   },
+  "sideNav": {
+    "library": "Library"
+  },
   "signupForm": {
     "button": {
       "signup": "Create account"

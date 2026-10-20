@@ -40,7 +40,7 @@ export function Panel({
         className={classNames([
           "relative flex flex-col mx-auto overflow-hidden text-panel-fg",
           "border border-panel-border",
-          size === "large" && "h-full w-full lg:shadow-lg lg:rounded-md",
+          size === "large" && "h-full w-full lg:border-0",
           size === "small" && "max-w-md shadow-lg rounded-md",
         ])}
       >
