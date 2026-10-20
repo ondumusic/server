@@ -279,3 +279,16 @@ dialog.dialog-contextmenu::backdrop {
     background-color: rgba(0, 0, 0, 0);
   }
 }
+
+.loading-bar {
+  animation: loading-bar 1.4s ease-in-out infinite;
+}
+
+@keyframes loading-bar {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
