@@ -5,10 +5,19 @@ import {
   redirect,
   useLocation,
 } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { type DragEvent, useEffect, useState } from "react";
+import {
+  Group,
+  Panel as ResizablePanel,
+  Separator,
+  useDefaultLayout,
+} from "react-resizable-panels";
+import { MiniPlayer } from "../components/MiniPlayer";
 import { NavBar } from "../components/NavBar";
 import { NoticeBanner } from "../components/NoticeBanner";
 import { Player } from "../components/Player";
+import { SideNav } from "../components/SideNav";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useQueue } from "../hooks/useQueue";
 import { auth } from "../services/auth";
 import { classNames } from "../utils/classNames";
@@ -31,9 +40,16 @@ export const Route = createFileRoute("/_authenticated")({
 function Authenticated() {
   const location = useLocation();
   const { queue } = useQueue();
+  const isDesktop = useMediaQuery("(width >= 64rem)");
   const [isPanelOpen, setIsPanelOpen] = useState(
     location.pathname !== "/" || queue.length === 0,
   );
+  const [isUpNextOpen, setIsUpNextOpen] = useState(false);
+  const { defaultLayout, onLayoutChange: handleLayoutChange } =
+    useDefaultLayout({
+      groupId: "sideNavSplitView",
+      storage: localStorage,
+    });
 
   const isOnboarding = false;
 
@@ -42,8 +58,64 @@ function Authenticated() {
     setIsPanelOpen(true);
   }, [location]);
 
-  if (location.pathname === "/" && queue.length === 0) {
+  // Large screens always show the panel, so there is nothing to show at "/".
+  if (location.pathname === "/" && (isDesktop || queue.length === 0)) {
     return <Navigate to="/artists" replace />;
+  }
+
+  // Open Up Next when dragging something onto the player, so it can be
+  // dropped there.
+  const handleDragOver = (e: DragEvent) => {
+    const sourceListId = e.dataTransfer.types
+      .find((t) => t.startsWith("application/x-list-"))
+      ?.replace("application/x-list-", "");
+    if (!sourceListId) return;
+
+    setIsUpNextOpen(true);
+  };
+
+  if (isDesktop) {
+    return (
+      <div className="flex relative h-full overflow-hidden bg-page-bg">
+        <NoticeBanner />
+
+        <Group
+          className="flex-1 min-w-0"
+          defaultLayout={defaultLayout}
+          onLayoutChange={handleLayoutChange}
+          orientation="horizontal"
+        >
+          <ResizablePanel
+            id="sideNav"
+            defaultSize="18rem"
+            minSize="14rem"
+            maxSize="20rem"
+          >
+            <div className="h-full py-5 px-3 flex flex-col bg-zinc-200 dark:bg-zinc-950">
+              <div className="flex-shrink-0">
+                <SideNav />
+              </div>
+              {/* biome-ignore lint/a11y/noStaticElementInteractions: allow dragging events */}
+              <div
+                className="flex-1 min-h-0 mt-3 flex flex-col justify-end"
+                onDragOver={handleDragOver}
+              >
+                <MiniPlayer
+                  isUpNextOpen={isUpNextOpen}
+                  onToggleUpNext={() => setIsUpNextOpen(!isUpNextOpen)}
+                />
+              </div>
+            </div>
+          </ResizablePanel>
+          <Separator className="w-[1px] bg-black/10 dark:bg-white/10 [&[data-separator='hover']]:bg-black/20 dark:[&[data-separator='hover']]:bg-white/20 [&[data-separator='active']]:bg-sidebar-divider-active focus:outline-none focus:bg-sidebar-divider-active" />
+          <ResizablePanel id="main">
+            <div className="relative h-full flex flex-col">
+              <Outlet />
+            </div>
+          </ResizablePanel>
+        </Group>
+      </div>
+    );
   }
 
   return (

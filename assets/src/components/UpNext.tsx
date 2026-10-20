@@ -42,8 +42,10 @@ const trackToQueueItem = (track: Track) => ({
 
 export function UpNext({
   isVisible,
+  animateHeight = true,
 }: PropsWithChildren<{
   isVisible: boolean;
+  animateHeight?: boolean;
 }>) {
   const allowDropFrom = useMemo(
     () => [
@@ -79,7 +81,7 @@ export function UpNext({
     if (!containerRef.current) return;
     if (!containerRef.current.parentNode) return;
 
-    const observer = new ResizeObserver((elements) => {
+    const observer = new ResizeObserver(() => {
       if (!containerRef.current) return;
       if (!containerRef.current.parentNode) return;
       const parentNode = containerRef.current.parentNode as HTMLElement;
@@ -87,15 +89,18 @@ export function UpNext({
       // Calculate how much space is available in the parentNode after removing
       // the height of our siblings.
       let availableHeight: number = parentNode.getBoundingClientRect().height;
-      for (const element of elements) {
-        if (element.target !== containerRef.current) {
-          availableHeight -= element.contentRect.height;
+      for (const sibling of parentNode.children) {
+        if (sibling !== containerRef.current) {
+          availableHeight -= sibling.getBoundingClientRect().height;
         }
       }
 
       setHeight(Math.ceil(availableHeight));
     });
 
+    // Also observe the parent itself, so we notice when it grows (e.g. when
+    // the mini player opens Up Next).
+    observer.observe(containerRef.current.parentNode as HTMLElement);
     for (const child of containerRef.current.parentNode.children) {
       observer.observe(child);
     }
@@ -429,7 +434,7 @@ export function UpNext({
     (item: ListItem, state: ListItemState) => (
       <div
         className={classNames([
-          "flex px-2 py-1 justify-between gap-4 text-sm",
+          "flex items-baseline px-2 py-1 justify-between gap-4 text-[13px] leading-snug",
           state.isDragging && "opacity-50",
           !state.isSelected && "text-white w-full",
           state.isSelected &&
@@ -445,14 +450,19 @@ export function UpNext({
           <div className="line-clamp-1">{item.track.name}</div>
           <span
             className={classNames([
-              "line-clamp-1",
+              "line-clamp-1 text-[11px]",
               state.isSelected ? "text-white" : "text-white/50",
             ])}
           >
             {item.track.artistName}
           </span>
         </div>
-        <div className="tabular-nums">
+        <div
+          className={classNames([
+            "tabular-nums text-[11px]",
+            state.isSelected ? "text-white" : "text-white/50",
+          ])}
+        >
           {formatDuration(item.track.duration)}
         </div>
       </div>
@@ -468,7 +478,9 @@ export function UpNext({
         "will-change-[height]",
       ])}
       style={{
-        transition: "height 400ms cubic-bezier(0.4, 0, 0.2, 1)",
+        transition: animateHeight
+          ? "height 400ms cubic-bezier(0.4, 0, 0.2, 1)"
+          : undefined,
         height: isVisible ? `${height}px` : "0px",
       }}
     >
@@ -491,12 +503,12 @@ export function UpNext({
             listItems.length === 0 && "hidden",
           ])}
         >
-          <strong className="font-semibold text-md text-white">
+          <strong className="font-semibold text-xs text-white">
             <Trans i18nKey="upNext.title">Up Next</Trans>
           </strong>
           <button
             type="button"
-            className="text-sm text-white/50"
+            className="text-[11px] text-white/50"
             onClick={() => clearNextTracks()}
           >
             <Trans i18nKey="button.clearUpNext">Clear</Trans>

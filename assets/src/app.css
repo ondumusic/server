@@ -280,6 +280,7 @@ dialog.dialog-contextmenu::backdrop {
   }
 }
 
+/* Loading bar (used in final step of onboarding) */
 .loading-bar {
   animation: loading-bar 1.4s ease-in-out infinite;
 }
