@@ -1,10 +1,11 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Trans, useTranslation } from "react-i18next";
 import { authApi } from "../../api";
+import { AuthLayout } from "../../components/AuthLayout";
 import { Button } from "../../components/form/Button";
 import { FormActions } from "../../components/form/FormActions";
 import { Input } from "../../components/form/Input";
-import { Panel } from "../../components/Panel";
+import { ArrowRightIcon } from "../../components/icons/ArrowRightIcon";
 import { useAuth } from "../../hooks/useAuth";
 import { type FormState, useForm } from "../../hooks/useForm";
 
@@ -54,50 +55,53 @@ export function UserComponent() {
   }
 
   return (
-    <div className="h-full content-center">
-      <Panel
-        size="small"
-        title={t("signupForm.title", { defaultValue: "Set up your account" })}
-      >
-        <form
-          key={form.key}
-          action={form.action}
-          className="space-y-8 pt-8 py-4 px-6"
-        >
-          <Input<SignupFields>
-            form={form}
-            type="text"
-            field="username"
-            label={t("signupForm.field.username", { defaultValue: "Username" })}
-            required
-            autoFocus
-          />
+    <AuthLayout
+      title={t("signupForm.title", { defaultValue: "Create your account" })}
+      subtitle={t("signupForm.subtitle", {
+        defaultValue: "You will use this account to log in to Ondu.",
+      })}
+      onboardingStep="user"
+    >
+      <form key={form.key} action={form.action} className="space-y-6">
+        <Input<SignupFields>
+          form={form}
+          type="text"
+          field="username"
+          label={t("signupForm.field.username", { defaultValue: "Username" })}
+          required
+          autoFocus
+        />
 
-          <Input<SignupFields>
-            form={form}
-            type="password"
-            field="password"
-            label={t("signupForm.field.password", { defaultValue: "Password" })}
-            required
-          />
+        <Input<SignupFields>
+          form={form}
+          type="password"
+          field="password"
+          label={t("signupForm.field.password", { defaultValue: "Password" })}
+          required
+        />
 
-          <Input<SignupFields>
-            form={form}
-            type="password"
-            field="passwordConfirmation"
-            label={t("signupForm.field.passwordConfirmation", {
-              defaultValue: "Confirm Password",
-            })}
-            required
-          />
+        <Input<SignupFields>
+          form={form}
+          type="password"
+          field="passwordConfirmation"
+          label={t("signupForm.field.passwordConfirmation", {
+            defaultValue: "Confirm Password",
+          })}
+          required
+        />
 
-          <FormActions>
-            <Button disabled={form.isPending} type="submit">
-              <Trans i18nKey="signupForm.button.login">Sign up</Trans>
-            </Button>
-          </FormActions>
-        </form>
-      </Panel>
-    </div>
+        <FormActions>
+          <Button disabled={form.isPending} type="submit">
+            <span className="relative block px-6">
+              <Trans i18nKey="signupForm.button.signup">Create account</Trans>
+              <ArrowRightIcon
+                className="absolute right-0 top-1/2 -translate-y-1/2 size-4"
+                title=""
+              />
+            </span>
+          </Button>
+        </FormActions>
+      </form>
+    </AuthLayout>
   );
 }

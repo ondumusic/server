@@ -111,7 +111,11 @@
     }
   },
   "onboarding": {
-    "firstLoadWait": "Finding your music..."
+    "firstLoadWait": "Finding your music...",
+    "steps": {
+      "account": "Account",
+      "library": "Library"
+    }
   },
   "passwordForm": {
     "field": {
@@ -252,14 +256,15 @@
   },
   "signupForm": {
     "button": {
-      "login": "Sign up"
+      "signup": "Create account"
     },
     "field": {
       "password": "Password",
       "passwordConfirmation": "Confirm Password",
       "username": "Username"
     },
-    "title": "Set up your account"
+    "subtitle": "You will use this account to log in to Ondu.",
+    "title": "Create your account"
   },
   "sortBy": {
     "album": {
