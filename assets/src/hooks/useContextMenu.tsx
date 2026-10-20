@@ -84,33 +84,36 @@ export function ContextMenu({
         return;
       }
 
-      // Calculate the position for the context menu that ideally
-      // fits within the viewport bounds.
+      // We'll need to "show" the modal (still invisible) to measure it,
+      // because a closed dialog has no size. The visibility is controlled
+      // with the isVisible state.
+      if (menu.open) menu.close();
+      menu.showModal();
+
+      // Now we can calculate the position for the context menu to ensure it
+      // fits within the viewport.
       const rect = menu.getBoundingClientRect();
       const viewport = {
         width: window.innerWidth,
         height: window.innerHeight,
       };
+      const margin = 16;
 
       let { x, y } = position;
 
-      if (x + rect.width > viewport.width) {
-        x = viewport.width - rect.width - 16;
-      }
-      if (x < 0) x = 16;
+      const fitsRight = x + rect.width <= viewport.width - margin;
+      if (!fitsRight) x = position.x - rect.width;
+      if (x < margin) x = margin;
 
-      if (y + rect.height > viewport.height) {
-        y = viewport.height - rect.height - 16;
-      }
-      if (y < 0) y = 16;
+      const fitsBelow = y + rect.height <= viewport.height - margin;
+      if (!fitsBelow) y = position.y - rect.height;
+      if (y < margin) y = margin;
 
       // Update the position of the context menu
       setAdjustedPosition({ x, y });
 
       // Make the modal visible
       setIsVisible(true);
-      if (menuRef.current?.open) menuRef.current?.close();
-      menuRef.current?.showModal();
     });
     return () => cancelAnimationFrame(raf);
   }, [position]);
@@ -193,7 +196,7 @@ export function ContextMenu({
     <dialog
       ref={menuRef}
       className={classNames([
-        "fixed bg-contextmenu-bg text-selected transition-colors rounded-lg shadow-2xl border border-contextmenu-border py-1 min-w-48 max-w-64 z-50",
+        "fixed bg-contextmenu-bg text-selected transition-colors rounded-lg shadow-2xl border border-contextmenu-border py-1 min-w-48 max-w-64 max-h-[calc(100vh-2rem)] overflow-y-auto z-50",
         "transition-opacity duration-75 dialog-contextmenu p-1 space-y-0.5",
         !isVisible && "invisible",
       ])}
