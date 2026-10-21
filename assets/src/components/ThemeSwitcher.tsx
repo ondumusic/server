@@ -19,9 +19,9 @@ const Option = ({
     className={classNames([
       "border-y first:border-l border-r first:rounded-l-md last:rounded-r-md text-sm",
       "border-zinc-400/60 focus:border-zinc-400",
-      "dark:border-zinc-400/50 dark:focus:border-zinc-200/50",
+      "dark:border-white/10 dark:focus:border-white/30",
       isSelected && "bg-accent-500 text-white",
-      !isSelected && "bg-white/80 dark:bg-black/40",
+      !isSelected && "bg-white/80 dark:bg-white/5",
     ])}
   >
     <button

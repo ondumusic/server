@@ -22,7 +22,7 @@ export function BlurredArtwork() {
   return (
     <div
       aria-hidden
-      className="absolute inset-0 overflow-hidden pointer-events-none bg-mist-950"
+      className="absolute inset-0 overflow-hidden pointer-events-none bg-stone-950"
     >
       {imageUrls.map((imageUrl) => (
         <div
@@ -36,7 +36,7 @@ export function BlurredArtwork() {
               className="w-full h-full object-cover scale-140 saturate-150 blur-[28px]"
             />
           ) : (
-            <div className="w-full h-full bg-linear-to-tl from-mist-600 to-mist-700" />
+            <div className="w-full h-full bg-linear-to-tl from-stone-600 to-stone-700" />
           )}
         </div>
       ))}

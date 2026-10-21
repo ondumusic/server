@@ -61,8 +61,8 @@ const CreatePlaylist = ({
             onInput={(e) => onChange((e.target as HTMLInputElement).value)}
             className={classNames([
               "mt-2 block w-full rounded-lg focus:ring-0 sm:text-sm sm:leading-6",
-              "bg-white/80 dark:bg-black/40",
-              "border-zinc-400/60 focus:border-zinc-400 dark:border-zinc-400/50 dark:focus:border-zinc-200/50",
+              "bg-white/80 dark:bg-white/5",
+              "border-zinc-400/60 focus:border-zinc-400 dark:border-white/10 dark:focus:border-white/30",
             ])}
           />
         </label>
@@ -162,7 +162,7 @@ const PlaylistPicker = ({
 
       <div className="flex flex-shrink-0 gap-2 p-2 text-md font-medium">
         <button
-          className="w-full rounded-md cursor-pointer py-2 px-6 text-sm font-medium bg-sidebar-active-bg shadow-sm text-sidebar-active-fg focus:border-0 focus:ring-0 focus:outline-0"
+          className="w-full rounded-md cursor-pointer py-2 px-6 text-sm font-medium bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15 focus:border-0 focus:ring-0 focus:outline-0"
           type="button"
           onClick={() => onClose(false)}
         >
@@ -170,7 +170,7 @@ const PlaylistPicker = ({
         </button>
         <button
           disabled={!selectedPlaylist && !draftPlaylist}
-          className="w-full rounded-md cursor-pointer py-2 px-6 text-sm font-medium text-white bg-accent-500 hover:bg-accent-600 shadow-sm focus:border-0 focus:ring-0 focus:outline-0 disabled:bg-accent-400 disabled:opacity-80 disabled:cursor-default"
+          className="w-full rounded-md cursor-pointer py-2 px-6 text-sm font-medium text-white bg-accent-500 hover:bg-accent-600 shadow-sm focus:border-0 focus:ring-0 focus:outline-0 disabled:bg-accent-500 disabled:opacity-40 disabled:cursor-default"
           type="button"
           onClick={addToPlaylist}
         >

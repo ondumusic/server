@@ -23,7 +23,7 @@ export function Select(props: Props) {
       className={classNames([
         "mt-2 block w-full rounded-md border shadow-sm focus:ring-0 sm:text-sm",
         "border-zinc-400/60 bg-white/80 focus:border-zinc-400",
-        "dark:border-zinc-400/50 dark:bg-black/40 dark:focus:border-zinc-200/50",
+        "dark:border-white/10 dark:bg-white/5 dark:focus:border-white/30",
         !props.hasError && "border-zinc-300 focus:border-zinc-400",
         props.hasError && "border-rose-400 focus:border-rose-400",
       ])}

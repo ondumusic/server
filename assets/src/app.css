@@ -32,7 +32,7 @@
   --panel-fg-muted: rgba(0, 0, 0, 0.45);
   --panel-fg-hint: rgba(0, 0, 0, 0.3);
   --panel-fg-divider: rgba(0, 0, 0, 0.1);
-  --panel-bg: rgba(255, 255, 255, 0.75);
+  --panel-bg: rgb(252, 252, 253);
   --panel-border: rgba(255, 255, 255, 0.8);
 
   --contextmenu-bg: rgb(255, 255, 255);
@@ -40,17 +40,13 @@
   --contextmenu-divider: rgba(220, 220, 220, 0.8);
   --contextmenu-border: rgba(220, 220, 220, 0.8);
 
-  --floating-menu-bg: rgba(255, 255, 255, 0.7);
-  --floating-menu-bg-hover: rgb(255, 255, 255);
-  --floating-menu-fg: rgb(0, 0, 0);
-  --floating-menu-border: rgba(255, 255, 255, 0.8);
-
   --navbar-bg: var(--panel-bg);
   --navbar-fg: var(--color-black);
   --navbar-hover-bg: rgba(255, 255, 255, 0.3);
   --navbar-active-bg: rgba(255, 255, 255, 0.7);
 
   --sidebar-fg: var(--panel-fg);
+  --sidenav-bg: var(--color-zinc-200);
   --sidebar-bg: var(--color-zinc-100);
   --sidebar-active-bg: var(--accent-500);
   --sidebar-active-fg: var(--color-white);
@@ -60,7 +56,7 @@
   --sidebar-divider-hover: rgba(0, 0, 0, 0.2);
   --sidebar-divider-active: rgba(0, 0, 0, 0.25);
 
-  --picker-bg: rgb(230, 230, 235);
+  --picker-bg: var(--dialog-bg);
   --picker-fg: var(--color-black);
 
   --header-bg: rgba(255, 255, 255, 0.9);
@@ -81,7 +77,7 @@
   --text-base: var(--color-white);
   --text-selected: var(--color-white);
 
-  --page-bg: var(--color-zinc-900);
+  --page-bg: rgb(24, 22, 21);
   --page-fg: rgba(255, 255, 255, 0.9);
   --page-fg-muted: rgba(255, 255, 255, 0.5);
 
@@ -89,18 +85,13 @@
   --panel-fg-muted: rgba(255, 255, 255, 0.5);
   --panel-fg-hint: rgba(255, 255, 255, 0.35);
   --panel-fg-divider: rgba(255, 255, 255, 0.12);
-  --panel-bg: rgba(60, 60, 65, 0.6);
+  --panel-bg: rgb(24, 22, 21);
   --panel-border: rgba(255, 255, 255, 0.12);
 
-  --contextmenu-bg: rgb(48, 48, 52);
+  --contextmenu-bg: rgb(48, 45, 43);
   --contextmenu-fg: rgb(245, 245, 245);
-  --contextmenu-divider: rgba(80, 80, 86, 0.8);
-  --contextmenu-border: rgba(80, 80, 86, 0.8);
-
-  --floating-menu-bg: rgba(48, 48, 52, 0.6);
-  --floating-menu-bg-hover: rgba(42, 42, 46, 0.8);
-  --floating-menu-fg: rgb(255, 255, 255);
-  --floating-menu-border: rgba(255, 255, 255, 0.2);
+  --contextmenu-divider: rgba(80, 76, 73, 0.8);
+  --contextmenu-border: rgba(80, 76, 73, 0.8);
 
   --navbar-bg: var(--panel-bg);
   --navbar-fg: var(--color-white);
@@ -108,7 +99,8 @@
   --navbar-active-bg: rgba(255, 255, 255, 0.18);
 
   --sidebar-fg: var(--panel-fg);
-  --sidebar-bg: var(--color-zinc-900);
+  --sidenav-bg: rgb(38, 35, 33);
+  --sidebar-bg: rgb(31, 29, 27);
   --sidebar-active-bg: var(--accent-600);
   --sidebar-active-fg: var(--color-white);
   --sidebar-inactive-bg: rgba(255, 255, 255, 0.12);
@@ -120,13 +112,13 @@
   --header-bg: rgba(100, 100, 105, 0.2);
   --header-divider: rgba(255, 255, 255, 0.1);
 
-  --picker-bg: rgb(40, 40, 45);
+  --picker-bg: var(--dialog-bg);
   --picker-fg: var(--color-white);
 
   --toast-bg: rgba(245, 245, 245, 0.95);
   --toast-fg: rgb(20, 20, 20);
 
-  --dialog-bg: rgb(35, 35, 38);
+  --dialog-bg: rgb(48, 45, 43);
   --dialog-fg: var(--color-white);
 
   --label-fg: var(--color-zinc-200);
@@ -155,11 +147,6 @@
   --color-contextmenu-divider: var(--contextmenu-divider);
   --color-contextmenu-border: var(--contextmenu-border);
 
-  --color-floating-menu-bg: var(--floating-menu-bg);
-  --color-floating-menu-bg-hover: var(--floating-menu-bg-hover);
-  --color-floating-menu-fg: var(--floating-menu-fg);
-  --color-floating-menu-border: var(--floating-menu-border);
-
   --color-page-bg: var(--page-bg);
   --color-page-fg: var(--page-fg);
   --color-page-fg-muted: var(--page-fg-muted);
@@ -176,6 +163,7 @@
   --color-navbar-hover-bg: var(--navbar-hover-bg);
   --color-navbar-active-bg: var(--navbar-active-bg);
 
+  --color-sidenav-bg: var(--sidenav-bg);
   --color-sidebar-bg: var(--sidebar-bg);
   --color-sidebar-fg: var(--sidebar-fg);
   --color-sidebar-active-bg: var(--sidebar-active-bg);
@@ -238,6 +226,10 @@ dialog.dialog-modal[open]::backdrop {
   background-color: rgba(0, 0, 0, 0.3);
 }
 
+[data-theme="dark"] dialog.dialog-modal[open]::backdrop {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
 dialog.dialog-contextmenu::backdrop {
   background-color: rgba(0, 0, 0, 0);
 }
@@ -254,7 +246,8 @@ dialog.dialog-contextmenu::backdrop {
     transform-origin: top right;
   }
 
-  dialog.dialog-modal[open]::backdrop {
+  dialog.dialog-modal[open]::backdrop,
+  [data-theme="dark"] dialog.dialog-modal[open]::backdrop {
     background-color: rgba(0, 0, 0, 0);
   }
 }

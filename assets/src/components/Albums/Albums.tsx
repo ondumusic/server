@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { FloatingDropdown } from "../../components/FloatingDropdown";
 import { SortAscIcon } from "../../components/icons/SortAscIcon";
 import { SortDescIcon } from "../../components/icons/SortDescIcon";
@@ -8,7 +8,6 @@ import {
   SelectableList,
 } from "../../components/SelectableList";
 import { sidebarTitleHeight } from "../../constants/sidebarTitleHeight";
-import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { usePlayer } from "../../hooks/usePlayer";
 import { usePlaylistPicker } from "../../hooks/usePlaylistPicker";
 import { useToast } from "../../hooks/useToast";
@@ -33,7 +32,8 @@ export function Albums({
   paddingTop?: number;
   gotoAlbumDetails: (album: Album) => void;
 }) {
-  const gridSize = useMediaQuery("(width >= 48rem)") ? 5 : 2;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
   const { populateUpNext, enqueueNext, enqueueAfter, userConfirmQueueReplace } =
     usePlayer();
   const { showPlaylistPicker, getMostRecentPlaylist } = usePlaylistPicker();
@@ -329,19 +329,42 @@ export function Albums({
     [listStyle, gotoAlbumDetails, handleSubmit],
   );
 
+  // Get the available width so we can use it to calculate the gridSize
+  // biome-ignore lint/correctness/useExhaustiveDependencies(loading): suppress loading
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    setContainerWidth(container.clientWidth);
+    const observer = new ResizeObserver(() => {
+      setContainerWidth(container.clientWidth);
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [loading]);
+
+  // This is where we calculate the gridSize (how many cards per row)
+  // Based on a (minimum card width + gap size) and the container width.
+  const minCardWidth = 160;
+  const gridGapSize = 18;
+  const gridSize = Math.max(
+    2,
+    Math.floor((containerWidth + gridGapSize) / (minCardWidth + gridGapSize)),
+  );
+
   if (loading) return <Loading />;
 
   return (
-    <div className="relative flex flex-col h-full">
+    <div ref={containerRef} className="relative flex flex-col h-full">
       {listStyle === "grid" && (
         <div
           style={{ height: sidebarTitleHeight }}
-          className="absolute z-10 top-0 -inset-x-4 flex items-end px-4 pb-2 bg-white/85 dark:bg-zinc-800/85 backdrop-blur-sm border-b border-sidebar-divider select-none"
+          className="absolute z-10 top-0 -inset-x-4 lg:-inset-x-8 flex items-end px-4 lg:px-8 pb-2 bg-panel-bg/85 backdrop-blur-sm border-b border-sidebar-divider select-none"
         >
           <h1 className="text-xl font-bold text-page-fg">
             {i18next.t("albums.title", { defaultValue: "Albums" })}
           </h1>
-          <div className="absolute right-4 top-[13px] flex">
+          <div className="absolute right-4 lg:right-8 top-3.5 flex">
             <FloatingDropdown<SortOption>
               onChange={(value) => {
                 if (sortBy === value) {
@@ -358,9 +381,9 @@ export function Albums({
             >
               {currentSortOption?.label}
               {sortDir === "asc" ? (
-                <SortAscIcon className="size-5" title="" />
+                <SortAscIcon className="size-4" title="" />
               ) : (
-                <SortDescIcon className="size-5" title="" />
+                <SortDescIcon className="size-4" title="" />
               )}
             </FloatingDropdown>
           </div>
@@ -372,7 +395,7 @@ export function Albums({
           allowDrag={true}
           items={albums}
           gridSize={listStyle === "grid" ? gridSize : 1}
-          gridGapSize={listStyle === "grid" ? 24 : 0}
+          gridGapSize={listStyle === "grid" ? gridGapSize : 0}
           scrollOverscan={listStyle === "grid" ? 5 : 10}
           multiple={listStyle === "grid"}
           paddingTop={

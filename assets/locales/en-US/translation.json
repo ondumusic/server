@@ -20,11 +20,13 @@
     "nextTrack": "Next Track",
     "openPanel": "Open Music Browser",
     "pauseCurrentTrack": "Pause Current Track",
+    "play": "Play",
     "playCurrentTrack": "Play Current Track",
     "playSelectedAlbum": "Play {{ albumName }}",
     "playSelectedTrack": "Play {{ trackName }}",
     "previousTrack": "Previous Track",
-    "showUpNext": "Up Next"
+    "showUpNext": "Up Next",
+    "shuffle": "Shuffle"
   },
   "colorPicker": {
     "customColor": "Custom color",

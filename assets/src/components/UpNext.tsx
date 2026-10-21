@@ -488,7 +488,7 @@ export function UpNext({
         <div
           role="none"
           className={classNames([
-            "block h-full text-center py-8 text-sm text-white/50",
+            "block h-full text-center py-8 text-xs text-white/50",
             listItems.length !== 0 && "hidden",
           ])}
           onDragOver={handleDragOver}

@@ -21,7 +21,7 @@ export function AlbumCard({
           <div className="absolute top-0 left-0 right-0 bottom-0 border-2 border-accent-400 [.selectable-list:focus_&]:border-accent-500 rounded-md bg-accent-400/20 [.selectable-list:focus_&]:bg-accent-500/30" />
         )}
       </AlbumArtwork>
-      <div className="pt-1.5 text-xs leading-2">
+      <div className="pt-2 text-xs leading-2">
         <span
           className={classNames([
             "inline-block max-w-full truncate leading-4 px-2 py-0.5",

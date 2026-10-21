@@ -90,8 +90,10 @@ function Authenticated() {
             defaultSize="18rem"
             minSize="14rem"
             maxSize="20rem"
+            groupResizeBehavior="preserve-pixel-size"
+            style={{ overflow: "hidden" }}
           >
-            <div className="h-full py-5 px-3 flex flex-col bg-zinc-200 dark:bg-zinc-950">
+            <div className="h-full py-5 px-3 flex flex-col bg-sidenav-bg">
               <div className="flex-shrink-0">
                 <SideNav />
               </div>
@@ -108,7 +110,7 @@ function Authenticated() {
             </div>
           </ResizablePanel>
           <Separator className="w-[1px] bg-black/10 dark:bg-white/10 [&[data-separator='hover']]:bg-black/20 dark:[&[data-separator='hover']]:bg-white/20 [&[data-separator='active']]:bg-sidebar-divider-active focus:outline-none focus:bg-sidebar-divider-active" />
-          <ResizablePanel id="main">
+          <ResizablePanel id="main" style={{ overflow: "hidden" }}>
             <div className="relative h-full flex flex-col">
               <Outlet />
             </div>

@@ -11,7 +11,7 @@ import i18next from "../i18next";
 import { queryPlaylistItems, queryTracks } from "../library";
 import type { Track, UUID } from "../types";
 
-interface PopulateInput {
+export interface PopulateInput {
   artistId?: UUID;
   albumId?: UUID;
   albumIds?: UUID[];
