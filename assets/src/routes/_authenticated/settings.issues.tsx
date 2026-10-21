@@ -303,7 +303,7 @@ function Issues() {
           <h1 className="font-semibold text-4xl lg:text-2xl line-clamp-1">
             <Trans i18nKey="settings.issues.title">Issues</Trans>
           </h1>
-          <span className="text-sm text-panel-fg-muted">
+          <span className="text-sm text-page-fg-muted">
             {summary.map((part) => (
               <span key={part}>{part} · </span>
             ))}
@@ -355,7 +355,7 @@ function Issues() {
       )}
 
       {entries && entries.length === 0 && (
-        <div className="flex flex-col items-center gap-2 py-16 text-panel-fg-muted">
+        <div className="flex flex-col items-center gap-2 py-16 text-page-fg-muted">
           <CheckIcon
             className="size-8 text-accent-500"
             title={t("settings.issues.none", { defaultValue: "No issues" })}
@@ -373,7 +373,7 @@ function Issues() {
         entries.length > 0 &&
         filter !== "all" &&
         filtered.length === 0 && (
-          <div className="flex flex-col items-center gap-2 py-16 text-panel-fg-muted">
+          <div className="flex flex-col items-center gap-2 py-16 text-page-fg-muted">
             <CheckIcon
               className="size-8 text-accent-500"
               title={t("settings.issues.none", { defaultValue: "No issues" })}
@@ -395,7 +395,7 @@ function Issues() {
         )}
 
       {filtered.length > 0 && (
-        <ul className="divide-y divide-panel-fg-divider">
+        <ul className="divide-y divide-page-fg-divider">
           {filtered.map((entry) => (
             <li key={entryKey(entry)}>
               {entry.__type === "albumIssues" ? (
@@ -436,7 +436,7 @@ function Row({
           <span className="font-medium truncate">{title}</span>
           {/* Keeps its width up to half the line, the title is cut off first. */}
           {subtitle && (
-            <span className="text-sm text-panel-fg-muted truncate flex-shrink-0 max-w-1/2">
+            <span className="text-sm text-page-fg-muted truncate flex-shrink-0 max-w-1/2">
               {subtitle}
             </span>
           )}

@@ -15,6 +15,12 @@ import { type ListItemState, SelectableList } from "./SelectableList";
 
 type ViewId = "artists" | "albums" | "playlists" | "settings" | "search";
 
+declare module "@tanstack/react-router" {
+  interface StaticDataRouteOption {
+    view?: ViewId;
+  }
+}
+
 type NavItem = { id: ViewId; href: string; label: string };
 
 const items: NavItem[] = [

@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { Albums } from "../../components/Albums";
-import { Panel } from "../../components/Panel";
+import { SplitView } from "../../components/SplitView";
 import { sidebarTitleHeight } from "../../constants/sidebarTitleHeight";
 import i18next from "../../i18next";
 import type { Album, UUID } from "../../types";
@@ -51,7 +51,7 @@ function AlbumsLayout() {
   }, [currentAlbumId, handleGotoAlbumDetails]);
 
   return (
-    <Panel
+    <SplitView
       renderSidebar={randerSidebar}
       sidebarTitle={i18next.t("albums.title", { defaultValue: "Albums" })}
     >
@@ -66,6 +66,6 @@ function AlbumsLayout() {
           />
         </div>
       )}
-    </Panel>
+    </SplitView>
   );
 }

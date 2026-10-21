@@ -67,7 +67,7 @@ function SecuritySettings() {
         <h1 className="font-semibold text-4xl lg:text-2xl line-clamp-1">
           <Trans i18nKey="settings.security.title">Security</Trans>
         </h1>
-        <span className="text-sm text-panel-fg-muted">
+        <span className="text-sm text-page-fg-muted">
           <Trans i18nKey="settings.security.subtitle">
             Change your password
           </Trans>

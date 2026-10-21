@@ -54,7 +54,7 @@ export function ArtistAlbumRow({ item, onPlayAlbum }: Props) {
       </div>
 
       <div className="pt-1 @2xl:pl-46 @3xl:pl-62 w-full">
-        <div className="pb-2 mb-2 min-h-20 @2xl:min-h-auto @2xl:border-b border-panel-fg-divider">
+        <div className="pb-2 mb-2 min-h-20 @2xl:min-h-auto @2xl:border-b border-page-fg-divider">
           <strong
             className="text-lg font-semibold mb-0.5 line-clamp-1"
             title={item.album.name}
@@ -63,11 +63,11 @@ export function ArtistAlbumRow({ item, onPlayAlbum }: Props) {
           </strong>
           <div className="flex flex-col @2xl:flex-row @2xl:gap-2">
             {item.album.releaseYear && (
-              <span className="text-panel-fg-muted text-sm @2xl:after:content-['·'] @2xl:after:ml-2">
+              <span className="text-page-fg-muted text-sm @2xl:after:content-['·'] @2xl:after:ml-2">
                 {item.album.releaseYear}
               </span>
             )}
-            <span className="text-panel-fg-muted text-sm">
+            <span className="text-page-fg-muted text-sm">
               <Trans
                 i18nKey="album.trackCount"
                 count={item.album.tracks.length}

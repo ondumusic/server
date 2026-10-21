@@ -11,11 +11,11 @@ import { scanApi } from "../../api";
 import { LogoutIcon } from "../../components/icons/LogoutIcon";
 import { SpinnerIcon } from "../../components/icons/SpinnerIcon";
 import { Marquee } from "../../components/Marquee";
-import { Panel } from "../../components/Panel";
 import {
   type ListItemState,
   SelectableList,
 } from "../../components/SelectableList";
+import { SplitView } from "../../components/SplitView";
 import { sidebarTitleHeight } from "../../constants/sidebarTitleHeight";
 import { useAuth } from "../../hooks/useAuth";
 import { useDialog } from "../../hooks/useDialog";
@@ -205,11 +205,11 @@ function SettingsLayout() {
   if (!currentSection) return <Navigate to="/settings" replace />;
 
   return (
-    <Panel
+    <SplitView
       renderSidebar={renderSidebar}
       sidebarTitle={i18next.t("settings.title", { defaultValue: "Settings" })}
     >
       <Outlet />
-    </Panel>
+    </SplitView>
   );
 }

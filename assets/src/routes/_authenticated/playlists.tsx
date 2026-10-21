@@ -6,8 +6,8 @@ import {
 } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { playlistApi } from "../../api";
-import { Panel } from "../../components/Panel";
 import { Playlists } from "../../components/Playlists";
+import { SplitView } from "../../components/SplitView";
 import { sidebarTitleHeight } from "../../constants/sidebarTitleHeight";
 import { useDialog } from "../../hooks/useDialog";
 import { usePlayer } from "../../hooks/usePlayer";
@@ -112,12 +112,12 @@ function PlaylistsLayout() {
   }, [playlistId, handleCreate, handleChange, handleDelete, handleSubmit]);
 
   return (
-    <Panel
+    <SplitView
       renderSidebar={renderSidebar}
       mobileShowSidebar={!playlistId}
       sidebarTitle={i18next.t("playlists.title", { defaultValue: "Playlists" })}
     >
       <Outlet />
-    </Panel>
+    </SplitView>
   );
 }
