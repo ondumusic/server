@@ -77,8 +77,6 @@ function Authenticated() {
   if (isDesktop) {
     return (
       <div className="flex relative h-full overflow-hidden bg-page-bg transition-opacity duration-400 starting:opacity-0">
-        <NoticeBanner />
-
         <Group
           className="flex-1 min-w-0"
           defaultLayout={defaultLayout}
@@ -97,6 +95,7 @@ function Authenticated() {
               <div className="flex-shrink-0">
                 <SideNav />
               </div>
+              <NoticeBanner className="flex-shrink-0 mt-3" />
               {/* biome-ignore lint/a11y/noStaticElementInteractions: allow dragging events */}
               <div
                 className="flex-1 min-h-0 mt-3 flex flex-col justify-end"
