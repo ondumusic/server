@@ -57,7 +57,13 @@
     "shufflePlaylist": "Shuffle \"{{ playlist }}\""
   },
   "emptyView": {
-    "noResults": "No Results"
+    "selectArtist": "Select an artist",
+    "selectPlaylist": "Select a playlist"
+  },
+  "errorBoundary": {
+    "description": "Reload the page to try again.",
+    "reload": "Reload",
+    "title": "Something went wrong"
   },
   "formattedDuration": {
     "hours_one": "{{ count }} hour",
@@ -154,6 +160,7 @@
       "ok": "OK"
     },
     "emptyPlaylist": "There are no tracks in this playlist yet.",
+    "folder": "Folder",
     "trackCount_one": "{{count}} track, {{duration}}",
     "trackCount_other": "{{count}} tracks, {{duration}}"
   },
