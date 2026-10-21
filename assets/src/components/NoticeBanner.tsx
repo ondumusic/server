@@ -29,18 +29,12 @@ async function dismiss(id: string) {
   if (response) notices.set(response.notices);
 }
 
-export function NoticeBanner() {
+export function NoticeBanner({ className }: { className?: string }) {
   const active = useSyncExternalStore(notices.subscribe, notices.get);
   if (active.length === 0) return null;
 
   return (
-    <div
-      className={classNames([
-        "fixed z-50 flex flex-col gap-2",
-        "bottom-24 left-1/2 -translate-x-1/2 w-max max-w-[calc(100%-32px)] items-center",
-        "lg:bottom-auto lg:top-6 lg:left-4 lg:translate-x-0 lg:w-76 lg:items-stretch",
-      ])}
-    >
+    <div className={classNames(["flex flex-col gap-2", className])}>
       {active.map((notice) => (
         <NoticePill key={notice.id} notice={notice} />
       ))}
@@ -56,13 +50,10 @@ function NoticePill({ notice }: { notice: Notice }) {
     <div
       role="status"
       className={classNames([
-        "rounded-2xl shadow-md text-sm",
-        // It sits on the dark player background in both themes, so a tint of
-        // the level color works for both.
-        "backdrop-blur-2xl ring-1",
+        "rounded-xl text-sm ring-1",
         notice.level === "warning"
-          ? "bg-amber-400/15 text-amber-100 ring-amber-300/25"
-          : "bg-white/10 text-white ring-white/15",
+          ? "bg-amber-50 text-amber-900 ring-amber-300/60 dark:bg-amber-400/15 dark:text-amber-100 dark:ring-amber-300/25"
+          : "bg-white/60 text-page-fg ring-black/10 dark:bg-white/10 dark:ring-white/15",
       ])}
     >
       <button
@@ -72,7 +63,10 @@ function NoticePill({ notice }: { notice: Notice }) {
         onClick={() => setExpanded(!expanded)}
       >
         {notice.level === "warning" && (
-          <WarningIcon className="size-4 shrink-0 text-amber-300" title="" />
+          <WarningIcon
+            className="size-4 shrink-0 text-amber-600 dark:text-amber-300"
+            title=""
+          />
         )}
         <span className="font-medium line-clamp-1 text-left">{title}</span>
         <ChevronDownIcon
