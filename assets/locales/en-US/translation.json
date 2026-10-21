@@ -294,6 +294,12 @@
     "subtitle": "You will use this account to log in to Ondu.",
     "title": "Create your account"
   },
+  "smallScreen": {
+    "logout": "Logout",
+    "openWebsite": "Get the apps",
+    "subtitle": "Sorry, the web app doesn't support small screens yet. Please try one of the official Ondu apps instead, or open it on a bigger screen.",
+    "title": "A screen for ants?"
+  },
   "sortBy": {
     "album": {
       "artistSortName": "Artist",

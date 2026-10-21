@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 
 import { Loading } from "../components/Loading";
 import { useAuth } from "../hooks/useAuth";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import type { OnboardingStep } from "../types";
 
 import { type SyncProgress, sync } from "./sync";
@@ -38,6 +39,7 @@ const LibraryContext = createContext<LibraryContext>({
 export function LibraryProvider({ children }: PropsWithChildren) {
   const { t } = useTranslation();
   const { isLoggedIn } = useAuth();
+  const isDesktop = useMediaQuery("(width >= 64rem)");
   const [pageLoadSync, setPageLoadSync] = useState<boolean | undefined>(
     isOnboarding ? false : undefined,
   );
@@ -106,11 +108,17 @@ export function LibraryProvider({ children }: PropsWithChildren) {
     return unsubscribe;
   }, []);
 
+  // As a quick hack we'll avoid showing the sync status on small screens
+  // because otherwise their experience is seeing a sync and then the
+  // message saying small screen not supported yet. I don't want to hack
+  // around to make the actual sync conditional either so hacky solution it is.
+  const showSyncScreen = pageLoadSync && isDesktop;
+
   return (
     <LibraryContext.Provider value={{ syncing, lastSynced, syncError, doSync }}>
       {isLoggedIn && pageLoadSync === undefined ? (
         <Loading fullPage />
-      ) : isLoggedIn && pageLoadSync ? (
+      ) : isLoggedIn && showSyncScreen ? (
         <Loading fullPage>
           <p className="text-center py-6 text-xs transition-opacity duration-500 starting:opacity-0">
             {t("sync.progressText", {
