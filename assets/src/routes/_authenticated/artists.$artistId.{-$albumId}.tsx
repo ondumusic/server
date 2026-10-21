@@ -56,8 +56,8 @@ function ArtistDetail() {
   if (!artistId)
     return (
       <EmptyView
-        message={i18next.t("emptyView.noResults", {
-          defaultValue: "No Results",
+        message={i18next.t("emptyView.selectArtist", {
+          defaultValue: "Select an artist",
         })}
       />
     );

@@ -10,8 +10,8 @@ export const Route = createFileRoute("/_authenticated/playlists/")({
 function PlaylistsIndex() {
   return (
     <EmptyView
-      message={i18next.t("emptyView.noResults", {
-        defaultValue: "No Results",
+      message={i18next.t("emptyView.selectPlaylist", {
+        defaultValue: "Select a playlist",
       })}
     />
   );
