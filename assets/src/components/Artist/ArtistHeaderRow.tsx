@@ -16,7 +16,7 @@ export function ArtistHeaderRow({ item }: Props) {
         >
           {item.artist.name}
         </h1>
-        <span className="text-sm text-panel-fg-muted">
+        <span className="text-sm text-page-fg-muted">
           <Trans i18nKey="artist.albumCount" count={item.artist.albumCount}>
             {{ count: item.artist.albumCount }} albums
           </Trans>

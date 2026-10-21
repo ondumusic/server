@@ -28,11 +28,11 @@ export function AlbumHeader({ album, tracks }: HeaderItem) {
         </strong>
         <div className="flex flex-col @md:flex-row @md:gap-2">
           {album.releaseYear && (
-            <span className="text-panel-fg-muted text-sm @md:after:content-['·'] @md:after:ml-2">
+            <span className="text-page-fg-muted text-sm @md:after:content-['·'] @md:after:ml-2">
               {album.releaseYear}
             </span>
           )}
-          <span className="text-panel-fg-muted text-sm">
+          <span className="text-page-fg-muted text-sm">
             <Trans
               i18nKey="album.trackCount"
               count={tracks.length}

@@ -45,14 +45,14 @@ export function TrackRow({
           "border-b",
           isLastTrack || isSelected
             ? "border-transparent"
-            : "border-panel-fg-divider",
+            : "border-page-fg-divider",
         ])}
       >
         <span
           className={classNames([
             "w-4 @md:w-6 flex-shrink-0 font-light text-right tabular-nums",
             "group-hover/track:hidden",
-            !isSelected && "text-panel-fg-muted",
+            !isSelected && "text-page-fg-muted",
             isPlaying && "hidden",
           ])}
         >
@@ -114,7 +114,7 @@ export function TrackRow({
             <div
               className={classNames([
                 "w-full line-clamp-1",
-                !isSelected && "text-panel-fg-muted",
+                !isSelected && "text-page-fg-muted",
               ])}
               title={track.artistName}
             >
@@ -126,7 +126,7 @@ export function TrackRow({
         <span
           className={classNames([
             "ml-auto font-light flex-shrink-0 tabular-nums",
-            !isSelected && "text-panel-fg-muted",
+            !isSelected && "text-page-fg-muted",
           ])}
         >
           {formatDuration(track.duration)}

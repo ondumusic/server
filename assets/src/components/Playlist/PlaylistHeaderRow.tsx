@@ -18,7 +18,7 @@ export const PlaylistHeaderRow = memo(({ item }: Props) => {
         </h1>
         <span
           className={classNames([
-            "text-sm text-panel-fg-muted",
+            "text-sm text-page-fg-muted",
             item.playlist.trackCount === 0 && "hidden",
           ])}
         >

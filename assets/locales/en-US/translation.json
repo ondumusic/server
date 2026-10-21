@@ -17,9 +17,7 @@
   "button": {
     "clearUpNext": "Clear",
     "closeNowPlaying": "Close",
-    "closePanel": "Close Music Browser",
     "nextTrack": "Next Track",
-    "openPanel": "Open Music Browser",
     "pauseCurrentTrack": "Pause Current Track",
     "play": "Play",
     "playCurrentTrack": "Play Current Track",

@@ -35,7 +35,7 @@ function PlaylistDetail() {
           <h1 className="font-semibold text-4xl lg:text-2xl line-clamp-1">
             {playlist.name}
           </h1>
-          <span className="text-sm text-panel-fg-muted">
+          <span className="text-sm text-page-fg-muted">
             {i18next.t("playlist.folder", { defaultValue: "Folder" })}
           </span>
         </header>

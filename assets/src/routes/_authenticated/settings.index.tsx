@@ -93,7 +93,7 @@ function GeneralSettings() {
         <h1 className="font-semibold text-4xl lg:text-2xl line-clamp-1">
           <Trans i18nKey="settings.general.title">General</Trans>
         </h1>
-        <span className="text-sm text-panel-fg-muted">
+        <span className="text-sm text-page-fg-muted">
           <Trans i18nKey="settings.general.subtitle">
             Change user preferences
           </Trans>

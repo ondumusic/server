@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { Artists } from "../../components/Artists";
-import { Panel } from "../../components/Panel";
+import { SplitView } from "../../components/SplitView";
 import { sidebarTitleHeight } from "../../constants/sidebarTitleHeight";
 import { usePlayer } from "../../hooks/usePlayer";
 import i18next from "../../i18next";
@@ -61,12 +61,12 @@ function ArtistsLayout() {
   }, [artistId, handleChange, handleSubmit]);
 
   return (
-    <Panel
+    <SplitView
       renderSidebar={renderSidebar}
       mobileShowSidebar={!artistId}
       sidebarTitle={i18next.t("artists.title", { defaultValue: "Artists" })}
     >
       <Outlet />
-    </Panel>
+    </SplitView>
   );
 }
