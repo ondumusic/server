@@ -16,12 +16,6 @@
     --accent-800: var(--color-blue-800);
     --accent-900: var(--color-blue-900);
     --accent-950: var(--color-blue-950);
-
-    /*
-     * NOTE: This is linked to the hardcoded `theme-color` meta tag.
-     * So if changing this, change that too.
-     */
-    --gradient-tint: var(--color-mist-600);
   }
 }
 
@@ -206,15 +200,6 @@
   --color-label: var(--color-panel-fg);
   --color-error: var(--error-fg);
   --color-muted: var(--color-panel-fg-muted);
-}
-
-body {
-  background-image: linear-gradient(
-    to bottom,
-    var(--gradient-tint) 0%,
-    color-mix(in srgb, var(--gradient-tint) 60%, transparent) 60%,
-    color-mix(in srgb, var(--gradient-tint) 30%, transparent) 100%
-  );
 }
 
 dialog,

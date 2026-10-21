@@ -33,7 +33,7 @@ if (appRoot) {
   const root = createRoot(appRoot);
   root.render(
     <StrictMode>
-      <Suspense fallback={<Loading />}>
+      <Suspense fallback={<Loading fullPage />}>
         <ThemeProvider>
           <AuthProvider>
             <LibraryProvider>

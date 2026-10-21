@@ -76,7 +76,7 @@ function Authenticated() {
 
   if (isDesktop) {
     return (
-      <div className="flex relative h-full overflow-hidden bg-page-bg">
+      <div className="flex relative h-full overflow-hidden bg-page-bg transition-opacity duration-400 starting:opacity-0">
         <NoticeBanner />
 
         <Group
