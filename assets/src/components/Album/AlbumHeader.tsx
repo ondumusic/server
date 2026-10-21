@@ -1,6 +1,7 @@
 import { Trans } from "react-i18next";
 import { formatTotalDuration } from "../../utils/formatTotalDuration";
 import { AlbumArtwork } from "../AlbumArtwork";
+import { PlayShuffleButtons } from "../PlayShuffleButtons";
 import type { HeaderItem } from "./types";
 
 export function AlbumHeader({ album, tracks }: HeaderItem) {
@@ -10,7 +11,7 @@ export function AlbumHeader({ album, tracks }: HeaderItem) {
         <AlbumArtwork
           album={album}
           size="large"
-          className="w-full shadow-lg aspect-square rounded-sm bg-linear-to-br from-stone-50 to-stone-200"
+          className="w-full shadow-lg aspect-square rounded-md bg-linear-to-br from-stone-50 to-stone-200"
         />
       </div>
 
@@ -42,6 +43,8 @@ export function AlbumHeader({ album, tracks }: HeaderItem) {
             </Trans>
           </span>
         </div>
+
+        <PlayShuffleButtons input={{ albumId: album.id }} className="mt-3" />
       </div>
     </header>
   );

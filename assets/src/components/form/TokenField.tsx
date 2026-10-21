@@ -43,10 +43,10 @@ export function TokenField(props: Props) {
     <div
       className={classNames([
         "mt-2 flex flex-wrap items-center gap-1.5 w-full rounded-lg px-1.5 py-1 sm:text-sm sm:leading-6",
-        "bg-white/80 dark:bg-black/40",
+        "bg-white/80 dark:bg-white/5",
         "border transition-colors duration-150 cursor-text",
         !props.hasError &&
-          "border-zinc-400/60 dark:border-zinc-400/50 focus-within:border-zinc-400 focus-within:dark:border-zinc-200/50",
+          "border-zinc-400/60 dark:border-white/10 focus-within:border-zinc-400 focus-within:dark:border-white/30",
         props.hasError && "border-rose-400 dark:border-rose-400",
       ])}
     >

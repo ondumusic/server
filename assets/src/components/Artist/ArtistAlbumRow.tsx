@@ -29,11 +29,11 @@ export function ArtistAlbumRow({ item, onPlayAlbum }: Props) {
         item.firstAlbumInList && "mt-4",
       ])}
     >
-      <div className="relative @md:absolute top-0 left-0 w-20 flex-grow-0 flex-shrink-0 @md:w-32 @xl:w-48 group/artwork">
+      <div className="relative @2xl:absolute top-0 left-0 w-20 flex-grow-0 flex-shrink-0 @2xl:w-30 @3xl:w-46 group/artwork">
         <AlbumArtwork
           album={item.album}
           size="large"
-          className="w-full shadow-lg aspect-square rounded-sm bg-linear-to-br from-stone-50 to-stone-200"
+          className="w-full shadow-lg aspect-square rounded-md bg-linear-to-br from-stone-50 to-stone-200"
         />
 
         <button
@@ -41,9 +41,9 @@ export function ArtistAlbumRow({ item, onPlayAlbum }: Props) {
           onDoubleClick={handlePlayAlbum}
           className="absolute left-0 top-0 w-full h-full opacity-0 group-hover/artwork:opacity-100 transition-opacity"
         >
-          <div className="m-auto flex justify-center align-center w-8 h-8 md:w-16 md:h-16 bg-accent-500 rounded-full shadow-lg transition-colors">
+          <div className="m-auto flex justify-center align-center size-8 @2xl:size-12 @3xl:size-16 bg-accent-500 rounded-full shadow-lg transition-colors">
             <PlayIcon
-              className="size-4 md:size-8 m-auto text-white"
+              className="size-4 @2xl:size-6 @3xl:size-8 m-auto text-white"
               title={t("button.playSelectedAlbum", {
                 defaultValue: "Play {{ albumName }}",
                 albumName: item.album.name,
@@ -53,17 +53,17 @@ export function ArtistAlbumRow({ item, onPlayAlbum }: Props) {
         </button>
       </div>
 
-      <div className="pt-1 @md:pl-46 @xl:pl-62 w-full">
-        <div className="pb-2 mb-2 min-h-20 @md:min-h-auto @md:border-b border-panel-fg-divider">
+      <div className="pt-1 @2xl:pl-46 @3xl:pl-62 w-full">
+        <div className="pb-2 mb-2 min-h-20 @2xl:min-h-auto @2xl:border-b border-panel-fg-divider">
           <strong
             className="text-lg font-semibold mb-0.5 line-clamp-1"
             title={item.album.name}
           >
             {item.album.name}
           </strong>
-          <div className="flex flex-col @md:flex-row @md:gap-2">
+          <div className="flex flex-col @2xl:flex-row @2xl:gap-2">
             {item.album.releaseYear && (
-              <span className="text-panel-fg-muted text-sm @md:after:content-['·'] @md:after:ml-2">
+              <span className="text-panel-fg-muted text-sm @2xl:after:content-['·'] @2xl:after:ml-2">
                 {item.album.releaseYear}
               </span>
             )}

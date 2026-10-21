@@ -324,7 +324,7 @@ function Issues() {
 
         {/* The dropdown is absolutely positioned from the top right. */}
         {entries && entries.length > 0 && (
-          <div className="flex h-9">
+          <div className="flex h-8">
             <FloatingDropdown<Filter>
               value={filter}
               options={filterOptions}

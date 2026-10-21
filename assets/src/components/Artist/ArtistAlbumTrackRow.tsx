@@ -15,7 +15,7 @@ export function ArtistAlbumTrackRow({
   isDragging = false,
 }: Props) {
   return (
-    <div className="@md:pl-34 @xl:pl-50">
+    <div className="@2xl:pl-34 @3xl:pl-50">
       <TrackRow
         track={item.track}
         number={item.track.number}

@@ -38,6 +38,9 @@ export function MiniPlayer({
     return unsubscribe;
   }, [addTimeObserver]);
 
+  // Without a current track, play starts the first track in Up Next
+  const canPlay = !!currentTrack || hasNextTrack;
+
   const artistAlbum = [currentTrack?.artist?.name, album?.name]
     .filter((name) => !!name)
     .join(" - ");
@@ -46,6 +49,7 @@ export function MiniPlayer({
     <div
       className={classNames([
         "relative min-h-0 flex flex-col overflow-hidden rounded-xl p-3 text-white shadow-lg select-none",
+        "dark:shadow-xl dark:shadow-black/50",
         "transition-[flex-grow] duration-300 ease-out",
         isUpNextOpen ? "grow" : "grow-0",
       ])}
@@ -56,7 +60,7 @@ export function MiniPlayer({
         <AlbumArtwork
           album={album}
           size="thumbnail"
-          className="size-10 flex-shrink-0 rounded-md bg-linear-to-tl from-mist-600 to-mist-700"
+          className="size-10 flex-shrink-0 rounded-md bg-linear-to-tl from-stone-600 to-stone-700"
         />
 
         <div className="flex-1 min-w-0 text-left">
@@ -100,7 +104,8 @@ export function MiniPlayer({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            className="grid place-items-center size-8 rounded-full hover:bg-white/10 cursor-pointer"
+            disabled={!currentTrack}
+            className="grid place-items-center size-8 rounded-full hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent cursor-pointer disabled:cursor-default"
             onClick={() => {
               if (hasPrevTrack && currentTime.current <= 2) prevTrack();
               else scrubTo(0, true);
@@ -115,7 +120,8 @@ export function MiniPlayer({
           </button>
           <button
             type="button"
-            className="grid place-items-center size-9 rounded-full hover:bg-white/10 cursor-pointer"
+            disabled={!canPlay}
+            className="grid place-items-center size-9 rounded-full hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent cursor-pointer disabled:cursor-default"
             onClick={() => {
               if (currentTrack) {
                 setIsPlaying(!isPlaying);
@@ -143,7 +149,7 @@ export function MiniPlayer({
           <button
             type="button"
             disabled={!hasNextTrack}
-            className="grid place-items-center size-8 rounded-full hover:bg-white/10 disabled:opacity-20 cursor-pointer"
+            className="grid place-items-center size-8 rounded-full hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent cursor-pointer disabled:cursor-default"
             onClick={() => nextTrack()}
           >
             <NextIcon

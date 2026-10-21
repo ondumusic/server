@@ -66,9 +66,11 @@ export function Panel({
           >
             <ResizablePanel
               id="left"
-              defaultSize="30%"
-              minSize="17%"
-              maxSize="40%"
+              defaultSize="20rem"
+              minSize="14rem"
+              maxSize="28rem"
+              groupResizeBehavior="preserve-pixel-size"
+              style={{ overflow: "hidden" }}
             >
               <div
                 role="none"
@@ -89,14 +91,18 @@ export function Panel({
               </div>
             </ResizablePanel>
             <Separator className="w-[1px] bg-sidebar-divider [&[data-separator='hover']]:bg-sidebar-divider-hover [&[data-separator='active']]:bg-sidebar-divider-active focus:outline-none focus:bg-sidebar-divider-active" />
-            <ResizablePanel id="right" minSize="60%">
-              <div className="@container h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-panel-bg backdrop-blur-2xl backdrop-saturate-150">
+            <ResizablePanel
+              id="right"
+              minSize="60%"
+              style={{ overflow: "hidden" }}
+            >
+              <div className="@container h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-panel-bg">
                 {children}
               </div>
             </ResizablePanel>
           </Group>
         ) : (
-          <div className="@container w-full h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-panel-bg backdrop-blur-2xl backdrop-saturate-150">
+          <div className="@container w-full h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-panel-bg">
             {mobileShowSidebar && hasSidebar && renderedSidebar
               ? renderedSidebar
               : children}

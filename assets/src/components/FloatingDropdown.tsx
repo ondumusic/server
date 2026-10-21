@@ -68,11 +68,10 @@ export function FloatingDropdown<T>({
             setShowOptions(!showOptions);
           }}
           className={classNames([
-            "flex gap-2 items-center",
+            "flex gap-1.5 items-center",
             "absolute top-0 right-0 z-[1000] select-none cursor-pointer",
-            "rounded-full shadow-lg hover:shadow-xl border-1 p-1.5 px-3 text-sm whitespace-nowrap",
-            "backdrop-blur-2xl backdrop-saturate-150 transition-all font-normal",
-            "text-floating-menu-fg border-floating-menu-border bg-floating-menu-bg hover:bg-floating-menu-bg-hover",
+            "rounded-md py-1.5 px-3 text-sm font-medium whitespace-nowrap transition-colors",
+            "text-page-fg bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15",
           ])}
         >
           {children}
@@ -84,16 +83,15 @@ export function FloatingDropdown<T>({
           className={classNames([
             "floating-dropdown",
             "absolute top-0 right-0 min-w-[180px] z-[1000] select-none",
-            "rounded-xl shadow-lg border-1 p-2 whitespace-nowrap",
-            "backdrop-blur-2xl backdrop-saturate-150",
-            "border-floating-menu-border bg-floating-menu-bg-hover",
+            "rounded-lg shadow-2xl border p-1 whitespace-nowrap",
+            "border-contextmenu-border bg-contextmenu-bg text-contextmenu-fg",
           ])}
         >
           {options.map((option) => (
             <div
               key={option.value as string}
               className={classNames([
-                "text-left text-sm cursor-pointer px-2 py-2.5 rounded-md group/option",
+                "text-left text-sm cursor-pointer px-3 py-2 rounded-md group/option",
                 "hover:bg-accent-400 hover:text-white",
               ])}
               role="option"

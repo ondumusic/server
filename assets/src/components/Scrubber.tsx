@@ -75,7 +75,7 @@ export function Scrubber() {
         />
       </div>
 
-      <div className="flex justify-between items-end tabular-nums transition-colors duration-200 text-white/50 group-hover/timeline:text-white text-xs mt-2">
+      <div className="flex justify-between items-end tabular-nums transition-colors duration-200 text-white/50 group-hover/timeline:text-white text-[11px] mt-2">
         <span>{formatDuration(currentTime)}</span>
         <span>{formatDuration(duration)}</span>
       </div>
