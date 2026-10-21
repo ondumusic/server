@@ -265,3 +265,17 @@ dialog.dialog-contextmenu::backdrop {
     transform: translateX(300%);
   }
 }
+
+/*
+We're using fancy css view transitions to animate the mini player artwork
+growing into the "full screen" player. Much easier than animating it ourselves.
+*/
+::view-transition-group(now-playing-artwork) {
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 300ms;
+}

@@ -6,12 +6,14 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import { type DragEvent, useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   Group,
   Panel as ResizablePanel,
   Separator,
   useDefaultLayout,
 } from "react-resizable-panels";
+import { FullPlayer } from "../components/FullPlayer";
 import { MiniPlayer } from "../components/MiniPlayer";
 import { NavBar } from "../components/NavBar";
 import { NoticeBanner } from "../components/NoticeBanner";
@@ -45,6 +47,7 @@ function Authenticated() {
     location.pathname !== "/" || queue.length === 0,
   );
   const [isUpNextOpen, setIsUpNextOpen] = useState(false);
+  const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
   const { defaultLayout, onLayoutChange: handleLayoutChange } =
     useDefaultLayout({
       groupId: "sideNavSplitView",
@@ -63,6 +66,19 @@ function Authenticated() {
     return <Navigate to="/artists" replace />;
   }
 
+  // This will show/hide the full screen player using a CSS view transition.
+  // Using flushSync because the DOM has to be updated inside `startViewTransition`.
+  const toggleNowPlaying = (open: boolean) => {
+    if (!document.startViewTransition) {
+      setIsNowPlayingOpen(open);
+      return;
+    }
+
+    document.startViewTransition(() => {
+      flushSync(() => setIsNowPlayingOpen(open));
+    });
+  };
+
   // Open Up Next when dragging something onto the player, so it can be
   // dropped there.
   const handleDragOver = (e: DragEvent) => {
@@ -78,6 +94,7 @@ function Authenticated() {
     return (
       <div className="flex relative h-full overflow-hidden bg-page-bg transition-opacity duration-400 starting:opacity-0">
         <Group
+          inert={isNowPlayingOpen}
           className="flex-1 min-w-0"
           defaultLayout={defaultLayout}
           onLayoutChange={handleLayoutChange}
@@ -104,6 +121,8 @@ function Authenticated() {
                 <MiniPlayer
                   isUpNextOpen={isUpNextOpen}
                   onToggleUpNext={() => setIsUpNextOpen(!isUpNextOpen)}
+                  isNowPlayingOpen={isNowPlayingOpen}
+                  onNowPlayingOpen={() => toggleNowPlaying(true)}
                 />
               </div>
             </div>
@@ -115,6 +134,10 @@ function Authenticated() {
             </div>
           </ResizablePanel>
         </Group>
+
+        {isNowPlayingOpen && (
+          <FullPlayer onClose={() => toggleNowPlaying(false)} />
+        )}
       </div>
     );
   }

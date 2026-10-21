@@ -1,6 +1,7 @@
 import {
   createContext,
   type PropsWithChildren,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -46,9 +47,36 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
   const audioService = useRef<AudioService>(null);
   const { isLoggedIn } = useAuth();
   const [isPlaying, realSetIsPlaying] = useState(false);
-  const [emitTimeUpdate, addTimeObserver] = useObserver<TimeUpdateEvent>();
   const [duration, setDuration] = useState(0);
   const { currentTrack, currentTrackIndex, nextTrack } = useQueue();
+  const [emit, addObserver] = useObserver<TimeUpdateEvent>();
+
+  // We store the currentTime/progressPercentage in a ref too so they
+  // are easily accessible when needed without having to put them in state
+  // causing a lot of renders.
+  const lastTimeUpdate = useRef<TimeUpdateEvent>({
+    currentTime: 0,
+    progressPercentage: 0,
+  });
+
+  const emitTimeUpdate = useCallback(
+    (event: TimeUpdateEvent) => {
+      lastTimeUpdate.current = event;
+      emit(event);
+    },
+    [emit],
+  );
+
+  const addTimeObserver = useCallback(
+    (callback: Observer<TimeUpdateEvent>) => {
+      // When registering an observer we'll immediately send the last update
+      // to avoid it having to wait for another update and avoid it never
+      // knowing the currentTime if the playback is paused.
+      if (lastTimeUpdate.current) callback(lastTimeUpdate.current);
+      return addObserver(callback);
+    },
+    [addObserver],
+  );
 
   // Manage the AudioService (only execute on first render/mount)
   useEffect(() => {

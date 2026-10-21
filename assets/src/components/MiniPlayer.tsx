@@ -1,45 +1,29 @@
-import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { useAudioManager } from "../hooks/useAudioManager";
 import { useQueue } from "../hooks/useQueue";
 import { useAlbum } from "../library";
 import { classNames } from "../utils/classNames";
 import { AlbumArtwork } from "./AlbumArtwork";
 import { BlurredArtwork } from "./BlurredArtwork";
-import { NextIcon } from "./icons/NextIcon";
-import { PauseIcon } from "./icons/PauseIcon";
-import { PlayIcon } from "./icons/PlayIcon";
-import { PrevIcon } from "./icons/PrevIcon";
 import { UpNextIcon } from "./icons/UpNextIcon";
 import { Marquee } from "./Marquee";
+import { PlayerControls } from "./PlayerControls";
 import { Scrubber } from "./Scrubber";
 import { UpNext } from "./UpNext";
 
 export function MiniPlayer({
   isUpNextOpen,
   onToggleUpNext,
+  isNowPlayingOpen,
+  onNowPlayingOpen,
 }: {
   isUpNextOpen: boolean;
   onToggleUpNext: () => void;
+  isNowPlayingOpen: boolean;
+  onNowPlayingOpen: () => void;
 }) {
   const { t } = useTranslation();
-  const { isPlaying, setIsPlaying, scrubTo, addTimeObserver } =
-    useAudioManager();
-  const { currentTrack, hasNextTrack, hasPrevTrack, prevTrack, nextTrack } =
-    useQueue();
+  const { currentTrack } = useQueue();
   const { data: album } = useAlbum(currentTrack?.albumId);
-  const currentTime = useRef<number>(0);
-
-  useEffect(() => {
-    const unsubscribe = addTimeObserver(({ currentTime: newCurrentTime }) => {
-      currentTime.current = newCurrentTime;
-    });
-
-    return unsubscribe;
-  }, [addTimeObserver]);
-
-  // Without a current track, play starts the first track in Up Next
-  const canPlay = !!currentTrack || hasNextTrack;
 
   const artistAlbum = [currentTrack?.artist?.name, album?.name]
     .filter((name) => !!name)
@@ -57,11 +41,25 @@ export function MiniPlayer({
       <BlurredArtwork />
 
       <div className="relative flex gap-3 items-center">
-        <AlbumArtwork
-          album={album}
-          size="thumbnail"
-          className="size-12 flex-shrink-0 rounded-md shadow-md shadow-black/30 bg-linear-to-tl from-stone-600 to-stone-700"
-        />
+        <button
+          type="button"
+          disabled={!currentTrack}
+          onClick={onNowPlayingOpen}
+          className="flex-shrink-0 cursor-pointer disabled:cursor-default"
+        >
+          <AlbumArtwork
+            album={album}
+            size="thumbnail"
+            className="size-12 rounded-md shadow-md shadow-black/30 bg-linear-to-tl from-stone-600 to-stone-700"
+            // Grows into the cover of the full screen player when opened, only
+            // one element can have the name at a time.
+            style={{
+              viewTransitionName: isNowPlayingOpen
+                ? undefined
+                : "now-playing-artwork",
+            }}
+          />
+        </button>
 
         <div className="flex-1 min-w-0 text-left">
           <Marquee
@@ -101,63 +99,7 @@ export function MiniPlayer({
           />
         </button>
 
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            disabled={!currentTrack}
-            className="grid place-items-center size-8 rounded-full hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent cursor-pointer disabled:cursor-default"
-            onClick={() => {
-              if (hasPrevTrack && currentTime.current <= 2) prevTrack();
-              else scrubTo(0, true);
-            }}
-          >
-            <PrevIcon
-              className="size-4"
-              title={t("button.previousTrack", {
-                defaultValue: "Previous Track",
-              })}
-            />
-          </button>
-          <button
-            type="button"
-            disabled={!canPlay}
-            className="grid place-items-center size-9 rounded-full hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent cursor-pointer disabled:cursor-default"
-            onClick={() => {
-              if (currentTrack) {
-                setIsPlaying(!isPlaying);
-              } else {
-                nextTrack();
-              }
-            }}
-          >
-            {isPlaying ? (
-              <PauseIcon
-                className="size-6"
-                title={t("button.pauseCurrentTrack", {
-                  defaultValue: "Pause Current Track",
-                })}
-              />
-            ) : (
-              <PlayIcon
-                className="size-6"
-                title={t("button.playCurrentTrack", {
-                  defaultValue: "Play Current Track",
-                })}
-              />
-            )}
-          </button>
-          <button
-            type="button"
-            disabled={!hasNextTrack}
-            className="grid place-items-center size-8 rounded-full hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent cursor-pointer disabled:cursor-default"
-            onClick={() => nextTrack()}
-          >
-            <NextIcon
-              className="size-4"
-              title={t("button.nextTrack", { defaultValue: "Next Track" })}
-            />
-          </button>
-        </div>
+        <PlayerControls />
 
         <span className="size-8 -mr-2" />
       </div>
