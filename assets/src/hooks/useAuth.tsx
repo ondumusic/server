@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   }, []);
 
   if (isFetching) {
-    return <Loading />;
+    return <Loading fullPage />;
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

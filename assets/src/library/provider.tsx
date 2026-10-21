@@ -11,10 +11,15 @@ import { useTranslation } from "react-i18next";
 
 import { Loading } from "../components/Loading";
 import { useAuth } from "../hooks/useAuth";
+import type { OnboardingStep } from "../types";
 
 import { type SyncProgress, sync } from "./sync";
 
 const FIVE_MINUTES = 5 * 60 * 1000;
+
+declare var hydrateReact: { onboarding: OnboardingStep };
+
+const isOnboarding = !!hydrateReact.onboarding;
 
 export interface LibraryContext {
   syncing: boolean;
@@ -33,7 +38,9 @@ const LibraryContext = createContext<LibraryContext>({
 export function LibraryProvider({ children }: PropsWithChildren) {
   const { t } = useTranslation();
   const { isLoggedIn } = useAuth();
-  const [pageLoadSync, setPageLoadSync] = useState(isLoggedIn);
+  const [pageLoadSync, setPageLoadSync] = useState<boolean | undefined>(
+    isOnboarding ? false : undefined,
+  );
   const [syncing, setSyncing] = useState(true);
   const [lastSynced, setLastSynced] = useState<Date | undefined>(undefined);
   const [syncError, setSyncError] = useState<unknown | undefined>(undefined);
@@ -88,7 +95,7 @@ export function LibraryProvider({ children }: PropsWithChildren) {
     if (!isLoggedIn) return;
 
     sync.getLastSyncedAt().then((lastSyncedAt?: Date) => {
-      setPageLoadSync(!lastSyncedAt);
+      setPageLoadSync(!lastSyncedAt && !isOnboarding);
       doSync();
     });
   }, [isLoggedIn]);
@@ -101,9 +108,11 @@ export function LibraryProvider({ children }: PropsWithChildren) {
 
   return (
     <LibraryContext.Provider value={{ syncing, lastSynced, syncError, doSync }}>
-      {isLoggedIn && pageLoadSync ? (
-        <Loading>
-          <p className="text-center py-6 text-xs">
+      {isLoggedIn && pageLoadSync === undefined ? (
+        <Loading fullPage />
+      ) : isLoggedIn && pageLoadSync ? (
+        <Loading fullPage>
+          <p className="text-center py-6 text-xs transition-opacity duration-500 starting:opacity-0">
             {t("sync.progressText", {
               defaultValue: "Syncing library...",
               artistCount: syncProgress?.artists ?? 0,
