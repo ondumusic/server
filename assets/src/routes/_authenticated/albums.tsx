@@ -58,7 +58,7 @@ function AlbumsLayout() {
       {currentAlbumId ? (
         <Outlet />
       ) : (
-        <div className="px-4 lg:px-8 h-full">
+        <div className="px-6 h-full">
           <Albums
             style="grid"
             currentAlbumId={currentAlbumId}

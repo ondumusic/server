@@ -359,12 +359,12 @@ export function Albums({
       {listStyle === "grid" && (
         <div
           style={{ height: sidebarTitleHeight }}
-          className="absolute z-10 top-0 -inset-x-4 lg:-inset-x-8 flex items-end px-4 lg:px-8 pb-2 bg-content-bg/85 backdrop-blur-sm border-b border-sidebar-divider select-none"
+          className="absolute z-10 top-0 -inset-x-6 flex items-end px-6 pb-2 bg-content-bg/85 backdrop-blur-sm border-b border-sidebar-divider select-none"
         >
           <h1 className="text-xl font-bold text-page-fg">
             {i18next.t("albums.title", { defaultValue: "Albums" })}
           </h1>
-          <div className="absolute right-4 lg:right-8 top-3.5 flex">
+          <div className="absolute right-6 top-3.5 flex">
             <FloatingDropdown<SortOption>
               onChange={(value) => {
                 if (sortBy === value) {
