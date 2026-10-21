@@ -1,8 +1,9 @@
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { useAudioManager } from "../hooks/useAudioManager";
+import { classNames } from "../utils/classNames";
 import { formatDuration } from "../utils/formatDuration";
 
-export function Scrubber() {
+export function Scrubber({ disabled = false }: { disabled?: boolean }) {
   const { setIsPlaying, duration, scrubTo, addTimeObserver } =
     useAudioManager();
   const scrubTime = useRef<number>(0);
@@ -40,7 +41,12 @@ export function Scrubber() {
   };
 
   return (
-    <div className="group/timeline">
+    <div
+      className={classNames([
+        "group/timeline",
+        disabled && "pointer-events-none",
+      ])}
+    >
       <div className="relative h-1">
         <div className="absolute z-[10] bottom-0 left-0 right-0 bg-white/30 h-1 rounded-lg overflow-hidden">
           <div
@@ -66,6 +72,7 @@ export function Scrubber() {
               group-hover/timeline:[&::-webkit-slider-thumb]:bg-white
               group-hover/timeline:[&::-webkit-slider-thumb]:shadow-xl
             "
+          disabled={disabled}
           value={currentTime}
           min={0}
           max={duration}

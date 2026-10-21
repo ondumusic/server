@@ -60,7 +60,7 @@ export function MiniPlayer({
         <AlbumArtwork
           album={album}
           size="thumbnail"
-          className="size-10 flex-shrink-0 rounded-md bg-linear-to-tl from-stone-600 to-stone-700"
+          className="size-12 flex-shrink-0 rounded-md shadow-md shadow-black/30 bg-linear-to-tl from-stone-600 to-stone-700"
         />
 
         <div className="flex-1 min-w-0 text-left">
@@ -83,7 +83,7 @@ export function MiniPlayer({
       </div>
 
       <div className="relative mt-3">
-        <Scrubber />
+        <Scrubber disabled={!currentTrack} />
       </div>
 
       <div className="relative mt-1 flex justify-between items-center">
@@ -91,7 +91,7 @@ export function MiniPlayer({
           type="button"
           onClick={onToggleUpNext}
           className={classNames([
-            "grid place-items-center size-8 rounded-full cursor-pointer hover:bg-white/10",
+            "grid place-items-center size-8 -ml-2 rounded-full cursor-pointer hover:bg-white/10",
             isUpNextOpen ? "text-white" : "text-white/60",
           ])}
         >
@@ -159,7 +159,7 @@ export function MiniPlayer({
           </button>
         </div>
 
-        <span className="size-8" />
+        <span className="size-8 -mr-2" />
       </div>
 
       <div
