@@ -3,6 +3,9 @@
 ## Unreleased
 nothing
 
+## 1.0.0-rc.3 - 2026-10-22
+- [Changed] redesigned the web ui ([#10](https://github.com/ondumusic/server/pull/10))
+
 ## 1.0.0-rc.2 - 2026-10-19
 - [Fixed] Albums with different track release years now use the most common one
 - [Fixed] Annotation data keys are no longer converted to snake_case

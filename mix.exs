@@ -4,7 +4,7 @@ defmodule Ondu.MixProject do
   def project do
     [
       app: :ondu,
-      version: "1.0.0-rc.2",
+      version: "1.0.0-rc.3",
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
