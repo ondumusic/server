@@ -349,6 +349,7 @@ export function Playlist({ playlist, items }: Props) {
       onContextMenu={handleContextMenu}
       onDoubleClick={handleDoubleClick}
       renderItem={renderItem}
+      paddingBottom={32}
     />
   );
 }

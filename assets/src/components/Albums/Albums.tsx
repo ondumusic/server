@@ -411,7 +411,7 @@ export function Albums({
           paddingTop={
             listStyle === "grid" ? sidebarTitleHeight + 16 : paddingTop
           }
-          paddingBottom={listStyle === "grid" ? 0 : 10}
+          paddingBottom={listStyle === "grid" ? 32 : 10}
           defaultFocusId={currentAlbumId}
           defaultFocusType="nearest"
           selectedIds={
