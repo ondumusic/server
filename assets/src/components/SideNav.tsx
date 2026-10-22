@@ -89,7 +89,7 @@ export function SideNav() {
           className={classNames([
             "flex items-center gap-2.5 text-sm px-3 py-1.5 rounded-md cursor-pointer text-page-fg",
             state.isSelected &&
-              "font-semibold bg-accent-500 dark:bg-accent-600 text-white shadow-sm",
+              "font-semibold bg-accent-500 text-white shadow-sm",
           ])}
         >
           <span

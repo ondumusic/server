@@ -4,6 +4,11 @@ import { Trans, useTranslation } from "react-i18next";
 import { settingApi } from "../../api";
 import { Button } from "../../components/form/Button";
 import { Input } from "../../components/form/Input";
+import {
+  SettingsActions,
+  SettingsGroup,
+  SettingsPage,
+} from "../../components/Settings";
 import { type FormState, useForm } from "../../hooks/useForm";
 import { useToast } from "../../hooks/useToast";
 import { useStats } from "../../library";
@@ -80,53 +85,38 @@ function LibrarySettings() {
     },
   );
 
+  const summary = [
+    t("settings.library.artistCount", {
+      defaultValue: "{{formattedCount}} artists",
+      count: stats?.artists ?? 0,
+      formattedCount: formatStat(stats?.artists ?? 0),
+    }),
+    t("settings.library.albumCount", {
+      defaultValue: "{{formattedCount}} albums",
+      count: stats?.albums ?? 0,
+      formattedCount: formatStat(stats?.albums ?? 0),
+    }),
+    t("settings.library.trackCount", {
+      defaultValue: "{{formattedCount}} tracks",
+      count: stats?.tracks ?? 0,
+      formattedCount: formatStat(stats?.tracks ?? 0),
+    }),
+    t("settings.library.playlistCount", {
+      defaultValue: "{{formattedCount}} playlists",
+      count: stats?.playlists ?? 0,
+      formattedCount: formatStat(stats?.playlists ?? 0),
+    }),
+  ];
+
   return (
-    <div className="h-full mx-4 lg:mx-8">
-      <header className="mt-18 md:mt-4 lg:mt-5 @md:pb-4 mb-4">
-        <h1 className="font-semibold text-4xl lg:text-2xl line-clamp-1">
-          <Trans i18nKey="settings.library.title">Library</Trans>
-        </h1>
-        <span className="text-sm text-page-fg-muted">
-          <Trans i18nKey="settings.library.subtitle">
-            Change your music library settings
-          </Trans>
-        </span>
-      </header>
-
-      <div className="space-y-16">
-        <div className="grid grid-cols-4 gap-4">
-          <div className="border rounded-md shadow-md bg-white/70 border-white/90 dark:border-white/30 dark:bg-black/20 p-4">
-            <h4 className="uppercase text-xs text-muted">
-              <Trans i18nKey="stats.artists">Artists</Trans>
-            </h4>
-            <span className="text-2xl">{formatStat(stats?.artists ?? 0)}</span>
-          </div>
-
-          <div className="border rounded-md shadow-md bg-white/70 border-white/90 dark:border-white/30 dark:bg-black/20 p-4">
-            <h4 className="uppercase text-xs text-muted">
-              <Trans i18nKey="stats.albums">Albums</Trans>
-            </h4>
-            <span className="text-2xl">{formatStat(stats?.albums ?? 0)}</span>
-          </div>
-
-          <div className="border rounded-md shadow-md bg-white/70 border-white/90 dark:border-white/30 dark:bg-black/20 p-4">
-            <h4 className="uppercase text-xs text-muted">
-              <Trans i18nKey="stats.tracks">Tracks</Trans>
-            </h4>
-            <span className="text-2xl">{formatStat(stats?.tracks ?? 0)}</span>
-          </div>
-
-          <div className="border rounded-md shadow-md bg-white/70 border-white/90 dark:border-white/30 dark:bg-black/20 p-4">
-            <h4 className="uppercase text-xs text-muted">
-              <Trans i18nKey="stats.playlists">Playlists</Trans>
-            </h4>
-            <span className="text-2xl">
-              {formatStat(stats?.playlists ?? 0)}
-            </span>
-          </div>
-        </div>
-
-        <form key={form.key} action={form.action} className="space-y-8">
+    <SettingsPage
+      title={t("settings.library.title", { defaultValue: "Library" })}
+      subtitle={summary.join(" · ")}
+    >
+      <form key={form.key} action={form.action}>
+        <SettingsGroup
+          title={t("settings.library.scanning", { defaultValue: "Scanning" })}
+        >
           <Input<SettingFields>
             form={form}
             type="select"
@@ -135,8 +125,12 @@ function LibrarySettings() {
               defaultValue: "Scan Type",
             })}
             options={{
-              quick: "Quick Scan (skips existing)",
-              full: "Full Scan (includes existing files)",
+              quick: t("scanType.quick", {
+                defaultValue: "Quick Scan (skips existing)",
+              }),
+              full: t("scanType.full", {
+                defaultValue: "Full Scan (includes existing files)",
+              }),
             }}
             help={t("settingsForm.help.scanType", {
               defaultValue:
@@ -172,19 +166,19 @@ function LibrarySettings() {
                 defaultValue: "Every hour",
               }),
               "120": t("pollInterval.120min", {
-                defaultValue: "Every 2 hour2",
+                defaultValue: "Every 2 hours",
               }),
               "180": t("pollInterval.180min", {
-                defaultValue: "Every 3 hour2",
+                defaultValue: "Every 3 hours",
               }),
               "360": t("pollInterval.360min", {
-                defaultValue: "Every 6 hour2",
+                defaultValue: "Every 6 hours",
               }),
               "720": t("pollInterval.720min", {
-                defaultValue: "Every 12 hour2",
+                defaultValue: "Every 12 hours",
               }),
               "1440": t("pollInterval.1440min", {
-                defaultValue: "Every 24 hour2",
+                defaultValue: "Every 24 hours",
               }),
             }}
             required
@@ -203,7 +197,7 @@ function LibrarySettings() {
             })}
           />
 
-          <div className="w-[50%] ml-[26%]">
+          <SettingsActions>
             <Button
               disabled={!form.isDirty || form.isPending}
               type="submit"
@@ -211,9 +205,9 @@ function LibrarySettings() {
             >
               <Trans i18nKey="settings.library.save">Save Changes</Trans>
             </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+          </SettingsActions>
+        </SettingsGroup>
+      </form>
+    </SettingsPage>
   );
 }
