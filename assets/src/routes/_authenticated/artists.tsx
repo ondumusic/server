@@ -63,7 +63,6 @@ function ArtistsLayout() {
   return (
     <SplitView
       renderSidebar={renderSidebar}
-      mobileShowSidebar={!artistId}
       sidebarTitle={i18next.t("artists.title", { defaultValue: "Artists" })}
     >
       <Outlet />

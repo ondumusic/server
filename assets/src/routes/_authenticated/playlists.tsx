@@ -114,7 +114,6 @@ function PlaylistsLayout() {
   return (
     <SplitView
       renderSidebar={renderSidebar}
-      mobileShowSidebar={!playlistId}
       sidebarTitle={i18next.t("playlists.title", { defaultValue: "Playlists" })}
     >
       <Outlet />

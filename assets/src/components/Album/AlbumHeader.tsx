@@ -6,7 +6,7 @@ import type { HeaderItem } from "./types";
 
 export function AlbumHeader({ album, tracks }: HeaderItem) {
   return (
-    <header className="mt-18 md:mt-4 lg:mt-5 @md:pb-4 @md:mb-2 flex items-start gap-6">
+    <header className="mt-4 lg:mt-5 @md:pb-4 @md:mb-2 flex items-start gap-6">
       <div className="w-28 mt-1.5 flex-shrink-0">
         <AlbumArtwork
           album={album}

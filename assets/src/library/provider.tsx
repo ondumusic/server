@@ -39,7 +39,8 @@ const LibraryContext = createContext<LibraryContext>({
 export function LibraryProvider({ children }: PropsWithChildren) {
   const { t } = useTranslation();
   const { isLoggedIn } = useAuth();
-  const isDesktop = useMediaQuery("(width >= 64rem)");
+  // Same as the CompactLayout breakpoint in _authenticated.tsx
+  const isSupportedScreen = useMediaQuery("(width >= 46rem)");
   const [pageLoadSync, setPageLoadSync] = useState<boolean | undefined>(
     isOnboarding ? false : undefined,
   );
@@ -112,7 +113,7 @@ export function LibraryProvider({ children }: PropsWithChildren) {
   // because otherwise their experience is seeing a sync and then the
   // message saying small screen not supported yet. I don't want to hack
   // around to make the actual sync conditional either so hacky solution it is.
-  const showSyncScreen = pageLoadSync && isDesktop;
+  const showSyncScreen = pageLoadSync && isSupportedScreen;
 
   return (
     <LibraryContext.Provider value={{ syncing, lastSynced, syncError, doSync }}>

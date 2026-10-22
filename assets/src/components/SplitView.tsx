@@ -6,21 +6,17 @@ import {
   useDefaultLayout,
 } from "react-resizable-panels";
 import { sidebarTitleHeight } from "../constants/sidebarTitleHeight";
-import { useMediaQuery } from "../hooks/useMediaQuery";
 import { ToastProvider } from "../hooks/useToast";
 
 export function SplitView({
   children,
   renderSidebar,
-  mobileShowSidebar,
   sidebarTitle,
 }: PropsWithChildren<{
   sidebarTitle?: string;
   renderSidebar?: () => ReactNode;
-  mobileShowSidebar?: boolean;
 }>) {
   const hasSidebar = typeof renderSidebar === "function";
-  const allowPanels = useMediaQuery("(width >= 48rem)") && hasSidebar;
   const { defaultLayout, onLayoutChange: handleLayoutChange } =
     useDefaultLayout({
       groupId: "panelSplitView",
@@ -35,7 +31,7 @@ export function SplitView({
   return (
     <ToastProvider>
       <div className="relative flex flex-col h-full w-full overflow-hidden text-page-fg">
-        {allowPanels && renderedSidebar ? (
+        {renderedSidebar ? (
           <Group
             className="w-full"
             defaultLayout={defaultLayout}
@@ -78,9 +74,7 @@ export function SplitView({
           </Group>
         ) : (
           <div className="@container w-full h-full overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-content-bg">
-            {mobileShowSidebar && hasSidebar && renderedSidebar
-              ? renderedSidebar
-              : children}
+            {children}
           </div>
         )}
       </div>
