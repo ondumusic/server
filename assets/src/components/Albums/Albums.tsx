@@ -21,6 +21,13 @@ import { AlbumRow } from "./AlbumRow";
 type SortOption = keyof Album & string;
 type SortDirection = "asc" | "desc";
 
+const defaultSortDirs: Record<string, SortDirection> = {
+  artistSortName: "asc",
+  sortName: "asc",
+  releaseYear: "desc",
+  insertedAt: "desc",
+};
+
 export function Albums({
   currentAlbumId,
   gotoAlbumDetails,
@@ -372,8 +379,11 @@ export function Albums({
                   setSortDir(newSortDir);
                   localStorage.setItem("albumSortDir", newSortDir);
                 } else {
-                  localStorage.setItem("albumSort", value);
+                  const newSortDir = defaultSortDirs[value] ?? "asc";
                   setSortBy(value);
+                  setSortDir(newSortDir);
+                  localStorage.setItem("albumSort", value);
+                  localStorage.setItem("albumSortDir", newSortDir);
                 }
               }}
               value={sortBy}

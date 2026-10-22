@@ -87,18 +87,28 @@ interface AlbumParams {
 
 export const queryAlbums = (params: AlbumParams = {}) => {
   const sortDir = params.sortDir ?? "asc";
+  const reverseSortDir = sortDir === "asc" ? "desc" : "asc";
+
   let sortBy: SortField<Album>[] = [
     ["artistSortName", sortDir],
+    ["releaseYear", reverseSortDir],
     ["sortName", sortDir],
   ];
 
   switch (params.sortBy) {
     case "insertedAt":
-      sortBy = [["insertedAt", sortDir]];
+      sortBy = [
+        ["insertedAt", sortDir],
+        ["artistSortName", reverseSortDir],
+        ["sortName", sortDir],
+      ];
       break;
 
     case "releaseYear":
-      sortBy = [["releaseYear", sortDir]];
+      sortBy = [
+        ["releaseYear", sortDir],
+        ["sortName", sortDir],
+      ];
       break;
 
     case "sortName":
