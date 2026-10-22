@@ -509,7 +509,12 @@ export function SelectableList<T>({
     if (typeMatchTimer.current) clearTimeout(typeMatchTimer.current);
     typeMatchTimer.current = setTimeout(() => {
       typeMatchTimer.current = null;
+      listRef.current?.removeAttribute("data-disable-global-keys");
     }, 800);
+
+    // This attribute will block global keys (like spacebar for play/pause)
+    // from working while you are typing to match.
+    listRef.current?.setAttribute("data-disable-global-keys", "");
 
     e.preventDefault();
 
@@ -583,6 +588,7 @@ export function SelectableList<T>({
         setTypeMatch(null);
         if (typeMatchTimer.current) clearTimeout(typeMatchTimer.current);
         typeMatchTimer.current = null;
+        listRef.current?.removeAttribute("data-disable-global-keys");
       }
       return;
     }
