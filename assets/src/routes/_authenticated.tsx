@@ -13,6 +13,7 @@ import {
   Separator,
   useDefaultLayout,
 } from "react-resizable-panels";
+import { CompactLayout } from "../components/CompactLayout";
 import { FullPlayer } from "../components/FullPlayer";
 import { MiniPlayer } from "../components/MiniPlayer";
 import { NoticeBanner } from "../components/NoticeBanner";
@@ -42,6 +43,8 @@ export const Route = createFileRoute("/_authenticated")({
 function Authenticated() {
   const location = useLocation();
   const isDesktop = useMediaQuery("(width >= 64rem)");
+  // Smaller tablets and windows, below this phones get the SmallScreen notice
+  const isCompact = useMediaQuery("(width >= 46rem)");
   const [isUpNextOpen, setIsUpNextOpen] = useState(false);
   const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
   const { isPlaying, setIsPlaying } = useAudioManager();
@@ -191,6 +194,17 @@ function Authenticated() {
           <FullPlayer onClose={() => toggleNowPlaying(false)} />
         )}
       </div>
+    );
+  }
+
+  if (isCompact) {
+    return (
+      <CompactLayout
+        isUpNextOpen={isUpNextOpen}
+        onToggleUpNext={() => setIsUpNextOpen(!isUpNextOpen)}
+        isNowPlayingOpen={isNowPlayingOpen}
+        onToggleNowPlaying={toggleNowPlaying}
+      />
     );
   }
 

@@ -31,7 +31,7 @@ function PlaylistDetail() {
   if (playlist.isFolder) {
     return (
       <div className="relative h-full mx-4 lg:mx-8">
-        <header className="mt-18 md:mt-4 lg:mt-5">
+        <header className="mt-4 lg:mt-5">
           <h1 className="font-semibold text-4xl lg:text-2xl line-clamp-1">
             {playlist.name}
           </h1>
