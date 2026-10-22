@@ -5,7 +5,7 @@ import {
   redirect,
   useLocation,
 } from "@tanstack/react-router";
-import { type DragEvent, useState } from "react";
+import { type DragEvent, useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import {
   Group,
@@ -18,7 +18,10 @@ import { MiniPlayer } from "../components/MiniPlayer";
 import { NoticeBanner } from "../components/NoticeBanner";
 import { SideNav } from "../components/SideNav";
 import { SmallScreen } from "../components/SmallScreen";
+import { isMacOS } from "../constants/isMacOS";
+import { useAudioManager } from "../hooks/useAudioManager";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { useQueue } from "../hooks/useQueue";
 import { auth } from "../services/auth";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -41,16 +44,13 @@ function Authenticated() {
   const isDesktop = useMediaQuery("(width >= 64rem)");
   const [isUpNextOpen, setIsUpNextOpen] = useState(false);
   const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
+  const { isPlaying, setIsPlaying } = useAudioManager();
+  const { currentTrack, nextTrack } = useQueue();
   const { defaultLayout, onLayoutChange: handleLayoutChange } =
     useDefaultLayout({
       groupId: "sideNavSplitView",
       storage: localStorage,
     });
-
-  // There is nothing to show at "/", start with the artists instead
-  if (location.pathname === "/") {
-    return <Navigate to="/artists" replace />;
-  }
 
   // This will show/hide the full screen player using a CSS view transition.
   // Using flushSync because the DOM has to be updated inside `startViewTransition`.
@@ -64,6 +64,72 @@ function Authenticated() {
       flushSync(() => setIsNowPlayingOpen(open));
     });
   };
+
+  // Global shortcut handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+
+      // Ignore when inside input field or a dialog
+      const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
+      const isInDialog = !!target.closest("dialog");
+      if (isTyping || isInDialog) return;
+
+      // Using this data attribute it's possible to disable global shortcuts,
+      // one example is while type matching in selectable lists
+      const isDisabled = !!target.closest("[data-disable-global-keys]");
+      if (isDisabled) return;
+
+      // SHORTCUTS
+
+      // Spacebar with no modifiers should play/pause
+      if (
+        e.code === "Space" &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.ctrlKey &&
+        !e.shiftKey
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.repeat) return;
+
+        if (currentTrack) {
+          setIsPlaying(!isPlaying);
+        } else {
+          nextTrack();
+        }
+        return;
+      }
+
+      // The next shortcuts only work with the modifier
+      const hasModifier = isMacOS
+        ? e.metaKey && e.altKey && !e.ctrlKey
+        : e.ctrlKey && e.altKey && !e.metaKey;
+
+      // This toggles up next
+      if (e.code === "KeyU" && hasModifier) {
+        e.preventDefault();
+        setIsUpNextOpen(!isUpNextOpen);
+        return;
+      }
+
+      // This toggles the "full screen" now playing view
+      if (e.code === "KeyP" && hasModifier && currentTrack) {
+        e.preventDefault();
+        toggleNowPlaying(!isNowPlayingOpen);
+        return;
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
+  });
+
+  // There is nothing to show at "/", start with the artists instead
+  if (location.pathname === "/") {
+    return <Navigate to="/artists" replace />;
+  }
 
   // Open Up Next when dragging something onto the player, so it can be
   // dropped there.
