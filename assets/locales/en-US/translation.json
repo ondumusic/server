@@ -194,6 +194,16 @@
     "confirm": "Logout",
     "message": "Are you sure you want to logout?"
   },
+  "promptResetDatabase": {
+    "cancel": "Cancel",
+    "confirm": "Reset",
+    "message": "Are you sure you want to reset your local database?"
+  },
+  "promptResetSettings": {
+    "cancel": "Cancel",
+    "confirm": "Reset",
+    "message": "Are you sure you want to reset your local settings?"
+  },
   "scanType": {
     "full": "Full Scan (includes existing files)",
     "quick": "Quick Scan (skips existing)"
@@ -203,19 +213,20 @@
     "dragItems_other": "{{ count }} items"
   },
   "settings": {
+    "account": {
+      "cancelPassword": "Cancel",
+      "changePassword": "Change Password",
+      "logout": "Logout",
+      "password": "Password",
+      "security": "Security",
+      "summary": "Your account and password.",
+      "title": "Account"
+    },
     "appearance": {
       "accentColor": "Accent Color",
       "summary": "These settings are stored locally for this browser only.",
       "theme": "Theme",
       "title": "Appearance"
-    },
-    "general": {
-      "currentlyLoggedIn": "Logged in as <strong>{{username}}</strong>",
-      "logout": "Logout",
-      "resetLocalDatabase": "Reset Local Database",
-      "resetUserSettings": "Reset User Settings",
-      "subtitle": "Change user preferences",
-      "title": "General"
     },
     "issues": {
       "albumCount_one": "{{count}} album",
@@ -235,26 +246,43 @@
       "trackCount_other": "{{count}} tracks"
     },
     "library": {
+      "albumCount_one": "{{formattedCount}} albums",
+      "albumCount_other": "{{formattedCount}} albums",
+      "artistCount_one": "{{formattedCount}} artists",
+      "artistCount_other": "{{formattedCount}} artists",
+      "playlistCount_one": "{{formattedCount}} playlists",
+      "playlistCount_other": "{{formattedCount}} playlists",
       "save": "Save Changes",
-      "subtitle": "Change your music library settings",
-      "title": "Library"
-    },
-    "maintenance": {
-      "summary": "Sometimes you just need a little reset.",
-      "title": "Maintenance"
+      "scanning": "Scanning",
+      "title": "Library",
+      "trackCount_one": "{{formattedCount}} tracks",
+      "trackCount_other": "{{formattedCount}} tracks"
     },
     "password": {
       "save": "Update Password"
     },
+    "playback": {
+      "summary": "These settings are stored locally for this browser only.",
+      "title": "Playback"
+    },
     "playHistory": {
-      "record": "Enabled",
       "recordInBrowser": "Yes, record and sync play history.",
       "summary": "Record and sync your play history to your Ondu Server.",
       "title": "Play History"
     },
-    "security": {
-      "subtitle": "Change your password",
-      "title": "Security"
+    "sections": {
+      "browser": "This Browser",
+      "server": "Server"
+    },
+    "storage": {
+      "localDatabase": "Local Database",
+      "localDatabaseHelp": "Resets your local IndexedDB and starts a new sync.",
+      "resetLocalDatabase": "Reset Local Database",
+      "resetUserSettings": "Reset User Settings",
+      "summary": "Sometimes you just need a little reset.",
+      "title": "Storage",
+      "userSettings": "User Settings",
+      "userSettingsHelp": "Resets all the custom settings for this browser session."
     },
     "title": "Settings"
   },
@@ -309,12 +337,6 @@
     "dateDesc": "Newest First",
     "textAsc": "A-Z",
     "textDesc": "Z-A"
-  },
-  "stats": {
-    "albums": "Albums",
-    "artists": "Artists",
-    "playlists": "Playlists",
-    "tracks": "Tracks"
   },
   "sync": {
     "albums_one": "{{count}} album",

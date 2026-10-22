@@ -3,7 +3,7 @@ import { CheckIcon } from "../components/icons/CheckIcon";
 import { PlusIcon } from "../components/icons/PlusIcon";
 import { WarningIcon } from "../components/icons/WarningIcon";
 import i18next from "../i18next";
-import { isAccessible } from "../utils/updateAccentColor";
+import { DEFAULT_ACCENT_COLOR, isAccessible } from "../utils/updateAccentColor";
 
 export function ColorPicker({
   value,
@@ -13,7 +13,7 @@ export function ColorPicker({
   onChange: (color: string) => void;
 }) {
   const presets = [
-    "#3b82f6", // blue
+    DEFAULT_ACCENT_COLOR, // blue
     "#ea580c", // orange
     "#16a34a", // green
     "#dc2626", // red

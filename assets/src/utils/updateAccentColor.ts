@@ -27,8 +27,19 @@ function generateAccentPalette(baseColor: string): Record<string, string> {
   );
 }
 
+// The blue from the Ondu branding
+export const DEFAULT_ACCENT_COLOR = "#3868f1";
+
 export function getAccentColor() {
-  return localStorage.getItem("baseAccentColor") ?? "#3b82f6";
+  return localStorage.getItem("baseAccentColor") ?? DEFAULT_ACCENT_COLOR;
+}
+
+function darkModeColor(baseColor: string) {
+  const base = oklch(parse(baseColor));
+  if (!base) throw new Error(`Invalid color: ${baseColor}`);
+
+  const l = base.l + Math.max(0, 0.7 - base.l) * 0.5;
+  return formatHex({ ...base, l });
 }
 
 export function applyAccentColor() {
@@ -39,6 +50,10 @@ export function applyAccentColor() {
   for (const [shade, hex] of Object.entries(palette)) {
     root.style.setProperty(`--accent-${shade}`, hex);
   }
+
+  root.style.removeProperty("--accent-500");
+  root.style.setProperty("--accent-light-500", palette[500]);
+  root.style.setProperty("--accent-dark-500", darkModeColor(baseColor));
 }
 
 export function updateAccentColor(baseColor: string) {

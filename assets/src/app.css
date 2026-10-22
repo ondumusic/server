@@ -10,7 +10,6 @@
     --accent-200: var(--color-blue-200);
     --accent-300: var(--color-blue-300);
     --accent-400: var(--color-blue-400);
-    --accent-500: var(--color-blue-500);
     --accent-600: var(--color-blue-600);
     --accent-700: var(--color-blue-700);
     --accent-800: var(--color-blue-800);
@@ -21,6 +20,8 @@
 
 :root,
 [data-theme="light"] {
+  --accent-500: var(--accent-light-500, var(--color-blue-500));
+
   --text-selected: var(--color-black);
 
   --page-bg: var(--color-zinc-100);
@@ -57,6 +58,8 @@
 }
 
 [data-theme="dark"] {
+  --accent-500: var(--accent-dark-500, var(--color-blue-500));
+
   --text-selected: var(--color-white);
 
   --page-bg: rgb(24, 22, 21);
@@ -73,7 +76,7 @@
 
   --sidenav-bg: rgb(38, 35, 33);
   --sidebar-bg: rgb(31, 29, 27);
-  --sidebar-active-bg: var(--accent-600);
+  --sidebar-active-bg: var(--accent-500);
   --sidebar-active-fg: var(--color-white);
   --sidebar-inactive-bg: rgba(255, 255, 255, 0.12);
   --sidebar-inactive-fg: rgba(255, 255, 255, 1);

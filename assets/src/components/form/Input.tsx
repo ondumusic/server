@@ -48,7 +48,7 @@ export function Input<T>(props: Props<T>) {
   return (
     <div
       className={
-        form.horizontal ? "grid grid-cols-8 gap-6 group/horizontal-form" : ""
+        form.horizontal ? "flex flex-col @xl:flex-row gap-x-8 gap-y-2" : ""
       }
     >
       <Label
@@ -58,7 +58,11 @@ export function Input<T>(props: Props<T>) {
         horizontal={form.horizontal === true}
       />
 
-      <div className={form.horizontal ? "col-span-5" : ""}>
+      <div
+        className={
+          form.horizontal ? "flex-1 min-w-0 max-w-md *:first:mt-0" : ""
+        }
+      >
         {inputType === "select" && (
           <Select
             id={id}

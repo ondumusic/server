@@ -12,8 +12,10 @@ export function Label(props: Props) {
     <label
       htmlFor={props.htmlFor}
       className={classNames([
-        "block text-sm font-semibold leading-6",
-        props.horizontal && "col-span-2 pt-3",
+        "block text-sm leading-6",
+        props.horizontal
+          ? "@xl:w-48 flex-shrink-0 @xl:pt-2 font-medium"
+          : "font-semibold",
         !props.hasError && "text-label",
         props.hasError && "text-error",
       ])}
