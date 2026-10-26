@@ -209,7 +209,6 @@ defmodule Ondu.Transcoder do
   def handle_info({:transcoding_failed, %Job{} = job}, state) do
     %{file: file} = job
     upsert_meta(job, %{failed_at: Utils.timestamp()})
-    Elixir.File.rm(Utils.tmp_file_path(file.id, job.preset))
 
     # Notify all pending requests for this file (any chunk)
     state.requests
@@ -399,14 +398,7 @@ defmodule Ondu.Transcoder do
         cleanup_lookup_key(lookup_key)
         :ok
 
-      {:error, :already_exists} ->
-        # Non-streamable transcodes already have existing files, so if the file
-        # already exists we will presume it is the correct file.
-        unless preset.streamable? do
-          cleanup_lookup_key(lookup_key)
-        end
-
-      _ ->
+      _error ->
         :ok
     end
   end

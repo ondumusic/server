@@ -92,7 +92,6 @@ defmodule OnduWeb.Router do
 
     get "/tracks", LibraryController, :tracks
     get "/tracks/:track_id", LibraryController, :track
-    get "/tracks/:track_id/transcode", StreamController, :transcode
     post "/plays", PlayController, :record_plays
 
     get "/annotations/:namespace/:entity_type", AnnotationController, :index

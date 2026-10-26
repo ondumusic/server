@@ -27,48 +27,48 @@ defmodule Ondu.Transcoder.CacheCleanupTest do
   } do
     update_record(changed, %{content_changed_at: ~U[2026-06-01 11:00:00Z]})
 
-    write_transcode(kept.id, "default_opus", 10, @old)
+    write_transcode(kept.id, "default_ogg", 10, @old)
     write_transcode(kept.id, "removed_preset", 10, @old)
-    write_transcode(changed.id, "default_opus", 10, @old)
-    write_transcode(Ecto.UUID.generate(), "default_opus", 10, @old)
+    write_transcode(changed.id, "default_ogg", 10, @old)
+    write_transcode(Ecto.UUID.generate(), "default_ogg", 10, @old)
     File.write!(Path.join(cache_path, "notes.txt"), "not a transcode")
 
     assert {:ok, 3} = CacheCleanup.run(now: @now, max_size: nil)
 
     assert Enum.sort(File.ls!(cache_path)) ==
-             Enum.sort(["#{kept.id}-default_opus.opus", "notes.txt"])
+             Enum.sort(["#{kept.id}-default_ogg.opus", "notes.txt"])
   end
 
   test "keeps transcodes completed in the last hour", %{cache_path: cache_path} do
     deleted_file_id = Ecto.UUID.generate()
-    write_transcode(deleted_file_id, "default_opus", 10, @recent)
+    write_transcode(deleted_file_id, "default_ogg", 10, @recent)
 
     assert {:ok, 0} = CacheCleanup.run(now: @now, max_size: 1)
-    assert File.ls!(cache_path) == ["#{deleted_file_id}-default_opus.opus"]
+    assert File.ls!(cache_path) == ["#{deleted_file_id}-default_ogg.opus"]
   end
 
   test "removes the oldest transcodes over the maximum size", %{
     cache_path: cache_path,
     files: [first, second, third]
   } do
-    write_transcode(first.id, "default_opus", 10, ~U[2026-06-01 08:00:00Z])
-    write_transcode(second.id, "default_opus", 10, ~U[2026-06-01 09:00:00Z])
-    write_transcode(third.id, "default_opus", 10, @old)
+    write_transcode(first.id, "default_ogg", 10, ~U[2026-06-01 08:00:00Z])
+    write_transcode(second.id, "default_ogg", 10, ~U[2026-06-01 09:00:00Z])
+    write_transcode(third.id, "default_ogg", 10, @old)
     # Counts towards the size, but is too recent to remove.
-    write_transcode(first.id, "mobile_opus", 10, @recent)
+    write_transcode(first.id, "mobile_ogg", 10, @recent)
 
     assert {:ok, 2} = CacheCleanup.run(now: @now, max_size: 25)
 
     assert Enum.sort(File.ls!(cache_path)) ==
-             Enum.sort(["#{third.id}-default_opus.opus", "#{first.id}-mobile_opus.opus"])
+             Enum.sort(["#{third.id}-default_ogg.opus", "#{first.id}-mobile_ogg.opus"])
   end
 
   test "does not limit the size without a maximum size", %{
     cache_path: cache_path,
     files: [first, second | _]
   } do
-    write_transcode(first.id, "default_opus", 10, @old)
-    write_transcode(second.id, "default_opus", 10, @old)
+    write_transcode(first.id, "default_ogg", 10, @old)
+    write_transcode(second.id, "default_ogg", 10, @old)
 
     assert {:ok, 0} = CacheCleanup.run(now: @now, max_size: nil)
     assert length(File.ls!(cache_path)) == 2

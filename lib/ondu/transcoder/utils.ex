@@ -8,41 +8,19 @@ defmodule Ondu.Transcoder.Utils do
   @spec chunk_size() :: non_neg_integer()
   def chunk_size, do: 1024 * 128
 
-  @spec default_range_size() :: non_neg_integer()
-  def default_range_size, do: 1024 * 256
-
   @spec timestamp() :: non_neg_integer()
   def timestamp, do: DateTime.utc_now() |> DateTime.to_unix()
 
   @doc """
-  The size of a transcode when it is known: of a completed transcode, or of a
-  preset with an exact size which is known before the transcode even started.
+  The size of a transcode: of the completed transcode, else the size it will
+  have, which is known before it even started.
   """
-  @spec known_file_size(File.t(), Preset.t()) :: non_neg_integer() | nil
+  @spec known_file_size(File.t(), Preset.t()) :: non_neg_integer()
   def known_file_size(file, preset) do
     case Transcoder.get_meta(file, preset) do
       %{file_size: size} when is_integer(size) and size > 0 -> size
-      _ when preset.exact_size? -> Preset.predicted_size(file, preset)
-      _ -> nil
+      _ -> Preset.predicted_size(file, preset)
     end
-  end
-
-  @spec estimate_file_size(File.t(), Preset.t()) :: non_neg_integer()
-  def estimate_file_size(%File{metadata: %{duration: duration}} = file, %{id: preset_id} = preset)
-      when preset_id in ~w(mobile_aac default_aac)a do
-    audio_bytes = Preset.bitrate(file, preset) * 1000 * duration / 8
-    est_overhead = 1.06
-    round(audio_bytes * est_overhead)
-  end
-
-  def estimate_file_size(%File{metadata: %{duration: duration}} = file, preset) do
-    audio_bytes = Preset.bitrate(file, preset) * 1000 * duration / 8
-
-    # Estimate the container and opus overhead (6%)
-    # this is most likely too much, but that's preferred because if we
-    # underestimate the transcode stream might end abruptly depending on client
-    est_overhead = 1.06
-    round(audio_bytes * est_overhead)
   end
 
   @spec calculate_timeout(File.t()) :: non_neg_integer()
@@ -117,10 +95,4 @@ defmodule Ondu.Transcoder.Utils do
   # leftovers (e.g. after a crash) can be cleaned up.
   @spec tmp_dir() :: String.t()
   def tmp_dir, do: Path.join(Ondu.Config.transcode_cache_path(), "tmp")
-
-  @spec tmp_file_path(file_id :: String.t(), preset :: Preset.t()) :: String.t()
-  def tmp_file_path(file_id, %Preset{} = preset) do
-    filename = "#{file_id}-#{preset.id}.#{preset.ext}.tmp"
-    Path.join(tmp_dir(), filename)
-  end
 end

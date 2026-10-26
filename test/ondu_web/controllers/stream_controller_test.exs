@@ -93,54 +93,6 @@ defmodule OnduWeb.StreamControllerTest do
     setup :register_and_log_in_user
     setup :set_mox_global
 
-    setup do
-      # Completed transcodes are persisted, start without them.
-      File.rm_rf!("./tmp/test/transcode")
-      :ok
-    end
-
-    test "returns the size once transcoded", %{conn: conn, track: track} do
-      start_supervised!(Transcoder)
-      stub_transcode(~s(cat "$1"))
-
-      conn = get(conn, ~p"/api/tracks/#{track}/transcode")
-
-      assert response(conn, 200) =~ ~r/^data: {"size":\d+}$/m
-    end
-
-    test "returns an error event when transcoding fails", %{conn: conn, track: track} do
-      start_supervised!(Transcoder)
-      # Fails after the first chunk was transcoded.
-      stub_transcode("head -c #{Transcoder.Utils.chunk_size() * 2} /dev/zero; exit 1")
-
-      conn = get(conn, ~p"/api/tracks/#{track}/transcode")
-
-      assert response(conn, 200) =~ ~s(event: error\ndata: {"error":"Transcoding failed"})
-    end
-
-    test "returns an error when transcoding fails right away", %{conn: conn, track: track} do
-      start_supervised!(Transcoder)
-      stub_transcode("exit 1")
-
-      conn = get(conn, ~p"/api/tracks/#{track}/transcode")
-
-      assert %{"error" => "Transcoding failed"} = json_response(conn, 500)
-    end
-
-    test "returns busy when too many transcodes are running", %{conn: conn, track: track} do
-      start_supervised!({Transcoder, max_concurrency: 0, max_queue_size: 0})
-
-      conn = get(conn, ~p"/api/tracks/#{track}/transcode")
-
-      assert response(conn, 503)
-      assert get_resp_header(conn, "retry-after") == ["5"]
-    end
-  end
-
-  describe "transcode with an exact size" do
-    setup :register_and_log_in_user
-    setup :set_mox_global
-
     setup %{track: track} do
       File.rm_rf!("./tmp/test/transcode")
       start_supervised!(Transcoder)
