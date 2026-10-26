@@ -9,7 +9,7 @@ defmodule Ondu.Transcoder.Job do
   alias Ondu.Files.File
   alias Ondu.Storage
   alias Ondu.Tool
-  alias Ondu.Transcoder.{AACGapless, Job, Preset, Trim, Utils}
+  alias Ondu.Transcoder.{AACGapless, Job, OggPadding, Preset, Trim, Utils}
 
   require Logger
 
@@ -77,7 +77,9 @@ defmodule Ondu.Transcoder.Job do
     end
   end
 
-  defp read_chunks(port, job, parent, chunk_index \\ 0, buffer \\ <<>>) do
+  # The previous chunk is kept so the padding can see the stream's last page,
+  # which can be larger than what is left in the buffer at the end.
+  defp read_chunks(port, job, parent, chunk_index \\ 0, buffer \\ <<>>, previous \\ <<>>) do
     chunk_size = Utils.chunk_size()
     timeout = Utils.calculate_timeout(job.file)
 
@@ -89,15 +91,15 @@ defmodule Ondu.Transcoder.Job do
           true ->
             {chunk, remaining} = :erlang.split_binary(new_buffer, chunk_size)
             send(parent, {:chunk, job, chunk_index, chunk})
-            read_chunks(port, job, parent, chunk_index + 1, remaining)
+            read_chunks(port, job, parent, chunk_index + 1, remaining, chunk)
 
           false ->
-            read_chunks(port, job, parent, chunk_index, new_buffer)
+            read_chunks(port, job, parent, chunk_index, new_buffer, previous)
         end
 
       {^port, {:exit_status, 0}} ->
         if Port.info(port), do: Port.close(port)
-        buffer = pad_to_predicted_size!(job, chunk_index, buffer)
+        buffer = pad_to_predicted_size!(job, chunk_index, buffer, previous)
         flush_chunks(parent, job, chunk_index, buffer)
 
       {^port, {:exit_status, status}} ->
@@ -111,10 +113,14 @@ defmodule Ondu.Transcoder.Job do
   end
 
   # Presets with an exact size promised that size to the clients, so the
-  # output is padded with zeros up to it. Ogg readers skip bytes that are not
-  # a page. More output than promised means the prediction is wrong, which
-  # cannot be served correctly.
-  defp pad_to_predicted_size!(%Job{preset: %{exact_size?: true}} = job, chunk_index, buffer) do
+  # output is padded up to it, see `OggPadding`. More output than promised
+  # means the prediction is wrong, which cannot be served correctly.
+  defp pad_to_predicted_size!(
+         %Job{preset: %{exact_size?: true}} = job,
+         chunk_index,
+         buffer,
+         previous
+       ) do
     predicted = Preset.predicted_size(job.file, job.preset)
     actual = chunk_index * Utils.chunk_size() + byte_size(buffer)
 
@@ -122,10 +128,10 @@ defmodule Ondu.Transcoder.Job do
       raise "ffmpeg output (#{actual} bytes) exceeds the predicted size (#{predicted} bytes)"
     end
 
-    buffer <> :binary.copy(<<0>>, predicted - actual)
+    buffer <> OggPadding.pad(previous <> buffer, predicted - actual)
   end
 
-  defp pad_to_predicted_size!(_job, _chunk_index, buffer), do: buffer
+  defp pad_to_predicted_size!(_job, _chunk_index, buffer, _previous), do: buffer
 
   # Sends the remaining data as chunks and returns the last chunk index.
   defp flush_chunks(_parent, _job, 0, <<>>), do: raise("ffmpeg produced no output")
