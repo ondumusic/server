@@ -1,14 +1,17 @@
 # CHANGELOG
 
 ## Unreleased
-- [Added] `default_ogg` and `mobile_ogg` transcoding presets (Opus in Ogg): gapless, seekable and served with a real `Content-Length` while still transcoding. They are the default now.
-- [Changed] AAC transcodes no longer get a hand written edit list, ffmpeg's own is what players use
-- [Removed] The `adts`, `aac` and WebM `opus` presets and the transcode prepare endpoint, the apps ask for the Ogg presets
-- [Changed] API version 2, apps built against the removed presets are told to update
-- [Changed] Asking for a transcoding preset the server does not have is refused instead of answered with the default
-- [Changed] The end of a transcode is served before it is encoded, so players that read a file's end first (Android, Chrome, Firefox) start right away instead of after the whole transcode
+nothing
+
+## 1.0.0-rc.4 - 2026-10-26
+- [Changed] replace existing transcoding with ogg opus ([#11](https://github.com/ondumusic/server/pull/11))
+- [Added] `default_ogg` and `mobile_ogg` transcoding presets (Opus in Ogg)
+- [Removed] The `adts`, `aac` and WebM `opus` presets and the transcode prepare endpoint
+- [Changed] API version 2, apps are told to update
+- [Changed] Refuse unknown transcoding presets
+- [Changed] The end of a transcode is served before it is encoded (players that read a file's end first (e.g. Android, Chrome) start immediately instead of post-transcode)
 - [Fixed] Range requests on transcodes ending exactly on a chunk boundary were one byte short
-- [Fixed] Transcodes of AAC sources carried the encoder padding at their end, a click at every track change of a gapless album
+- [Fixed] AAC sources carried the encoder padding at their end
 
 ## 1.0.0-rc.3 - 2026-10-22
 - [Changed] redesigned the web ui ([#10](https://github.com/ondumusic/server/pull/10))
