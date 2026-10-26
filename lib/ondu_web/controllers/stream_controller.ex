@@ -26,21 +26,14 @@ defmodule OnduWeb.StreamController do
       ],
       preset: [
         in: :query,
-        description: "Which transcoding preset to use",
+        description: "Which transcoding preset to use.",
         schema: %OpenApiSpex.Schema{
           type: :string,
-          enum: [
-            "default_opus",
-            "mobile_opus",
-            "default_adts",
-            "mobile_adts",
-            "default_aac",
-            "mobile_aac"
-          ],
-          default: "default_opus"
+          enum: Preset.ids(),
+          default: "default_ogg"
         },
         required: false,
-        example: "default_opus"
+        example: "default_ogg"
       ]
     ],
     responses: [
@@ -152,21 +145,14 @@ defmodule OnduWeb.StreamController do
       ],
       preset: [
         in: :query,
-        description: "Which transcoding preset to use",
+        description: "Which transcoding preset to use.",
         schema: %OpenApiSpex.Schema{
           type: :string,
-          enum: [
-            "default_opus",
-            "mobile_opus",
-            "default_adts",
-            "mobile_adts",
-            "default_aac",
-            "mobile_aac"
-          ],
-          default: "default_opus"
+          enum: Preset.ids(),
+          default: "default_ogg"
         },
         required: false,
-        example: "default_opus"
+        example: "default_ogg"
       ],
       range: [
         in: :header,
@@ -222,7 +208,7 @@ defmodule OnduWeb.StreamController do
   def download(conn, %{"transcode" => "1"}) do
     %{track: %{file: file} = track, preset: preset} = conn.assigns
 
-    case actual_file_size(file, preset) do
+    case Utils.known_file_size(file, preset) do
       size when is_integer(size) ->
         conn
         |> put_resp_header("content-length", "#{size}")
@@ -250,21 +236,14 @@ defmodule OnduWeb.StreamController do
       ],
       preset: [
         in: :query,
-        description: "Which transcoding preset to use",
+        description: "Which transcoding preset to use.",
         schema: %OpenApiSpex.Schema{
           type: :string,
-          enum: [
-            "default_opus",
-            "mobile_opus",
-            "default_adts",
-            "mobile_adts",
-            "default_aac",
-            "mobile_aac"
-          ],
-          default: "default_opus"
+          enum: Preset.ids(),
+          default: "default_ogg"
         },
         required: false,
-        example: "default_opus"
+        example: "default_ogg"
       ],
       range: [
         in: :header,
@@ -325,9 +304,15 @@ defmodule OnduWeb.StreamController do
       |> parse_range()
       |> disable_range_for_adts(preset)
 
-    conn
-    |> serve_transcoded(range, track, preset)
-    |> halt()
+    if preset.exact_size? do
+      conn
+      |> serve_sized_transcode(range, track, preset)
+      |> halt()
+    else
+      conn
+      |> serve_transcoded(range, track, preset)
+      |> halt()
+    end
   end
 
   def stream(conn, _params) do
@@ -360,7 +345,55 @@ defmodule OnduWeb.StreamController do
     end
   end
 
-  # Transcoded range dispatch
+  # Presets with an exact size are served like a regular file: the size is
+  # known before the transcode is done, so ranges are honest and a request for
+  # bytes that are not transcoded yet simply waits for them.
+  defp serve_sized_transcode(conn, range, track, preset) do
+    file = track.file
+    size = Utils.known_file_size(file, preset)
+
+    case fit_range(range, size) do
+      {:ok, start_byte, end_byte} ->
+        conn
+        |> put_resp_header("content-range", "bytes #{start_byte}-#{end_byte}/#{size}")
+        |> send_sized_transcode(:partial_content, track, preset, start_byte, end_byte)
+
+      {:error, :unsatisfiable_range} ->
+        conn
+        |> put_status(416)
+        |> put_resp_header("content-range", "bytes */#{size}")
+        |> text("Range Not Satisfiable")
+
+      _ ->
+        send_sized_transcode(conn, :ok, track, preset, 0, size - 1)
+    end
+  end
+
+  # The first chunk is requested before the headers are sent, so a full queue
+  # can still be answered with a busy response (and it starts the transcode).
+  defp send_sized_transcode(conn, status, track, preset, start_byte, end_byte) do
+    file = track.file
+    first_chunk = div(start_byte, Utils.chunk_size())
+
+    case Transcoder.request_chunk(file, preset, first_chunk) do
+      {:ok, _data} ->
+        conn
+        |> put_stream_headers(track, preset)
+        |> put_resp_header("content-length", "#{end_byte - start_byte + 1}")
+        |> send_chunked(status)
+        |> stream_transcoded_range(file, preset, start_byte, end_byte)
+
+      {:error, :server_busy} ->
+        send_busy(conn)
+
+      {:error, _reason} ->
+        conn
+        |> put_status(:internal_server_error)
+        |> text("Transcoding failed")
+    end
+  end
+
+  # Transcoded range dispatch (presets without an exact size)
   # - No range at all -> send entire file
   # - 0 - :infinity -> send entire file (or first default chunk if still transcoding)
   # - N - :infinity -> send a default-sized chunk from offset N

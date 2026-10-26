@@ -87,12 +87,9 @@ defmodule Ondu.Transcoder.Job do
         end
 
       {^port, {:exit_status, 0}} ->
-        if byte_size(buffer) > 0 do
-          send(parent, {:chunk, job, chunk_index, buffer})
-        end
-
         if Port.info(port), do: Port.close(port)
-        chunk_index
+        buffer = pad_to_predicted_size!(job, chunk_index, buffer)
+        flush_chunks(parent, job, chunk_index, buffer)
 
       {^port, {:exit_status, status}} ->
         if Port.info(port), do: Port.close(port)
@@ -101,6 +98,40 @@ defmodule Ondu.Transcoder.Job do
       timeout ->
         Tool.kill(port)
         raise "ffmpeg time out"
+    end
+  end
+
+  # Presets with an exact size promised that size to the clients, so the
+  # output is padded with zeros up to it. Ogg readers skip bytes that are not
+  # a page. More output than promised means the prediction is wrong, which
+  # cannot be served correctly.
+  defp pad_to_predicted_size!(%Job{preset: %{exact_size?: true}} = job, chunk_index, buffer) do
+    predicted = Preset.predicted_size(job.file, job.preset)
+    actual = chunk_index * Utils.chunk_size() + byte_size(buffer)
+
+    if actual > predicted do
+      raise "ffmpeg output (#{actual} bytes) exceeds the predicted size (#{predicted} bytes)"
+    end
+
+    buffer <> :binary.copy(<<0>>, predicted - actual)
+  end
+
+  defp pad_to_predicted_size!(_job, _chunk_index, buffer), do: buffer
+
+  # Sends the remaining data as chunks and returns the last chunk index.
+  defp flush_chunks(_parent, _job, 0, <<>>), do: raise("ffmpeg produced no output")
+  defp flush_chunks(_parent, _job, chunk_index, <<>>), do: chunk_index - 1
+
+  defp flush_chunks(parent, job, chunk_index, data) do
+    chunk_size = Utils.chunk_size()
+
+    if byte_size(data) > chunk_size do
+      {chunk, remaining} = :erlang.split_binary(data, chunk_size)
+      send(parent, {:chunk, job, chunk_index, chunk})
+      flush_chunks(parent, job, chunk_index + 1, remaining)
+    else
+      send(parent, {:chunk, job, chunk_index, data})
+      chunk_index
     end
   end
 

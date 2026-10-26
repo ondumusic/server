@@ -14,6 +14,19 @@ defmodule Ondu.Transcoder.Utils do
   @spec timestamp() :: non_neg_integer()
   def timestamp, do: DateTime.utc_now() |> DateTime.to_unix()
 
+  @doc """
+  The size of a transcode when it is known: of a completed transcode, or of a
+  preset with an exact size which is known before the transcode even started.
+  """
+  @spec known_file_size(File.t(), Preset.t()) :: non_neg_integer() | nil
+  def known_file_size(file, preset) do
+    case Transcoder.get_meta(file, preset) do
+      %{file_size: size} when is_integer(size) and size > 0 -> size
+      _ when preset.exact_size? -> Preset.predicted_size(file, preset)
+      _ -> nil
+    end
+  end
+
   @spec estimate_file_size(File.t(), Preset.t()) :: non_neg_integer()
   def estimate_file_size(%File{metadata: %{duration: duration}} = file, %{id: preset_id} = preset)
       when preset_id in ~w(mobile_aac default_aac)a do
