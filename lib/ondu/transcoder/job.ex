@@ -99,7 +99,7 @@ defmodule Ondu.Transcoder.Job do
 
       {^port, {:exit_status, 0}} ->
         if Port.info(port), do: Port.close(port)
-        buffer = pad_to_predicted_size!(job, chunk_index, buffer, previous)
+        buffer = pad_to_predicted_size(job, chunk_index, buffer, previous)
         flush_chunks(parent, job, chunk_index, buffer)
 
       {^port, {:exit_status, status}} ->
@@ -114,8 +114,10 @@ defmodule Ondu.Transcoder.Job do
 
   # Presets with an exact size promised that size to the clients, so the
   # output is padded up to it, see `OggPadding`. More output than promised
-  # means the prediction is wrong, which cannot be served correctly.
-  defp pad_to_predicted_size!(
+  # means the file's stored duration is too short. The transcode is completed
+  # anyway: whoever is listening right now is cut short, but once cached its
+  # real size is what gets promised. Failing instead would fail every play.
+  defp pad_to_predicted_size(
          %Job{preset: %{exact_size?: true}} = job,
          chunk_index,
          buffer,
@@ -125,13 +127,18 @@ defmodule Ondu.Transcoder.Job do
     actual = chunk_index * Utils.chunk_size() + byte_size(buffer)
 
     if actual > predicted do
-      raise "ffmpeg output (#{actual} bytes) exceeds the predicted size (#{predicted} bytes)"
-    end
+      Logger.warning(
+        "Transcode of #{job.file.path} (#{job.preset.id}) exceeds the predicted size " <>
+          "(#{actual} > #{predicted} bytes), its duration is probably wrong"
+      )
 
-    buffer <> OggPadding.pad(previous <> buffer, predicted - actual)
+      buffer
+    else
+      buffer <> OggPadding.pad(previous <> buffer, predicted - actual)
+    end
   end
 
-  defp pad_to_predicted_size!(_job, _chunk_index, buffer, _previous), do: buffer
+  defp pad_to_predicted_size(_job, _chunk_index, buffer, _previous), do: buffer
 
   # Sends the remaining data as chunks and returns the last chunk index.
   defp flush_chunks(_parent, _job, 0, <<>>), do: raise("ffmpeg produced no output")
