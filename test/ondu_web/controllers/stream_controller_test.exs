@@ -18,6 +18,8 @@ defmodule OnduWeb.StreamControllerTest do
 
   # Pretends to be ffmpeg, the shell script runs with the input path as $1.
   defp stub_transcode(script) do
+    stub(Ondu.Tool.ProbeMock, :exec, fn _path -> {:error, :probe_failed} end)
+
     stub(Ondu.Tool.TranscodeMock, :exec, fn args ->
       "file://" <> input = Enum.at(args, Enum.find_index(args, &(&1 == "-i")) + 1)
 

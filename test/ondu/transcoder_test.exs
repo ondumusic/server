@@ -36,6 +36,9 @@ defmodule Ondu.TranscoderTest do
       open_port(args)
     end)
 
+    # Nothing to trim, unless a test says otherwise.
+    stub(Tool.ProbeMock, :exec, fn _path -> {:error, :probe_failed} end)
+
     transcoder_pid = start_supervised!(Transcoder)
 
     on_exit(fn ->
@@ -560,6 +563,22 @@ defmodule Ondu.TranscoderTest do
                Enum.drop(args, 2)
     end
 
+    test "cuts the end padding of aac sources", %{track: track} do
+      stub(Tool.ProbeMock, :exec, fn _path ->
+        {:ok,
+         %{
+           "streams" => [%{"codec_type" => "audio", "codec_name" => "aac", "duration_ts" => 1}],
+           "format" => %{
+             "tags" => %{"iTunSMPB" => " 00000000 00000840 000001C8 0000000000B185F8"}
+           }
+         }}
+      end)
+
+      Transcoder.request_chunk(track.file, Transcoder.Preset.get(:default_ogg), 0)
+
+      assert_receive {:transcode_called, ["-i", _uri, "-af", "atrim=end_sample=11634168" | _]}
+    end
+
     test "the default preset is default_ogg" do
       assert %{id: :default_ogg} = Transcoder.Preset.default_preset()
       assert %{id: :default_ogg} = Transcoder.Preset.get("default")
@@ -616,7 +635,54 @@ defmodule Ondu.TranscoderTest do
 
     setup do
       stub(Tool.TranscodeMock, :exec, &Tool.Transcode.exec/1)
+      stub(Tool.ProbeMock, :exec, &Tool.Probe.exec/1)
       :ok
+    end
+
+    # An album track from an AAC source: ffmpeg leaves the encoder padding at
+    # its end, which would click at the next track. Built here from the flac
+    # fixture, since the fixtures carry no padding information.
+    test "transcodes of aac sources end where the music ends", %{track: track} do
+      source =
+        Path.join(System.tmp_dir!(), "padded-source-#{System.unique_integer([:positive])}.m4a")
+
+      flac = absolute("with_tags/sample.flac")
+
+      {_, 0} =
+        System.cmd(
+          "ffmpeg",
+          ~w(-nostdin -v error -y -i #{flac} -c:a aac -b:a 128k -ar 44100) ++ [source]
+        )
+
+      {valid, ""} =
+        "ffprobe"
+        |> System.cmd(~w(-v error -show_entries stream=duration_ts -of csv=p=0) ++ [flac])
+        |> elem(0)
+        |> String.trim()
+        |> Integer.parse()
+
+      # Apple's encoders write iTunSMPB and no edit list, this exercises both ways of knowing the count.
+      :ok =
+        Transcoder.AACGapless.write_smpb(
+          source,
+          "00000000 00000400 00000000 " <>
+            String.pad_leading(Integer.to_string(valid, 16), 16, "0")
+        )
+
+      preset = Transcoder.Preset.get(:mobile_ogg)
+      file = track |> with_fixture(source) |> Map.fetch!(:file) |> with_probed_duration()
+      cache_file = Transcoder.Cache.cache_file_path(file.id, preset)
+      assert {:ok, _chunk} = Transcoder.request_chunk(file, preset, 0)
+      assert_eventually(fn -> File.exists?(cache_file) end, 500)
+
+      {pcm, 0} =
+        System.cmd(
+          "ffmpeg",
+          ~w(-nostdin -v error -i #{cache_file} -f s16le -ac 1 -ar 44100 pipe:1)
+        )
+
+      assert_in_delta div(byte_size(pcm), 2), valid, 2
+      File.rm!(source)
     end
 
     # The whole point of the Ogg presets: the prediction is an upper bound for

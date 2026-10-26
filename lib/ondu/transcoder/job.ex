@@ -9,7 +9,7 @@ defmodule Ondu.Transcoder.Job do
   alias Ondu.Files.File
   alias Ondu.Storage
   alias Ondu.Tool
-  alias Ondu.Transcoder.{AACGapless, Job, Preset, Utils}
+  alias Ondu.Transcoder.{AACGapless, Job, Preset, Trim, Utils}
 
   require Logger
 
@@ -51,7 +51,8 @@ defmodule Ondu.Transcoder.Job do
   end
 
   defp transcode_file(%Job{} = job, parent) do
-    args = Preset.ffmpeg_args(job.file, job.preset)
+    valid_samples = valid_samples(job.file)
+    args = Preset.ffmpeg_args(job.file, job.preset, valid_samples: valid_samples)
     {:ok, port} = Tool.transcode(args)
 
     # ffmpeg will not create directories so we need to make sure the output
@@ -64,7 +65,15 @@ defmodule Ondu.Transcoder.Job do
     if job.preset.streamable? do
       read_chunks(port, job, parent)
     else
-      await_transcode(port, job, parent)
+      await_transcode(port, job, parent, valid_samples)
+    end
+  end
+
+  # A failed probe only means the source is transcoded whole, as it was before.
+  defp valid_samples(%File{} = file) do
+    case Tool.probe(Storage.get_uri(file.path)) do
+      {:ok, probe} -> Trim.valid_samples(probe)
+      _error -> nil
     end
   end
 
@@ -135,16 +144,16 @@ defmodule Ondu.Transcoder.Job do
     end
   end
 
-  defp await_transcode(port, job, parent, data \\ <<>>) do
+  defp await_transcode(port, job, parent, valid_samples, data \\ <<>>) do
     timeout = Utils.calculate_timeout(job.file)
 
     receive do
       {^port, {:data, new_data}} ->
-        await_transcode(port, job, parent, data <> new_data)
+        await_transcode(port, job, parent, valid_samples, data <> new_data)
 
       {^port, {:exit_status, 0}} ->
         if Port.info(port), do: Port.close(port)
-        consume_output_file!(job, parent)
+        consume_output_file!(job, parent, valid_samples)
 
       {^port, {:exit_status, status}} ->
         if Port.info(port), do: Port.close(port)
@@ -156,7 +165,7 @@ defmodule Ondu.Transcoder.Job do
     end
   end
 
-  defp consume_output_file!(job, parent) do
+  defp consume_output_file!(job, parent, valid_samples) do
     ffmpeg_output_file = Utils.tmp_file_path(job.file.id, job.preset)
 
     unless Elixir.File.exists?(ffmpeg_output_file) do
@@ -164,7 +173,7 @@ defmodule Ondu.Transcoder.Job do
     end
 
     # If needed inject the iTunSMPB tag for gapless AAC.
-    maybe_make_gapless(job)
+    maybe_make_gapless(job, valid_samples)
 
     # Get the File size to calculate the amount of chunks we will be streaming
     %Elixir.File.Stat{size: file_size} = Elixir.File.stat!(ffmpeg_output_file, time: :posix)
@@ -198,10 +207,13 @@ defmodule Ondu.Transcoder.Job do
   # ffmpeg already writes the edit list and trims the last sample, which is
   # what AVPlayer needs for gapless playback. ExoPlayer reads the iTunSMPB tag
   # instead, which ffmpeg cannot write in the form it expects.
-  defp maybe_make_gapless(%{preset: %{streamable?: false, ffmpeg_preset: :aac}} = job) do
+  defp maybe_make_gapless(
+         %{preset: %{streamable?: false, ffmpeg_preset: :aac}} = job,
+         source_valid_samples
+       ) do
     ffmpeg_output_file = Utils.tmp_file_path(job.file.id, job.preset)
     sample_rate = Preset.sample_rate(job.file, job.preset)
-    valid_samples = round(job.file.metadata.duration * sample_rate)
+    valid_samples = target_valid_samples(job.file, sample_rate, source_valid_samples)
 
     case AACGapless.inject_smpb(ffmpeg_output_file, valid_samples) do
       :ok ->
@@ -216,5 +228,18 @@ defmodule Ondu.Transcoder.Job do
     end
   end
 
-  defp maybe_make_gapless(_job), do: :noop
+  defp maybe_make_gapless(_job, _valid_samples), do: :noop
+
+  # The valid samples at the transcode's rate: from the source's own count when
+  # it has one, else from its duration (which includes any padding).
+  defp target_valid_samples(
+         %File{metadata: %{sample_rate: source_rate}},
+         sample_rate,
+         source_valid_samples
+       )
+       when is_integer(source_valid_samples) and is_integer(source_rate) and source_rate > 0,
+       do: round(source_valid_samples * sample_rate / source_rate)
+
+  defp target_valid_samples(%File{metadata: %{duration: duration}}, sample_rate, _samples),
+    do: round(duration * sample_rate)
 end
