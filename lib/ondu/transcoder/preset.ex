@@ -3,38 +3,47 @@ defmodule Ondu.Transcoder.Preset do
   This module defines all possible presets and ffmpeg argument helper functions.
 
   ## Currently defined presets
-  ┌─────────────────────┬───────┬─────────┬─────────────┬─────────┬───────────┬────────────┐
-  │       Preset        │ Codec │ Bitrate │ Sample Rate │ Format  │ Extension │    MIME    │
-  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┤
-  │ Default AAC (M4A)   │ AAC   │ 256k    │ 44100       │ -f mp4  │ .m4a      │ audio/mp4  │
-  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┤
-  │ Default ADTS stream │ AAC   │ 256k    │ 44100       │ -f adts │ .aac      │ audio/aac  │
-  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┤
-  │ Default Opus        │ Opus  │ 192k    │ 48000       │ -f webm │ .webm     │ audio/webm │
-  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┤
-  │ Mobile AAC (M4A)    │ AAC   │ 128k    │ 44100       │ -f mp4  │ .m4a      │ audio/mp4  │
-  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┤
-  │ Mobile ADTS stream  │ AAC   │ 128k    │ 44100       │ -f adts │ .aac      │ audio/aac  │
-  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┤
-  │ Mobile Opus         │ Opus  │ 96k     │ 48000       │ -f webm │ .webm     │ audio/webm │
-  └─────────────────────┴───────┴─────────┴─────────────┴─────────┴───────────┴────────────┘
+  ┌─────────────────────┬───────┬─────────┬─────────────┬─────────┬───────────┬────────────┬────────────┐
+  │       Preset        │ Codec │ Bitrate │ Sample Rate │ Format  │ Extension │    MIME    │ Exact size │
+  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┼────────────┤
+  │ Default Ogg (Opus)  │ Opus  │ 192k    │ 48000       │ -f ogg  │ .opus     │ audio/ogg  │ yes        │
+  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┼────────────┤
+  │ Mobile Ogg (Opus)   │ Opus  │ 96k     │ 48000       │ -f ogg  │ .opus     │ audio/ogg  │ yes        │
+  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┼────────────┤
+  │ Default AAC (M4A)   │ AAC   │ 256k    │ 44100       │ -f mp4  │ .m4a      │ audio/mp4  │ when done  │
+  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┼────────────┤
+  │ Mobile AAC (M4A)    │ AAC   │ 128k    │ 44100       │ -f mp4  │ .m4a      │ audio/mp4  │ when done  │
+  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┼────────────┤
+  │ Default ADTS stream │ AAC   │ 256k    │ 44100       │ -f adts │ .aac      │ audio/aac  │ no         │
+  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┼────────────┤
+  │ Mobile ADTS stream  │ AAC   │ 128k    │ 44100       │ -f adts │ .aac      │ audio/aac  │ no         │
+  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┼────────────┤
+  │ Default Opus (WebM) │ Opus  │ 192k    │ 48000       │ -f webm │ .webm     │ audio/webm │ no         │
+  ├─────────────────────┼───────┼─────────┼─────────────┼─────────┼───────────┼────────────┼────────────┤
+  │ Mobile Opus (WebM)  │ Opus  │ 96k     │ 48000       │ -f webm │ .webm     │ audio/webm │ no         │
+  └─────────────────────┴───────┴─────────┴─────────────┴─────────┴───────────┴────────────┴────────────┘
 
-  ## About AAC/ADTS
-  This seems a bit confusing but the reasoning behind it is a best attempt at
-  having working gapless playback support. However doing this requires a two-step
-  transcoding pipeline, where after converting the file we also need to inject a
-  iTunSMPB metatag into the file. This seems to yield the best results, however
-  also means we can't stream the file until this is processed.
+  ## Ogg Opus presets
+  The Ogg presets are the preferred streaming presets. Opus carries its own
+  priming and end trimming information, so sequential tracks play gapless in
+  every player that supports it (browsers, ExoPlayer and AVPlayer), and the
+  Ogg container can be read from front to back, so a file can be played while
+  it is still being transcoded.
 
-  So iOS clients should ideally try to use the AAC version (which should include
-  the iTunSMPB metadata) for downloads, but could revert to ADTS for streaming so
-  the playback happens as soon as possible. (There are always possible reasons
-  for delays, like a full transcoding queue). This does still mean there might be
-  a more noticeable gap between sequential tracks while streaming, compared to
-  downloads. It would be nice if AVPlayer just supported opus too.
+  They are encoded at a constant bitrate, which makes the size of the result
+  known before the transcode starts: every 20ms packet has the same size and
+  the Ogg page overhead is fixed. The server can therefore send an honest
+  `Content-Length` right away and support range requests on a transcode that
+  is still running. The transcode is padded with zero bytes up to the
+  predicted size, which Ogg readers ignore. See `predicted_size/2`.
 
-  I still feel like it is not perfect but at this point this combination of
-  presets is the best I can do, for now.
+  ## AAC and ADTS presets
+  AAC in an M4A container is gapless (ffmpeg writes the edit list and trims
+  the last sample) but the container index is written last, so the file can
+  only be served once the transcode is done. ADTS can be streamed while
+  transcoding but can never be gapless. The WebM presets have no seek index
+  when written to a pipe. These presets are kept for clients that were built
+  against them, new clients should use the Ogg presets.
   """
 
   alias Ondu.Files.File
@@ -48,25 +57,55 @@ defmodule Ondu.Transcoder.Preset do
     :ffmpeg_preset,
     :mimetype,
     :sample_rate,
-    streamable?: true
+    streamable?: true,
+    exact_size?: false
   ]
 
   @type t :: %__MODULE__{
           id: atom(),
           bitrate: non_neg_integer(),
           sample_rate: non_neg_integer(),
-          ffmpeg_preset: :aac | :adts | :opus,
+          ffmpeg_preset: :ogg | :aac | :adts | :opus,
           streamable?: boolean(),
+          exact_size?: boolean(),
           mimetype: String.t(),
           ext: String.t()
         }
 
+  # Opus always uses 20ms packets, so 50 packets (and 50 Ogg lacing entries)
+  # per second, and ffmpeg writes a page per second by default.
+  @opus_packets_per_second 50
+  @ogg_page_header_bytes 27
+  # OpusHead and OpusTags pages, with only the encoder vendor string.
+  @ogg_header_bytes 1024
+  # Padding slack: the pre-skip and encoder flush add a few packets and the
+  # duration is a rounded number, two seconds of packets is plenty.
+  @ogg_slack_seconds 2
+
   @spec default_preset :: t()
-  def default_preset, do: Enum.find(list(), &(&1.id == :default_opus))
+  def default_preset, do: Enum.find(list(), &(&1.id == :default_ogg))
 
   @spec list() :: [t()]
   def list do
     [
+      %__MODULE__{
+        id: :default_ogg,
+        bitrate: 192,
+        sample_rate: 48_000,
+        ffmpeg_preset: :ogg,
+        exact_size?: true,
+        mimetype: "audio/ogg",
+        ext: "opus"
+      },
+      %__MODULE__{
+        id: :mobile_ogg,
+        bitrate: 96,
+        sample_rate: 48_000,
+        ffmpeg_preset: :ogg,
+        exact_size?: true,
+        mimetype: "audio/ogg",
+        ext: "opus"
+      },
       %__MODULE__{
         id: :default_aac,
         bitrate: 256,
@@ -120,6 +159,9 @@ defmodule Ondu.Transcoder.Preset do
     ]
   end
 
+  @spec ids() :: [String.t()]
+  def ids, do: Enum.map(list(), &to_string(&1.id))
+
   @spec get(id :: String.t() | atom()) :: t()
   def get(id) do
     list()
@@ -164,6 +206,46 @@ defmodule Ondu.Transcoder.Preset do
 
   def audio_channels(_file, _preset),
     do: 2
+
+  @doc """
+  The size of the transcode for presets with an exact size, before it exists.
+
+  For constant bitrate Opus every packet is `bitrate / 400` bytes (20ms worth)
+  and each packet costs `ceil(packet / 255)` lacing bytes in the page it is in.
+  The result is an upper bound: the real transcode is padded up to it.
+  """
+  @spec predicted_size(file :: File.t(), preset :: t()) :: non_neg_integer()
+  def predicted_size(
+        %File{metadata: %{duration: duration}} = file,
+        %__MODULE__{
+          ffmpeg_preset: :ogg
+        } = preset
+      )
+      when is_number(duration) do
+    packet_bytes = div(bitrate(file, preset) * 1000, 400)
+    lacing_bytes = ceil(packet_bytes / 255)
+    seconds = ceil(duration) + @ogg_slack_seconds
+    packets = seconds * @opus_packets_per_second
+
+    packets * (packet_bytes + lacing_bytes) + seconds * @ogg_page_header_bytes +
+      @ogg_header_bytes
+  end
+
+  defp ffmpeg_shared_args(%File{} = file, %__MODULE__{ffmpeg_preset: :ogg} = preset) do
+    bitrate = bitrate(file, preset)
+    audio_channels = audio_channels(file, preset)
+
+    # Constant bitrate so the size is predictable, see `predicted_size/2`. No
+    # metadata is copied, tags of any size would make the size unpredictable.
+    # libopus only encodes at 48000, other rates are resampled by ffmpeg.
+    ~w(
+        -c:a libopus -b:a #{bitrate}k -vbr off -f ogg -ar 48000 -vn
+        -ac #{audio_channels}
+        -map_metadata -1
+        -y -v quiet -nostats
+        pipe:1
+      )
+  end
 
   defp ffmpeg_shared_args(%File{} = file, %__MODULE__{ffmpeg_preset: :opus} = preset) do
     bitrate = bitrate(file, preset)

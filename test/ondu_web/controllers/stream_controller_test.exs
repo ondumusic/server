@@ -16,6 +16,22 @@ defmodule OnduWeb.StreamControllerTest do
     [track: track]
   end
 
+  # Pretends to be ffmpeg, the shell script runs with the input path as $1.
+  defp stub_transcode(script) do
+    stub(Ondu.Tool.TranscodeMock, :exec, fn args ->
+      "file://" <> input = Enum.at(args, Enum.find_index(args, &(&1 == "-i")) + 1)
+
+      port =
+        Port.open({:spawn_executable, System.find_executable("sh")}, [
+          :binary,
+          :exit_status,
+          args: ["-c", script, "sh", input]
+        ])
+
+      {:ok, port}
+    end)
+  end
+
   describe "stream with current_user" do
     setup :register_and_log_in_user
 
@@ -81,22 +97,6 @@ defmodule OnduWeb.StreamControllerTest do
       :ok
     end
 
-    # Pretends to be ffmpeg, the shell script runs with the input path as $1.
-    defp stub_transcode(script) do
-      stub(Ondu.Tool.TranscodeMock, :exec, fn args ->
-        "file://" <> input = Enum.at(args, Enum.find_index(args, &(&1 == "-i")) + 1)
-
-        port =
-          Port.open({:spawn_executable, System.find_executable("sh")}, [
-            :binary,
-            :exit_status,
-            args: ["-c", script, "sh", input]
-          ])
-
-        {:ok, port}
-      end)
-    end
-
     test "returns the size once transcoded", %{conn: conn, track: track} do
       start_supervised!(Transcoder)
       stub_transcode(~s(cat "$1"))
@@ -132,6 +132,88 @@ defmodule OnduWeb.StreamControllerTest do
 
       assert response(conn, 503)
       assert get_resp_header(conn, "retry-after") == ["5"]
+    end
+  end
+
+  describe "transcode with an exact size" do
+    setup :register_and_log_in_user
+    setup :set_mox_global
+
+    setup %{track: track} do
+      File.rm_rf!("./tmp/test/transcode")
+      start_supervised!(Transcoder)
+      stub_transcode(~s(cat "$1"))
+      preset = Transcoder.Preset.get(:default_ogg)
+      contents = File.read!(track.file.path)
+      size = Transcoder.Preset.predicted_size(track.file, preset)
+      assert byte_size(contents) < size
+      [preset: preset, contents: contents, size: size]
+    end
+
+    defp get_transcode(conn, track, headers \\ []) do
+      conn = Enum.reduce(headers, conn, fn {k, v}, conn -> put_req_header(conn, k, v) end)
+      get(conn, ~p"/stream/#{track}?transcode=1&preset=default_ogg")
+    end
+
+    test "has a content length before the transcode is done", %{conn: conn, track: track} = ctx do
+      conn = get_transcode(conn, track)
+
+      assert response(conn, 200)
+      assert get_resp_header(conn, "content-length") == ["#{ctx.size}"]
+      assert get_resp_header(conn, "content-type") == ["audio/ogg"]
+      assert get_resp_header(conn, "accept-ranges") == ["bytes"]
+      assert byte_size(conn.resp_body) == ctx.size
+      assert binary_part(conn.resp_body, 0, byte_size(ctx.contents)) == ctx.contents
+    end
+
+    test "serves ranges", %{conn: conn, track: track} = ctx do
+      conn = get_transcode(conn, track, [{"range", "bytes=10-20"}])
+
+      assert response(conn, 206) == binary_part(ctx.contents, 10, 11)
+      assert get_resp_header(conn, "content-range") == ["bytes 10-20/#{ctx.size}"]
+      assert get_resp_header(conn, "content-length") == ["11"]
+    end
+
+    test "serves open ended ranges to the end", %{conn: conn, track: track} = ctx do
+      chunk_size = Transcoder.Utils.chunk_size()
+      conn = get_transcode(conn, track, [{"range", "bytes=#{chunk_size - 5}-"}])
+
+      assert get_resp_header(conn, "content-range") == [
+               "bytes #{chunk_size - 5}-#{ctx.size - 1}/#{ctx.size}"
+             ]
+
+      assert byte_size(response(conn, 206)) == ctx.size - chunk_size + 5
+    end
+
+    test "serves ranges across chunk boundaries exactly", %{conn: conn, track: track} = ctx do
+      chunk_size = Transcoder.Utils.chunk_size()
+      conn = get_transcode(conn, track, [{"range", "bytes=0-#{chunk_size}"}])
+
+      assert byte_size(response(conn, 206)) == chunk_size + 1
+      assert binary_part(conn.resp_body, 0, byte_size(ctx.contents)) == ctx.contents
+    end
+
+    test "refuses ranges beyond the size", %{conn: conn, track: track} = ctx do
+      conn = get_transcode(conn, track, [{"range", "bytes=#{ctx.size}-"}])
+
+      assert response(conn, 416)
+      assert get_resp_header(conn, "content-range") == ["bytes */#{ctx.size}"]
+    end
+
+    test "downloads have a content length right away", %{conn: conn, track: track} = ctx do
+      conn = get(conn, ~p"/download/#{track}?transcode=1&preset=default_ogg")
+
+      assert response(conn, 200)
+      assert get_resp_header(conn, "content-length") == ["#{ctx.size}"]
+    end
+
+    test "returns busy when too many transcodes are running", %{conn: conn, track: track} do
+      stop_supervised!(Transcoder)
+      start_supervised!({Transcoder, max_concurrency: 0, max_queue_size: 0})
+
+      conn = get_transcode(conn, track)
+
+      assert response(conn, 503)
     end
   end
 
