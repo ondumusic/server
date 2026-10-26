@@ -4,7 +4,7 @@ defmodule OnduWeb.InfoControllerTest do
   test "returns the server and api version", %{conn: conn} do
     conn = log_in_user(conn, Ondu.AccountsFixtures.user_fixture())
 
-    assert %{"version" => version, "apiVersion" => 1} =
+    assert %{"version" => version, "apiVersion" => 2} =
              conn |> get(~p"/api/info") |> api_response(200, "ServerInfo")
 
     assert version == to_string(Application.spec(:ondu, :vsn))

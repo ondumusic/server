@@ -17,7 +17,7 @@ defmodule OnduWeb.ApiSpec do
 
   # Only increased when the API changes in a way that breaks existing clients,
   # e.g. removing or renaming fields or endpoints. Additions don't change it.
-  @api_version 1
+  @api_version 2
 
   @spec api_version() :: pos_integer()
   def api_version, do: @api_version
