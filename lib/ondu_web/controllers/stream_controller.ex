@@ -234,17 +234,25 @@ defmodule OnduWeb.StreamController do
 
   # The first chunk is requested before the headers are sent, so a full queue
   # can still be answered with a busy response (and it starts the transcode).
+  # The end of a running transcode is answered without waiting for it.
   defp send_sized_transcode(conn, status, track, preset, start_byte, end_byte) do
     file = track.file
     first_chunk = div(start_byte, Utils.chunk_size())
 
-    case Transcoder.request_chunk(file, preset, first_chunk) do
-      {:ok, _data} ->
+    with :error <- Transcoder.early_tail(file, preset, start_byte, end_byte),
+         {:ok, _data} <- Transcoder.request_chunk(file, preset, first_chunk) do
+      conn
+      |> put_stream_headers(track, preset)
+      |> put_resp_header("content-length", "#{end_byte - start_byte + 1}")
+      |> send_chunked(status)
+      |> stream_transcoded_range(file, preset, start_byte, end_byte)
+    else
+      {:ok, tail} ->
         conn
         |> put_stream_headers(track, preset)
-        |> put_resp_header("content-length", "#{end_byte - start_byte + 1}")
+        |> put_resp_header("content-length", "#{byte_size(tail)}")
         |> send_chunked(status)
-        |> stream_transcoded_range(file, preset, start_byte, end_byte)
+        |> stream_data(tail)
 
       {:error, :server_busy} ->
         send_busy(conn)

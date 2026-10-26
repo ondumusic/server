@@ -32,6 +32,10 @@ for src in h1 h2 long; do
   encode $src.fmp4.m4a      $src.flac pipe:mp4 -c:a aac -b:a 256k -movflags +frag_keyframe+empty_moov+delay_moov+default_base_moof -frag_duration 2000000
   encode $src.opus_mp4.mp4  $src.flac mp4      -c:a libopus -b:a 192k
 done
+# a page for the browser probes
+cat > play.html <<'HTML'
+<!doctype html><title>probe</title><audio id=a controls muted></audio>
+HTML
 # padded oggs, as the server serves them: the promised size is larger than the file.
 # 300 KB is far past the 64 KB in which ffmpeg (and Chrome) look for the last page,
 # which is why the server pads with empty pages (oggpad.py) rather than zeros.

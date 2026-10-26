@@ -161,6 +161,68 @@ defmodule OnduWeb.StreamControllerTest do
       assert get_resp_header(conn, "content-length") == ["#{ctx.size}"]
     end
 
+    # Players that read the end of the file first (ExoPlayer, Chrome) would
+    # otherwise wait for the whole transcode before playing a note.
+    test "serves the end of a running transcode right away", %{conn: conn, track: track} do
+      fixture =
+        Path.expand("../../support/fixtures/music_files/without_tags/sample.opus", __DIR__)
+
+      file = update_record(track.file, %{path: fixture})
+      preset = Transcoder.Preset.get(:mobile_ogg)
+      size = Transcoder.Preset.predicted_size(file, preset)
+      # more than a chunk out, then busy for a while
+      stub_transcode(~s|for i in $(seq 25); do cat "$1"; done; sleep 2|)
+
+      stub(Ondu.Tool.ProbeMock, :exec, fn _path ->
+        {:ok,
+         %{
+           "streams" => [
+             %{
+               "codec_type" => "audio",
+               "codec_name" => "opus",
+               "sample_rate" => "48000",
+               "time_base" => "1/48000",
+               "duration_ts" => 140_160,
+               "initial_padding" => 312
+             }
+           ],
+           "format" => %{"format_name" => "ogg"}
+         }}
+      end)
+
+      # the head, as every player reads first, which starts the transcode
+      head =
+        conn
+        |> put_req_header("range", "bytes=0-999")
+        |> get(~p"/stream/#{track}?transcode=1&preset=mobile_ogg")
+
+      assert response(head, 206)
+
+      assert_eventually(fn ->
+        match?(%{padding: %{granule: g}} when is_integer(g), Transcoder.get_meta(file, preset))
+      end)
+
+      {elapsed, tail} =
+        :timer.tc(fn ->
+          conn
+          |> put_req_header("range", "bytes=#{size - 500}-")
+          |> get(~p"/stream/#{track}?transcode=1&preset=mobile_ogg")
+        end)
+
+      assert response(tail, 206)
+      assert byte_size(tail.resp_body) == 500
+      assert get_resp_header(tail, "content-range") == ["bytes #{size - 500}-#{size - 1}/#{size}"]
+      assert elapsed < 1_000_000, "the tail waited #{div(elapsed, 1000)} ms for the transcode"
+
+      assert_eventually(
+        fn -> match?(%{persisted: true}, Transcoder.get_meta(file, preset)) end,
+        500
+      )
+
+      whole = get(conn, ~p"/download/#{track}?transcode=1&preset=mobile_ogg")
+      assert binary_part(response(whole, 200), size - 500, 500) == tail.resp_body
+    end
+
     test "refuses a preset it does not have", %{conn: conn, track: track} do
       streamed = get(conn, ~p"/stream/#{track}?transcode=1&preset=default_adts")
       assert %{"error" => "Unknown preset"} = json_response(streamed, 400)

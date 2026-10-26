@@ -25,6 +25,7 @@ defmodule Ondu.Transcoder.Preset do
 
   alias Ondu.Files.File
   alias Ondu.Storage
+  alias Ondu.Transcoder.OggPadding
 
   defstruct [:id, :ext, :bitrate, :mimetype]
 
@@ -111,7 +112,9 @@ defmodule Ondu.Transcoder.Preset do
 
   For constant bitrate Opus every packet is `bitrate / 400` bytes (20ms worth)
   and each packet costs `ceil(packet / 255)` lacing bytes in the page it is in.
-  The result is an upper bound: the real transcode is padded up to it.
+  The result is an upper bound: the real transcode is padded up to it, with
+  at least `OggPadding.min_padding/0` of padding so the end of the file is
+  known before the audio is.
   """
   @spec predicted_size(file :: File.t(), preset :: t()) :: non_neg_integer()
   def predicted_size(%File{metadata: %{duration: duration}} = file, %__MODULE__{} = preset)
@@ -122,6 +125,6 @@ defmodule Ondu.Transcoder.Preset do
     packets = seconds * @opus_packets_per_second
 
     packets * (packet_bytes + lacing_bytes) + seconds * @ogg_page_header_bytes +
-      @ogg_header_bytes
+      @ogg_header_bytes + OggPadding.min_padding()
   end
 end
