@@ -705,6 +705,36 @@ defmodule Ondu.TranscoderTest do
       end
     end
 
+    # The padding is made of empty pages, so the duration survives it even when
+    # the padding is far larger than the 64 KB ffmpeg (and Chrome) scan for the
+    # last page. Forced here by claiming a duration well past the music.
+    test "a transcode padded far past its music keeps its duration", %{track: track} do
+      preset = Transcoder.Preset.get(:default_ogg)
+
+      file =
+        track
+        |> with_fixture("with_tags/sample.flac")
+        |> Map.fetch!(:file)
+        |> with_probed_duration()
+
+      real_duration = file.metadata.duration
+      file = %{file | metadata: %{file.metadata | duration: real_duration + 20}}
+      cache_file = Transcoder.Cache.cache_file_path(file.id, preset)
+
+      assert {:ok, _chunk} = Transcoder.request_chunk(file, preset, 0)
+      assert_eventually(fn -> File.exists?(cache_file) end, 500)
+      assert File.stat!(cache_file).size == Transcoder.Preset.predicted_size(file, preset)
+      assert File.stat!(cache_file).size > 64 * 1024 + 20 * 24_000
+
+      {output, 0} =
+        System.cmd(
+          "ffprobe",
+          ~w(-v error -show_entries format=duration -of csv=p=0) ++ [cache_file]
+        )
+
+      assert_in_delta String.to_float(String.trim(output)), real_duration, 0.1
+    end
+
     test "the padded transcode is still a valid opus file", %{track: track} do
       preset = Transcoder.Preset.get(:mobile_ogg)
 
