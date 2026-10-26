@@ -4,6 +4,7 @@
 - [Added] `default_ogg` and `mobile_ogg` transcoding presets (Opus in Ogg): gapless, seekable and served with a real `Content-Length` while still transcoding. They are the default now.
 - [Changed] AAC transcodes no longer get a hand written edit list, ffmpeg's own is what players use
 - [Removed] The `adts`, `aac` and WebM `opus` presets and the transcode prepare endpoint, the apps ask for the Ogg presets
+- [Changed] API version 2, apps built against the removed presets are told to update
 - [Fixed] Range requests on transcodes ending exactly on a chunk boundary were one byte short
 - [Fixed] Transcodes of AAC sources carried the encoder padding at their end, a click at every track change of a gapless album
 
