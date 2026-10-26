@@ -616,17 +616,30 @@ defmodule Ondu.TranscoderTest do
       assert last == :binary.copy(<<0>>, byte_size(last))
     end
 
-    test "fails when the output exceeds the predicted size", %{track: track} do
+    # A file whose stored duration is too short (a headerless VBR MP3 is probed
+    # by its first frames) would otherwise fail on every play, since a failed
+    # transcode is never cached. Finishing it with its real size cuts the first
+    # listeners short once; every play after that is exact from the cache.
+    test "finishes with the real size when the output exceeds the predicted size", %{
+      track: track
+    } do
       preset = Transcoder.Preset.get(:mobile_ogg)
       # A track that claims to be half a second long, while the fixture is not.
       file = %{track.file | metadata: %{track.file.metadata | duration: 0.5}}
-      assert Transcoder.Preset.predicted_size(file, preset) < File.stat!(absolute(file.path)).size
+      fixture_size = File.stat!(absolute(file.path)).size
+      assert Transcoder.Preset.predicted_size(file, preset) < fixture_size
 
-      Transcoder.request_chunk(file, preset, 0)
+      log =
+        ExUnit.CaptureLog.capture_log(fn ->
+          Transcoder.request_chunk(file, preset, 0)
 
-      assert_eventually(fn ->
-        match?(%{failed_at: f} when f != nil, Transcoder.get_meta(file, preset))
-      end)
+          assert_eventually(fn ->
+            match?(%{completed_at: c} when c != nil, Transcoder.get_meta(file, preset))
+          end)
+        end)
+
+      assert %{file_size: ^fixture_size, failed_at: nil} = Transcoder.get_meta(file, preset)
+      assert log =~ "exceeds the predicted size"
     end
   end
 
