@@ -42,3 +42,10 @@ ondu-*.tar
 
 # Local config files
 /config/*.local.exs
+
+# stream harness output
+/tools/stream-harness/assets/
+/tools/stream-harness/avprobe
+/tools/stream-harness/server.log
+/tools/stream-harness/syscapture
+/tools/stream-harness/captures/
