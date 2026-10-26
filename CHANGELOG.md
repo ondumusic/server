@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ## Unreleased
+- [Changed] AAC transcodes no longer get a hand written edit list, ffmpeg's own is what players use
 - [Fixed] Range requests on transcodes ending exactly on a chunk boundary were one byte short
 
 ## 1.0.0-rc.3 - 2026-10-22

@@ -164,25 +164,24 @@ defmodule Ondu.Transcoder.Job do
     chunk_count - 1
   end
 
+  # ffmpeg already writes the edit list and trims the last sample, which is
+  # what AVPlayer needs for gapless playback. ExoPlayer reads the iTunSMPB tag
+  # instead, which ffmpeg cannot write in the form it expects.
   defp maybe_make_gapless(%{preset: %{streamable?: false, ffmpeg_preset: :aac}} = job) do
     ffmpeg_output_file = Utils.tmp_file_path(job.file.id, job.preset)
     sample_rate = Preset.sample_rate(job.file, job.preset)
+    valid_samples = round(job.file.metadata.duration * sample_rate)
 
-    with {:ok, probe_json} <- Tool.probe(Storage.get_uri(job.file.path)),
-         valid_samples when not is_nil(valid_samples) <-
-           AACGapless.source_valid_samples(probe_json, sample_rate),
-         :ok <- AACGapless.inject_smpb(ffmpeg_output_file, valid_samples),
-         :ok <- AACGapless.inject_elst(ffmpeg_output_file, valid_samples) do
-      Logger.debug("Injected iTunSMPB into the transcode of #{job.file.path}")
-    else
+    case AACGapless.inject_smpb(ffmpeg_output_file, valid_samples) do
+      :ok ->
+        Logger.debug("Injected iTunSMPB into the transcode of #{job.file.path}")
+
       error ->
         # NOTE: On failure we don't raise because the file can still be played
         # without this tag. Do log it though.
         Logger.warning(
           "Failed to inject iTunSMPB into the transcode of #{job.file.path} (#{inspect(error)})"
         )
-
-        :noop
     end
   end
 

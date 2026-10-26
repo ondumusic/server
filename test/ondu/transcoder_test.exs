@@ -35,22 +35,6 @@ defmodule Ondu.TranscoderTest do
       open_port(args)
     end)
 
-    stub(Ondu.Tool.ProbeMock, :exec, fn _path ->
-      {:ok,
-       %{
-         "streams" => [
-           %{
-             "codec_type" => "audio",
-             "sample_rate" => 132,
-             "duration_ts" => 132,
-             "start_pts" => 132,
-             "format" => %{},
-             "tags" => %{}
-           }
-         ]
-       }}
-    end)
-
     transcoder_pid = start_supervised!(Transcoder)
 
     on_exit(fn ->
