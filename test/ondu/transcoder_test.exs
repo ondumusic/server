@@ -291,8 +291,8 @@ defmodule Ondu.TranscoderTest do
 
     test "the default preset is default_ogg" do
       assert %{id: :default_ogg} = Transcoder.Preset.default_preset()
-      assert %{id: :default_ogg} = Transcoder.Preset.get("default")
-      assert %{id: :default_ogg} = Transcoder.Preset.get("nonsense")
+      assert %{id: :mobile_ogg} = Transcoder.Preset.get("mobile_ogg")
+      assert Transcoder.Preset.get("nonsense") == nil
     end
 
     test "pads the output up to the predicted size", %{track: track} do

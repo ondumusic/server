@@ -59,15 +59,8 @@ defmodule Ondu.Transcoder.Preset do
   @spec ids() :: [String.t()]
   def ids, do: Enum.map(list(), &to_string(&1.id))
 
-  @spec get(id :: String.t() | atom()) :: t()
-  def get(id) do
-    list()
-    |> Enum.find(&(to_string(&1.id) == to_string(id)))
-    |> case do
-      nil -> default_preset()
-      preset -> preset
-    end
-  end
+  @spec get(id :: String.t() | atom()) :: t() | nil
+  def get(id), do: Enum.find(list(), &(to_string(&1.id) == to_string(id)))
 
   @doc """
   With `valid_samples:` the decoded audio is cut to that many samples (of the
