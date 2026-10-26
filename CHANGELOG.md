@@ -1,7 +1,7 @@
 # CHANGELOG
 
 ## Unreleased
-nothing
+- [Fixed] Range requests on transcodes ending exactly on a chunk boundary were one byte short
 
 ## 1.0.0-rc.3 - 2026-10-22
 - [Changed] redesigned the web ui ([#10](https://github.com/ondumusic/server/pull/10))

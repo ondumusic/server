@@ -57,15 +57,18 @@ defmodule Ondu.Transcoder.Utils do
     end
   end
 
-  @spec get_chunk_part(binary(), non_neg_integer(), non_neg_integer()) ::
-          {binary(), non_neg_integer()}
-  def get_chunk_part(data, offset, size) do
-    offset = max(0, offset)
-    size_in_chunk = min(byte_size(data) - offset - 1, size - offset)
-    chunk_part_data = binary_part(data, offset, size_in_chunk + 1)
-    remaining_bytes = max(0, size - byte_size(chunk_part_data))
+  @doc """
+  The part of a chunk that falls within a byte range of the whole transcode,
+  both ends of the range are inclusive.
+  """
+  @spec slice_chunk(binary(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+          binary()
+  def slice_chunk(data, chunk_index, start_byte, end_byte) do
+    chunk_start = chunk_index * chunk_size()
+    from = max(start_byte, chunk_start) - chunk_start
+    to = min(end_byte, chunk_start + byte_size(data) - 1) - chunk_start
 
-    {chunk_part_data, remaining_bytes}
+    if to < from, do: <<>>, else: binary_part(data, from, to - from + 1)
   end
 
   @type range_error :: :no_range | :invalid_range

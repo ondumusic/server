@@ -494,25 +494,20 @@ defmodule OnduWeb.StreamController do
 
   defp stream_transcoded_range(conn, file, preset, start_byte, end_byte) do
     chunk_size = Utils.chunk_size()
-    start_chunk = div(start_byte, chunk_size)
-    offset = max(0, start_byte - start_chunk * chunk_size)
-    remaining = end_byte - start_byte
+    first_chunk = div(start_byte, chunk_size)
+    last_chunk = div(end_byte, chunk_size)
 
-    do_stream_range(conn, file, preset, start_chunk, offset, remaining)
-  end
-
-  defp do_stream_range(conn, _file, _preset, _chunk_index, _offset, 0), do: conn
-
-  defp do_stream_range(conn, file, preset, chunk_index, offset, remaining) do
-    with true <- Utils.continue_stream?(file, preset, chunk_index),
-         {:ok, data} <- Transcoder.request_chunk(file, preset, chunk_index),
-         {part, remaining} <- Utils.get_chunk_part(data, offset, remaining),
-         {:ok, conn} <- chunk(conn, part) do
-      do_stream_range(conn, file, preset, chunk_index + 1, 0, remaining)
-    else
-      {:error, :server_busy} -> send_busy(conn)
-      _ -> conn
-    end
+    Enum.reduce_while(first_chunk..last_chunk//1, conn, fn chunk_index, conn ->
+      with true <- Utils.continue_stream?(file, preset, chunk_index),
+           {:ok, data} <- Transcoder.request_chunk(file, preset, chunk_index),
+           part = Utils.slice_chunk(data, chunk_index, start_byte, end_byte),
+           {:ok, conn} <- chunk(conn, part) do
+        {:cont, conn}
+      else
+        {:error, :server_busy} when chunk_index == first_chunk -> {:halt, send_busy(conn)}
+        _ -> {:halt, conn}
+      end
+    end)
   end
 
   defp stream_data(conn, data) when is_binary(data) or is_list(data) do
