@@ -1,7 +1,7 @@
 defmodule Ondu.Transcoder.Job do
   @moduledoc false
 
-  defstruct [:pid, :file, :preset]
+  defstruct [:pid, :file, :preset, :samples, :sample_rate, :padding]
 
   @type t :: %__MODULE__{}
 
@@ -51,18 +51,22 @@ defmodule Ondu.Transcoder.Job do
   end
 
   defp transcode_file(%Job{} = job, parent) do
-    valid_samples = valid_samples(job.file)
-    args = Preset.ffmpeg_args(job.file, job.preset, valid_samples: valid_samples)
+    job = probe(job)
+    args = Preset.ffmpeg_args(job.file, job.preset, valid_samples: job.samples)
     {:ok, port} = Tool.transcode(args)
 
     read_chunks(port, job, parent)
   end
 
-  # A failed probe only means the source is transcoded whole, as it was before.
-  defp valid_samples(%File{} = file) do
+  # A failed probe only means the source is transcoded whole, as it was
+  # before, and nothing is promised about its end before it is encoded.
+  defp probe(%Job{file: file} = job) do
     case Tool.probe(Storage.get_uri(file.path)) do
-      {:ok, probe} -> Trim.valid_samples(probe)
-      _error -> nil
+      {:ok, probe} ->
+        %{job | samples: Trim.valid_samples(probe), sample_rate: Trim.sample_rate(probe)}
+
+      _error ->
+        job
     end
   end
 
@@ -75,6 +79,7 @@ defmodule Ondu.Transcoder.Job do
     receive do
       {^port, {:data, data}} ->
         new_buffer = buffer <> data
+        job = describe_padding(job, parent, chunk_index, new_buffer)
 
         case byte_size(new_buffer) >= chunk_size do
           true ->
@@ -101,11 +106,33 @@ defmodule Ondu.Transcoder.Job do
     end
   end
 
+  # Once the first page is in, the padding can be described: the stream's
+  # serial and, when the source's sample count is known, its final granule
+  # position. The transcoder then answers requests for the end of the file
+  # before the audio exists, see `OggPadding`.
+  defp describe_padding(%Job{padding: nil} = job, parent, 0, buffer) do
+    case OggPadding.stream_info(buffer) do
+      %{serial: _, preskip: preskip} = info ->
+        granule =
+          if is_integer(job.samples) and is_integer(job.sample_rate),
+            do: OggPadding.final_granule(job.samples, job.sample_rate, preskip)
+
+        padding = Map.put(info, :granule, granule)
+        send(parent, {:padding, job, padding})
+        %{job | padding: padding}
+
+      nil ->
+        job
+    end
+  end
+
+  defp describe_padding(job, _parent, _chunk_index, _buffer), do: job
+
   # The predicted size was promised to the clients, so the output is padded
-  # up to it, see `OggPadding`. More output than promised
-  # means the file's stored duration is too short. The transcode is completed
-  # anyway: whoever is listening right now is cut short, but once cached its
-  # real size is what gets promised. Failing instead would fail every play.
+  # up to it, see `OggPadding`. More output than promised means the file's
+  # stored duration is too short. The transcode is completed anyway: whoever
+  # is listening right now is cut short, but once cached its real size is what
+  # gets promised. Failing instead would fail every play.
   defp pad_to_predicted_size(%Job{} = job, chunk_index, buffer, previous) do
     predicted = Preset.predicted_size(job.file, job.preset)
     actual = chunk_index * Utils.chunk_size() + byte_size(buffer)
@@ -118,9 +145,35 @@ defmodule Ondu.Transcoder.Job do
 
       buffer
     else
-      buffer <> OggPadding.pad(previous <> buffer, predicted - actual)
+      buffer <> padding(job, actual, predicted, previous <> buffer)
     end
   end
+
+  # The granule and serial the padding was described with, so what was
+  # answered early and what is written agree; from the stream itself when
+  # nothing could be promised.
+  defp padding(%Job{padding: padding} = job, actual, predicted, tail) do
+    case {padding, OggPadding.last_page(tail)} do
+      {%{granule: granule, serial: serial}, real} when is_integer(granule) ->
+        check_granule(job, granule, real)
+        OggPadding.pad(actual, predicted, granule, serial)
+
+      {_, {granule, serial, _seq}} ->
+        OggPadding.pad(actual, predicted, granule, serial)
+
+      {_, nil} ->
+        :binary.copy(<<0>>, predicted - actual)
+    end
+  end
+
+  defp check_granule(job, granule, {real, _serial, _seq}) when real != granule do
+    Logger.warning(
+      "Transcode of #{job.file.path} (#{job.preset.id}) ended on granule #{real}, " <>
+        "#{granule} was promised from its probe"
+    )
+  end
+
+  defp check_granule(_job, _granule, _real), do: :ok
 
   # Sends the remaining data as chunks and returns the last chunk index.
   defp flush_chunks(_parent, _job, 0, <<>>), do: raise("ffmpeg produced no output")

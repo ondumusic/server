@@ -6,6 +6,7 @@
 - [Removed] The `adts`, `aac` and WebM `opus` presets and the transcode prepare endpoint, the apps ask for the Ogg presets
 - [Changed] API version 2, apps built against the removed presets are told to update
 - [Changed] Asking for a transcoding preset the server does not have is refused instead of answered with the default
+- [Changed] The end of a transcode is served before it is encoded, so players that read a file's end first (Android, Chrome, Firefox) start right away instead of after the whole transcode
 - [Fixed] Range requests on transcodes ending exactly on a chunk boundary were one byte short
 - [Fixed] Transcodes of AAC sources carried the encoder padding at their end, a click at every track change of a gapless album
 

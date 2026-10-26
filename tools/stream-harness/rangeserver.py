@@ -1,9 +1,14 @@
 # Minimal test server: serves ./assets with Range support (like a finished cache
 # file), or with ?chunked=1 as a chunked response without Content-Length (like a
 # live transcode), optionally throttled with ?kbps=N to mimic a slow encoder.
+# ?live=N simulates a transcode in progress: the file becomes available at N bytes
+# per second from the moment it is first asked for, and a request waits for the
+# bytes it needs, as the real server does; ?tail=M makes the last M bytes
+# available from the start, like the server's early tail.
 import http.server, os, sys, time, urllib.parse, re
+LIVE = {}
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
-MIME = {".m4a":"audio/mp4",".mp4":"audio/mp4",".aac":"audio/aac",".opus":"audio/ogg",".webm":"audio/webm",".flac":"audio/flac",".wav":"audio/wav",".m3u8":"application/vnd.apple.mpegurl",".m4s":"video/iso.segment"}
+MIME = {".m4a":"audio/mp4",".mp4":"audio/mp4",".aac":"audio/aac",".opus":"audio/ogg",".webm":"audio/webm",".flac":"audio/flac",".wav":"audio/wav",".m3u8":"application/vnd.apple.mpegurl",".html":"text/html",".m4s":"video/iso.segment"}
 class H(http.server.BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
     def log_message(self, f, *a): sys.stderr.write("%s %s\n" % (self.command, self.path if '?' not in self.path else self.path) + ("   range=%s\n" % self.headers.get("Range") if self.headers.get("Range") else ""))
@@ -39,7 +44,14 @@ class H(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         if head: return
         body = data[start:end+1]
+        live = int(q.get("live", ["0"])[0]); tail = int(q.get("tail", ["0"])[0])
+        if live: began = LIVE.setdefault(p, time.time())
         for i in range(0, len(body), 16384):
+            if live:
+                # wait until this piece is "encoded", unless it lies in the early tail
+                piece_end = start + i + min(16384, len(body) - i)
+                while piece_end > min(size, (time.time() - began) * live) and piece_end <= size - tail:
+                    time.sleep(0.05)
             try: self.wfile.write(body[i:i+16384])
             except BrokenPipeError: return
             if kbps: time.sleep(16384*8/1000/kbps)

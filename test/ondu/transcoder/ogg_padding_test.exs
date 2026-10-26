@@ -4,6 +4,7 @@ defmodule Ondu.Transcoder.OggPaddingTest do
   alias Ondu.Transcoder.OggPadding
 
   @fixture Path.expand("../../support/fixtures/music_files/without_tags/sample.opus", __DIR__)
+  @header 27
 
   test "the checksum matches what the encoder wrote" do
     data = File.read!(@fixture)
@@ -18,44 +19,77 @@ defmodule Ondu.Transcoder.OggPaddingTest do
     assert OggPadding.crc(head <> <<0::32>> <> rest) == written
   end
 
+  test "reads the serial and pre-skip from the first page" do
+    data = File.read!(@fixture)
+    assert %{serial: serial, preskip: 312} = OggPadding.stream_info(data)
+    <<"OggS", 0, _flags, _granule::64, ^serial::little-32, _::binary>> = data
+    assert OggPadding.stream_info(binary_part(data, 0, 30)) == nil
+    assert OggPadding.stream_info("not ogg at all") == nil
+  end
+
+  test "the final granule is the pre-skip plus the resampled count, rounded up" do
+    assert OggPadding.final_granule(220_500, 44_100, 312) == 240_312
+    assert OggPadding.final_granule(220_501, 44_100, 312) == 240_314
+    assert OggPadding.final_granule(100_003, 48_000, 312) == 100_315
+    assert OggPadding.final_granule(220_501, 96_000, 312) == 110_563
+  end
+
   test "finds the page that ends the stream" do
     data = File.read!(@fixture)
     assert {granule, serial, seq} = OggPadding.last_page(data)
     assert granule > 0 and seq > 0
-    # the file's serial, from its first page
     <<"OggS", 0, _flags, _granule::64, ^serial::little-32, _::binary>> = data
     assert OggPadding.last_page(:binary.part(data, 0, 10)) == nil
     assert OggPadding.last_page(data <> <<0, 0, 0>>) == nil
   end
 
-  test "pads with empty pages continuing the stream, and zeros for the rest" do
-    data = File.read!(@fixture)
-    {granule, serial, seq} = OggPadding.last_page(data)
-    padding = OggPadding.pad(data, 100)
+  test "pads with zeros first and pages on a grid anchored at the end" do
+    actual = 1000
+    size = actual + @header * 4 + 5
+    padding = OggPadding.pad(actual, size, 4321, 99)
 
-    assert byte_size(padding) == 100
+    assert byte_size(padding) == size - actual
+    <<zeros::binary-size(5), pages::binary>> = padding
+    assert zeros == <<0, 0, 0, 0, 0>>
 
-    <<first::binary-size(27), second::binary-size(27), third::binary-size(27), rest::binary>> =
-      padding
+    for {page, n} <- Enum.with_index(for(<<p::binary-size(@header) <- pages>>, do: p)) do
+      start = actual + 5 + n * @header
 
-    assert rest == <<0::size(19 * 8)>>
-
-    for {page, n} <- Enum.with_index([first, second, third], 1) do
-      assert <<"OggS", 0, 0, ^granule::little-signed-64, ^serial::little-32, page_seq::little-32,
+      assert <<"OggS", 0, 0, 4321::little-signed-64, 99::little-32, seq::little-32,
                crc::little-32, 0>> = page
 
-      assert page_seq == seq + n
+      assert seq == div(start, @header)
       <<head::binary-size(22), _::32, tail::binary>> = page
       assert OggPadding.crc(head <> <<0::32>> <> tail) == crc
     end
 
-    # readers see the same end: ffmpeg reports the same duration, and no error
-    assert OggPadding.last_page(data <> OggPadding.pad(data, 27 * 3)) ==
-             {granule, serial, seq + 3}
+    assert OggPadding.pad(size, size, 1, 1) == <<>>
+    assert OggPadding.pad(size + 5, size, 1, 1) == <<>>
   end
 
-  test "zeros when there is no page to continue" do
-    assert OggPadding.pad(<<1, 2, 3>>, 30) == <<0::size(30 * 8)>>
-    assert OggPadding.pad(<<>>, 0) == <<>>
+  # What the server answers before the audio exists has to be what it writes
+  # once it does, whatever size the audio turns out to have.
+  test "the tail is the same bytes as the padding, for any length of audio" do
+    size = 200_000
+
+    for actual <- [size - 140_000, size - 131_100, size - 131_099 - 27 + 1, 60_000] do
+      file = :binary.copy(<<7>>, actual) <> OggPadding.pad(actual, size, 555, 42)
+      assert byte_size(file) == size
+
+      for {from, to} <- [
+            {size - 131_072, size - 1},
+            {size - 1000, size - 1},
+            {size - 131_072, size - 130_000},
+            {size - 27, size - 27},
+            {size - 1, size - 1}
+          ] do
+        assert OggPadding.tail(size, from, to, 555, 42) == binary_part(file, from, to - from + 1),
+               "actual #{actual}, bytes #{from}-#{to}"
+      end
+    end
+  end
+
+  test "the padding is long enough for the tail to be pages" do
+    assert OggPadding.min_padding() == 131_072 + 27
   end
 end

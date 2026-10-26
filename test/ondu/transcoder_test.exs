@@ -289,6 +289,61 @@ defmodule Ondu.TranscoderTest do
       assert_receive {:transcode_called, ["-i", _uri, "-af", "atrim=end_sample=11634168" | _]}
     end
 
+    # The fixture is a real Opus stream and the mock ffmpeg copies it, so the
+    # job can read the stream's serial from it and, with the sample count from
+    # the probe, promise the stream's end before it is "encoded".
+    test "describes the padding from the first bytes and serves the end early", %{
+      track: track
+    } do
+      preset = Transcoder.Preset.get(:mobile_ogg)
+      file = track |> with_fixture("without_tags/sample.opus") |> Map.fetch!(:file)
+      # Long enough for the 25 copies the mock produces to fit the prediction.
+      file = %{file | metadata: %{file.metadata | duration: 8.0}}
+      stub(Tool.ProbeMock, :exec, fn _path -> {:ok, opus_probe()} end)
+
+      # ffmpeg that has more than a chunk out and is then busy for a while
+      stub(Tool.TranscodeMock, :exec, fn args ->
+        "file://" <> input = Enum.at(args, Enum.find_index(args, &(&1 == "-i")) + 1)
+
+        port =
+          Port.open({:spawn_executable, System.find_executable("sh")}, [
+            :binary,
+            :exit_status,
+            args: ["-c", ~s|for i in $(seq 25); do cat "$1"; done; sleep 2|, "sh", input]
+          ])
+
+        {:ok, port}
+      end)
+
+      size = Transcoder.Preset.predicted_size(file, preset)
+      assert {:ok, _chunk} = Transcoder.request_chunk(file, preset, 0)
+
+      assert_eventually(fn ->
+        match?(%{padding: %{granule: g}} when is_integer(g), Transcoder.get_meta(file, preset))
+      end)
+
+      %{padding: %{granule: granule, serial: serial}, completed_at: nil} =
+        Transcoder.get_meta(file, preset)
+
+      assert granule == 140_160
+
+      assert {:ok, early} = Transcoder.early_tail(file, preset, size - 1000, size - 1)
+      assert byte_size(early) == 1000
+      assert Transcoder.early_tail(file, preset, size - 140_000, size - 1) == :error
+      assert Transcoder.early_tail(file, preset, size - 10, size) == :error
+
+      assert_eventually(
+        fn -> match?(%{persisted: true}, Transcoder.get_meta(file, preset)) end,
+        500
+      )
+
+      cache_file = Transcoder.Cache.cache_file_path(file.id, preset)
+      assert File.stat!(cache_file).size == size
+      assert binary_part(File.read!(cache_file), size - 1000, 1000) == early
+      assert {^granule, ^serial, _} = Transcoder.OggPadding.last_page(File.read!(cache_file))
+      assert Transcoder.early_tail(file, preset, size - 1000, size - 1) == :error
+    end
+
     test "the default preset is default_ogg" do
       assert %{id: :default_ogg} = Transcoder.Preset.default_preset()
       assert %{id: :mobile_ogg} = Transcoder.Preset.get("mobile_ogg")
@@ -297,7 +352,7 @@ defmodule Ondu.TranscoderTest do
 
     test "pads the output up to the predicted size", %{track: track} do
       preset = Transcoder.Preset.get(:default_ogg)
-      file = track.file
+      file = track |> with_fixture("without_tags/sample.opus") |> Map.fetch!(:file)
       predicted = Transcoder.Preset.predicted_size(file, preset)
       fixture_size = File.stat!(absolute(file.path)).size
       assert fixture_size < predicted
@@ -313,10 +368,10 @@ defmodule Ondu.TranscoderTest do
 
       assert chunk_count == ceil(predicted / Transcoder.Utils.chunk_size())
 
-      # The real output comes first, then zeros.
+      # The real output comes first, then the padding pages, up to the very end.
       assert binary_part(chunk, 0, 16) == binary_part(File.read!(absolute(file.path)), 0, 16)
       {:ok, last} = Transcoder.request_chunk(file, preset, chunk_count - 1)
-      assert last == :binary.copy(<<0>>, byte_size(last))
+      assert binary_part(last, byte_size(last) - 27, 4) == "OggS"
     end
 
     # A file whose stored duration is too short (a headerless VBR MP3 is probed
@@ -328,6 +383,7 @@ defmodule Ondu.TranscoderTest do
     } do
       preset = Transcoder.Preset.get(:mobile_ogg)
       # A track that claims to be half a second long, while the fixture is not.
+      track = with_fixture(track, "with_tags/sample.aiff")
       file = %{track.file | metadata: %{track.file.metadata | duration: 0.5}}
       fixture_size = File.stat!(absolute(file.path)).size
       assert Transcoder.Preset.predicted_size(file, preset) < fixture_size
@@ -410,7 +466,9 @@ defmodule Ondu.TranscoderTest do
 
         assert actual <= predicted, "#{fixture} #{preset_id}: #{actual} > #{predicted}"
 
-        assert predicted - actual < 3 * Transcoder.Preset.bitrate(file, preset) * 125 + 2048,
+        assert predicted - actual <
+                 3 * Transcoder.Preset.bitrate(file, preset) * 125 + 2048 +
+                   Transcoder.OggPadding.min_padding(),
                "#{fixture} #{preset_id}: padding of #{predicted - actual} bytes is too much"
       end
     end
@@ -443,6 +501,43 @@ defmodule Ondu.TranscoderTest do
         )
 
       assert_in_delta String.to_float(String.trim(output)), real_duration, 0.1
+    end
+
+    # The granule promised before encoding has to be the one the encoder ends
+    # on: the Android app trims the last frame by it, and one sample off at a
+    # frame boundary would cut 20 ms of music.
+    test "promises the granule the encoder ends on, for every fixture", %{track: track} do
+      for fixture <- @fixtures, preset_id <- [:default_ogg, :mobile_ogg] do
+        preset = Transcoder.Preset.get(preset_id)
+        file = track |> with_fixture(fixture) |> Map.fetch!(:file) |> with_probed_duration()
+        cache_file = Transcoder.Cache.cache_file_path(file.id, preset)
+
+        assert {:ok, _chunk} = Transcoder.request_chunk(file, preset, 0)
+        assert_eventually(fn -> File.exists?(cache_file) end, 500)
+        data = File.read!(cache_file)
+        {padding_granule, serial, _} = Transcoder.OggPadding.last_page(data)
+        assert {audio_granule, ^serial} = last_audio_page(data)
+        assert padding_granule == audio_granule, "#{fixture} #{preset_id}"
+        Transcoder.Cache.delete(file.id, preset)
+      end
+    end
+
+    # the encoder's own last page: the last one that carries packets
+    defp last_audio_page(data) do
+      data
+      |> :binary.matches("OggS")
+      |> Enum.reverse()
+      |> Enum.find_value(fn {offset, _} ->
+        case binary_part(data, offset, 27) do
+          <<"OggS", 0, _f, granule::little-signed-64, serial::little-32, _seq::little-32, _::32,
+            segments>>
+          when segments > 0 ->
+            {granule, serial}
+
+          _ ->
+            nil
+        end
+      end)
     end
 
     test "the padded transcode is still a valid opus file", %{track: track} do
@@ -483,6 +578,22 @@ defmodule Ondu.TranscoderTest do
 
       %{file | metadata: %{file.metadata | duration: String.to_float(String.trim(output))}}
     end
+  end
+
+  defp opus_probe do
+    %{
+      "streams" => [
+        %{
+          "codec_type" => "audio",
+          "codec_name" => "opus",
+          "sample_rate" => "48000",
+          "time_base" => "1/48000",
+          "duration_ts" => 140_160,
+          "initial_padding" => 312
+        }
+      ],
+      "format" => %{"format_name" => "ogg"}
+    }
   end
 
   defp with_fixture(track, fixture) do

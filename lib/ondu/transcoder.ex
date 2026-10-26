@@ -5,7 +5,7 @@ defmodule Ondu.Transcoder do
   require Logger
 
   alias Ondu.Files.File
-  alias Ondu.Transcoder.{Cache, Config, Job, Preset, Result, State, Utils}
+  alias Ondu.Transcoder.{Cache, Config, Job, OggPadding, Preset, Result, State, Utils}
 
   @chunks_table :transcoder_chunks
   @meta_table :transcoder_meta
@@ -66,6 +66,29 @@ defmodule Ondu.Transcoder do
     :ets.delete_all_objects(@chunks_table)
     :ets.delete_all_objects(@meta_table)
     :ok
+  end
+
+  @doc """
+  The bytes `from` up to and including `to` of a transcode that is still
+  running, when they lie in the padding at its end and that padding is
+  already known, see `OggPadding`. A client that reads the end of the file
+  before playing (ExoPlayer, Chrome) then does not wait for the whole
+  transcode.
+  """
+  @spec early_tail(File.t(), Preset.t(), non_neg_integer(), non_neg_integer()) ::
+          {:ok, binary()} | :error
+  def early_tail(%File{} = file, preset, from, to) do
+    size = Preset.predicted_size(file, preset)
+    earliest = size - OggPadding.tail_bytes()
+
+    case get_meta(file, preset) do
+      %{completed_at: nil, failed_at: nil, padding: %{granule: granule, serial: serial}}
+      when is_integer(granule) and from >= earliest and to < size and from <= to ->
+        {:ok, OggPadding.tail(size, from, to, granule, serial)}
+
+      _ ->
+        :error
+    end
   end
 
   @type chunk_error ::
@@ -171,6 +194,11 @@ defmodule Ondu.Transcoder do
 
     new_requests = Map.delete(state.requests, lookup_key)
     {:noreply, %{state | requests: new_requests}}
+  end
+
+  def handle_info({:padding, %Job{} = job, padding}, state) do
+    upsert_meta(job, %{padding: padding})
+    {:noreply, state}
   end
 
   def handle_info({:transcoding_complete, %Job{} = job, chunk_count}, state) do

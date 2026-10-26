@@ -12,6 +12,7 @@ format and streaming decisions on the platforms the apps run on.
 ./check-runner-ffmpeg.sh  # the same ffmpeg behaviours inside the Docker runner image (podman or docker)
 python3 -I rangeserver.py 8765 &
 node web-probe.mjs 8765   # browsers via playwright (install browsers first)
+node web-live.mjs "long.ogg_opus_padded.opus?live=300000&tail=131072"  # Chromium on a transcode in progress
 ```
 
 ## What it measures
@@ -70,6 +71,13 @@ after 64 KB: a 300 KB tail of zeros loses the duration, the same tail of
 empty pages carrying the last granule position keeps it exact. AVPlayer
 treats both the same (`oggpad.py` builds either; `make-assets.sh` makes
 `*_padded` and `*_zeros` variants).
+
+Chromium and ExoPlayer read the end of an Ogg file before playing, and
+Chromium asks for it from a 32 KB boundary, up to 98 KB before the end.
+On a transcode in progress that request waited for the whole transcode:
+with the harness server simulating one (`?live=`), Chromium did not start
+within 12 s. With the last 64 KB served early it started after 2.2 s,
+with the last 128 KB after 13 ms, which is what the server now does.
 
 What did click on real albums was the source, not the player: ffmpeg drops
 the encoder delay of an AAC source but keeps its end padding (456 samples on
