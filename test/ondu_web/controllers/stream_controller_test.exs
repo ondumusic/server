@@ -161,6 +161,14 @@ defmodule OnduWeb.StreamControllerTest do
       assert get_resp_header(conn, "content-length") == ["#{ctx.size}"]
     end
 
+    test "refuses a preset it does not have", %{conn: conn, track: track} do
+      streamed = get(conn, ~p"/stream/#{track}?transcode=1&preset=default_adts")
+      assert %{"error" => "Unknown preset"} = json_response(streamed, 400)
+
+      downloaded = get(conn, ~p"/download/#{track}?transcode=1&preset=nonsense")
+      assert json_response(downloaded, 400)
+    end
+
     test "returns busy when too many transcodes are running", %{conn: conn, track: track} do
       stop_supervised!(Transcoder)
       start_supervised!({Transcoder, max_concurrency: 0, max_queue_size: 0})

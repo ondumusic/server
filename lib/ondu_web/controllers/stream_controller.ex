@@ -78,6 +78,7 @@ defmodule OnduWeb.StreamController do
           }
         }
       },
+      bad_request: {"Unknown preset.", "application/json", Schemas.Error},
       unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
       not_found: {"Track not found.", "application/json", Schemas.Error},
       requested_range_not_satisfiable:
@@ -161,6 +162,7 @@ defmodule OnduWeb.StreamController do
           }
         }
       },
+      bad_request: {"Unknown preset.", "application/json", Schemas.Error},
       unauthorized: {"Invalid authentication.", "application/json", Schemas.Error},
       not_found: {"Track not found.", "application/json", Schemas.Error},
       requested_range_not_satisfiable:
@@ -346,12 +348,24 @@ defmodule OnduWeb.StreamController do
     assign(conn, :track, track)
   end
 
+  # A preset the server does not have is refused rather than swapped for the
+  # default: a client that asks for one by name expects that format.
   defp assign_preset(conn, _opts) do
-    preset =
-      conn.params
-      |> Map.get("preset", "default")
-      |> Preset.get()
+    case Map.fetch(conn.params, "preset") do
+      :error ->
+        assign(conn, :preset, Preset.default_preset())
 
-    assign(conn, :preset, preset)
+      {:ok, id} ->
+        case Preset.get(id) do
+          %Preset{} = preset ->
+            assign(conn, :preset, preset)
+
+          nil ->
+            conn
+            |> put_status(:bad_request)
+            |> json(%{error: "Unknown preset"})
+            |> halt()
+        end
+    end
   end
 end
