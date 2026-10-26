@@ -5,6 +5,7 @@
 - [Changed] AAC transcodes no longer get a hand written edit list, ffmpeg's own is what players use
 - [Deprecated] The `adts` and WebM `opus` presets, they keep working for existing clients
 - [Fixed] Range requests on transcodes ending exactly on a chunk boundary were one byte short
+- [Fixed] Transcodes of AAC sources carried the encoder padding at their end, a click at every track change of a gapless album
 
 ## 1.0.0-rc.3 - 2026-10-22
 - [Changed] redesigned the web ui ([#10](https://github.com/ondumusic/server/pull/10))

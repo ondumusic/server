@@ -172,10 +172,15 @@ defmodule Ondu.Transcoder.Preset do
     end
   end
 
-  @spec ffmpeg_args(file :: File.t(), preset :: t()) :: [String.t()]
-  def ffmpeg_args(%File{} = file, %__MODULE__{} = preset) do
+  @doc """
+  With `valid_samples:` the decoded audio is cut to that many samples (of the
+  source's sample rate) before encoding, see `Ondu.Transcoder.Trim`.
+  """
+  @spec ffmpeg_args(file :: File.t(), preset :: t(), valid_samples: non_neg_integer() | nil) ::
+          [String.t()]
+  def ffmpeg_args(%File{} = file, %__MODULE__{} = preset, opts \\ []) do
     uri = Storage.get_uri(file.path)
-    args = ["-i", uri] ++ ffmpeg_shared_args(file, preset)
+    args = ["-i", uri] ++ trim_args(opts[:valid_samples]) ++ ffmpeg_shared_args(file, preset)
 
     if preset.streamable? do
       args
@@ -184,6 +189,11 @@ defmodule Ondu.Transcoder.Preset do
       args ++ [tmp_output_file]
     end
   end
+
+  defp trim_args(samples) when is_integer(samples) and samples > 0,
+    do: ["-af", "atrim=end_sample=#{samples}"]
+
+  defp trim_args(_samples), do: []
 
   @spec bitrate(file :: File.t(), preset :: t()) :: non_neg_integer()
   def bitrate(%{metadata: %{bitrate: bitrate}}, preset) when is_integer(bitrate),
