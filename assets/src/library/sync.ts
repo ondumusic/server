@@ -5,7 +5,7 @@ import type { Album, Artist, Playlist, PlaylistItem, Track } from "../types";
 import { artworkThumbnailUrl } from "../utils/artwork";
 import { notifyChanges } from "./events";
 import { repo } from "./repo";
-import { transforms } from "./transforms";
+import { schemaVersion, transforms } from "./transforms";
 
 interface SyncMeta<T> {
   key: string;
@@ -169,7 +169,10 @@ class SyncClient {
   async #fetch(cursor?: string, attempt: number = 1) {
     try {
       const result = await client.get<undefined, SyncResponse>(`/sync`, {
-        search: cursor ? { cursor } : {},
+        search: {
+          schemaVersion: String(schemaVersion),
+          ...(cursor ? { cursor } : {}),
+        },
       });
 
       this.pushChanges(result);

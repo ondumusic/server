@@ -14,6 +14,24 @@ defmodule Ondu.Sync do
   @default_limit 100
   @max_limit 500
 
+  # This is the version of the entity shapes. Bump it as needed, but be aware
+  # that a mismatch (client <-> server) will result in a full sync for the
+  # client to ensure it has the latest versions.
+  @schema_version 1
+
+  def schema_version, do: @schema_version
+
+  def positions(cursor, client_schema_version) do
+    schema = %{"server" => @schema_version, "client" => client_schema_version}
+
+    # If the client and server match we can continue, otherwise we will
+    # restart (but continue for deletions to avoid restarting the entire
+    # deletion log.)
+    if cursor["schema"] == schema,
+      do: cursor,
+      else: Map.take(cursor, ["deletions"])
+  end
+
   def get_entities(cursor, limit \\ nil) do
     %{
       artists: get_new_entities(Artist.preloaded(), cursor["artists"], limit: limit),
@@ -31,11 +49,12 @@ defmodule Ondu.Sync do
     }
   end
 
-  def encode_cursor(result, prev_cursor \\ %{}) do
+  def encode_cursor(result, prev_cursor \\ %{}, client_schema_version \\ nil) do
     version = 1
+    schema = %{"server" => @schema_version, "client" => client_schema_version}
 
     cursor =
-      Enum.reduce(result, %{}, fn
+      Enum.reduce(result, %{"schema" => schema}, fn
         {k, %{entries: []}}, acc ->
           case Map.get(prev_cursor, to_string(k)) do
             [_date, _last_id] = old_value -> Map.put(acc, k, old_value)
@@ -59,7 +78,7 @@ defmodule Ondu.Sync do
   def decode_cursor("v1-" <> encoded) do
     with {:ok, json} <- Base.url_decode64(encoded),
          {:ok, %{} = cursor} <- JSON.decode(json),
-         true <- Enum.all?(cursor, &valid_position?/1) do
+         true <- Enum.all?(cursor, &valid_entry?/1) do
       {:ok, cursor}
     else
       _ -> {:error, :invalid_cursor}
@@ -68,7 +87,10 @@ defmodule Ondu.Sync do
 
   def decode_cursor(_cursor), do: {:error, :invalid_cursor}
 
-  defp valid_position?({_key, [date, id]}) when is_binary(date) do
+  defp valid_entry?({"schema", %{"server" => server, "client" => client}}),
+    do: valid_schema_version?(server) and valid_schema_version?(client)
+
+  defp valid_entry?({_key, [date, id]}) when is_binary(date) do
     with {:ok, _date, _offset} <- DateTime.from_iso8601(date),
          {:ok, _id} <- Ecto.UUID.cast(id) do
       true
@@ -77,7 +99,18 @@ defmodule Ondu.Sync do
     end
   end
 
-  defp valid_position?(_position), do: false
+  defp valid_entry?(_entry), do: false
+
+  defp valid_schema_version?(version), do: is_nil(version) or is_integer(version)
+
+  def parse_schema_version(version) when is_binary(version) do
+    case Integer.parse(version) do
+      {version, ""} -> version
+      _ -> nil
+    end
+  end
+
+  def parse_schema_version(_version), do: nil
 
   def parse_limit(limit) when is_binary(limit) do
     case Integer.parse(limit) do

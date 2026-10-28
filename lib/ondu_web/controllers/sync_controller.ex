@@ -26,6 +26,17 @@ defmodule OnduWeb.SyncController do
         description: "Cursor from previous sync response to get only changes since then.",
         type: :string,
         required: false
+      ],
+      schemaVersion: [
+        in: :query,
+        description: """
+        Version of the entity data your client understands.
+
+        Pick a number and bump it when your client starts using new fields it
+        would have ignored before. The server will then send all entities again.
+        """,
+        type: :integer,
+        required: false
       ]
     ],
     responses: [
@@ -39,8 +50,10 @@ defmodule OnduWeb.SyncController do
   def sync(conn, params) do
     case Sync.decode_cursor(params["cursor"]) do
       {:ok, cursor} ->
-        result = Sync.get_entities(cursor, Sync.parse_limit(params["limit"]))
-        new_cursor = Sync.encode_cursor(result, cursor)
+        client_schema_version = Sync.parse_schema_version(params["schema_version"])
+        positions = Sync.positions(cursor, client_schema_version)
+        result = Sync.get_entities(positions, Sync.parse_limit(params["limit"]))
+        new_cursor = Sync.encode_cursor(result, positions, client_schema_version)
         notices = Notices.active()
 
         render(conn, :result, result: result, cursor: new_cursor, notices: notices)

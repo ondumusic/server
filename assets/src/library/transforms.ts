@@ -1,6 +1,8 @@
 import type { Album, Artist, Playlist, PlaylistItem, Track } from "../types";
 import { repo } from "./repo";
 
+export const schemaVersion = 1;
+
 export const transforms = {
   async artists(artists: Artist[]) {
     return artists.map((artist) => {
