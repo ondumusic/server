@@ -63,6 +63,7 @@ function StorageSettings() {
     localStorage.removeItem("baseAccentColor");
     localStorage.removeItem("theme");
     localStorage.removeItem("recordPlays");
+    localStorage.removeItem("transcodingPreset");
     location.reload();
   };
 

@@ -1,6 +1,7 @@
 import { authApi } from "../api";
 import type { Track } from "../types";
 import { playRecorder } from "./plays";
+import { transcoding } from "./transcoding";
 
 interface AudioEvent {
   duration: number;
@@ -138,13 +139,26 @@ export class AudioService {
   }
 
   #setSource(audioTrack: AudioTrack) {
-    const sources =
-      audioTrack.transcode === true
-        ? [`${audioTrack.streamUrl}?transcode=1&token=${this.#playToken}`]
-        : [
-            `${audioTrack.streamUrl}?transcode=0&token=${this.#playToken}`,
-            `${audioTrack.streamUrl}?transcode=1&token=${this.#playToken}`,
-          ];
+    const original = `${audioTrack.streamUrl}?transcode=0&token=${this.#playToken}`;
+    const transcode = `${audioTrack.streamUrl}?transcode=1&token=${this.#playToken}`;
+    const preset = transcoding.preset;
+
+    // Determine the sources.
+    let sources: string[];
+    if (audioTrack.transcode === true) {
+      // Uses default transcode presets (decided on server)
+      sources = [transcode];
+    } else if (preset) {
+      // Use preferred transcode preset, fallback to original or default transcode
+      sources = [
+        `${transcode}&preset=${encodeURIComponent(preset)}`,
+        original,
+        transcode,
+      ];
+    } else {
+      // Play original file, or default transcode if that fails (e.g. unsupported audio)
+      sources = [original, transcode];
+    }
 
     this.#audioRef.src = sources[0];
     this.#audioRef.load();

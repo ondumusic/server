@@ -286,7 +286,12 @@
       "userSettings": "User Settings",
       "userSettingsHelp": "Resets all the custom settings for this browser session."
     },
-    "title": "Settings"
+    "title": "Settings",
+    "transcoding": {
+      "original": "Original",
+      "summary": "For example you could use the mobile preset to save on bandwidth.",
+      "title": "Streaming Quality"
+    }
   },
   "settingsForm": {
     "button": {

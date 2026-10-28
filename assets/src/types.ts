@@ -173,9 +173,21 @@ export interface User {
 
 export type ScanType = "full" | "quick";
 
+export interface TranscodingPreset {
+  id: string;
+  name: string;
+  codec: string;
+  container: string;
+  mimetype: string;
+  extension: string;
+  bitrate: number;
+}
+
 export interface ServerInfo {
   version: string;
   apiVersion: number;
+  defaultPreset: string;
+  presets: TranscodingPreset[];
 }
 
 export interface Settings {
