@@ -32,14 +32,23 @@ defmodule OnduWeb.SyncController do
       ok:
         {"Returns a cursor-paginated list of entities from the library.", "application/json",
          Schemas.SyncResponse},
+      bad_request: {"Invalid cursor.", "application/json", Schemas.Error},
       unauthorized: {"Invalid authentication.", "application/json", Schemas.Error}
     ]
 
   def sync(conn, params) do
-    result = Sync.get_entities(params)
-    new_cursor = Sync.encode_cursor(result, params)
-    notices = Notices.active()
+    case Sync.decode_cursor(params["cursor"]) do
+      {:ok, cursor} ->
+        result = Sync.get_entities(cursor, Sync.parse_limit(params["limit"]))
+        new_cursor = Sync.encode_cursor(result, cursor)
+        notices = Notices.active()
 
-    render(conn, :result, result: result, cursor: new_cursor, notices: notices)
+        render(conn, :result, result: result, cursor: new_cursor, notices: notices)
+
+      {:error, :invalid_cursor} ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{error: "Invalid cursor"})
+    end
   end
 end

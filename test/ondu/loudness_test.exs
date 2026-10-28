@@ -53,7 +53,7 @@ defmodule Ondu.LoudnessTest do
       assert {:ok, _loudness} = Loudness.measure(file)
 
       assert %{albums: %{entries: [%{id: album_id}]}} =
-               Ondu.Sync.get_entities(%{"cursor" => cursor})
+               Ondu.Sync.get_entities(cursor)
 
       assert album_id == track.album_id
     end
@@ -66,7 +66,7 @@ defmodule Ondu.LoudnessTest do
       assert {:ok, _loudness} = Loudness.measure(file)
 
       assert %{tracks: %{entries: [%{id: track_id}]}} =
-               Ondu.Sync.get_entities(%{"cursor" => cursor})
+               Ondu.Sync.get_entities(cursor)
 
       assert track_id == track.id
     end
@@ -78,7 +78,7 @@ defmodule Ondu.LoudnessTest do
       file = Repo.one!(from(f in File, limit: 1))
 
       assert {:ok, _loudness} = Loudness.measure(file)
-      assert %{tracks: %{entries: []}} = Ondu.Sync.get_entities(%{"cursor" => cursor})
+      assert %{tracks: %{entries: []}} = Ondu.Sync.get_entities(cursor)
     end
 
     test "does not touch the track when re-measuring gives the same values" do
@@ -88,7 +88,7 @@ defmodule Ondu.LoudnessTest do
       cursor = sync_cursor_in_the_past()
 
       assert {:ok, _loudness} = Loudness.measure(Repo.reload!(file))
-      assert %{tracks: %{entries: []}} = Ondu.Sync.get_entities(%{"cursor" => cursor})
+      assert %{tracks: %{entries: []}} = Ondu.Sync.get_entities(cursor)
     end
 
     test "touches the track when re-measuring gives different values" do
@@ -99,7 +99,7 @@ defmodule Ondu.LoudnessTest do
       stub(Ondu.Tool.LoudnessMock, :exec, fn _path -> {:ok, %{lufs: -12.0, peak: -1.0}} end)
 
       assert {:ok, _loudness} = Loudness.measure(Repo.reload!(file))
-      assert %{tracks: %{entries: [_track]}} = Ondu.Sync.get_entities(%{"cursor" => cursor})
+      assert %{tracks: %{entries: [_track]}} = Ondu.Sync.get_entities(cursor)
     end
 
     test "does not store the measurement when the file changed meanwhile" do
@@ -118,11 +118,11 @@ defmodule Ondu.LoudnessTest do
     Repo.update_all(Ondu.Tracks.Track, set: [updated_at: past])
     Repo.update_all(Ondu.Albums.Album, set: [updated_at: past])
 
-    params = %{"limit" => 10_000}
-    result = Ondu.Sync.get_entities(params)
+    result = Ondu.Sync.get_entities(%{}, 10_000)
     refute result.tracks.has_more?
 
-    Ondu.Sync.encode_cursor(result, params)
+    {:ok, cursor} = result |> Ondu.Sync.encode_cursor() |> Ondu.Sync.decode_cursor()
+    cursor
   end
 
   describe "album_loudness/1" do

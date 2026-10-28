@@ -12,11 +12,9 @@ defmodule Ondu.Sync do
   import Ecto.Query
 
   @default_limit 100
+  @max_limit 500
 
-  def get_entities(params) do
-    cursor = Map.get(params, "cursor") |> decode_cursor()
-    limit = Map.get(params, "limit")
-
+  def get_entities(cursor, limit \\ nil) do
     %{
       artists: get_new_entities(Artist.preloaded(), cursor["artists"], limit: limit),
       albums: get_new_entities(Album.preloaded(), cursor["albums"], limit: limit),
@@ -33,8 +31,7 @@ defmodule Ondu.Sync do
     }
   end
 
-  def encode_cursor(result, params \\ %{}) do
-    prev_cursor = Map.get(params, "cursor") |> decode_cursor()
+  def encode_cursor(result, prev_cursor \\ %{}) do
     version = 1
 
     cursor =
@@ -57,14 +54,39 @@ defmodule Ondu.Sync do
     "v#{version}-#{cursor}"
   end
 
-  def decode_cursor(nil), do: %{}
+  def decode_cursor(nil), do: {:ok, %{}}
 
-  def decode_cursor("v1-" <> cursor) do
-    # NOTE: todo maybe add error handling
-    cursor
-    |> Base.url_decode64!()
-    |> JSON.decode!()
+  def decode_cursor("v1-" <> encoded) do
+    with {:ok, json} <- Base.url_decode64(encoded),
+         {:ok, %{} = cursor} <- JSON.decode(json),
+         true <- Enum.all?(cursor, &valid_position?/1) do
+      {:ok, cursor}
+    else
+      _ -> {:error, :invalid_cursor}
+    end
   end
+
+  def decode_cursor(_cursor), do: {:error, :invalid_cursor}
+
+  defp valid_position?({_key, [date, id]}) when is_binary(date) do
+    with {:ok, _date, _offset} <- DateTime.from_iso8601(date),
+         {:ok, _id} <- Ecto.UUID.cast(id) do
+      true
+    else
+      _ -> false
+    end
+  end
+
+  defp valid_position?(_position), do: false
+
+  def parse_limit(limit) when is_binary(limit) do
+    case Integer.parse(limit) do
+      {limit, ""} when limit > 0 -> min(limit, @max_limit)
+      _ -> @default_limit
+    end
+  end
+
+  def parse_limit(_limit), do: @default_limit
 
   defp get_new_entities(mod, cursor, opts) do
     limit = Keyword.get(opts, :limit) || @default_limit
