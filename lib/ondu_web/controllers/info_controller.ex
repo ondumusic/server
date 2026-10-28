@@ -1,6 +1,7 @@
 defmodule OnduWeb.InfoController do
   use OnduWeb, :controller
 
+  alias Ondu.Transcoder.Preset
   alias OnduWeb.ApiSpec
 
   operation :info,
@@ -17,9 +18,11 @@ defmodule OnduWeb.InfoController do
     ]
 
   def info(conn, _params) do
-    json(conn, %{
+    render(conn, :info,
       version: to_string(Application.spec(:ondu, :vsn)),
-      apiVersion: ApiSpec.api_version()
-    })
+      api_version: ApiSpec.api_version(),
+      default_preset: Preset.default_preset(),
+      presets: Preset.list()
+    )
   end
 end

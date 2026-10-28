@@ -23,14 +23,19 @@ defmodule Ondu.Transcoder.Preset do
   empty Ogg pages, which readers skip. See `predicted_size/2`.
   """
 
+  use Gettext, backend: Ondu.Gettext
+
   alias Ondu.Files.File
   alias Ondu.Storage
   alias Ondu.Transcoder.OggPadding
 
-  defstruct [:id, :ext, :bitrate, :mimetype]
+  defstruct [:id, :name, :codec, :container, :ext, :bitrate, :mimetype]
 
   @type t :: %__MODULE__{
           id: atom(),
+          name: String.t(),
+          codec: String.t(),
+          container: String.t(),
           bitrate: non_neg_integer(),
           mimetype: String.t(),
           ext: String.t()
@@ -52,9 +57,30 @@ defmodule Ondu.Transcoder.Preset do
   @spec list() :: [t()]
   def list do
     [
-      %__MODULE__{id: :default_ogg, bitrate: 192, mimetype: "audio/ogg", ext: "opus"},
-      %__MODULE__{id: :mobile_ogg, bitrate: 96, mimetype: "audio/ogg", ext: "opus"}
+      %__MODULE__{
+        id: :default_ogg,
+        name: dgettext_noop("presets", "Default (%{bitrate}kbps)"),
+        codec: "opus",
+        container: "ogg",
+        bitrate: 192,
+        mimetype: "audio/ogg",
+        ext: "opus"
+      },
+      %__MODULE__{
+        id: :mobile_ogg,
+        name: dgettext_noop("presets", "Mobile (%{bitrate}kbps)"),
+        codec: "opus",
+        container: "ogg",
+        bitrate: 96,
+        mimetype: "audio/ogg",
+        ext: "opus"
+      }
     ]
+  end
+
+  @spec name(t()) :: String.t()
+  def name(%__MODULE__{} = preset) do
+    Gettext.dgettext(Ondu.Gettext, "presets", preset.name, bitrate: preset.bitrate)
   end
 
   @spec ids() :: [String.t()]
