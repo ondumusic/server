@@ -41,7 +41,7 @@ defmodule OnduWeb do
         formats: [:html, :json],
         layouts: [html: OnduWeb.Layouts]
 
-      use Gettext, backend: OnduWeb.Gettext
+      use Gettext, backend: Ondu.Gettext
       use OpenApiSpex.ControllerSpecs
 
       alias OnduWeb.Schemas
@@ -55,7 +55,7 @@ defmodule OnduWeb do
   def json do
     quote do
       # Translation
-      use Gettext, backend: OnduWeb.Gettext
+      use Gettext, backend: Ondu.Gettext
 
       # Routes generation with the ~p sigil
       unquote(verified_routes())
@@ -80,7 +80,7 @@ defmodule OnduWeb do
   defp html_helpers do
     quote do
       # Translation
-      use Gettext, backend: OnduWeb.Gettext
+      use Gettext, backend: Ondu.Gettext
 
       # HTML escaping functionality
       import Phoenix.HTML

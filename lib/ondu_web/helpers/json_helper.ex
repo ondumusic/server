@@ -51,8 +51,8 @@ defmodule OnduWeb.Helpers.JSON do
   end
 
   defp t(message, message, count, validation),
-    do: Gettext.dngettext(OnduWeb.Gettext, "errors", message, message, count, validation)
+    do: Gettext.dngettext(Ondu.Gettext, "errors", message, message, count, validation)
 
   defp t(message, validation),
-    do: Gettext.dgettext(OnduWeb.Gettext, "errors", message, validation)
+    do: Gettext.dgettext(Ondu.Gettext, "errors", message, validation)
 end
