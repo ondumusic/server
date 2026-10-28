@@ -1,3 +1,4 @@
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { AnimatedWaveform } from "../../components/icons/AnimatedWaveform";
 import { PlayIcon } from "../../components/icons/PlayIcon";
@@ -16,6 +17,12 @@ interface Props {
   showTrackArtist?: boolean;
   showAlbumArtwork?: boolean;
 }
+
+const handlePlayClick = (e: ReactMouseEvent<HTMLButtonElement>) => {
+  const listRowEl = e.currentTarget.closest("[data-item-id]");
+  if (!listRowEl) return;
+  listRowEl.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+};
 
 export function TrackRow({
   track,
@@ -77,16 +84,18 @@ export function TrackRow({
               })}
             />
           ) : (
-            <PlayIcon
-              className={classNames([
-                "size-4 text-accent-500",
-                isSelected && "text-white",
-              ])}
-              title={t("button.playSelectedTrack", {
-                defaultValue: "Play {{ trackName }}",
-                trackName: track.name,
-              })}
-            />
+            <button type="button" onClick={handlePlayClick}>
+              <PlayIcon
+                className={classNames([
+                  "size-4 text-accent-500",
+                  isSelected && "text-white",
+                ])}
+                title={t("button.playSelectedTrack", {
+                  defaultValue: "Play {{ trackName }}",
+                  trackName: track.name,
+                })}
+              />
+            </button>
           )}
         </div>
 
