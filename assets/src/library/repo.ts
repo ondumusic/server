@@ -197,10 +197,28 @@ export class Repo {
     return Promise.all(requests).then((results) => results.filter((r) => !!r));
   }
 
-  async count(store: string) {
+  async count<T>(store: string, whereIndex?: Query<T>["whereIndex"]) {
     const db = await this.instance;
     const tx = db.transaction(store, "readonly");
-    return this.#result<number>(tx.objectStore(store).count());
+    const objectStore = tx.objectStore(store);
+
+    if (!whereIndex) return this.#result<number>(objectStore.count());
+
+    // IndexedDB can only count for range queries, so lets ensure that's
+    // what we have before proceeding.
+    const [indexName, op, ...args] = whereIndex as [
+      string,
+      QueryOperation,
+      ...unknown[],
+    ];
+    const rangeQuery = opToRange(op, ...args);
+    if (rangeQuery.kind !== "range") {
+      throw new Error(`Unsupported count operation: ${op}`);
+    }
+
+    return this.#result<number>(
+      objectStore.index(indexName).count(rangeQuery.range ?? undefined),
+    );
   }
 
   async put<T>(store: string, item: T) {

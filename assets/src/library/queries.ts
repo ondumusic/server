@@ -304,7 +304,7 @@ export const queryPlaylistItemsByIds = async (playlistItemIds: UUID[]) => {
 export function useStats() {
   return useStoreRecord<Stats>("tracks", async () => {
     const [artists, albums, tracks, playlists] = await Promise.all([
-      repo.count("artists"),
+      repo.count<Artist>("artists", ["filter_albumCount", ">", 0]),
       repo.count("albums"),
       repo.count("tracks"),
       repo.count("playlists"),
