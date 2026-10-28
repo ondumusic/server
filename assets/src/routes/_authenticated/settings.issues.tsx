@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -27,6 +28,7 @@ import { usePhoenixSocket } from "../../hooks/usePhoenixSocket";
 import { useToast } from "../../hooks/useToast";
 import i18next from "../../i18next";
 import { repo } from "../../library";
+import { subscribe } from "../../library/events";
 import type { Album, Track, UUID } from "../../types";
 import { classNames } from "../../utils/classNames";
 
@@ -202,6 +204,7 @@ function Issues() {
   const setFilter = (value: Filter) =>
     navigate({ search: value === "all" ? {} : { code: value }, replace: true });
   const [isScanning, setIsScanning] = useState(false);
+  const isScanningRef = useRef(false);
 
   const load = useCallback(async () => {
     try {
@@ -214,6 +217,27 @@ function Issues() {
 
   useEffect(() => {
     load();
+  }, [load]);
+
+  // Because the artwork worker starts after the file scanner has completed
+  // we don't know whether or not album artwork issues are fixed yet. So we
+  // subscribe to album changes and debounce an update of the issues list to
+  // try and provide real time feedback for this.
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+
+    const unsubscribe = subscribe("albums", () => {
+      // Because the scan itself also does a reload we can ignore events that
+      // happen during a scan.
+      if (isScanningRef.current) return;
+      clearTimeout(timeout);
+      timeout = setTimeout(load, 1000);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+      unsubscribe();
+    };
   }, [load]);
 
   const counts = useMemo(() => {
@@ -274,6 +298,7 @@ function Issues() {
 
   const handleScan = async () => {
     setIsScanning(true);
+    isScanningRef.current = true;
     showToast({
       message: t("toast.startedLibraryScan", {
         defaultValue: "Started scanning the library for new tracks",
@@ -283,6 +308,7 @@ function Issues() {
     try {
       await scanApi.startScanner();
       waitForScan(async () => {
+        isScanningRef.current = false;
         await load();
         setIsScanning(false);
         showToast({
@@ -293,6 +319,7 @@ function Issues() {
       });
     } catch {
       setIsScanning(false);
+      isScanningRef.current = false;
     }
   };
 
