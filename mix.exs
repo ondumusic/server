@@ -10,7 +10,8 @@ defmodule Ondu.MixProject do
       start_permanent: Mix.env() == :prod,
       listeners: [Phoenix.CodeReloader],
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      dialyzer: [plt_core_path: "_build/#{Mix.env()}", plt_add_apps: [:ex_unit]]
     ]
   end
 
