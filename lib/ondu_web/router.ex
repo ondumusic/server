@@ -13,6 +13,7 @@ defmodule OnduWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug OnduWeb.Plugs.Locale
     plug :fetch_current_user
     plug OpenApiSpex.Plug.PutApiSpec, module: OnduWeb.ApiSpec
     plug Casex.CamelCaseDecoderPlug
