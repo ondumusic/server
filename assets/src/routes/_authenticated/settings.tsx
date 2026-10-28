@@ -5,7 +5,7 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { useState } from "react";
-import { scanApi } from "../../api";
+import { infoApi, scanApi } from "../../api";
 import { SpinnerIcon } from "../../components/icons/SpinnerIcon";
 import { Marquee } from "../../components/Marquee";
 import {
@@ -20,6 +20,7 @@ import i18next from "../../i18next";
 import { classNames } from "../../utils/classNames";
 
 export const Route = createFileRoute("/_authenticated/settings")({
+  loader: () => infoApi.getInfo(),
   staticData: { view: "settings" as const },
   component: SettingsLayout,
 });
@@ -38,6 +39,7 @@ function SettingsLayout() {
   const { showToast } = useToast();
   const { waitForScan } = usePhoenixSocket();
   const [isScanning, setIsScanning] = useState(false);
+  const serverInfo = Route.useLoaderData();
 
   // Settings stored on the server first, then the ones for this browser only.
   const settingSections: ListItem[] = [
@@ -183,16 +185,26 @@ function SettingsLayout() {
   );
 
   const renderSidebar = () => (
-    <SelectableList<ListItem>
-      multiple={false}
-      items={settingSections}
-      renderItem={renderItem}
-      selectedIds={new Set(currentSection ? [currentSection.id] : [])}
-      defaultFocusId={currentSection?.id}
-      paddingTop={sidebarTitleHeight}
-      onChange={handleChange}
-      onContextMenu={handleContextMenu}
-    />
+    <div className="flex flex-col h-full">
+      <div className="h-full overflow-auto">
+        <SelectableList<ListItem>
+          multiple={false}
+          items={settingSections}
+          renderItem={renderItem}
+          selectedIds={new Set(currentSection ? [currentSection.id] : [])}
+          defaultFocusId={currentSection?.id}
+          paddingTop={sidebarTitleHeight}
+          onChange={handleChange}
+          onContextMenu={handleContextMenu}
+        />
+      </div>
+      <div className="px-6 py-3 text-xs text-center text-page-fg-muted select-none">
+        {i18next.t("settings.serverVersion", {
+          defaultValue: "Ondu {{ version }}",
+          version: serverInfo.version,
+        })}
+      </div>
+    </div>
   );
 
   return (

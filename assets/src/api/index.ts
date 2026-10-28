@@ -3,6 +3,7 @@ export { artistApi } from "./artists";
 export { authApi } from "./auth";
 export { client } from "./client";
 export { ClientError } from "./errors";
+export { infoApi } from "./info";
 export {
   type AlbumIssues,
   type Issue,

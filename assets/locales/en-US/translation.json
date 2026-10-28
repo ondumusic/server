@@ -275,6 +275,7 @@
       "browser": "This Browser",
       "server": "Server"
     },
+    "serverVersion": "Ondu {{ version }}",
     "storage": {
       "localDatabase": "Local Database",
       "localDatabaseHelp": "Resets your local IndexedDB and starts a new sync.",

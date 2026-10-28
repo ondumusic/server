@@ -173,6 +173,11 @@ export interface User {
 
 export type ScanType = "full" | "quick";
 
+export interface ServerInfo {
+  version: string;
+  apiVersion: number;
+}
+
 export interface Settings {
   musicPath: string;
   scanType: ScanType;
