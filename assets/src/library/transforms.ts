@@ -1,5 +1,6 @@
 import type { Album, Artist, Playlist, PlaylistItem, Track } from "../types";
 import { repo } from "./repo";
+import { searchTokens } from "./search";
 
 export const schemaVersion = 1;
 
@@ -13,6 +14,7 @@ export const transforms = {
         slug: artist.slug,
         albumCount: artist.albumCount,
         insertedAt: new Date(artist.insertedAt as string),
+        searchTokens: searchTokens.artist(artist),
 
         // TMP VALUES:
         __type: "artist" as const,
@@ -40,6 +42,10 @@ export const transforms = {
         artistId: album.artistId,
         artistName: artist?.name,
         artistSortName: artist?.sortName,
+        searchTokens: searchTokens.album({
+          name: album.name,
+          artistName: artist?.name,
+        }),
 
         // TMP VALUES:
         __type: "album" as const,
@@ -84,6 +90,10 @@ export const transforms = {
         albumArtistId: track.albumArtistId,
         albumArtistName: album?.artistName,
         albumArtistSortName: album?.artistSortName,
+        searchTokens: searchTokens.track({
+          name: track.name,
+          artistName: artist?.name,
+        }),
 
         // TMP VALUES:
         __type: "track" as const,

@@ -14,6 +14,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import type { OnboardingStep } from "../types";
 
+import { maybeReindexSearch } from "./search";
 import { type SyncProgress, sync } from "./sync";
 
 const FIVE_MINUTES = 5 * 60 * 1000;
@@ -96,6 +97,8 @@ export function LibraryProvider({ children }: PropsWithChildren) {
   // biome-ignore lint/correctness/useExhaustiveDependencies(doSync): suppress dependency
   useEffect(() => {
     if (!isLoggedIn) return;
+
+    maybeReindexSearch();
 
     sync.getLastSyncedAt().then((lastSyncedAt?: Date) => {
       setPageLoadSync(!lastSyncedAt && !isOnboarding);

@@ -22,6 +22,11 @@ type StoreOperations<T> = {
   };
 };
 
+type UpdateBatchResult = {
+  lastKey: IDBValidKey | undefined;
+  done: boolean;
+};
+
 export class Repo {
   #name: string;
   #migrations: Migrations;
@@ -239,6 +244,31 @@ export class Repo {
     return await this.#write({ [store]: { del: keys } });
   }
 
+  async updateEach<T>(
+    store: string,
+    update: (record: T) => T | undefined,
+    batchSize = 500,
+  ) {
+    const db = await this.instance;
+
+    // We'll process this update in batches, each batch has its own transaction
+    // to avoid blocking other writes until the entire store has been updated.
+    let batch: UpdateBatchResult = {
+      lastKey: undefined,
+      done: false,
+    };
+
+    while (!batch.done) {
+      batch = await this.#updateBatch(
+        db,
+        store,
+        update,
+        batchSize,
+        batch.lastKey,
+      );
+    }
+  }
+
   async truncate(store: string) {
     return this.truncateMany([store]);
   }
@@ -269,6 +299,60 @@ export class Repo {
           "Failed to delete indexedDB, blocked by other connection.",
         );
       };
+    });
+  }
+
+  #updateBatch<T>(
+    db: IDBDatabase,
+    store: string,
+    update: (record: T) => T | undefined,
+    batchSize: number,
+    afterKey: IDBValidKey | undefined,
+  ): Promise<UpdateBatchResult> {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(store, "readwrite");
+
+      // If there is an `afterKey` value we want to resume our cursor
+      // from that to continue with the next batch.
+      let range = null;
+      if (afterKey !== undefined)
+        range = IDBKeyRange.lowerBound(afterKey, true);
+
+      let lastKey = afterKey;
+      let count = 0;
+      let done = false;
+
+      // Open cursor from the range.
+      const req = tx.objectStore(store).openCursor(range);
+
+      // This is called once per record and has to be synchronous.
+      req.onsuccess = () => {
+        const cursor = req.result;
+
+        // No cursor means we have seen every record in the store.
+        if (!cursor) {
+          done = true;
+          return;
+        }
+
+        // Call the update function with the current value
+        // and if it returns new data, update it in the database.
+        const updated = update(cursor.value as T);
+        if (updated) cursor.update(updated);
+
+        // Always remember the last key (so we know where to continue
+        // the next batch).
+        lastKey = cursor.primaryKey;
+
+        // Only continue with the next record if we have not yet hit
+        // our batch size limit.
+        count++;
+        if (count < batchSize) cursor.continue();
+      };
+
+      // Resolve when complete, or reject on error.
+      tx.oncomplete = () => resolve({ lastKey, done });
+      tx.onerror = () => reject(tx.error);
     });
   }
 
@@ -336,5 +420,15 @@ export const repo = new Repo("ondu", {
 
     // Keeps track of cursor et al.
     db.createObjectStore("meta", { keyPath: "key" });
+  },
+  // This migration adds local search tokens in an index
+  2: (_db, tx) => {
+    if (!tx) throw new Error("migration requires an upgrade transaction");
+    for (const store of ["artists", "albums", "tracks"]) {
+      tx.objectStore(store).createIndex("by_searchToken", "searchTokens", {
+        unique: false,
+        multiEntry: true,
+      });
+    }
   },
 });
