@@ -7,6 +7,8 @@ defmodule Ondu.Release do
 
   alias Ondu.Accounts
   alias Ondu.Accounts.User
+  alias Ondu.Repo
+  alias Ondu.Transcoder
 
   def migrate do
     load_app()
@@ -30,7 +32,7 @@ defmodule Ondu.Release do
     Application.ensure_all_started(:bcrypt_elixir)
 
     {:ok, result, _} =
-      Ecto.Migrator.with_repo(Ondu.Repo, fn _repo ->
+      Ecto.Migrator.with_repo(Repo, fn _repo ->
         with %User{} = user <- Accounts.get_user_by_username(username),
              do: Accounts.reset_user_password(user)
       end)
@@ -46,6 +48,58 @@ defmodule Ondu.Release do
       {:error, changeset} ->
         IO.puts(:stderr, "Failed to reset the password: #{inspect(changeset.errors)}")
         System.halt(1)
+    end
+  end
+
+  @doc """
+  Starts transcoding all music files for the given preset.
+  """
+  def prewarm_transcode_cache(preset) do
+    load_app()
+    preset = Transcoder.Preset.get(preset)
+
+    if is_nil(preset) do
+      IO.puts(:stderr, "There is no preset with identifier #{preset}")
+      System.halt(1)
+    end
+
+    # In eval mode the Transcoder has not started so we need to do that as well
+    case Transcoder.start_link([]) do
+      {:ok, _pid} -> :ok
+      {:error, {:already_started, _pid}} -> :ok
+    end
+
+    Ecto.Migrator.with_repo(Repo, fn _repo ->
+      prewarm_all(preset)
+    end)
+  end
+
+  defp prewarm_all(preset) do
+    import Ecto.Query
+
+    # Figure out which files need to be prewarmed
+    files = Repo.all(from f in Ondu.Files.File, join: t in assoc(f, :track), order_by: f.path)
+    todo = Enum.reject(files, &match?(%{persisted: true}, Transcoder.get_meta(&1, preset)))
+    IO.puts("#{length(todo)} of #{length(files)} files to transcode")
+
+    todo
+    |> Enum.with_index(1)
+    |> Enum.each(fn {file, i} ->
+      case prewarm(file, preset) do
+        {:ok, _} -> IO.puts("#{i}/#{length(todo)} started #{file.path}")
+        {:error, reason} -> IO.puts("#{i}/#{length(todo)} #{reason} #{file.path}")
+      end
+    end)
+  end
+
+  defp prewarm(file, preset) do
+    case Transcoder.request_chunk(file, preset, 0) do
+      {:error, :server_busy} ->
+        Process.sleep(5_000)
+        prewarm(file, preset)
+
+      result ->
+        result
     end
   end
 

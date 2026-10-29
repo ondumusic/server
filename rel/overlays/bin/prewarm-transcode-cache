@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 <preset>" >&2
+  exit 1
+fi
+
+cd -P -- "$(dirname -- "$0")"
+# The preset is passed as environment variable to avoid quoting issues.
+PREWARM_TRANSCODE_CACHE_NAME="$1" exec ./ondu eval \
+  'Ondu.Release.prewarm_transcode_cache(System.fetch_env!("PREWARM_TRANSCODE_CACHE_NAME"))'

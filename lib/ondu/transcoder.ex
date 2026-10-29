@@ -13,7 +13,7 @@ defmodule Ondu.Transcoder do
   @queue_timeout_ms 30_000
   @cleanup_timer_ms 5_000
 
-  @spec start_link(Keyword.t()) :: {:ok, pid()}
+  @spec start_link(Keyword.t()) :: GenServer.on_start()
   def start_link(opts) do
     config = %Config{
       max_concurrency: opts[:max_concurrency] || Ondu.Config.transcode_max_concurrency(),
