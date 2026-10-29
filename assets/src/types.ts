@@ -25,10 +25,12 @@ export interface Artist {
 
   sortName?: string;
   insertedAt?: Date | string | number;
+  searchTokens?: string[];
 }
 
 export namespace Artist {
   export type Indexes = {
+    by_searchToken: string;
     by_slug: string;
     filter_albumCount: number;
     by_missingData: "YES" | "NO";
@@ -57,10 +59,12 @@ export interface Album {
   artistName?: string;
   artistSortName?: string;
   insertedAt?: Date | string | number;
+  searchTokens?: string[];
 }
 
 export namespace Album {
   export type Indexes = {
+    by_searchToken: string;
     by_slug: string;
     by_artistId: UUID;
     by_missingData: "YES" | "NO";
@@ -93,10 +97,12 @@ export interface Track {
   albumArtistSortName?: string;
   albumReleaseYear?: number;
   insertedAt?: Date | string | number;
+  searchTokens?: string[];
 }
 
 export namespace Track {
   export type Indexes = {
+    by_searchToken: string;
     by_artistId: UUID;
     by_albumId: UUID;
     by_albumArtistId: UUID;
