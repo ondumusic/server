@@ -17,7 +17,7 @@ defmodule Ondu.Artists.Artwork do
     field :width, :integer
     field :height, :integer
 
-    timestamps(type: :utc_datetime)
+    timestamps(type: :utc_datetime_usec)
   end
 
   @spec changeset(t(), map()) :: Ecto.Changeset.t()

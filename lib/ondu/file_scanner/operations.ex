@@ -444,11 +444,11 @@ defmodule Ondu.FileScanner.Operations do
   end
 
   defp add_timestamps(entry, additional_fields \\ []) do
-    now = DateTime.utc_now() |> DateTime.truncate(:second)
-    date_fields = [:inserted_at, :updated_at] ++ additional_fields
+    now = DateTime.utc_now()
+    entry = Map.merge(entry, %{inserted_at: now, updated_at: now})
 
-    Enum.reduce(date_fields, entry, fn field, entry ->
-      Map.put(entry, field, now)
+    Enum.reduce(additional_fields, entry, fn field, entry ->
+      Map.put(entry, field, DateTime.truncate(now, :second))
     end)
   end
 end

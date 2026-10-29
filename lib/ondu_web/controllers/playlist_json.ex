@@ -33,7 +33,7 @@ defmodule OnduWeb.PlaylistJSON do
       isFolder: playlist.is_folder,
       parentId: playlist.parent_id,
       trackCount: playlist.track_count,
-      insertedAt: playlist.inserted_at
+      insertedAt: json_datetime(playlist.inserted_at)
     }
   end
 
@@ -44,7 +44,7 @@ defmodule OnduWeb.PlaylistJSON do
       position: playlist_item.position,
       playlistId: playlist_item.playlist_id,
       trackId: playlist_item.track_id,
-      insertedAt: playlist_item.inserted_at
+      insertedAt: json_datetime(playlist_item.inserted_at)
     }
   end
 

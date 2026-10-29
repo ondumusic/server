@@ -11,7 +11,7 @@ defmodule Ondu.ArtistArtworkTest do
     File.mkdir_p!(dir)
 
     artist = Artist |> first() |> Repo.one!()
-    artist = update_record(artist, %{updated_at: ~U[2026-01-01 00:00:00Z]})
+    artist = update_record(artist, %{updated_at: ~U[2026-01-01 00:00:00.000000Z]})
 
     [artist: artist, dir: dir]
   end
@@ -38,7 +38,7 @@ defmodule Ondu.ArtistArtworkTest do
     assert File.read!(Artworks.original_path(:artists, artist.id)) == File.read!(path)
     assert File.exists?(Artworks.variant_path(:artists, artist.id, :thumbnail))
     assert File.exists?(Artworks.variant_path(:artists, artist.id, :large))
-    assert DateTime.after?(Repo.reload!(artist).updated_at, ~U[2026-01-01 00:00:00Z])
+    assert DateTime.after?(Repo.reload!(artist).updated_at, ~U[2026-01-01 00:00:00.000000Z])
 
     assert Artworks.variant_sizes(:artists, %{width: 1600, height: 1000}) ==
              [{:thumbnail, 205, 128}, {:large, 1024, 640}]
@@ -46,11 +46,11 @@ defmodule Ondu.ArtistArtworkTest do
 
   test "replaces the artwork, but not with the same image", %{artist: artist, dir: dir} do
     {:ok, first} = Artworks.put(:artists, artist, image(dir, "first.png", "300x300"))
-    artist = update_record(Repo.reload!(artist), %{updated_at: ~U[2026-01-01 00:00:00Z]})
+    artist = update_record(Repo.reload!(artist), %{updated_at: ~U[2026-01-01 00:00:00.000000Z]})
 
     assert {:ok, %{hash: hash}} = Artworks.put(:artists, artist, Path.join(dir, "first.png"))
     assert hash == first.hash
-    assert Repo.reload!(artist).updated_at == ~U[2026-01-01 00:00:00Z]
+    assert Repo.reload!(artist).updated_at == ~U[2026-01-01 00:00:00.000000Z]
 
     assert {:ok, second} = Artworks.put(:artists, artist, image(dir, "second.png", "400x200"))
     assert second.hash != first.hash

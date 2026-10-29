@@ -78,7 +78,7 @@ defmodule Ondu.Loudness do
   end
 
   defp store(file, loudness) do
-    now = DateTime.utc_now(:second)
+    now = DateTime.utc_now()
 
     case Repo.update_all(unchanged_file_query(file), set: [loudness: loudness, updated_at: now]) do
       {1, _} ->

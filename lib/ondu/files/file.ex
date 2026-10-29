@@ -31,7 +31,7 @@ defmodule Ondu.Files.File do
     # needs to re-check this file only when actual content changed.
     field :content_changed_at, :utc_datetime
 
-    timestamps(type: :utc_datetime)
+    timestamps(type: :utc_datetime_usec)
   end
 
   @spec mimetype(t()) :: String.t()

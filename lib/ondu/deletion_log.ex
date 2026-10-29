@@ -10,6 +10,6 @@ defmodule Ondu.DeletionLog do
 
     field :entity_id, :binary_id, primary_key: true
     field :metadata, :map, default: %{}
-    field :deleted_at, :utc_datetime
+    field :deleted_at, :utc_datetime_usec
   end
 end

@@ -216,7 +216,7 @@ defmodule Ondu.Artwork do
   # client sync and return with the new artwork.
   defp touch(kind, parent) do
     from(p in kind!(kind).parent, where: p.id == ^parent.id)
-    |> Repo.update_all(set: [updated_at: DateTime.utc_now(:second)])
+    |> Repo.update_all(set: [updated_at: DateTime.utc_now()])
   end
 
   defp after_change(kind, parent, artwork) do

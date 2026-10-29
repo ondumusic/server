@@ -17,7 +17,7 @@ defmodule Ondu.Playlists.Playlist do
     has_many :items, PlaylistItem, preload_order: [asc: :position]
     belongs_to :playlist, __MODULE__, foreign_key: :parent_id
 
-    timestamps(type: :utc_datetime)
+    timestamps(type: :utc_datetime_usec)
   end
 
   @spec preloaded(Ecto.Queryable.t() | nil) :: Ecto.Queryable.t()

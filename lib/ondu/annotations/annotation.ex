@@ -40,7 +40,7 @@ defmodule Ondu.Annotations.Annotation do
 
     field :data, :map
 
-    timestamps(type: :utc_datetime)
+    timestamps(type: :utc_datetime_usec)
   end
 
   # NOTE: data is not marked as required because it could be nilified,

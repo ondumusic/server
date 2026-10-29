@@ -18,7 +18,7 @@ defmodule Ondu.Playlists.PlaylistItem do
     belongs_to :playlist, Playlist
     belongs_to :track, Track
 
-    timestamps(type: :utc_datetime)
+    timestamps(type: :utc_datetime_usec)
   end
 
   @spec preloaded(Ecto.Queryable.t() | nil) :: Ecto.Queryable.t()

@@ -24,6 +24,10 @@ defmodule OnduWeb.Helpers.JSON do
     |> Casex.to_camel_case()
   end
 
+  @spec json_datetime(DateTime.t() | nil) :: DateTime.t() | nil
+  def json_datetime(nil), do: nil
+  def json_datetime(datetime), do: DateTime.truncate(datetime, :second)
+
   @type json_map_opt :: {:include, [atom()]} | {:as, (map() -> map())}
   @spec json_map(atom(), map(), Access.t(), atom(), [json_map_opt()]) :: [map()]
   def json_map(module, assigns, path, assign_key, opts) do

@@ -60,7 +60,7 @@ defmodule Ondu.Playlists do
         |> repo.all()
 
       new_keys = FractionalIndex.generate_n_keys_between(nil, nil, length(item_ids))
-      now = DateTime.utc_now() |> DateTime.truncate(:second)
+      now = DateTime.utc_now()
 
       Enum.zip(item_ids, new_keys)
       |> Enum.each(fn {item_id, key} ->

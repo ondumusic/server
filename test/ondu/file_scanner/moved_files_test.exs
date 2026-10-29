@@ -82,7 +82,7 @@ defmodule Ondu.FileScanner.MovedFilesTest do
     track = track_of(path)
     playlist = TestSeeds.insert_playlist(%{name: "Playlist"})
     TestSeeds.insert_playlist_item(playlist, %{position: "a0", track_id: track.id})
-    update_record(track, %{play_count: 3, inserted_at: ~U[2026-01-01 00:00:00Z]})
+    update_record(track, %{play_count: 3, inserted_at: ~U[2026-01-01 00:00:00.000000Z]})
   end
 
   # This ensures a given track has not been reinserted after a file move/rename.
@@ -141,10 +141,10 @@ defmodule Ondu.FileScanner.MovedFilesTest do
       Ondu.Albums.update_artwork(album, %{
         hash: "hash",
         fetcher: :embedded,
-        last_fetch_attempt: ~U[2026-01-01 00:00:00Z]
+        last_fetch_attempt: ~U[2026-01-01 00:00:00.000000Z]
       })
 
-    track = update_record(track, %{updated_at: ~U[2026-01-01 00:00:00Z]})
+    track = update_record(track, %{updated_at: ~U[2026-01-01 00:00:00.000000Z]})
 
     move(music_path, "Old/song.mp3", "New/song.mp3")
     scan!(:quick)
@@ -384,7 +384,9 @@ defmodule Ondu.FileScanner.MovedFilesTest do
       scan!()
 
       album =
-        update_record(album_of("Artist/Albm/01 One.mp3"), %{inserted_at: ~U[2026-01-01 00:00:00Z]})
+        update_record(album_of("Artist/Albm/01 One.mp3"), %{
+          inserted_at: ~U[2026-01-01 00:00:00.000000Z]
+        })
 
       retag(music_path, "Artist/Albm/01 One.mp3", "Artist/Album/01 One.mp3")
       retag(music_path, "Artist/Albm/02 Two.mp3", "Artist/Album/02 Two.mp3")
@@ -469,7 +471,7 @@ defmodule Ondu.FileScanner.MovedFilesTest do
 
       artist =
         update_record(artist_of("Artst/Album/01 One.mp3"), %{
-          inserted_at: ~U[2026-01-01 00:00:00Z]
+          inserted_at: ~U[2026-01-01 00:00:00.000000Z]
         })
 
       retag(music_path, "Artst/Album/01 One.mp3", "Artist/Album/01 One.mp3")

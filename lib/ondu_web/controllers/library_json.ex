@@ -22,7 +22,7 @@ defmodule OnduWeb.LibraryJSON do
       slug: artist.slug,
       albumCount: artist.album_count,
       artwork: artwork(:artists, artist.id, artist.artwork),
-      insertedAt: artist.inserted_at
+      insertedAt: json_datetime(artist.inserted_at)
     }
   end
 
@@ -65,7 +65,7 @@ defmodule OnduWeb.LibraryJSON do
       trackCount: album.track_count,
       artwork: artwork,
       loudness: album_loudness(album),
-      insertedAt: album.inserted_at
+      insertedAt: json_datetime(album.inserted_at)
     }
 
     if assigns[:render_tracks] != false do
@@ -100,7 +100,7 @@ defmodule OnduWeb.LibraryJSON do
       playCount: track.play_count,
       lastPlayedAt: track.last_played_at,
       mimetype: mimetype,
-      insertedAt: track.inserted_at,
+      insertedAt: json_datetime(track.inserted_at),
       downloadUrl: url(~p"/download/#{track}"),
       streamUrl: url(~p"/stream/#{track}"),
       relativeFilePath: track.file.path

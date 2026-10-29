@@ -49,7 +49,7 @@ defmodule Ondu.FileScanner.Applier do
   end
 
   defp rename_artists(renamed_artists, settings) do
-    now = DateTime.utc_now(:second)
+    now = DateTime.utc_now()
 
     for %{artist_id: artist_id, artist: name} <- renamed_artists do
       artist = Repo.get!(Artist, artist_id)
@@ -69,7 +69,7 @@ defmodule Ondu.FileScanner.Applier do
   end
 
   defp rename_albums(renamed_albums, settings) do
-    now = DateTime.utc_now(:second)
+    now = DateTime.utc_now()
 
     # First we get or create the artist entries per album artist (by slug),
     # as multiple albums could have the same artist.

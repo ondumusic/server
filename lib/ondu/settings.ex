@@ -13,7 +13,7 @@ defmodule Ondu.Settings do
     # The poll interval is in minutes, defaults to 60 minutes (hourly)
     field :poll_interval, :integer, default: 60
 
-    timestamps(type: :utc_datetime)
+    timestamps(type: :utc_datetime_usec)
   end
 
   @type t :: %__MODULE__{}

@@ -17,7 +17,7 @@ defmodule OnduWeb.AnnotationJSON do
     %{
       entityId: annotation.entity_id,
       data: annotation.data,
-      updatedAt: annotation.updated_at
+      updatedAt: json_datetime(annotation.updated_at)
     }
   end
 

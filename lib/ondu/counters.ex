@@ -24,7 +24,7 @@ defmodule Ondu.Counters do
         join: c in subquery(counts),
         on: p.id == c.id,
         where: field(p, ^counter_field) != c.count or is_nil(field(p, ^counter_field)),
-        update: [set: [{^counter_field, c.count}, {:updated_at, ^DateTime.utc_now(:second)}]],
+        update: [set: [{^counter_field, c.count}, {:updated_at, ^DateTime.utc_now()}]],
         select: p.id
       )
       |> Repo.update_all([])

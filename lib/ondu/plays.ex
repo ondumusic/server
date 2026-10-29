@@ -50,7 +50,7 @@ defmodule Ondu.Plays do
 
   defp store(plays) do
     track_ids = existing_track_ids(plays)
-    now = DateTime.utc_now(:second)
+    now = DateTime.utc_now()
 
     entries =
       for play <- plays, play.track_id in track_ids do

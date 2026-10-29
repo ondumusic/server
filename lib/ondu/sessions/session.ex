@@ -19,7 +19,7 @@ defmodule Ondu.Sessions.Session do
     field :context, :string
     belongs_to :user, User
 
-    timestamps(type: :utc_datetime, updated_at: false)
+    timestamps(type: :utc_datetime_usec, updated_at: false)
   end
 
   @spec build_session_token(User.t()) :: {binary(), t()}

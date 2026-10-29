@@ -22,7 +22,7 @@ defmodule Ondu.Artists.Artist do
     has_many :tracks, Track
     has_one :artwork, Artwork
 
-    timestamps(type: :utc_datetime)
+    timestamps(type: :utc_datetime_usec)
   end
 
   @spec preloaded(Ecto.Queryable.t() | nil) :: Ecto.Queryable.t()

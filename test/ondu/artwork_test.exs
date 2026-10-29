@@ -52,17 +52,17 @@ defmodule Ondu.ArtworkTest do
 
     test "touches the album so clients sync the new artwork urls" do
       album = Repo.one!(Album)
-      update_record(album, %{updated_at: ~U[2000-01-01 00:00:00Z]})
+      update_record(album, %{updated_at: ~U[2000-01-01 00:00:00.000000Z]})
 
       assert {:ok, _artwork} = Albums.find_cover(album)
-      assert Repo.reload!(album).updated_at != ~U[2000-01-01 00:00:00Z]
+      assert Repo.reload!(album).updated_at != ~U[2000-01-01 00:00:00.000000Z]
     end
 
     test "keeps the artwork when the source did not change" do
       album = Repo.one!(Album)
       assert {:ok, artwork} = Albums.find_cover(album)
 
-      album = update_record(album, %{updated_at: ~U[2000-01-01 00:00:00Z]})
+      album = update_record(album, %{updated_at: ~U[2000-01-01 00:00:00.000000Z]})
       # A resize would create this file again.
       File.rm!(Artwork.variant_path(:albums, album.id, :large))
       Phoenix.PubSub.subscribe(Ondu.PubSub, "library:sync")
@@ -70,7 +70,7 @@ defmodule Ondu.ArtworkTest do
       assert {:ok, %{hash: hash}} = Albums.find_cover(album)
       assert hash == artwork.hash
       refute File.exists?(Artwork.variant_path(:albums, album.id, :large))
-      assert Repo.reload!(album).updated_at == ~U[2000-01-01 00:00:00Z]
+      assert Repo.reload!(album).updated_at == ~U[2000-01-01 00:00:00.000000Z]
       refute_received %{event: "processed"}
     end
 
@@ -78,27 +78,27 @@ defmodule Ondu.ArtworkTest do
       album = Repo.one!(Album)
       assert {:ok, artwork} = Albums.find_cover(album)
 
-      album = update_record(album, %{updated_at: ~U[2000-01-01 00:00:00Z]})
+      album = update_record(album, %{updated_at: ~U[2000-01-01 00:00:00.000000Z]})
       stub(Ondu.Tool.ExtractArtworkMock, :exec, fn _path -> other_bytes end)
 
       assert {:ok, new_artwork} = Albums.find_cover(album)
       assert new_artwork.hash != artwork.hash
       assert {new_artwork.width, new_artwork.height} == {600, 600}
-      assert Repo.reload!(album).updated_at != ~U[2000-01-01 00:00:00Z]
+      assert Repo.reload!(album).updated_at != ~U[2000-01-01 00:00:00.000000Z]
     end
 
     test "clears the artwork when it is no longer found" do
       album = Repo.one!(Album)
       assert {:ok, _artwork} = Albums.find_cover(album)
 
-      album = update_record(album, %{updated_at: ~U[2000-01-01 00:00:00Z]})
+      album = update_record(album, %{updated_at: ~U[2000-01-01 00:00:00.000000Z]})
       stub(Ondu.Tool.ExtractArtworkMock, :exec, fn _path -> {:error, :not_found} end)
       Phoenix.PubSub.subscribe(Ondu.PubSub, "library:sync")
 
       assert {:ok, artwork} = Albums.find_cover(album)
       assert {artwork.hash, artwork.width} == {nil, nil}
       refute File.exists?(Artwork.dir(:albums, album.id))
-      assert Repo.reload!(album).updated_at != ~U[2000-01-01 00:00:00Z]
+      assert Repo.reload!(album).updated_at != ~U[2000-01-01 00:00:00.000000Z]
 
       album_id = album.id
       assert_received %{event: "processed", payload: %{albums: [^album_id]}}

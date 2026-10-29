@@ -24,7 +24,7 @@ defmodule Ondu.Albums.Album do
     has_many :tracks, Track, preload_order: [asc: :disc, asc_nulls_last: :number, asc: :name]
     has_one :artwork, Artwork
 
-    timestamps(type: :utc_datetime)
+    timestamps(type: :utc_datetime_usec)
   end
 
   @spec preloaded(Ecto.Queryable.t() | nil) :: Ecto.Queryable.t()

@@ -114,7 +114,7 @@ defmodule Ondu.LoudnessTest do
   # Moves all tracks and albums back in time and returns a sync cursor after all
   # of them, so anything touched from now on shows up in the next sync.
   defp sync_cursor_in_the_past do
-    past = DateTime.add(DateTime.utc_now(:second), -1, :hour)
+    past = DateTime.add(DateTime.utc_now(), -1, :hour)
     Repo.update_all(Ondu.Tracks.Track, set: [updated_at: past])
     Repo.update_all(Ondu.Albums.Album, set: [updated_at: past])
 

@@ -12,6 +12,32 @@ defmodule OnduWeb.SyncControllerTest do
     refute Map.has_key?(track, "artist")
   end
 
+  test "continues from cursors issued before timestamps had microseconds", %{conn: conn} do
+    whole_second = %{DateTime.utc_now() | microsecond: {0, 6}}
+
+    for schema <- [Ondu.Artists.Artist, Ondu.Albums.Album, Ondu.Tracks.Track] do
+      Repo.update_all(schema, set: [updated_at: whole_second])
+    end
+
+    %{"cursor" => cursor} = conn |> get(~p"/api/sync") |> json_response(200)
+    {:ok, decoded} = Ondu.Sync.decode_cursor(cursor)
+
+    truncated =
+      Map.new(decoded, fn
+        {key, [date, id]} ->
+          {:ok, date, _offset} = DateTime.from_iso8601(date)
+          {key, [DateTime.truncate(date, :second), id]}
+
+        entry ->
+          entry
+      end)
+
+    assert %{"tracks" => [], "albums" => [], "artists" => []} =
+             conn
+             |> get(~p"/api/sync?cursor=v1-#{encode(truncated)}")
+             |> api_response(200, "SyncResponse")
+  end
+
   test "continues from the cursor of the previous response", %{conn: conn} do
     assert %{"cursor" => cursor, "complete" => true} =
              conn |> get(~p"/api/sync") |> api_response(200, "SyncResponse")
@@ -69,7 +95,7 @@ defmodule OnduWeb.SyncControllerTest do
 
     test "continues for old client that send no schema version", %{conn: conn} do
       %{"cursor" => cursor} = conn |> get(~p"/api/sync") |> json_response(200)
-      log_deletion(1)
+      log_deletion()
 
       assert %{"tracks" => [], "deletions" => [_]} =
                conn |> get(~p"/api/sync?cursor=#{cursor}") |> api_response(200, "SyncResponse")
@@ -81,6 +107,17 @@ defmodule OnduWeb.SyncControllerTest do
       assert %{"error" => "Invalid cursor"} =
                conn |> get(~p"/api/sync?cursor=#{cursor}") |> api_response(400, "Error")
     end
+  end
+
+  test "syncs changes made in the same second as the previous sync", %{conn: conn} do
+    log_deletion()
+    %{"cursor" => cursor, "deletions" => [_]} = conn |> get(~p"/api/sync") |> json_response(200)
+
+    # This is an id that sorts before the one in the cursor
+    log_deletion(entity_id: "00000000-0000-4000-8000-000000000000")
+
+    assert %{"deletions" => [_]} =
+             conn |> get(~p"/api/sync?cursor=#{cursor}") |> api_response(200, "SyncResponse")
   end
 
   test "refuses invalid cursors", %{conn: conn} do
@@ -112,11 +149,13 @@ defmodule OnduWeb.SyncControllerTest do
     "v1-" <> encode(decoded)
   end
 
-  defp log_deletion(seconds_from_now \\ 0) do
-    Ondu.Repo.insert!(%Ondu.DeletionLog{
+  defp log_deletion(attrs \\ []) do
+    deletion = %Ondu.DeletionLog{
       entity_type: :track,
       entity_id: Ecto.UUID.generate(),
-      deleted_at: DateTime.add(DateTime.utc_now(:second), seconds_from_now, :second)
-    })
+      deleted_at: DateTime.utc_now()
+    }
+
+    Ondu.Repo.insert!(struct!(deletion, attrs))
   end
 end

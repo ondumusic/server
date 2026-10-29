@@ -16,6 +16,6 @@ defmodule Ondu.Plays.Play do
 
     belongs_to :track, Track
 
-    timestamps(type: :utc_datetime, updated_at: false)
+    timestamps(type: :utc_datetime_usec, updated_at: false)
   end
 end

@@ -110,7 +110,7 @@ defmodule Ondu.Annotations do
     existing_ids = existing_ids(entity_type, Enum.map(entries, & &1.entity_id))
     {entries, skipped} = Enum.split_with(entries, &MapSet.member?(existing_ids, &1.entity_id))
     {removed, written} = Enum.split_with(entries, &is_nil(&1.data))
-    now = DateTime.utc_now(:second)
+    now = DateTime.utc_now()
 
     rows =
       for %{entity_id: entity_id, data: data} <- written do

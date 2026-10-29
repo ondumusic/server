@@ -18,7 +18,7 @@ defmodule Ondu.PlaysTest do
     track: track,
     other_track: other_track
   } do
-    track = update_record(track, %{updated_at: ~U[2026-01-01 00:00:00Z]})
+    track = update_record(track, %{updated_at: ~U[2026-01-01 00:00:00.000000Z]})
 
     assert :ok =
              Plays.record([
@@ -30,17 +30,17 @@ defmodule Ondu.PlaysTest do
     assert %{play_count: 2, last_played_at: ~U[2026-09-02 08:00:00Z], updated_at: updated_at} =
              Repo.reload!(track)
 
-    assert DateTime.after?(updated_at, ~U[2026-01-01 00:00:00Z])
+    assert DateTime.after?(updated_at, ~U[2026-01-01 00:00:00.000000Z])
     assert %{play_count: 1} = Repo.reload!(other_track)
   end
 
   test "ignores plays that were stored before", %{track: track} do
     plays = [play(track, "2026-09-01T10:00:00Z")]
     :ok = Plays.record(plays)
-    track = update_record(Repo.reload!(track), %{updated_at: ~U[2026-01-01 00:00:00Z]})
+    track = update_record(Repo.reload!(track), %{updated_at: ~U[2026-01-01 00:00:00.000000Z]})
 
     assert :ok = Plays.record(plays ++ plays)
-    assert %{play_count: 1, updated_at: ~U[2026-01-01 00:00:00Z]} = Repo.reload!(track)
+    assert %{play_count: 1, updated_at: ~U[2026-01-01 00:00:00.000000Z]} = Repo.reload!(track)
   end
 
   test "ignores plays of tracks that no longer exist", %{track: track} do

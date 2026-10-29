@@ -235,7 +235,7 @@ defmodule Ondu.Playlists.Operations do
          removes: removes,
          existing_items: existing_items
        }) do
-    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    now = DateTime.utc_now()
 
     removed =
       if removes != [] do

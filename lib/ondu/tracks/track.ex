@@ -24,7 +24,7 @@ defmodule Ondu.Tracks.Track do
     belongs_to :album, Album
     belongs_to :file, File
 
-    timestamps(type: :utc_datetime)
+    timestamps(type: :utc_datetime_usec)
   end
 
   @spec preloaded(Ecto.Queryable.t() | nil) :: Ecto.Queryable.t()
