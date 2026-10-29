@@ -1,6 +1,10 @@
 # CHANGELOG
 
 ## Unreleased
+nothing
+
+## 1.0.0-rc.5 - 2026-10-29
+- [Fixed] Sync no uses microsecond precision to avoid potential same-second misses
 - [Added] The Sync API now supports client/server schema version definitions
 - [Fixed] API now validates sync cursors instead of just raising errors
 - [Added] Web: added transcoding options to playback settings page
