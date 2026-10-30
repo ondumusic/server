@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { EmptyView } from "../../components/EmptyView";
 import { SearchResults } from "../../components/SearchResults";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import i18next from "../../i18next";
 import { canSearch, useSearch } from "../../library/search";
 
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/search")({
 function SearchPage() {
   // the router parses 123 as number so we want to make sure we have a string
   const { q = "" } = Route.useSearch() as SearchParams;
-  const query = String(q);
+  const query = useDebouncedValue(String(q), 150);
   const { results, loading } = useSearch(query);
 
   if (!canSearch(query)) {
