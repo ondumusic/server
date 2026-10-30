@@ -11,6 +11,7 @@ import { AlbumIcon } from "./icons/AlbumIcon";
 import { ArtistIcon } from "./icons/ArtistIcon";
 import { PlaylistIcon } from "./icons/PlaylistIcon";
 import { SettingsIcon } from "./icons/SettingsIcon";
+import { SearchField } from "./SearchField";
 import { type ListItemState, SelectableList } from "./SelectableList";
 
 type ViewId = "artists" | "albums" | "playlists" | "settings" | "search";
@@ -109,6 +110,9 @@ export function SideNav() {
 
   return (
     <nav className="flex flex-col h-full">
+      <div className="pb-5">
+        <SearchField />
+      </div>
       <div className="px-3 pb-1.5 text-xs font-semibold text-page-fg-muted select-none">
         {t("sideNav.library", { defaultValue: "Library" })}
       </div>

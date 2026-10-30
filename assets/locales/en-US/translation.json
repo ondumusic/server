@@ -209,6 +209,12 @@
     "full": "Full Scan (includes existing files)",
     "quick": "Quick Scan (skips existing)"
   },
+  "search": {
+    "clear": "Clear search",
+    "noResults": "No results for “{{ query }}”",
+    "placeholder": "Search",
+    "typeToSearch": "Type to search"
+  },
   "selection": {
     "dragItems_one": "{{ count }} item",
     "dragItems_other": "{{ count }} items"
