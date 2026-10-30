@@ -31,6 +31,7 @@ defmodule OnduWeb.Router do
     get "/albums/:id", PageController, :react
     get "/playlists", PageController, :react
     get "/playlists/:id", PageController, :react
+    get "/search", PageController, :react
     get "/settings", PageController, :react
     get "/settings/appearance", PageController, :react
     get "/settings/playback", PageController, :react
