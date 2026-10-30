@@ -213,6 +213,11 @@
     "clear": "Clear search",
     "noResults": "No results for “{{ query }}”",
     "placeholder": "Search",
+    "section": {
+      "albums": "Albums",
+      "artists": "Artists",
+      "tracks": "Songs"
+    },
     "typeToSearch": "Type to search"
   },
   "selection": {

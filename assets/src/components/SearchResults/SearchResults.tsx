@@ -1,9 +1,7 @@
-import { Link } from "@tanstack/react-router";
 import i18next from "../../i18next";
 import type { SearchResults as SearchResultsT } from "../../library/search";
-import type { Artist } from "../../types";
 import { AlbumResults } from "./AlbumResults";
-import { ResultRow } from "./ResultRow";
+import { ArtistResults } from "./ArtistResults";
 import { SectionHeader } from "./SectionHeader";
 import { TrackResults } from "./TrackResults";
 
@@ -15,7 +13,7 @@ export function SearchResults({ results }: Props) {
   return (
     <div className="h-full overflow-auto pb-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {results.artists.length > 0 && (
-        <section>
+        <section className="pt-8 first:pt-0">
           <SectionHeader
             title={i18next.t("search.section.artists", {
               defaultValue: "Artists",
@@ -26,7 +24,7 @@ export function SearchResults({ results }: Props) {
       )}
 
       {results.albums.length > 0 && (
-        <section>
+        <section className="pt-8 first:pt-0">
           <SectionHeader
             title={i18next.t("search.section.albums", {
               defaultValue: "Albums",
@@ -37,7 +35,7 @@ export function SearchResults({ results }: Props) {
       )}
 
       {results.tracks.length > 0 && (
-        <section>
+        <section className="pt-8 first:pt-0">
           <SectionHeader
             title={i18next.t("search.section.tracks", {
               defaultValue: "Songs",
@@ -47,24 +45,5 @@ export function SearchResults({ results }: Props) {
         </section>
       )}
     </div>
-  );
-}
-
-// these will be replaced later, doing one at a time starting with tracks
-function ArtistResults({ artists }: { artists: Artist[] }) {
-  return (
-    <ul>
-      {artists.map((artist) => (
-        <li key={artist.id}>
-          <Link
-            to="/artists/$artistId/{-$albumId}"
-            params={{ artistId: artist.slug }}
-            className="block"
-          >
-            <ResultRow title={artist.name} />
-          </Link>
-        </li>
-      ))}
-    </ul>
   );
 }
