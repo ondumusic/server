@@ -46,7 +46,7 @@ function SearchPage() {
   }
 
   return (
-    <div className="h-full mx-8 pt-4">
+    <div className="@container h-full mx-8 pt-4">
       <SearchResults results={results} />
     </div>
   );

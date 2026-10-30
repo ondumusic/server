@@ -1,6 +1,8 @@
+import { useMemo } from "react";
 import type { Album, Artist, Track } from "../../types";
 import { useStoreQuery } from "../hooks";
 import { repo } from "../repo";
+import type { Query } from "../repo/queryHelpers";
 import { normalizeSearchText, tokenize } from "./tokens";
 
 export type SearchResults = {
@@ -42,7 +44,25 @@ async function searchAlbums(query: string) {
 async function searchTracks(query: string) {
   if (!canSearch(query)) return [];
   const rows = await repo.query<Track>("tracks", prefixQuery(query));
-  return topResults(rows, query, limits.tracks);
+  const top = topResults(rows, query, limits.tracks);
+
+  // Now we'll query the top tracks to join with album data, doing that
+  // in the original query would result in loading all the album data
+  // while only wanting the `limit` amount.
+  return repo.query<Track>("tracks", {
+    whereIndex: ["id", "in", top.map((track) => track.id)],
+    join: {
+      album: {
+        store: "albums",
+        foreignKey: "albumId",
+        cardinality: "one",
+        query: (tracks: Track[]): Omit<Query<Album>, "join"> => {
+          const albumIds = new Set(tracks.map((track) => track.albumId));
+          return { whereIndex: ["id", "in", Array.from(albumIds)] };
+        },
+      },
+    },
+  });
 }
 
 export function useSearch(query: string) {
@@ -50,11 +70,10 @@ export function useSearch(query: string) {
   const albums = useStoreQuery("albums", () => searchAlbums(query), [query]);
   const tracks = useStoreQuery("tracks", () => searchTracks(query), [query]);
 
-  const results: SearchResults = {
-    artists: artists.data,
-    albums: albums.data,
-    tracks: tracks.data,
-  };
+  const results: SearchResults = useMemo(
+    () => ({ artists: artists.data, albums: albums.data, tracks: tracks.data }),
+    [artists.data, albums.data, tracks.data],
+  );
 
   const loading = artists.loading || albums.loading || tracks.loading;
 
