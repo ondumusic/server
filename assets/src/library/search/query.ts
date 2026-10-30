@@ -19,8 +19,8 @@ interface PrefixQuery {
 const minLookupLength = 2;
 
 const limits = {
-  artists: 5,
-  albums: 5,
+  artists: 10,
+  albums: 10,
   tracks: 10,
 };
 

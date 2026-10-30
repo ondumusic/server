@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import i18next from "../../i18next";
 import type { SearchResults as SearchResultsT } from "../../library/search";
-import type { Album, Artist } from "../../types";
+import type { Artist } from "../../types";
+import { AlbumResults } from "./AlbumResults";
 import { ResultRow } from "./ResultRow";
 import { SectionHeader } from "./SectionHeader";
 import { TrackResults } from "./TrackResults";
@@ -61,24 +62,6 @@ function ArtistResults({ artists }: { artists: Artist[] }) {
             className="block"
           >
             <ResultRow title={artist.name} />
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function AlbumResults({ albums }: { albums: Album[] }) {
-  return (
-    <ul>
-      {albums.map((album) => (
-        <li key={album.id}>
-          <Link
-            to="/albums/$albumId"
-            params={{ albumId: album.id }}
-            className="block"
-          >
-            <ResultRow title={album.name} subtitle={album.artistName} />
           </Link>
         </li>
       ))}
