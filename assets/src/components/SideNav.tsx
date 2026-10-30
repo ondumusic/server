@@ -8,7 +8,7 @@ import { type ReactNode, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { classNames } from "../utils/classNames";
 import { AlbumIcon } from "./icons/AlbumIcon";
-import { ArtistIcon } from "./icons/ArtistIcon";
+import { MicrophoneIcon } from "./icons/MicrophoneIcon";
 import { PlaylistIcon } from "./icons/PlaylistIcon";
 import { SettingsIcon } from "./icons/SettingsIcon";
 import { SearchField } from "./SearchField";
@@ -36,7 +36,7 @@ const items: NavItem[] = [
 const lastVisited = new Map<ViewId, string>();
 
 const icons: Partial<Record<ViewId, ReactNode>> = {
-  artists: <ArtistIcon className="size-5" title="" strokeWidth={2} />,
+  artists: <MicrophoneIcon className="size-5" title="" strokeWidth={2} />,
   albums: <AlbumIcon className="size-5" title="" strokeWidth={2} />,
   playlists: <PlaylistIcon className="size-5" title="" strokeWidth={2} />,
   settings: <SettingsIcon className="size-5" title="" strokeWidth={2} />,

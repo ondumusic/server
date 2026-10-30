@@ -31,7 +31,11 @@ export function canSearch(query: string) {
 // Search functions
 async function searchArtists(query: string) {
   if (!canSearch(query)) return [];
-  const rows = await repo.query<Artist>("artists", prefixQuery(query));
+  const prefix = prefixQuery(query);
+  const rows = await repo.query<Artist>("artists", {
+    ...prefix,
+    having: { ...prefix.having, albumCount: [">", 0] },
+  });
   return topResults(rows, query, limits.artists);
 }
 

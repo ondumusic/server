@@ -3,7 +3,11 @@ import { EmptyView } from "../../components/EmptyView";
 import { SearchResults } from "../../components/SearchResults";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import i18next from "../../i18next";
-import { canSearch, useSearch } from "../../library/search";
+import {
+  canSearch,
+  type SearchResults as SearchResultsT,
+  useSearch,
+} from "../../library/search";
 
 type SearchParams = {
   q?: string;
@@ -20,6 +24,23 @@ function SearchPage() {
   const query = useDebouncedValue(String(q), 150);
   const { results, loading } = useSearch(query);
 
+  // NOTE: The pt-[23px] is to match the header alignment with other routes
+  return (
+    <div className="@container h-full px-4 pt-[23px] bg-content-bg">
+      <SearchContent query={query} results={results} loading={loading} />
+    </div>
+  );
+}
+
+function SearchContent({
+  query,
+  results,
+  loading,
+}: {
+  query: string;
+  results: SearchResultsT;
+  loading: boolean;
+}) {
   if (!canSearch(query)) {
     return (
       <EmptyView
@@ -45,9 +66,5 @@ function SearchPage() {
     );
   }
 
-  return (
-    <div className="@container h-full mx-4 pt-4">
-      <SearchResults results={results} />
-    </div>
-  );
+  return <SearchResults results={results} />;
 }
