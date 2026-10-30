@@ -51,6 +51,7 @@ export function UpNext({
     () => [
       "upNext",
       "albumTracks",
+      "searchTracks",
       "playlist",
       "playlists",
       "artists",

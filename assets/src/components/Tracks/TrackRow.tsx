@@ -16,6 +16,7 @@ interface Props {
   isLastTrack: boolean;
   showTrackArtist?: boolean;
   showAlbumArtwork?: boolean;
+  showNumber?: boolean;
 }
 
 const handlePlayClick = (e: ReactMouseEvent<HTMLButtonElement>) => {
@@ -23,6 +24,39 @@ const handlePlayClick = (e: ReactMouseEvent<HTMLButtonElement>) => {
   if (!listRowEl) return;
   listRowEl.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
 };
+
+function PlayButton({
+  isPlaying,
+  light,
+  label,
+}: {
+  isPlaying: boolean;
+  light: boolean;
+  label: string;
+}) {
+  if (isPlaying)
+    return (
+      <AnimatedWaveform
+        className={classNames([
+          "size-4 text-accent-500",
+          light && "text-white",
+        ])}
+        title={label}
+      />
+    );
+
+  return (
+    <button type="button" onClick={handlePlayClick}>
+      <PlayIcon
+        className={classNames([
+          "size-4 text-accent-500",
+          light && "text-white",
+        ])}
+        title={label}
+      />
+    </button>
+  );
+}
 
 export function TrackRow({
   track,
@@ -33,8 +67,13 @@ export function TrackRow({
   number,
   showTrackArtist = true,
   showAlbumArtwork = true,
+  showNumber = true,
 }: Props) {
   const { t } = useTranslation();
+
+  // The play/playing icon either shows instead of the number,
+  // or over the artwork, depending on these props.
+  const floatingPlayButton = !showNumber && showAlbumArtwork;
 
   return (
     <div className="group/track">
@@ -55,49 +94,36 @@ export function TrackRow({
             : "border-page-fg-divider",
         ])}
       >
-        <span
-          className={classNames([
-            "w-4 @md:w-6 flex-shrink-0 font-light text-right tabular-nums",
-            "group-hover/track:hidden",
-            !isSelected && "text-page-fg-muted",
-            isPlaying && "hidden",
-          ])}
-        >
-          {number && `${number}.`}
-        </span>
-
-        <div
-          className={classNames([
-            "w-4 @md:w-6 group-hover/track:flex justify-end flex-shrink-0",
-            !isPlaying ? "hidden" : "flex",
-          ])}
-        >
-          {isPlaying ? (
-            <AnimatedWaveform
+        {!floatingPlayButton && (
+          <>
+            <span
               className={classNames([
-                "size-4 text-accent-500",
-                isSelected && "text-white",
+                "w-4 @md:w-6 flex-shrink-0 font-light text-right tabular-nums",
+                "group-hover/track:hidden",
+                !isSelected && "text-page-fg-muted",
+                isPlaying && "hidden",
               ])}
-              title={t("button.playSelectedTrack", {
-                defaultValue: "Play {{ trackName }}",
-                trackName: track.name,
-              })}
-            />
-          ) : (
-            <button type="button" onClick={handlePlayClick}>
-              <PlayIcon
-                className={classNames([
-                  "size-4 text-accent-500",
-                  isSelected && "text-white",
-                ])}
-                title={t("button.playSelectedTrack", {
+            >
+              {showNumber && number && `${number}.`}
+            </span>
+
+            <div
+              className={classNames([
+                "w-4 @md:w-6 group-hover/track:flex justify-end flex-shrink-0",
+                !isPlaying ? "hidden" : "flex",
+              ])}
+            >
+              <PlayButton
+                isPlaying={isPlaying}
+                light={isSelected}
+                label={t("button.playSelectedTrack", {
                   defaultValue: "Play {{ trackName }}",
                   trackName: track.name,
                 })}
               />
-            </button>
-          )}
-        </div>
+            </div>
+          </>
+        )}
 
         <AlbumArtwork
           album={track?.album}
@@ -106,7 +132,26 @@ export function TrackRow({
             "w-8 h-8 bg-linear-to-br from-stone-50 to-stone-200 lg:rounded-sm lg:shadow-sm flex-shrink-0",
             !showAlbumArtwork && "hidden",
           ])}
-        />
+        >
+          {floatingPlayButton && (
+            <div
+              className={classNames([
+                "absolute inset-0 items-center justify-center bg-black/50 lg:rounded-sm",
+                "group-hover/track:flex",
+                isPlaying ? "flex" : "hidden",
+              ])}
+            >
+              <PlayButton
+                isPlaying={isPlaying}
+                light
+                label={t("button.playSelectedTrack", {
+                  defaultValue: "Play {{ trackName }}",
+                  trackName: track.name,
+                })}
+              />
+            </div>
+          )}
+        </AlbumArtwork>
 
         <div>
           <div
