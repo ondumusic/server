@@ -17,16 +17,23 @@ export function useStoreQuery<T>(
   enabledRef.current = opts.enabled !== false;
   const queryRef = useRef(queryFn);
   queryRef.current = queryFn;
+  const requestCounter = useRef(0);
 
   const load = useCallback(async () => {
     if (!enabledRef.current) return;
     if (!queryRef.current) return;
 
+    // track requests so we can ignore outdated responses and
+    // only show the most recently requested data.
+    const request = ++requestCounter.current;
+
     try {
       const results = await queryRef.current();
+      if (request !== requestCounter.current) return;
       setData(results);
       setError(null);
     } catch (err) {
+      if (request !== requestCounter.current) return;
       console.error("Query failed:", err);
       setError(err);
     }
