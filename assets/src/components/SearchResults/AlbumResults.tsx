@@ -8,9 +8,12 @@ import {
   useState,
 } from "react";
 import { usePlayer } from "../../hooks/usePlayer";
+import { usePlaylistPicker } from "../../hooks/usePlaylistPicker";
 import { useToast } from "../../hooks/useToast";
 import i18next from "../../i18next";
+import { queryTracks } from "../../library";
 import type { Album, UUID } from "../../types";
+import { appendTracksToPlaylist } from "../../utils/appendTracksToPlaylist";
 import { AlbumCard } from "../Albums/AlbumCard";
 import { type ListItemState, SelectableList } from "../SelectableList";
 
@@ -23,7 +26,9 @@ const gapSize = 18;
 
 export function AlbumResults({ albums }: Props) {
   const navigate = useNavigate();
-  const { populateUpNext, userConfirmQueueReplace } = usePlayer();
+  const { populateUpNext, enqueueNext, enqueueAfter, userConfirmQueueReplace } =
+    usePlayer();
+  const { showPlaylistPicker, getMostRecentPlaylist } = usePlaylistPicker();
   const { showToast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -83,6 +88,163 @@ export function AlbumResults({ albums }: Props) {
     [navigate],
   );
 
+  const handleContextMenu = useCallback(
+    (ids: Set<UUID>) => {
+      const selectedAlbums = albums.filter((album) => ids.has(album.id));
+      const selectedAlbumIds = selectedAlbums.map((album) => album.id);
+      if (selectedAlbums.length === 0) return [];
+      const firstAlbum = selectedAlbums[0];
+      const recentPlaylist = getMostRecentPlaylist();
+      const playlistActions = [
+        {
+          type: "item",
+          key: "add_to_playlist",
+          label: i18next.t("contextMenu.addToPlaylist", {
+            defaultValue: "Add To Playlist...",
+            count: 12,
+          }),
+          onClick: async () => {
+            const playlist = await showPlaylistPicker();
+            if (playlist === false) return;
+            const tracks = await queryTracks({ albumIds: selectedAlbumIds });
+            await appendTracksToPlaylist(playlist.id, tracks);
+            showToast({
+              link: `/playlists/${playlist.id}`,
+              message: i18next.t("toast.addedToPlaylist", {
+                defaultValue: "Added {{ count }} tracks to {{ playlistName }}",
+                count: tracks.length,
+                playlistName: playlist.name,
+              }),
+            });
+          },
+        },
+      ];
+
+      if (recentPlaylist) {
+        playlistActions.unshift({
+          type: "item",
+          key: "add_to_recent_playlist",
+          label: i18next.t("contextMenu.addToRecentPlaylist", {
+            defaultValue: "Add To {{ playlistName }}",
+            playlistName: recentPlaylist.name,
+          }),
+          onClick: async () => {
+            const tracks = await queryTracks({ albumIds: selectedAlbumIds });
+            await appendTracksToPlaylist(recentPlaylist.id as UUID, tracks);
+            showToast({
+              link: `/playlists/${recentPlaylist.id}`,
+              message: i18next.t("toast.addedToPlaylist", {
+                defaultValue: "Added {{ count }} tracks to {{ playlistName }}",
+                count: tracks.length,
+                playlistName: recentPlaylist.name,
+              }),
+            });
+          },
+        });
+      }
+
+      return [
+        {
+          type: "item",
+          key: "play",
+          label: i18next.t("contextMenu.playAlbum", {
+            defaultValue: 'Play "{{ album }}"',
+            album: firstAlbum.name,
+            count: selectedAlbums.length,
+          }),
+          onClick: async () => {
+            if (!(await userConfirmQueueReplace())) return;
+            populateUpNext({ albumIds: selectedAlbumIds });
+
+            showToast({
+              message: i18next.t("toast.addedAlbumToPlayNow", {
+                defaultValue: "Playing {{ albumName }}",
+                albumName: firstAlbum.name,
+                count: selectedAlbums.length,
+              }),
+            });
+          },
+        },
+        {
+          type: "item",
+          key: "shuffle",
+          label: i18next.t("contextMenu.shuffleAlbum", {
+            defaultValue: 'Shuffle "{{ album }}"',
+            album: firstAlbum.name,
+            count: selectedAlbums.length,
+          }),
+          onClick: async () => {
+            if (!(await userConfirmQueueReplace())) return;
+            populateUpNext({ albumIds: selectedAlbumIds, random: true });
+
+            showToast({
+              message: i18next.t("toast.addedAlbumToPlayShuffled", {
+                defaultValue: "Shuffling {{ albumName }}",
+                albumName: firstAlbum.name,
+                count: selectedAlbums.length,
+              }),
+            });
+          },
+        },
+        {
+          type: "divider" as const,
+          key: "queue_actions",
+        },
+        {
+          type: "item",
+          key: "play_next",
+          label: i18next.t("contextMenu.playNext", {
+            defaultValue: "Play Next",
+          }),
+          onClick: async () => {
+            const tracks = await queryTracks({ albumIds: selectedAlbumIds });
+            enqueueNext(tracks.map((track) => ({ track })));
+
+            showToast({
+              message: i18next.t("toast.addedToPlayNext", {
+                defaultValue: "Added {{ count }} tracks to up next",
+                count: tracks.length,
+              }),
+            });
+          },
+        },
+        {
+          type: "item",
+          key: "play_after",
+          label: i18next.t("contextMenu.playAfter", {
+            defaultValue: "Add To Queue",
+          }),
+          onClick: async () => {
+            const tracks = await queryTracks({ albumIds: selectedAlbumIds });
+            enqueueAfter(tracks.map((track) => ({ track })));
+
+            showToast({
+              message: i18next.t("toast.addedToPlayAfter", {
+                defaultValue: "Added {{ count }} tracks to the queue",
+                count: tracks.length,
+              }),
+            });
+          },
+        },
+        {
+          type: "divider" as const,
+          key: "playlist_actions",
+        },
+        ...playlistActions,
+      ];
+    },
+    [
+      albums,
+      userConfirmQueueReplace,
+      showToast,
+      enqueueNext,
+      enqueueAfter,
+      populateUpNext,
+      showPlaylistPicker,
+      getMostRecentPlaylist,
+    ],
+  );
+
   const renderItem = useCallback((album: Album, state: ListItemState) => {
     return <AlbumCard album={album} isSelected={state.isSelected} />;
   }, []);
@@ -102,6 +264,7 @@ export function AlbumResults({ albums }: Props) {
           onChange={setSelectedIds}
           onSubmit={handleSubmit}
           onDoubleClick={handleDoubleClick}
+          onContextMenu={handleContextMenu}
           renderItem={renderItem}
         />
       </div>
