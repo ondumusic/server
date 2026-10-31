@@ -85,6 +85,55 @@ export function ArtistResults({ artists }: Props) {
     [navigate],
   );
 
+  const handleContextMenu = useCallback(
+    (ids: Set<string>) => {
+      const artist = artists.find((artist) => ids.has(artist.id));
+      if (!artist) return [];
+
+      return [
+        {
+          type: "item",
+          key: "play",
+          label: i18next.t("contextMenu.playArtist", {
+            defaultValue: 'Play "{{ artist }}"',
+            artist: artist.name,
+          }),
+          onClick: async () => {
+            if (!(await userConfirmQueueReplace())) return;
+            populateUpNext({ artistId: artist.id });
+
+            showToast({
+              message: i18next.t("toast.addedArtistToPlayNow", {
+                defaultValue: "Playing {{ artistName }}",
+                artistName: artist.name,
+              }),
+            });
+          },
+        },
+        {
+          type: "item",
+          key: "shuffle",
+          label: i18next.t("contextMenu.shuffleArtist", {
+            defaultValue: 'Shuffle "{{ artist }}"',
+            artist: artist.name,
+          }),
+          onClick: async () => {
+            if (!(await userConfirmQueueReplace())) return;
+            populateUpNext({ artistId: artist.id, random: true });
+
+            showToast({
+              message: i18next.t("toast.addedArtistToPlayShuffled", {
+                defaultValue: "Shuffling {{ artistName }}",
+                artistName: artist.name,
+              }),
+            });
+          },
+        },
+      ];
+    },
+    [artists, userConfirmQueueReplace, populateUpNext, showToast],
+  );
+
   const renderItem = useCallback((artist: Artist, state: ListItemState) => {
     return <ArtistCard artist={artist} isSelected={state.isSelected} />;
   }, []);
@@ -104,6 +153,7 @@ export function ArtistResults({ artists }: Props) {
           onChange={setSelectedIds}
           onSubmit={handleSubmit}
           onDoubleClick={handleDoubleClick}
+          onContextMenu={handleContextMenu}
           renderItem={renderItem}
         />
       </div>
