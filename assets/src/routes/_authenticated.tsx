@@ -17,6 +17,7 @@ import { CompactLayout } from "../components/CompactLayout";
 import { FullPlayer } from "../components/FullPlayer";
 import { MiniPlayer } from "../components/MiniPlayer";
 import { NoticeBanner } from "../components/NoticeBanner";
+import { focusSearchField } from "../components/SearchField";
 import { SideNav } from "../components/SideNav";
 import { SmallScreen } from "../components/SmallScreen";
 import { isMacOS } from "../constants/isMacOS";
@@ -77,6 +78,12 @@ function Authenticated() {
       const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
       const isInDialog = !!target.closest("dialog");
       if (isTyping || isInDialog) return;
+
+      // Focus search field
+      if (e.key === "k" && (isMacOS ? e.metaKey : e.ctrlKey)) {
+        if (focusSearchField()) e.preventDefault();
+        return;
+      }
 
       // Using this data attribute it's possible to disable global shortcuts,
       // one example is while type matching in selectable lists
