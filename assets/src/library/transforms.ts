@@ -45,6 +45,8 @@ export const transforms = {
         searchTokens: searchTokens.album({
           name: album.name,
           artistName: artist?.name,
+          slug: album.slug,
+          artist,
         }),
 
         // TMP VALUES:
@@ -93,6 +95,7 @@ export const transforms = {
         searchTokens: searchTokens.track({
           name: track.name,
           artistName: artist?.name,
+          artist,
         }),
 
         // TMP VALUES:
