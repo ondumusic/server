@@ -1,5 +1,5 @@
-import { useLocation, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate, useRouter } from "@tanstack/react-router";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import i18next from "../i18next";
 import { classNames } from "../utils/classNames";
 import { ClearIcon } from "./icons/ClearIcon";
@@ -13,8 +13,20 @@ const queryFromSearch = ({ q }: SearchParams): string => {
   return q === undefined || q === null ? "" : String(q);
 };
 
+const searchFieldId = "search-field";
+
+export const focusSearchField = () => {
+  const input = document.getElementById(searchFieldId);
+  if (!(input instanceof HTMLInputElement)) return false;
+
+  input.focus();
+  input.select();
+  return true;
+};
+
 export function SearchField() {
   const navigate = useNavigate();
+  const router = useRouter();
   const location = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -55,6 +67,19 @@ export function SearchField() {
     inputRef.current?.focus();
   };
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Escape") return;
+    e.preventDefault();
+    inputRef.current?.blur();
+
+    if (!onSearchPage) return;
+    if (router.history.canGoBack()) {
+      router.history.back();
+    } else {
+      navigate({ to: "/" });
+    }
+  };
+
   return (
     <div
       className={classNames([
@@ -69,6 +94,7 @@ export function SearchField() {
       />
       <input
         ref={inputRef}
+        id={searchFieldId}
         type="text"
         value={value}
         placeholder={i18next.t("search.placeholder", {
@@ -77,6 +103,7 @@ export function SearchField() {
         autoComplete="off"
         spellCheck={false}
         onChange={(e) => updateQuery(e.target.value)}
+        onKeyDown={handleKeyDown}
         className={classNames([
           "block w-full h-8 pl-8 pr-8 border-0 rounded-md text-sm",
           "bg-transparent text-page-fg placeholder:text-page-fg-muted",
