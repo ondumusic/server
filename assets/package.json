@@ -14,13 +14,13 @@
     "i18n:extract": "i18next-cli extract"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.15",
+    "@biomejs/biome": "^2.6.4",
     "@faker-js/faker": "^10.6.0",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/vite": "^4.3.3",
     "@types/culori": "^4.0.1",
-    "@types/node": "^26.6.5",
-    "@types/phoenix": "^1.6.7",
+    "@types/node": "^26.6.6",
+    "@types/phoenix": "^1.6.8",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
@@ -28,7 +28,7 @@
     "@vitest/browser": "^5.0.5",
     "@vitest/coverage-v8": "^5.0.5",
     "fishery": "^2.4.0",
-    "i18next-cli": "^1.77.0",
+    "i18next-cli": "^1.80.5",
     "playwright": "^1.64.1",
     "tailwindcss": "^4.3.3",
     "terser": "^5.51.2",
@@ -36,17 +36,17 @@
     "vitest": "^5.0.5"
   },
   "dependencies": {
-    "@tanstack/react-router": "^1.170.45",
-    "@tanstack/router-cli": "^1.167.45",
-    "@tanstack/router-plugin": "^1.168.47",
+    "@tanstack/react-router": "^1.170.46",
+    "@tanstack/router-cli": "^1.167.46",
+    "@tanstack/router-plugin": "^1.168.48",
     "culori": "^4.0.2",
     "fractional-indexing": "^4.0.0",
-    "i18next": "^26.5.2",
-    "phoenix": "^1.8.15",
+    "i18next": "^26.5.11",
+    "phoenix": "^1.8.16",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-i18next": "^17.1.0",
-    "react-resizable-panels": "^4.14.5",
-    "vite": "^8.3.4"
+    "react-i18next": "^17.1.9",
+    "react-resizable-panels": "^4.15.1",
+    "vite": "^8.3.5"
   }
 }
