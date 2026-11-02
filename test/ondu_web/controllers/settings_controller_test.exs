@@ -56,7 +56,7 @@ defmodule OnduWeb.SettingsControllerTest do
              } =
                conn
                |> patch(~p"/api/settings", %{
-                 musicPath: "/music"
+                 musicPath: "/this/path/does/not/exist"
                })
                |> api_response(422, "UpdateSettingsError")
     end
