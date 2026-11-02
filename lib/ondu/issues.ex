@@ -31,6 +31,7 @@ defmodule Ondu.Issues do
   defp find_entries(code) do
     [
       album_entries(),
+      mixed_format_entries(),
       track_number_entries(),
       untitled_track_entries(),
       orphaned_track_entries()
@@ -44,6 +45,20 @@ defmodule Ondu.Issues do
     Query.albums_with_artwork()
     |> Repo.all()
     |> Enum.map(&build_entry(:album, &1.id, Rules.album(&1)))
+  end
+
+  defp mixed_format_entries do
+    Query.albums_with_mixed_formats()
+    |> Repo.all()
+    |> Query.track_type_counts()
+    |> Repo.all()
+    |> Enum.group_by(
+      fn {album_id, _type, _count} -> album_id end,
+      fn {_album_id, type, count} -> {type, count} end
+    )
+    |> Enum.map(fn {album_id, counts} ->
+      build_entry(:album, album_id, Rules.mixed_formats(counts))
+    end)
   end
 
   defp track_number_entries do

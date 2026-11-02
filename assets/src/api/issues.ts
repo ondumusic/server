@@ -7,6 +7,7 @@ export type IssueCode =
   | "artwork_low_res"
   | "album_missing"
   | "release_year_missing"
+  | "mixed_formats"
   | "track_number_missing"
   | "track_number_duplicate"
   | "track_number_gap"
@@ -21,6 +22,7 @@ export interface Issue {
     disc?: number;
     numbers?: number[];
     trackIds?: UUID[];
+    formats?: Record<string, number>;
   };
 }
 

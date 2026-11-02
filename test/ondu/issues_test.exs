@@ -78,6 +78,25 @@ defmodule Ondu.IssuesTest do
       assert album_entry.type == :album
     end
 
+    test "finds albums with mixed formats" do
+      artist = Repo.one!(Ondu.Artists.Artist)
+
+      album =
+        TestSeeds.insert_album(artist, %{
+          name: "Half Upgraded",
+          release_year: 2000,
+          tracks: [
+            %{track: 1, name: "Upgraded One", type: :m4a},
+            %{track: 2, name: "Upgraded Two", type: :m4a},
+            %{track: 3, name: "Not Upgraded", type: :mp3}
+          ]
+        })
+
+      assert %{entries: [entry]} = Issues.list()
+      assert entry.album.id == album.id
+      assert entry.issues == [%{code: :mixed_formats, details: %{formats: %{m4a: 2, mp3: 1}}}]
+    end
+
     test "filters by code" do
       artist = Repo.one!(Ondu.Artists.Artist)
       TestSeeds.insert_album(artist, %{name: "No Year", release_year: nil})

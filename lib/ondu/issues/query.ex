@@ -45,6 +45,24 @@ defmodule Ondu.Issues.Query do
     )
   end
 
+  def albums_with_mixed_formats do
+    from(t in visible_tracks(),
+      join: f in assoc(t, :file),
+      group_by: t.album_id,
+      having: count(f.type, :distinct) > 1,
+      select: t.album_id
+    )
+  end
+
+  def track_type_counts(album_ids) do
+    from(t in visible_tracks(),
+      join: f in assoc(t, :file),
+      where: t.album_id in ^album_ids,
+      group_by: [t.album_id, f.type],
+      select: {t.album_id, f.type, count()}
+    )
+  end
+
   def tracks_without_title do
     from(t in visible_tracks(),
       join: f in assoc(t, :file),

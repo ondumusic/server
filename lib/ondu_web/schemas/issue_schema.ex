@@ -14,6 +14,7 @@ defmodule OnduWeb.Schemas.Issue do
     - `artwork_low_res`: the found artwork is of low quality
     - `album_missing`: tracks without an album tag ("Unknown Album")
     - `release_year_missing`: the album has no release year
+    - `mixed_formats`: the album has tracks in different file formats
     - `track_number_missing`: `trackIds` of the tracks without a track number
     - `track_number_duplicate`: `numbers` used by more than one track on `disc`
     - `track_number_gap`: `numbers` missing on `disc`, possibly incomplete album?
@@ -32,7 +33,12 @@ defmodule OnduWeb.Schemas.Issue do
           height: %Schema{type: :integer, example: 571},
           disc: %Schema{type: :integer, example: 1},
           numbers: %Schema{type: :array, items: %Schema{type: :integer}, example: [5]},
-          trackIds: %Schema{type: :array, items: OnduWeb.Schemas.TrackId}
+          trackIds: %Schema{type: :array, items: OnduWeb.Schemas.TrackId},
+          formats: %Schema{
+            type: :object,
+            additionalProperties: %Schema{type: :integer},
+            example: %{m4a: 9, mp3: 3}
+          }
         }
       }
     },

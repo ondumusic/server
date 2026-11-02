@@ -53,6 +53,7 @@ const CODES: IssueCode[] = [
   "artist_missing",
   "album_missing",
   "title_missing",
+  "mixed_formats",
   "track_number_missing",
   "track_number_duplicate",
   "track_number_gap",
@@ -75,6 +76,10 @@ function codeLabel(code: IssueCode) {
     case "title_missing":
       return i18next.t("issues.code.titleMissing", {
         defaultValue: "No title",
+      });
+    case "mixed_formats":
+      return i18next.t("issues.code.mixedFormats", {
+        defaultValue: "Mixed formats",
       });
     case "track_number_missing":
       return i18next.t("issues.code.trackNumberMissing", {
@@ -111,6 +116,13 @@ function formatNumbers(numbers: number[] = []) {
   return numbers.join(", ");
 }
 
+function formatCounts(formats: Record<string, number> = {}) {
+  return Object.entries(formats)
+    .sort(([, a], [, b]) => b - a)
+    .map(([format, count]) => `${count} ${format}`)
+    .join(", ");
+}
+
 function describeIssue(issue: Issue): string {
   const { details } = issue;
   const count = details.trackIds?.length ?? 0;
@@ -134,6 +146,11 @@ function describeIssue(issue: Issue): string {
         : i18next.t("issues.issue.titleMissing", {
             defaultValue: "No title",
           });
+    case "mixed_formats":
+      return i18next.t("issues.issue.mixedFormats", {
+        defaultValue: "Tracks in different formats ({{formats}})",
+        formats: formatCounts(details.formats),
+      });
     case "track_number_missing":
       return i18next.t("issues.issue.trackNumberMissing", {
         defaultValue: "{{count}} tracks without a track number",

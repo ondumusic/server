@@ -7,6 +7,7 @@ defmodule Ondu.Issues.Rules do
           | :artwork_low_res
           | :album_missing
           | :release_year_missing
+          | :mixed_formats
           | :track_number_missing
           | :track_number_duplicate
           | :track_number_gap
@@ -22,6 +23,7 @@ defmodule Ondu.Issues.Rules do
     artwork_low_res
     album_missing
     release_year_missing
+    mixed_formats
     track_number_missing
     track_number_duplicate
     track_number_gap
@@ -105,6 +107,12 @@ defmodule Ondu.Issues.Rules do
       do: [issue(:track_number_gap, %{disc: disc, numbers: gaps})],
       else: []
   end
+
+  @spec mixed_formats([{atom(), pos_integer()}]) :: [issue()]
+  def mixed_formats([_, _ | _] = counts),
+    do: [issue(:mixed_formats, %{formats: Map.new(counts)})]
+
+  def mixed_formats(_counts), do: []
 
   @spec untitled_tracks([Ecto.UUID.t()]) :: [issue()]
   def untitled_tracks([]), do: []

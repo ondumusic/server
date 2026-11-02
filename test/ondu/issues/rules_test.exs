@@ -63,6 +63,18 @@ defmodule Ondu.Issues.RulesTest do
     end
   end
 
+  describe "mixed_formats/1" do
+    test "returns nothing for a single format" do
+      assert Rules.mixed_formats([{:mp3, 12}]) == []
+    end
+
+    test "reports the number of tracks per format" do
+      assert Rules.mixed_formats([{:m4a, 9}, {:mp3, 3}]) == [
+               %{code: :mixed_formats, details: %{formats: %{m4a: 9, mp3: 3}}}
+             ]
+    end
+  end
+
   describe "untitled_tracks/1" do
     test "lists the tracks without a title" do
       assert Rules.untitled_tracks([]) == []
