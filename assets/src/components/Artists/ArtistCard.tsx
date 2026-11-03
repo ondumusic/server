@@ -13,7 +13,7 @@ export function ArtistCard({
     <div className="text-center w-full">
       <ArtistArtwork
         artist={artist}
-        size="large"
+        size="thumbnail"
         className="w-full aspect-square rounded-full"
         style={{ contentVisibility: "auto" }}
       >
