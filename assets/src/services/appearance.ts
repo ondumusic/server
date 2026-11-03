@@ -1,17 +1,17 @@
 import { useSyncExternalStore } from "react";
 
-const ARTIST_PHOTOS_KEY = "showArtistPhotos";
+const ARTIST_PHOTOS_KEY = "showArtistArtwork";
 
 type Listener = () => void;
 
 export class AppearanceService {
   #listeners = new Set<Listener>();
 
-  get showArtistPhotos(): boolean {
+  get showArtistArtwork(): boolean {
     return localStorage.getItem(ARTIST_PHOTOS_KEY) !== "false";
   }
 
-  set showArtistPhotos(show: boolean) {
+  set showArtistArtwork(show: boolean) {
     localStorage.setItem(ARTIST_PHOTOS_KEY, String(show));
     this.#notify();
   }
@@ -29,10 +29,10 @@ export class AppearanceService {
 export const appearance = new AppearanceService();
 
 export function useAppearance() {
-  const showArtistPhotos = useSyncExternalStore(
+  const showArtistArtwork = useSyncExternalStore(
     (listener) => appearance.subscribe(listener),
-    () => appearance.showArtistPhotos,
+    () => appearance.showArtistArtwork,
   );
 
-  return { showArtistPhotos };
+  return { showArtistArtwork };
 }

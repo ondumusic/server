@@ -31,7 +31,13 @@ export function ArtistArtwork({
       style={{ ...style, ...(backgroundImage && { backgroundImage }) }}
     >
       {!backgroundImage && (
-        <MicrophoneIcon className="w-2/5 h-2/5 text-stone-400/70" title="" />
+        <MicrophoneIcon
+          className={classNames([
+            "text-stone-400/70",
+            size === "large" ? "w-1/3 h-1/3" : "w-2/5 h-2/5",
+          ])}
+          title=""
+        />
       )}
       {children}
     </div>
