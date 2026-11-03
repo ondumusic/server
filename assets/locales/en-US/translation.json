@@ -242,6 +242,10 @@
       "theme": "Theme",
       "title": "Appearance"
     },
+    "artistPhotos": {
+      "showInList": "Show photos in the artist list.",
+      "title": "Artist Photos"
+    },
     "issues": {
       "albumCount_one": "{{count}} album",
       "albumCount_other": "{{count}} albums",
