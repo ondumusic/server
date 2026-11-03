@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { ColorPicker } from "../../components/ColorPicker";
 import {
   SettingsGroup,
@@ -9,6 +9,7 @@ import {
 } from "../../components/Settings";
 import { ThemeSwitcher } from "../../components/ThemeSwitcher";
 import { useTheme } from "../../hooks/useTheme";
+import { appearance, useAppearance } from "../../services/appearance";
 import {
   getAccentColor,
   updateAccentColor,
@@ -23,6 +24,7 @@ function AppearanceSettings() {
   const { t } = useTranslation();
   const [color, setColor] = useState(getAccentColor());
   const { theme, setTheme } = useTheme();
+  const { showArtistPhotos } = useAppearance();
 
   return (
     <SettingsPage
@@ -50,6 +52,25 @@ function AppearanceSettings() {
               setColor(newColor);
             }}
           />
+        </SettingsRow>
+        <SettingsRow
+          label={t("settings.artistPhotos.title", {
+            defaultValue: "Artist Photos",
+          })}
+        >
+          <label className="flex items-center gap-2 text-sm @xl:pt-1.5">
+            <input
+              type="checkbox"
+              className="accent-accent-500"
+              checked={showArtistPhotos}
+              onChange={(e) => {
+                appearance.showArtistPhotos = e.target.checked;
+              }}
+            />
+            <Trans i18nKey="settings.artistPhotos.showInList">
+              Show photos in the artist list.
+            </Trans>
+          </label>
         </SettingsRow>
       </SettingsGroup>
     </SettingsPage>

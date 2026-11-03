@@ -8,6 +8,7 @@ import { usePlayer } from "../../hooks/usePlayer";
 import { useToast } from "../../hooks/useToast";
 import i18next from "../../i18next";
 import { useArtists } from "../../library";
+import { useAppearance } from "../../services/appearance";
 import type { Artist, UUID } from "../../types";
 import { ArtistRow } from "./ArtistRow";
 
@@ -29,6 +30,7 @@ export function Artists({
   const { populateUpNext, userConfirmQueueReplace } = usePlayer();
   const { data: listItems, loading: isLoading } = useArtists();
   const { showToast } = useToast();
+  const { showArtistPhotos } = useAppearance();
 
   const handleTypeMatch = useCallback((item: Artist, query: string) => {
     const matcher = new RegExp(`^${query.replace(/\s+/g, "")}`, "iu");
@@ -121,9 +123,13 @@ export function Artists({
 
   const renderItem = useCallback(
     (artist: Artist, state: ListItemState) => (
-      <ArtistRow isSelected={state.isSelected} artist={artist} />
+      <ArtistRow
+        isSelected={state.isSelected}
+        artist={artist}
+        showPhoto={showArtistPhotos}
+      />
     ),
-    [],
+    [showArtistPhotos],
   );
 
   if (isLoading) return <Loading />;
