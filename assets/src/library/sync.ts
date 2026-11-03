@@ -2,7 +2,7 @@ import { ClientError, client } from "../api";
 import type { Notice } from "../api/notices";
 import { notices } from "../services/notices";
 import type { Album, Artist, Playlist, PlaylistItem, Track } from "../types";
-import { artworkThumbnailUrl } from "../utils/artwork";
+import { artworkThumbnailUrl, artworkUrls } from "../utils/artwork";
 import { notifyChanges } from "./events";
 import { repo } from "./repo";
 import { schemaVersion, transforms } from "./transforms";
@@ -163,7 +163,7 @@ class SyncClient {
     if (changedStores.size > 0) notifyChanges([...changedStores]);
 
     this.#emitProgress();
-    this.#prewarmArtwork(albums);
+    this.#prewarmArtwork([...albums, ...artists]);
   }
 
   async #fetch(cursor?: string, attempt: number = 1) {
@@ -198,11 +198,11 @@ class SyncClient {
     }
   }
 
-  async #prewarmArtwork(albums: Album[]) {
-    if (!albums.length) return;
+  async #prewarmArtwork(parents: (Album | Artist)[]) {
+    if (!parents.length) return;
     // Only thumbnails, larger artwork is cached when it is first shown.
-    const urls = albums
-      .map((album) => artworkThumbnailUrl(album))
+    const urls = parents
+      .map((parent) => artworkThumbnailUrl(parent))
       .filter((url) => !!url);
     const sw = await navigator.serviceWorker?.ready;
     if (sw?.active) {
@@ -217,15 +217,14 @@ class SyncClient {
     const albums = await repo.query<Album>("albums", {
       sortBy: [["releaseYear", "desc"]],
     });
-    await this.#pruneArtwork(albums);
-    await this.#prewarmArtwork(albums);
+    const artists = await repo.getAll<Artist>("artists");
+    await this.#pruneArtwork([...albums, ...artists]);
+    await this.#prewarmArtwork([...albums, ...artists]);
   }
 
-  // Removes outdated artwork (older hashes) from the cache, needs all albums.
-  async #pruneArtwork(albums: Album[]) {
-    const urls = albums.flatMap(
-      (album) => album.artwork?.map((image) => image.url) ?? [],
-    );
+  // Removes outdated artwork (older hashes) from the cache
+  async #pruneArtwork(parents: (Album | Artist)[]) {
+    const urls = artworkUrls(parents);
     const sw = await navigator.serviceWorker?.ready;
     if (sw?.active) {
       sw.active.postMessage({

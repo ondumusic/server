@@ -22,6 +22,7 @@ export interface Artist {
   name: string;
   slug: string;
   albumCount: number;
+  artwork?: ArtworkImage[];
 
   sortName?: string;
   insertedAt?: Date | string | number;
