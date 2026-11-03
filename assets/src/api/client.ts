@@ -3,7 +3,7 @@ import { auth } from "../services/auth";
 import type { Page } from "../types";
 import { ClientError } from "./errors";
 
-type RequestMethod = "GET" | "POST" | "PATCH" | "DELETE";
+type RequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 type RequestBody<T> = BodyInit | undefined | T;
 type RequestHeaders = { [key: string]: string };
 
@@ -61,6 +61,14 @@ class Client {
     return this.#request<Req, Res>("POST", path, body, opts);
   }
 
+  async put<Req, Res>(
+    path: string,
+    body: RequestBody<Req>,
+    opts: RequestOptions = {},
+  ): Promise<Res> {
+    return this.#request<Req, Res>("PUT", path, body, opts);
+  }
+
   async patch<Req, Res>(
     path: string,
     body: RequestBody<Req>,
@@ -87,7 +95,6 @@ class Client {
     url.search = new URLSearchParams(opts?.search ?? {}).toString();
 
     const headers: RequestHeaders = {
-      "Content-Type": "application/json",
       Accept: "application/json",
     };
 
@@ -95,8 +102,13 @@ class Client {
       headers.Authorization = `Bearer ${auth.sessionToken}`;
     }
 
-    if (typeof body === "object") {
-      body = JSON.stringify(body);
+    // Form data can be sent as-is, the browser takes care of everything.
+    // For other body types we will use JSON.
+    if (!(body instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+      if (typeof body === "object") {
+        body = JSON.stringify(body);
+      }
     }
 
     try {

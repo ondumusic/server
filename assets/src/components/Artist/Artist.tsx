@@ -4,6 +4,7 @@ import {
   type ListItemState,
   SelectableList,
 } from "../../components/SelectableList";
+import { useArtistArtwork } from "../../hooks/useArtistArtwork";
 import { usePlayer } from "../../hooks/usePlayer";
 import { usePlaylistPicker } from "../../hooks/usePlaylistPicker";
 import { useQueue } from "../../hooks/useQueue";
@@ -58,6 +59,11 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
   } = usePlayer();
 
   const { currentTrack } = useQueue();
+  const {
+    contextMenuItems: artworkMenuItems,
+    uploadArtwork,
+    updatingArtistId,
+  } = useArtistArtwork();
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
     new Set(),
   );
@@ -225,10 +231,14 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
       const [firstId] = selectedIds;
       const recentPlaylist = getMostRecentPlaylist();
 
-      // The context menu for an album works differently.
-      const maybeAlbumItem = listItems.find((item) => item.id === firstId);
-      if (maybeAlbumItem && maybeAlbumItem.type === "album") {
-        const album = maybeAlbumItem.album;
+      // The context menu for the artist header and an album work differently.
+      const maybeArtistOrAlbum = listItems.find((item) => item.id === firstId);
+      if (maybeArtistOrAlbum && maybeArtistOrAlbum.type === "artist") {
+        return artworkMenuItems(maybeArtistOrAlbum.artist);
+      }
+
+      if (maybeArtistOrAlbum && maybeArtistOrAlbum.type === "album") {
+        const album = maybeArtistOrAlbum.album;
 
         const albumPlaylistActions = [
           {
@@ -446,6 +456,7 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
       showPlaylistPicker,
       getMostRecentPlaylist,
       showToast,
+      artworkMenuItems,
     ],
   );
 
@@ -453,7 +464,13 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
     (item: ListItem, state: ListItemState) => {
       switch (item.type) {
         case "artist":
-          return <ArtistHeaderRow item={item} />;
+          return (
+            <ArtistHeaderRow
+              item={item}
+              onDropArtwork={(file) => uploadArtwork(item.artist, file)}
+              isUpdatingArtwork={updatingArtistId === item.artist.id}
+            />
+          );
         case "album":
           return <ArtistAlbumRow item={item} onPlayAlbum={handlePlayAlbum} />;
         case "disc":
@@ -471,7 +488,7 @@ export function Artist({ artist, currentAlbumId, albums }: Props) {
           return <PlaceholderRow item={item} />;
       }
     },
-    [handlePlayAlbum, currentTrack],
+    [handlePlayAlbum, currentTrack, uploadArtwork, updatingArtistId],
   );
 
   const currentAlbum = listItems.find(

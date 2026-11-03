@@ -24,7 +24,7 @@ function AppearanceSettings() {
   const { t } = useTranslation();
   const [color, setColor] = useState(getAccentColor());
   const { theme, setTheme } = useTheme();
-  const { showArtistPhotos } = useAppearance();
+  const { showArtistArtwork } = useAppearance();
 
   return (
     <SettingsPage
@@ -54,20 +54,20 @@ function AppearanceSettings() {
           />
         </SettingsRow>
         <SettingsRow
-          label={t("settings.artistPhotos.title", {
-            defaultValue: "Artist Photos",
+          label={t("settings.artistArtwork.title", {
+            defaultValue: "Artist Artwork",
           })}
         >
           <label className="flex items-center gap-2 text-sm @xl:pt-1.5">
             <input
               type="checkbox"
               className="accent-accent-500"
-              checked={showArtistPhotos}
+              checked={showArtistArtwork}
               onChange={(e) => {
-                appearance.showArtistPhotos = e.target.checked;
+                appearance.showArtistArtwork = e.target.checked;
               }}
             />
-            <Trans i18nKey="settings.artistPhotos.showInList">
+            <Trans i18nKey="settings.artistArtwork.showInList">
               Show photos in the artist list.
             </Trans>
           </label>

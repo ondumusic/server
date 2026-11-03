@@ -9,7 +9,7 @@ import { Artist } from "../../components/Artist";
 import { EmptyView } from "../../components/EmptyView";
 import { Loading } from "../../components/Loading";
 import i18next from "../../i18next";
-import { queryArtist, useArtistAlbums } from "../../library";
+import { queryArtist, useArtist, useArtistAlbums } from "../../library";
 import type { UUID } from "../../types";
 
 export const Route = createFileRoute(
@@ -35,8 +35,12 @@ function ArtistDetail() {
   const { artistId, albumId } = Route.useParams() as Params;
   const router = useRouter();
   const isPopNavigation = router.history.location.state?.isBackForward;
-  // const { data: artist } = useArtist(artistId);
-  const artist = Route.useLoaderData();
+
+  // Use cached artist from the loader but also get the artist data
+  // for ourselves, so it reacts to live changes.
+  const loaderArtist = Route.useLoaderData();
+  const { data: liveArtist } = useArtist(artistId);
+  const artist = liveArtist ?? loaderArtist;
   const hasArtistId = !!artistId;
 
   const [useSuspense, setUseSuspense] = useState(

@@ -4,6 +4,7 @@ import {
   type ListItemState,
   SelectableList,
 } from "../../components/SelectableList";
+import { useArtistArtwork } from "../../hooks/useArtistArtwork";
 import { usePlayer } from "../../hooks/usePlayer";
 import { useToast } from "../../hooks/useToast";
 import i18next from "../../i18next";
@@ -30,7 +31,8 @@ export function Artists({
   const { populateUpNext, userConfirmQueueReplace } = usePlayer();
   const { data: listItems, loading: isLoading } = useArtists();
   const { showToast } = useToast();
-  const { showArtistPhotos } = useAppearance();
+  const { showArtistArtwork } = useAppearance();
+  const { contextMenuItems: artworkMenuItems } = useArtistArtwork();
 
   const handleTypeMatch = useCallback((item: Artist, query: string) => {
     const matcher = new RegExp(`^${query.replace(/\s+/g, "")}`, "iu");
@@ -98,9 +100,20 @@ export function Artists({
             });
           },
         },
+        {
+          type: "divider" as const,
+          key: "artwork_actions",
+        },
+        ...artworkMenuItems(artist),
       ];
     },
-    [listItems, userConfirmQueueReplace, populateUpNext, showToast],
+    [
+      listItems,
+      userConfirmQueueReplace,
+      populateUpNext,
+      showToast,
+      artworkMenuItems,
+    ],
   );
 
   const handleDoubleClick = useCallback(
@@ -126,10 +139,10 @@ export function Artists({
       <ArtistRow
         isSelected={state.isSelected}
         artist={artist}
-        showPhoto={showArtistPhotos}
+        showArtwork={showArtistArtwork}
       />
     ),
-    [showArtistPhotos],
+    [showArtistArtwork],
   );
 
   if (isLoading) return <Loading />;

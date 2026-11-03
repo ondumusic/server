@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ## Unreleased
+- [Added] Web: display artist artwork and add uploading/removing functionality
 - [Fixed] Web: a selected list item just outside scrollview was not scrolled into view
 - [Added] Issues: surface it when tracks on an album have mixed file formats
 

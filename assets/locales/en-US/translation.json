@@ -11,6 +11,14 @@
     "albumCount_one": "{{count}} album",
     "albumCount_other": "{{count}} albums"
   },
+  "artistArtwork": {
+    "error": {
+      "failed": "Failed to update the artwork, please try again.",
+      "invalidImage": "That file is not a valid image.",
+      "ok": "OK",
+      "tooLarge": "The image is too large, it can be at most {{ maxSize }}MB."
+    }
+  },
   "artists": {
     "title": "Artists"
   },
@@ -33,6 +41,7 @@
     "readabilityWarning": "This color could cause poor readability"
   },
   "contextMenu": {
+    "addArtistArtwork": "Choose Artwork...",
     "addToPlaylist_one": "Add To Playlist...",
     "addToPlaylist_other": "Add To Playlist...",
     "addToRecentPlaylist": "Add To {{ playlistName }}",
@@ -47,9 +56,11 @@
     "playArtist": "Play \"{{ artist }}\"",
     "playNext": "Play Next",
     "playPlaylist": "Play \"{{ playlist }}\"",
+    "removeArtistArtwork": "Remove Artwork",
     "removeTracks_one": "Remove {{ count }} track",
     "removeTracks_other": "Remove {{ count }} tracks",
     "renamePlaylist": "Rename",
+    "replaceArtistArtwork": "Replace Artwork...",
     "scanLibrary": "Scan the library",
     "shuffleAlbum_one": "Shuffle Album",
     "shuffleAlbum_other": "Shuffle Albums",
@@ -197,6 +208,11 @@
     "confirm": "Logout",
     "message": "Are you sure you want to logout?"
   },
+  "promptRemoveArtistArtwork": {
+    "cancel": "Cancel",
+    "confirm": "Remove",
+    "message": "Remove the artwork from {{ artistName }}?"
+  },
   "promptResetDatabase": {
     "cancel": "Cancel",
     "confirm": "Reset",
@@ -242,9 +258,9 @@
       "theme": "Theme",
       "title": "Appearance"
     },
-    "artistPhotos": {
+    "artistArtwork": {
       "showInList": "Show photos in the artist list.",
-      "title": "Artist Photos"
+      "title": "Artist Artwork"
     },
     "issues": {
       "albumCount_one": "{{count}} album",
@@ -393,6 +409,8 @@
     "addedToPlayNext_other": "Added {{ count }} tracks to up next",
     "addedToPlayShuffled_one": "Shuffling {{ count }} track",
     "addedToPlayShuffled_other": "Shuffling {{ count }} tracks",
+    "artistArtworkRemoved": "Removed the artwork from {{ artistName }}",
+    "artistArtworkUpdated": "Updated the artwork for {{ artistName }}",
     "completedLibraryScan": "Library scan completed",
     "copiedPath": "Copied file path",
     "defaultLinkTitle": "View",
