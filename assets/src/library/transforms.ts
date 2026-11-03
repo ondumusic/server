@@ -2,7 +2,9 @@ import type { Album, Artist, Playlist, PlaylistItem, Track } from "../types";
 import { repo } from "./repo";
 import { searchTokens } from "./search";
 
-export const schemaVersion = 1;
+// Schema History:
+// 2: added artist artwork
+export const schemaVersion = 2;
 
 export const transforms = {
   async artists(artists: Artist[]) {
@@ -13,6 +15,7 @@ export const transforms = {
         sortName: artist.sortName,
         slug: artist.slug,
         albumCount: artist.albumCount,
+        artwork: artist.artwork ?? [],
         insertedAt: new Date(artist.insertedAt as string),
         searchTokens: searchTokens.artist(artist),
 
