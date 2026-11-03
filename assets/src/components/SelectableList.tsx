@@ -371,7 +371,10 @@ export function SelectableList<T>({
     const viewportBottom = scrollTop + scrollHeight;
 
     // If it's already visible then we can do nothing here.
-    if (itemTop >= viewportTop && itemBottom <= viewportBottom) {
+    if (
+      paddingTop + itemTop >= viewportTop &&
+      paddingTop + itemBottom <= viewportBottom
+    ) {
       return;
     }
 

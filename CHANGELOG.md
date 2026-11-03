@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ## Unreleased
+- [Fixed] Web: a selected list item just outside scrollview was not scrolled into view
 - [Added] Issues: surface it when tracks on an album have mixed file formats
 
 ## 1.0.0-rc.6 - 2026-10-31
