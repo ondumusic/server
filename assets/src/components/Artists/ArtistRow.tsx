@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Marquee } from "../../components/Marquee";
 import type { Artist } from "../../types";
 import { classNames } from "../../utils/classNames";
+import { ArtistArtwork } from "../ArtistArtwork";
 
 interface Props {
   artist: Artist;
@@ -18,6 +19,11 @@ export const ArtistRow = memo(({ artist, isSelected = false }: Props) => {
           "bg-sidebar-inactive-bg text-sidebar-inactive-fg [.selectable-list:focus_&]:bg-sidebar-active-bg [.selectable-list:focus_&]:shadow-sm [.selectable-list:focus_&]:text-sidebar-active-fg",
       ])}
     >
+      <ArtistArtwork
+        artist={artist}
+        size="thumbnail"
+        className="size-7 rounded-full flex-shrink-0"
+      />
       <Marquee className="py-2.5" delay={500} text={artist.name} />
     </li>
   );
