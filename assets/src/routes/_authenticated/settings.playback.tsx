@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Select } from "../../components/form/Select";
 import {
@@ -7,8 +7,7 @@ import {
   SettingsPage,
   SettingsRow,
 } from "../../components/Settings";
-import { playRecorder } from "../../services/plays";
-import { transcoding } from "../../services/transcoding";
+import { settings, useSetting } from "../../services/settings";
 import type { ServerInfo } from "../../types";
 import { Route as SettingsRoute } from "./settings";
 
@@ -20,13 +19,14 @@ export const Route = createFileRoute("/_authenticated/settings/playback")({
 function PlaybackSettings() {
   const { t } = useTranslation();
   const { presets }: ServerInfo = SettingsRoute.useLoaderData();
-  const [recordPlays, setRecordPlays] = useState(playRecorder.enabled);
-  const [preset, setPreset] = useState(() => {
-    const stored = transcoding.preset;
-    const known = presets.some(({ id }) => id === stored);
-    if (!known) transcoding.preset = null;
-    return known ? stored : null;
-  });
+  const recordPlays = useSetting(settings.recordPlays);
+  const stored = useSetting(settings.transcodingPreset);
+  const preset = presets.some(({ id }) => id === stored) ? stored : null;
+
+  // If the preset is no longer available on the server we can forget it.
+  useEffect(() => {
+    if (stored !== preset) settings.transcodingPreset.set(null);
+  }, [stored, preset]);
 
   // NOTE: The empty option is to prefer original audio files.
   const presetOptions = {
@@ -57,10 +57,9 @@ function PlaybackSettings() {
               name="transcodingPreset"
               value={preset ?? ""}
               options={presetOptions}
-              onChange={(value) => {
-                transcoding.preset = value || null;
-                setPreset(value || null);
-              }}
+              onChange={(value) =>
+                settings.transcodingPreset.set(value || null)
+              }
             />
           </div>
         </SettingsRow>
@@ -79,10 +78,7 @@ function PlaybackSettings() {
               type="checkbox"
               className="accent-accent-500"
               checked={recordPlays}
-              onChange={(e) => {
-                playRecorder.enabled = e.target.checked;
-                setRecordPlays(e.target.checked);
-              }}
+              onChange={(e) => settings.recordPlays.set(e.target.checked)}
             />
             <Trans i18nKey="settings.playHistory.recordInBrowser">
               Yes, record and sync play history.

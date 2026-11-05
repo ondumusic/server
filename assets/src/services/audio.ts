@@ -1,7 +1,7 @@
 import { authApi } from "../api";
 import type { Track } from "../types";
 import { playRecorder } from "./plays";
-import { transcoding } from "./transcoding";
+import { settings } from "./settings";
 
 interface AudioEvent {
   duration: number;
@@ -141,7 +141,7 @@ export class AudioService {
   #setSource(audioTrack: AudioTrack) {
     const original = `${audioTrack.streamUrl}?transcode=0&token=${this.#playToken}`;
     const transcode = `${audioTrack.streamUrl}?transcode=1&token=${this.#playToken}`;
-    const preset = transcoding.preset;
+    const preset = settings.transcodingPreset.get();
 
     // Determine the sources.
     let sources: string[];

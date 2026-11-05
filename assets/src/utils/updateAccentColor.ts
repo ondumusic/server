@@ -1,4 +1,5 @@
 import { formatHex, oklch, parse, wcagContrast } from "culori";
+import { settings } from "../services/settings";
 
 function generateAccentPalette(baseColor: string): Record<string, string> {
   const parsed = parse(baseColor);
@@ -27,13 +28,6 @@ function generateAccentPalette(baseColor: string): Record<string, string> {
   );
 }
 
-// The blue from the Ondu branding
-export const DEFAULT_ACCENT_COLOR = "#3868f1";
-
-export function getAccentColor() {
-  return localStorage.getItem("baseAccentColor") ?? DEFAULT_ACCENT_COLOR;
-}
-
 function darkModeColor(baseColor: string) {
   const base = oklch(parse(baseColor));
   if (!base) throw new Error(`Invalid color: ${baseColor}`);
@@ -43,7 +37,7 @@ function darkModeColor(baseColor: string) {
 }
 
 export function applyAccentColor() {
-  const baseColor = getAccentColor();
+  const baseColor = settings.baseAccentColor.get();
   const palette = generateAccentPalette(baseColor);
   const root = document.documentElement;
 
@@ -57,7 +51,7 @@ export function applyAccentColor() {
 }
 
 export function updateAccentColor(baseColor: string) {
-  localStorage.setItem("baseAccentColor", baseColor);
+  settings.baseAccentColor.set(baseColor);
   applyAccentColor();
 }
 

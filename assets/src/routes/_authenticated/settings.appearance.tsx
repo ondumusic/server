@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { ColorPicker } from "../../components/ColorPicker";
 import {
@@ -9,11 +8,8 @@ import {
 } from "../../components/Settings";
 import { ThemeSwitcher } from "../../components/ThemeSwitcher";
 import { useTheme } from "../../hooks/useTheme";
-import { appearance, useAppearance } from "../../services/appearance";
-import {
-  getAccentColor,
-  updateAccentColor,
-} from "../../utils/updateAccentColor";
+import { settings, useSetting } from "../../services/settings";
+import { updateAccentColor } from "../../utils/updateAccentColor";
 
 export const Route = createFileRoute("/_authenticated/settings/appearance")({
   staticData: { view: "settings" as const },
@@ -22,9 +18,9 @@ export const Route = createFileRoute("/_authenticated/settings/appearance")({
 
 function AppearanceSettings() {
   const { t } = useTranslation();
-  const [color, setColor] = useState(getAccentColor());
+  const color = useSetting(settings.baseAccentColor);
   const { theme, setTheme } = useTheme();
-  const { showArtistArtwork } = useAppearance();
+  const showArtistArtwork = useSetting(settings.showArtistArtwork);
 
   return (
     <SettingsPage
@@ -45,13 +41,7 @@ function AppearanceSettings() {
             defaultValue: "Accent Color",
           })}
         >
-          <ColorPicker
-            value={color}
-            onChange={(newColor) => {
-              updateAccentColor(newColor);
-              setColor(newColor);
-            }}
-          />
+          <ColorPicker value={color} onChange={updateAccentColor} />
         </SettingsRow>
         <SettingsRow
           label={t("settings.artistArtwork.title", {
@@ -63,9 +53,7 @@ function AppearanceSettings() {
               type="checkbox"
               className="accent-accent-500"
               checked={showArtistArtwork}
-              onChange={(e) => {
-                appearance.showArtistArtwork = e.target.checked;
-              }}
+              onChange={(e) => settings.showArtistArtwork.set(e.target.checked)}
             />
             <Trans i18nKey="settings.artistArtwork.showInList">
               Show photos in the artist list.

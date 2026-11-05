@@ -7,6 +7,7 @@ import {
 } from "../../components/Settings";
 import { useDialog } from "../../hooks/useDialog";
 import { repo } from "../../library";
+import { settings } from "../../services/settings";
 
 export const Route = createFileRoute("/_authenticated/settings/storage")({
   staticData: { view: "settings" as const },
@@ -56,14 +57,7 @@ function StorageSettings() {
     });
     if (!confirmed) return;
 
-    // Not using localStorage.clear because auth token is also in there, so
-    // might make sense to move this to a separate settings service or something
-    localStorage.removeItem("albumSort");
-    localStorage.removeItem("albumSortDir");
-    localStorage.removeItem("baseAccentColor");
-    localStorage.removeItem("theme");
-    localStorage.removeItem("recordPlays");
-    localStorage.removeItem("transcodingPreset");
+    settings.reset();
     location.reload();
   };
 

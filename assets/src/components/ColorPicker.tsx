@@ -3,7 +3,8 @@ import { CheckIcon } from "../components/icons/CheckIcon";
 import { PlusIcon } from "../components/icons/PlusIcon";
 import { WarningIcon } from "../components/icons/WarningIcon";
 import i18next from "../i18next";
-import { DEFAULT_ACCENT_COLOR, isAccessible } from "../utils/updateAccentColor";
+import { DEFAULT_ACCENT_COLOR } from "../services/settings";
+import { isAccessible } from "../utils/updateAccentColor";
 
 export function ColorPicker({
   value,

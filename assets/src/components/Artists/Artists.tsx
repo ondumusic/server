@@ -9,7 +9,7 @@ import { usePlayer } from "../../hooks/usePlayer";
 import { useToast } from "../../hooks/useToast";
 import i18next from "../../i18next";
 import { useArtists } from "../../library";
-import { useAppearance } from "../../services/appearance";
+import { settings, useSetting } from "../../services/settings";
 import type { Artist, UUID } from "../../types";
 import { ArtistRow } from "./ArtistRow";
 
@@ -31,7 +31,7 @@ export function Artists({
   const { populateUpNext, userConfirmQueueReplace } = usePlayer();
   const { data: listItems, loading: isLoading } = useArtists();
   const { showToast } = useToast();
-  const { showArtistArtwork } = useAppearance();
+  const showArtistArtwork = useSetting(settings.showArtistArtwork);
   const { contextMenuItems: artworkMenuItems } = useArtistArtwork();
 
   const handleTypeMatch = useCallback((item: Artist, query: string) => {
