@@ -312,6 +312,9 @@
     "storage": {
       "localDatabase": "Local Database",
       "localDatabaseHelp": "Resets your local IndexedDB and starts a new sync.",
+      "preloadArtwork": "Artwork Preloading",
+      "preloadArtworkHelp": "When enabled this will preload album and artist thumbnails which makes everything feel more instant. It does cost more bandwidth and storage up front.",
+      "preloadArtworkInBrowser": "Yes, preload artwork in this browser.",
       "resetLocalDatabase": "Reset Local Database",
       "resetUserSettings": "Reset User Settings",
       "summary": "Sometimes you just need a little reset.",

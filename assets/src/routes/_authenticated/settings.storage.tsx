@@ -6,8 +6,8 @@ import {
   SettingsRow,
 } from "../../components/Settings";
 import { useDialog } from "../../hooks/useDialog";
-import { repo } from "../../library";
-import { settings } from "../../services/settings";
+import { repo, sync } from "../../library";
+import { settings, useSetting } from "../../services/settings";
 
 export const Route = createFileRoute("/_authenticated/settings/storage")({
   staticData: { view: "settings" as const },
@@ -23,6 +23,12 @@ const resetButtonClassName = [
 function StorageSettings() {
   const { t } = useTranslation();
   const { promptConfirm } = useDialog();
+  const preloadArtwork = useSetting(settings.preloadArtwork);
+
+  const handlePreloadArtwork = (enabled: boolean) => {
+    settings.preloadArtwork.set(enabled);
+    if (enabled) sync.prewarmAll();
+  };
 
   const handleResetDatabase = async () => {
     const confirmed = await promptConfirm({
@@ -69,6 +75,27 @@ function StorageSettings() {
       })}
     >
       <SettingsGroup>
+        <SettingsRow
+          label={t("settings.storage.preloadArtwork", {
+            defaultValue: "Artwork Preloading",
+          })}
+          help={t("settings.storage.preloadArtworkHelp", {
+            defaultValue:
+              "When enabled this will preload album and artist thumbnails which makes everything feel more instant. It does cost more bandwidth and storage up front.",
+          })}
+        >
+          <label className="flex items-center gap-2 text-sm @xl:pt-1.5">
+            <input
+              type="checkbox"
+              className="accent-accent-500"
+              checked={preloadArtwork === true}
+              onChange={(e) => handlePreloadArtwork(e.target.checked)}
+            />
+            <Trans i18nKey="settings.storage.preloadArtworkInBrowser">
+              Yes, preload artwork in this browser.
+            </Trans>
+          </label>
+        </SettingsRow>
         <SettingsRow
           label={t("settings.storage.localDatabase", {
             defaultValue: "Local Database",

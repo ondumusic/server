@@ -32,4 +32,8 @@ export const definitions = {
     type: "string",
     defaultValue: null,
   },
+  preloadArtwork: {
+    type: "boolean",
+    defaultValue: null,
+  },
 } satisfies Record<string, Definition>;
