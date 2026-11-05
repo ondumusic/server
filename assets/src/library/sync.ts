@@ -1,6 +1,7 @@
 import { ClientError, client } from "../api";
 import type { Notice } from "../api/notices";
 import { notices } from "../services/notices";
+import { settings } from "../services/settings";
 import type { Album, Artist, Playlist, PlaylistItem, Track } from "../types";
 import { artworkThumbnailUrl, artworkUrls } from "../utils/artwork";
 import { notifyChanges } from "./events";
@@ -49,6 +50,7 @@ class SyncClient {
     playlistItems: 0,
   };
   #observers: Set<SyncProgressObserver> = new Set();
+  #prewarmQueue: (Album | Artist)[] = [];
 
   constructor() {
     this.#resetProgress();
@@ -86,13 +88,27 @@ class SyncClient {
     this.#syncing = true;
     const cursor = await this.#getCursor();
 
+    // If there is a cursor but preloadArtwork was never configured we will
+    // default the setting to `true` to keep it consistent.
+    if (cursor && settings.preloadArtwork.get() === null) {
+      settings.preloadArtwork.set(true);
+    }
+
+    this.#prewarmQueue = [];
     try {
       await this.#fetch(cursor);
       this.#setLastSyncedAt(new Date());
       this.#updateMissingData();
+      const queued = this.#prewarmQueue;
+      this.#prewarmQueue = [];
+      this.#prewarmArtwork(queued);
     } finally {
       this.#syncing = false;
     }
+  }
+
+  async prewarmAll() {
+    await this.#refreshArtworkCache();
   }
 
   async pushChanges({
@@ -163,7 +179,7 @@ class SyncClient {
     if (changedStores.size > 0) notifyChanges([...changedStores]);
 
     this.#emitProgress();
-    this.#prewarmArtwork([...albums, ...artists]);
+    this.#prewarmQueue.push(...albums, ...artists);
   }
 
   async #fetch(cursor?: string, attempt: number = 1) {
@@ -199,7 +215,7 @@ class SyncClient {
   }
 
   async #prewarmArtwork(parents: (Album | Artist)[]) {
-    if (!parents.length) return;
+    if (settings.preloadArtwork.get() !== true || !parents.length) return;
     // Only thumbnails, larger artwork is cached when it is first shown.
     const urls = parents
       .map((parent) => artworkThumbnailUrl(parent))
@@ -214,6 +230,7 @@ class SyncClient {
   }
 
   async #refreshArtworkCache() {
+    if (settings.preloadArtwork.get() !== true) return;
     const albums = await repo.query<Album>("albums", {
       sortBy: [["releaseYear", "desc"]],
     });
