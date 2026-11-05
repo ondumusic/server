@@ -473,7 +473,7 @@ function Row({
       <AlbumArtwork
         album={album}
         size="thumbnail"
-        className="size-11 flex-shrink-0 rounded-sm shadow-sm bg-linear-to-br from-stone-50 to-stone-200"
+        className="size-11 flex-shrink-0 rounded-sm shadow-sm"
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2 min-w-0 mb-1">

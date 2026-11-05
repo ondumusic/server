@@ -1,6 +1,7 @@
-import { type CSSProperties, type PropsWithChildren, useEffect } from "react";
+import type { CSSProperties, PropsWithChildren } from "react";
 import type { Album } from "../types";
 import { artworkThumbnailUrl, artworkUrl } from "../utils/artwork";
+import { artworkLayers } from "../utils/artworkLayers";
 import { classNames } from "../utils/classNames";
 
 // Shows the artwork of an album as css background, the className should set
@@ -14,40 +15,22 @@ export function AlbumArtwork({
   size,
   className,
   style,
-  onLoad,
   children,
 }: PropsWithChildren<{
   album?: Album | null;
   size: "thumbnail" | "large";
   className?: string;
   style?: CSSProperties;
-  onLoad?: (image: HTMLImageElement) => void;
 }>) {
   const thumbnail = artworkThumbnailUrl(album);
   const urls = (
     size === "large" ? [artworkUrl(album), thumbnail] : [thumbnail]
-  ).filter((url) => !!url);
-  const backgroundImage = urls.map((url) => `url(${url})`).join(", ");
-
-  // Backgrounds have no load event, so the (top) artwork is loaded separately
-  // when someone needs it (e.g. to extract its colors).
-  const [topUrl] = urls;
-  useEffect(() => {
-    if (!topUrl || !onLoad) return;
-
-    const image = new Image();
-    image.onload = () => onLoad(image);
-    image.src = topUrl;
-
-    return () => {
-      image.onload = null;
-    };
-  }, [topUrl, onLoad]);
+  ).filter((url): url is string => !!url);
 
   return (
     <div
-      className={classNames(["relative bg-cover bg-center", className])}
-      style={{ ...style, ...(backgroundImage && { backgroundImage }) }}
+      className={classNames(["relative", className])}
+      style={{ ...style, ...artworkLayers(urls) }}
     >
       {children}
     </div>

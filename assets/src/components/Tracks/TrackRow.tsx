@@ -129,7 +129,7 @@ export function TrackRow({
           album={track?.album}
           size="thumbnail"
           className={classNames([
-            "w-8 h-8 bg-linear-to-br from-stone-50 to-stone-200 lg:rounded-sm lg:shadow-sm flex-shrink-0",
+            "w-8 h-8 lg:rounded-sm lg:shadow-sm flex-shrink-0",
             !showAlbumArtwork && "hidden",
           ])}
         >
