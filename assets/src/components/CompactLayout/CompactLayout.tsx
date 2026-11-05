@@ -96,7 +96,7 @@ export function CompactLayout({
           <AlbumArtwork
             album={album}
             size="thumbnail"
-            className="size-10 flex-shrink-0 rounded-md shadow-md shadow-black/30 bg-linear-to-tl from-stone-600 to-stone-700"
+            className="size-10 flex-shrink-0 rounded-md shadow-md shadow-black/30"
             style={{
               viewTransitionName: isNowPlayingOpen
                 ? undefined

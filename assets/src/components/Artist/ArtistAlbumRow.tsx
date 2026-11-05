@@ -33,7 +33,7 @@ export function ArtistAlbumRow({ item, onPlayAlbum }: Props) {
         <AlbumArtwork
           album={item.album}
           size="large"
-          className="w-full shadow-lg aspect-square rounded-md bg-linear-to-br from-stone-50 to-stone-200"
+          className="w-full shadow-lg aspect-square rounded-md"
         />
 
         <button

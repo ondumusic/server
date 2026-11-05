@@ -22,7 +22,7 @@ export const AlbumRow = memo(({ album, isSelected = false }: Props) => {
       <AlbumArtwork
         album={album}
         size="thumbnail"
-        className="w-10 h-10 aspect-square shadow-md rounded-md bg-stone-900 flex-shrink-0"
+        className="w-10 h-10 aspect-square shadow-md rounded-md flex-shrink-0"
         style={{ contentVisibility: "auto" }}
       />
       <div className="py-2.5 max-w-full overflow-auto">

@@ -14,7 +14,7 @@ export function AlbumCard({
       <AlbumArtwork
         album={album}
         size="large"
-        className="w-full aspect-square shadow-md rounded-md bg-stone-900"
+        className="w-full aspect-square shadow-md rounded-md"
         style={{ contentVisibility: "auto" }}
       >
         {isSelected && (

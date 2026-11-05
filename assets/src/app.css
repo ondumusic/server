@@ -31,6 +31,12 @@
 
   --content-bg: rgb(252, 252, 253);
 
+  --artwork-placeholder: linear-gradient(
+    to bottom right,
+    var(--color-stone-200),
+    var(--color-stone-300)
+  );
+
   --contextmenu-bg: rgb(255, 255, 255);
   --contextmenu-fg: rgb(0, 0, 0);
   --contextmenu-divider: rgba(220, 220, 220, 0.8);
@@ -68,6 +74,12 @@
   --page-fg-divider: rgba(255, 255, 255, 0.12);
 
   --content-bg: rgb(24, 22, 21);
+
+  --artwork-placeholder: linear-gradient(
+    to bottom right,
+    var(--color-stone-800),
+    var(--color-stone-900)
+  );
 
   --contextmenu-bg: rgb(48, 45, 43);
   --contextmenu-fg: rgb(245, 245, 245);

@@ -63,7 +63,7 @@ export function FullPlayer({ onClose }: { onClose: () => void }) {
           <AlbumArtwork
             album={album}
             size="large"
-            className="w-full aspect-square rounded-xl shadow-2xl shadow-black/40 bg-linear-to-tl from-stone-600 to-stone-700"
+            className="w-full aspect-square rounded-xl shadow-2xl shadow-black/40"
             style={{ viewTransitionName: "now-playing-artwork" }}
           />
 
