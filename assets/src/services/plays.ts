@@ -1,8 +1,8 @@
 import { type Play, playApi } from "../api/plays";
 import { uuid } from "../utils/uuid";
+import { settings } from "./settings";
 
 const QUEUE_KEY = "pendingPlays";
-const ENABLED_KEY = "recordPlays";
 const MAX_BATCH_SIZE = 500;
 
 interface CurrentPlay {
@@ -21,14 +21,6 @@ interface CurrentPlay {
 export class PlayRecorder {
   #current?: CurrentPlay;
   #flushing = false;
-
-  get enabled(): boolean {
-    return localStorage.getItem(ENABLED_KEY) !== "false";
-  }
-
-  set enabled(enabled: boolean) {
-    localStorage.setItem(ENABLED_KEY, String(enabled));
-  }
 
   start(track: { id: string; duration?: number | null }) {
     this.#current = {
@@ -64,7 +56,7 @@ export class PlayRecorder {
   }
 
   #record(current: CurrentPlay) {
-    if (!this.enabled) return;
+    if (!settings.recordPlays.get()) return;
 
     this.#savePending([
       ...this.#pending(),

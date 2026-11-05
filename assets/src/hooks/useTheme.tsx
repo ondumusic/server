@@ -1,10 +1,5 @@
-import {
-  createContext,
-  type PropsWithChildren,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { type PropsWithChildren, useEffect } from "react";
+import { settings, useSetting } from "../services/settings";
 
 function getSystemTheme() {
   return window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -17,28 +12,16 @@ function applyTheme(newTheme: string) {
   document.documentElement.setAttribute("data-theme", theme);
 }
 
-export type ThemeContext = {
-  theme: string;
-  setTheme(theme: string): void;
-};
-
-const ThemeContext = createContext<ThemeContext>({
-  theme: getSystemTheme(),
-  setTheme() {},
-});
-
 export function useTheme() {
-  return useContext(ThemeContext);
+  const theme = useSetting(settings.theme);
+  return { theme, setTheme: settings.theme.set };
 }
 
 export const ThemeProvider = ({ children }: PropsWithChildren) => {
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("theme") || "auto";
-  });
+  const theme = useSetting(settings.theme);
 
   useEffect(() => {
     applyTheme(theme);
-    localStorage.setItem("theme", theme);
   }, [theme]);
 
   useEffect(() => {
@@ -49,9 +32,5 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
     return () => mediaQuery.removeEventListener("change", handler);
   }, [theme]);
 
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return children;
 };

@@ -13,6 +13,7 @@ import { usePlaylistPicker } from "../../hooks/usePlaylistPicker";
 import { useToast } from "../../hooks/useToast";
 import i18next from "../../i18next";
 import { queryTracks, useAlbums } from "../../library";
+import { settings, useSetting } from "../../services/settings";
 import type { Album, UUID } from "../../types";
 import { appendTracksToPlaylist } from "../../utils/appendTracksToPlaylist";
 import { AlbumCard } from "./AlbumCard";
@@ -47,12 +48,8 @@ export function Albums({
   const { showToast } = useToast();
   const [selectedIds, setSelectedIds] = useState<Set<UUID>>(new Set([]));
 
-  const defaultSortOption = (localStorage.getItem("albumSort") ??
-    "artistSortName") as SortOption;
-  const defaultSortDir = (localStorage.getItem("albumSortDir") ??
-    "asc") as SortDirection;
-  const [sortBy, setSortBy] = useState<SortOption>(defaultSortOption);
-  const [sortDir, setSortDir] = useState<SortDirection>(defaultSortDir);
+  const sortBy = useSetting(settings.albumSort) as SortOption;
+  const sortDir = useSetting(settings.albumSortDir) as SortDirection;
   const sortOptions = useMemo(
     () => [
       {
@@ -375,15 +372,10 @@ export function Albums({
             <FloatingDropdown<SortOption>
               onChange={(value) => {
                 if (sortBy === value) {
-                  const newSortDir = sortDir === "asc" ? "desc" : "asc";
-                  setSortDir(newSortDir);
-                  localStorage.setItem("albumSortDir", newSortDir);
+                  settings.albumSortDir.set(sortDir === "asc" ? "desc" : "asc");
                 } else {
-                  const newSortDir = defaultSortDirs[value] ?? "asc";
-                  setSortBy(value);
-                  setSortDir(newSortDir);
-                  localStorage.setItem("albumSort", value);
-                  localStorage.setItem("albumSortDir", newSortDir);
+                  settings.albumSort.set(value);
+                  settings.albumSortDir.set(defaultSortDirs[value] ?? "asc");
                 }
               }}
               value={sortBy}
