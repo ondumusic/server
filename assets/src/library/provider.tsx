@@ -8,9 +8,8 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-
-import { PreloadArtwork } from "../components/PreloadArtwork";
 import { Loading } from "../components/Loading";
+import { PreloadArtwork } from "../components/PreloadArtwork";
 import { useAuth } from "../hooks/useAuth";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { settings } from "../services/settings";
