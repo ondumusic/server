@@ -40,6 +40,13 @@ export interface SyncProgress {
 
 type SyncProgressObserver = (progress: SyncProgress) => void;
 
+export interface PrewarmProgress {
+  done: number;
+  total: number;
+}
+
+type PrewarmProgressObserver = (progress: PrewarmProgress) => void;
+
 class SyncClient {
   #syncing: boolean = false;
   #progress: SyncProgress = {
@@ -50,6 +57,7 @@ class SyncClient {
     playlistItems: 0,
   };
   #observers: Set<SyncProgressObserver> = new Set();
+  #prewarmObservers: Set<PrewarmProgressObserver> = new Set();
   #prewarmQueue: (Album | Artist)[] = [];
 
   constructor() {
@@ -71,6 +79,19 @@ class SyncClient {
       "controllerchange",
       prewarmArtwork,
     );
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      const data = event.data as
+        | (PrewarmProgress & { type?: string })
+        | undefined;
+      if (data?.type !== "PREWARM_PROGRESS") return;
+      const progress = { done: data.done, total: data.total };
+      for (const callback of this.#prewarmObservers) callback(progress);
+    });
+  }
+
+  addPrewarmObserver(observer: PrewarmProgressObserver): () => void {
+    this.#prewarmObservers.add(observer);
+    return () => this.#prewarmObservers.delete(observer);
   }
 
   addObserver(observer: SyncProgressObserver): () => void {
@@ -107,8 +128,17 @@ class SyncClient {
     }
   }
 
-  async prewarmAll() {
-    await this.#refreshArtworkCache();
+  async prewarmableCount(): Promise<number> {
+    const albums = await repo.getAll<Album>("albums");
+    const artists = await repo.getAll<Artist>("artists");
+    return [...albums, ...artists].filter((parent) =>
+      artworkThumbnailUrl(parent),
+    ).length;
+  }
+
+  // Resolves to whether the service worker took the job.
+  async prewarmAll(): Promise<boolean> {
+    return await this.#refreshArtworkCache();
   }
 
   async pushChanges({
@@ -214,29 +244,43 @@ class SyncClient {
     }
   }
 
-  async #prewarmArtwork(parents: (Album | Artist)[]) {
-    if (settings.preloadArtwork.get() !== true || !parents.length) return;
+  async #prewarmArtwork(parents: (Album | Artist)[]): Promise<boolean> {
+    if (settings.preloadArtwork.get() !== true || !parents.length) return false;
     // Only thumbnails, larger artwork is cached when it is first shown.
     const urls = parents
       .map((parent) => artworkThumbnailUrl(parent))
       .filter((url) => !!url);
-    const sw = await navigator.serviceWorker?.ready;
-    if (sw?.active) {
-      sw.active.postMessage({
-        type: "PREWARM",
-        urls,
-      });
-    }
+    const sw = await this.#serviceWorker();
+    if (!sw) return false;
+    sw.postMessage({
+      type: "PREWARM",
+      urls,
+    });
+    return true;
   }
 
-  async #refreshArtworkCache() {
-    if (settings.preloadArtwork.get() !== true) return;
+  async #serviceWorker(): Promise<ServiceWorker | undefined> {
+    // some browsers like firefox will never be `ready` in private mode
+    const ready = navigator.serviceWorker?.ready;
+    if (!ready) return undefined;
+    const timeout = new Promise<undefined>((resolve) =>
+      setTimeout(() => resolve(undefined), 3000),
+    );
+
+    // lets wait for service worker to be ready, or our timeout,
+    // whichever happens first.
+    const registration = await Promise.race([ready, timeout]);
+    return registration?.active ?? undefined;
+  }
+
+  async #refreshArtworkCache(): Promise<boolean> {
+    if (settings.preloadArtwork.get() !== true) return false;
     const albums = await repo.query<Album>("albums", {
       sortBy: [["releaseYear", "desc"]],
     });
     const artists = await repo.getAll<Artist>("artists");
     await this.#pruneArtwork([...albums, ...artists]);
-    await this.#prewarmArtwork([...albums, ...artists]);
+    return await this.#prewarmArtwork([...albums, ...artists]);
   }
 
   // Removes outdated artwork (older hashes) from the cache
