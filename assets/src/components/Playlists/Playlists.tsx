@@ -513,6 +513,18 @@ export function Playlists({
     [],
   );
 
+  const handleArrowRight = ({ focusedItem }) => {
+    if (!focusedItem?.isFolder) return;
+    openFolders.add(focusedItem.id);
+    setOpenFolders(new Set([...openFolders]));
+  };
+
+  const handleArrowLeft = ({ focusedItem }) => {
+    if (!focusedItem?.isFolder) return;
+    openFolders.delete(focusedItem.id);
+    setOpenFolders(new Set([...openFolders]));
+  };
+
   if (isLoading) return <Loading />;
 
   const currentPlaylist = playlistId
@@ -538,16 +550,8 @@ export function Playlists({
           defaultFocusType="center"
           selectedIds={new Set(currentPlaylist ? [currentPlaylist.id] : [])}
           keyBindings={{
-            ArrowRight: ({ focusedItem }) => {
-              if (!focusedItem?.isFolder) return;
-              openFolders.add(focusedItem.id);
-              setOpenFolders(new Set([...openFolders]));
-            },
-            ArrowLeft: ({ focusedItem }) => {
-              if (!focusedItem?.isFolder) return;
-              openFolders.delete(focusedItem.id);
-              setOpenFolders(new Set([...openFolders]));
-            },
+            ArrowRight: handleArrowRight,
+            ArrowLeft: handleArrowLeft,,
           }}
           onContextMenu={handleContextMenu}
           onChange={handleChange}
