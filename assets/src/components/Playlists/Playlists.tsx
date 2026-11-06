@@ -513,13 +513,21 @@ export function Playlists({
     [],
   );
 
-  const handleArrowRight = ({ focusedItem }) => {
+  const handleArrowRight = ({
+    focusedItem,
+  }: {
+    focusedItem: ListItem | null;
+  }) => {
     if (!focusedItem?.isFolder) return;
     openFolders.add(focusedItem.id);
     setOpenFolders(new Set([...openFolders]));
   };
 
-  const handleArrowLeft = ({ focusedItem }) => {
+  const handleArrowLeft = ({
+    focusedItem,
+  }: {
+    focusedItem: ListItem | null;
+  }) => {
     if (!focusedItem?.isFolder) return;
     openFolders.delete(focusedItem.id);
     setOpenFolders(new Set([...openFolders]));
@@ -551,7 +559,7 @@ export function Playlists({
           selectedIds={new Set(currentPlaylist ? [currentPlaylist.id] : [])}
           keyBindings={{
             ArrowRight: handleArrowRight,
-            ArrowLeft: handleArrowLeft,,
+            ArrowLeft: handleArrowLeft,
           }}
           onContextMenu={handleContextMenu}
           onChange={handleChange}
