@@ -1,12 +1,18 @@
 # CHANGELOG
 
 ## Unreleased
-- [Added] Web: display artist artwork and add uploading/removing functionality
+nothing
+
+## 1.0.0-rc.7 - 2026-11-06
+- [Fixed] Web: show spinner icon while track is buffering
+- [Fixed] Web: show the correct duration in player for transcoded streams
+- [Added] Web: make artwork preloading optional ([#16](https://github.com/ondumusic/server/pull/16))
+- [Added] Web: display artist artwork and add uploading/removing functionality ([#15](https://github.com/ondumusic/server/pull/15))
 - [Fixed] Web: a selected list item just outside scrollview was not scrolled into view
 - [Added] Issues: surface it when tracks on an album have mixed file formats
 
 ## 1.0.0-rc.6 - 2026-10-31
-- [Added] Web: initial version of search (using the local indexeddb data)
+- [Added] Web: initial version of search (using the local indexeddb data) ([#12](https://github.com/ondumusic/server/pull/12))
 
 ## 1.0.0-rc.5 - 2026-10-29
 - [Fixed] Sync no uses microsecond precision to avoid potential same-second misses
