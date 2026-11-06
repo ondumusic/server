@@ -19,6 +19,7 @@ interface TimeUpdateEvent {
 
 export interface AudioManagerContext {
   isPlaying: boolean;
+  isBuffering: boolean;
   duration: number;
 
   // State management
@@ -33,6 +34,7 @@ export interface AudioManagerContext {
 
 const AudioManagerContext = createContext<AudioManagerContext>({
   isPlaying: false,
+  isBuffering: false,
   duration: 0,
   setIsPlaying: (_isPlaying) => {},
   addTimeObserver: (_callback) => {},
@@ -47,6 +49,7 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
   const audioService = useRef<AudioService>(null);
   const { isLoggedIn } = useAuth();
   const [isPlaying, realSetIsPlaying] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
   const [duration, setDuration] = useState(0);
   const { currentTrack, currentTrackIndex, nextTrack } = useQueue();
   const [emit, addObserver] = useObserver<TimeUpdateEvent>();
@@ -106,9 +109,14 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
       nextTrack();
     });
 
+    const unsubscribe3 = audioService.current.on("buffering", (e) => {
+      setIsBuffering(!!e.isBuffering);
+    });
+
     return () => {
       unsubscribe();
       unsubscribe2();
+      unsubscribe3();
     };
   }, [nextTrack, emitTimeUpdate]);
 
@@ -140,6 +148,7 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
         progressPercentage: 0,
       });
     } else {
+      setDuration(currentTrack.duration ?? 0);
       emitTimeUpdate({
         currentTime: 0,
         progressPercentage: 0,
@@ -171,6 +180,7 @@ export const AudioManagerProvider = ({ children }: PropsWithChildren) => {
 
   const value = {
     isPlaying,
+    isBuffering,
     duration,
     addTimeObserver,
     setIsPlaying,

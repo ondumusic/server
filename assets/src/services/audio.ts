@@ -8,6 +8,7 @@ interface AudioEvent {
   currentTime: number;
   progressPercentage: number;
   isPlaying: boolean;
+  isBuffering?: boolean;
 }
 
 interface AudioTrack extends Track {
@@ -15,8 +16,20 @@ interface AudioTrack extends Track {
   transcode?: boolean;
 }
 
-type AudioEventName = "timeupdate" | "ended";
+type AudioEventName = "timeupdate" | "ended" | "buffering";
 type AudioEventHandler = (event: AudioEvent) => void;
+
+// These are events where the buffering state might have changed
+// and we want to emit our own buffering event.
+const BUFFERING_EVENTS = [
+  "loadstart",
+  "waiting",
+  "playing",
+  "canplay",
+  "play",
+  "pause",
+  "error",
+];
 type AudioEventUnsubscriber = () => void;
 
 export class AudioService {
@@ -27,6 +40,7 @@ export class AudioService {
   #playTokenFetchedAt?: Date;
   #playTokenMaxAge: number = 1800 * 1000;
   #endedTimer?: ReturnType<typeof setTimeout>;
+  #startingPlayback = false;
 
   constructor() {
     this.#audioRef = new Audio();
@@ -37,6 +51,9 @@ export class AudioService {
     this.#audioRef.addEventListener("pause", this.#emitStateChange);
     this.#audioRef.addEventListener("play", this.#handlePlayEvent);
     this.#audioRef.addEventListener("pause", this.#handlePauseEvent);
+    for (const name of BUFFERING_EVENTS) {
+      this.#audioRef.addEventListener(name, this.#emitBuffering);
+    }
 
     this.#refreshPlayToken();
 
@@ -54,11 +71,15 @@ export class AudioService {
     this.#audioRef.removeEventListener("pause", this.#emitStateChange);
     this.#audioRef.removeEventListener("play", this.#handlePlayEvent);
     this.#audioRef.removeEventListener("pause", this.#handlePauseEvent);
+    for (const name of BUFFERING_EVENTS) {
+      this.#audioRef.removeEventListener(name, this.#emitBuffering);
+    }
     this.#audioRef.onerror = null;
     this.#audioRef.src = "";
   }
 
   stop() {
+    this.#startingPlayback = false;
     this.#currentTrack = undefined;
     playRecorder.stop();
     clearTimeout(this.#endedTimer);
@@ -105,7 +126,10 @@ export class AudioService {
     if (this.#audioRef.readyState >= 3) {
       this.#audioRef.play().catch((err) => console.warn("blocked:", err.name));
     } else {
+      this.#startingPlayback = true;
+      this.#emitBuffering();
       const canPlay = () => {
+        this.#startingPlayback = false;
         this.#audioRef
           .play()
           .catch((err) => console.warn("blocked:", err.name));
@@ -121,12 +145,13 @@ export class AudioService {
   }
 
   pause() {
+    this.#startingPlayback = false;
     this.#audioRef.pause();
+    this.#emitBuffering();
   }
 
   scrubTo(updatedTime: number, forcePlay: boolean = false) {
-    let duration = this.#audioRef.duration || 0;
-    if (Number.isNaN(duration)) duration = 0;
+    const duration = this.#duration();
     this.#audioRef.currentTime = Math.max(0, Math.min(updatedTime, duration));
 
     this.#monitorEnded();
@@ -190,6 +215,17 @@ export class AudioService {
     this.#audioRef.onerror = nextSource;
   }
 
+  #duration(): number {
+    // We will trust the library duration over the audio stream, because the
+    // transcoded streams don't always let us know the correct duration.
+    const known = this.#currentTrack?.duration ?? 0;
+    if (known > 0) return known;
+    const streamDuration = this.#audioRef.duration;
+    return Number.isFinite(streamDuration) && streamDuration > 0
+      ? streamDuration
+      : 0;
+  }
+
   // In some scenarios (mostly related to live transcoding) the ended event
   // was not triggered properly. This is why we also add a monitor to force
   // "end" it when it should have ended.
@@ -208,8 +244,8 @@ export class AudioService {
         return;
       }
 
-      const duration = this.#audioRef.duration;
-      if (!Number.isFinite(duration) || duration <= 0) return;
+      const duration = this.#duration();
+      if (duration <= 0) return;
 
       const remaining = (duration - this.#audioRef.currentTime) * 1000;
       if (remaining <= 0) return;
@@ -255,11 +291,22 @@ export class AudioService {
     this.#endedTimer = undefined;
   };
 
+  // We only emit this event when trying to play a new track
+  #emitBuffering = () => {
+    const wantsToPlay = this.#startingPlayback || !this.#audioRef.paused;
+    this.#emit("buffering", {
+      currentTime: this.#audioRef.currentTime,
+      duration: this.#duration(),
+      progressPercentage: 0,
+      isPlaying: !this.#audioRef.paused && !this.#audioRef.ended,
+      isBuffering: wantsToPlay && this.#audioRef.readyState < 3,
+    });
+  };
+
   #emitStateChange = (event: Event) => {
     if (this.#audioRef.readyState < 3) return;
 
-    let duration = this.#audioRef.duration || 0;
-    if (Number.isNaN(duration)) duration = 0;
+    const duration = this.#duration();
 
     let progressPercentage = (this.#audioRef.currentTime / duration) * 100;
     if (Number.isNaN(progressPercentage)) progressPercentage = 0;
@@ -286,9 +333,7 @@ export class AudioService {
   };
 
   #emitEnded() {
-    const duration = Number.isFinite(this.#audioRef.duration)
-      ? this.#audioRef.duration
-      : 0;
+    const duration = this.#duration();
     const currentTime = this.#audioRef.currentTime || 0;
     let progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
     if (Number.isNaN(progressPercentage)) progressPercentage = 0;

@@ -13,6 +13,7 @@ import { Marquee } from "../Marquee";
 import { NoticeBanner } from "../NoticeBanner";
 import { PlayerControls } from "../PlayerControls";
 import { SideNav } from "../SideNav";
+import { TrackTitle } from "../TrackTitle";
 import { UpNext } from "../UpNext";
 import { ProgressLine } from "./ProgressLine";
 
@@ -104,7 +105,7 @@ export function CompactLayout({
             }}
           />
           <div className="min-w-0">
-            <Marquee
+            <TrackTitle
               className="text-sm font-medium"
               text={
                 currentTrack?.name ||

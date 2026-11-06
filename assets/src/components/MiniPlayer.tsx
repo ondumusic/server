@@ -8,6 +8,7 @@ import { UpNextIcon } from "./icons/UpNextIcon";
 import { Marquee } from "./Marquee";
 import { PlayerControls } from "./PlayerControls";
 import { Scrubber } from "./Scrubber";
+import { TrackTitle } from "./TrackTitle";
 import { UpNext } from "./UpNext";
 
 export function MiniPlayer({
@@ -62,7 +63,7 @@ export function MiniPlayer({
         </button>
 
         <div className="flex-1 min-w-0 text-left">
-          <Marquee
+          <TrackTitle
             className="text-sm font-medium"
             text={
               currentTrack?.name ||

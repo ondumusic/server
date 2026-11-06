@@ -8,6 +8,7 @@ import { ChevronDownIcon } from "./icons/ChevronDownIcon";
 import { Marquee } from "./Marquee";
 import { PlayerControls } from "./PlayerControls";
 import { Scrubber } from "./Scrubber";
+import { TrackTitle } from "./TrackTitle";
 
 export function FullPlayer({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
@@ -69,7 +70,7 @@ export function FullPlayer({ onClose }: { onClose: () => void }) {
 
           <div className="px-4">
             <div className="mt-6 text-center">
-              <Marquee
+              <TrackTitle
                 className="text-xl font-semibold"
                 text={
                   currentTrack?.name ||
