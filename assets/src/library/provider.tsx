@@ -9,9 +9,11 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 
+import { PreloadArtwork } from "../components/PreloadArtwork";
 import { Loading } from "../components/Loading";
 import { useAuth } from "../hooks/useAuth";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { settings } from "../services/settings";
 import type { OnboardingStep } from "../types";
 
 import { maybeReindexSearch } from "./search";
@@ -52,6 +54,8 @@ export function LibraryProvider({ children }: PropsWithChildren) {
     undefined,
   );
   const syncLock = useRef(false);
+  const [askArtwork, setAskArtwork] = useState(false);
+  const finishFirstRun = useCallback(() => setAskArtwork(false), []);
 
   const doSync = useCallback(async () => {
     if (!isLoggedIn) return;
@@ -69,6 +73,10 @@ export function LibraryProvider({ children }: PropsWithChildren) {
       setSyncing(false);
       setPageLoadSync(false);
       syncLock.current = false;
+
+      if (!isOnboarding && settings.preloadArtwork.get() === null) {
+        setAskArtwork(true);
+      }
     }
   }, [isLoggedIn]);
 
@@ -133,6 +141,8 @@ export function LibraryProvider({ children }: PropsWithChildren) {
             })}
           </p>
         </Loading>
+      ) : isLoggedIn && askArtwork && isSupportedScreen ? (
+        <PreloadArtwork onDone={finishFirstRun} />
       ) : (
         children
       )}
