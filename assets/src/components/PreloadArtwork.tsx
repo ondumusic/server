@@ -65,7 +65,9 @@ export function PreloadArtwork({ onDone }: { onDone: () => void }) {
     <div className="w-full h-full content-center text-center transition-opacity duration-300 starting:opacity-0">
       <div className="mx-auto max-w-sm px-6">
         <h1 className="text-lg font-semibold">
-          <Trans i18nKey="sync.preload.title">Do you want to preload artwork?</Trans>
+          <Trans i18nKey="sync.preload.title">
+            Do you want to preload artwork?
+          </Trans>
         </h1>
         <p className="mt-1 text-sm text-page-fg-muted">
           <Trans i18nKey="sync.preload.question" count={count ?? 0}>
